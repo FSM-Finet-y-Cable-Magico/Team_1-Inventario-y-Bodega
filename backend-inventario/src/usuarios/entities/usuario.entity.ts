@@ -2,7 +2,7 @@ import { Entity, PrimaryGeneratedColumn } from 'typeorm';
 import { CreateDateColumn } from 'typeorm/browser';
 import { Column } from 'typeorm/browser';
 
-@Entity('usuarios')
+@Entity('usuario')
 export class Usuario {
   @PrimaryGeneratedColumn()
   id_usuario: number;
