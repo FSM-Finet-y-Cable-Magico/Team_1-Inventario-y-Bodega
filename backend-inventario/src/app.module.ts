@@ -10,7 +10,7 @@ import { UsuariosModule } from './usuarios/usuarios.module';
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
-      url: '', //colocar la url aca, me dio paja setear el modulo para dejarlo como ConfigModule
+      url: 'postgresql://postgres:DQJbHFggACmJzjytMDGiLPYoWMvQadHN@junction.proxy.rlwy.net:55656/railway', //colocar la url aca, me dio paja setear el modulo para dejarlo como ConfigModule
       synchronize: false,
       autoLoadEntities: true,
       logging: true,
