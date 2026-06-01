@@ -5,12 +5,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { HealthController } from './health/health.controller';
 import { HealthModule } from './health/health.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
-      url: 'postgresql://postgres:DQJbHFggACmJzjytMDGiLPYoWMvQadHN@junction.proxy.rlwy.net:55656/railway', //colocar la url aca, me dio paja setear el modulo para dejarlo como ConfigModule
+      url: process.env.DATABASE_URL,
       synchronize: false,
       autoLoadEntities: true,
       logging: true,
@@ -20,6 +21,7 @@ import { UsuariosModule } from './usuarios/usuarios.module';
     }),
     HealthModule,
     UsuariosModule,
+    AuthModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],

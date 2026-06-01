@@ -51,3 +51,6 @@ pids
 *.pid
 *.seed
 *.pid.lock
+
+# Session / handoff (local only)
+PROGRESS.md
