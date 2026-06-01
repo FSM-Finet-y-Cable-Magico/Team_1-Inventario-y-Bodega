@@ -24,7 +24,11 @@ export class AuthService {
       usuario.password_hash,
     );
     if (!match) throw new UnauthorizedException('Credenciales inválidas');
-
-    return { message: 'Login exitoso' };
+    const payload = {
+      sub: usuario.id_usuario,
+      nombre_usuario: usuario.nombre_usuario,
+    };
+    const access_token = await this.jwtService.signAsync(payload);
+    return { access_token };
   }
 }
