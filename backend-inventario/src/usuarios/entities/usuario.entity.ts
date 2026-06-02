@@ -1,6 +1,8 @@
 import { Entity, PrimaryGeneratedColumn } from 'typeorm';
-import { CreateDateColumn } from 'typeorm/browser';
-import { Column } from 'typeorm/browser';
+import { CreateDateColumn } from 'typeorm';
+import { Column } from 'typeorm';
+import { OneToMany } from 'typeorm';
+import { UsuarioRol } from './usuario-rol.entity';
 
 @Entity('usuario')
 export class Usuario {
@@ -28,11 +30,6 @@ export class Usuario {
   @CreateDateColumn({ type: 'timestamptz', nullable: true })
   fecha_creacion: Date;
 
-  /*
-  relaciones, ver despues. Ojo que estoy viendo que hay relaciones mal hechas, no se si usuario deberia tener el usuario rol para comenzar, pregunto nomas...
-
-  @OneToOne(()=>Empresa)
-  @JoinColumn({name:'id_empresa})
-  empresa:Empresa;
-  */
+  @OneToMany(() => UsuarioRol, (ur) => ur.usuario)
+  usuarioRoles: UsuarioRol[];
 }
