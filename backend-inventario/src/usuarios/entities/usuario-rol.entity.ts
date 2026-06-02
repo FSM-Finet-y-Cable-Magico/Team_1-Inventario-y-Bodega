@@ -18,7 +18,7 @@ export class UsuarioRol {
   id_rol: number;
 
   @CreateDateColumn({ nullable: true })
-  fecha_creacion: Date;
+  fecha_asignacion: Date;
 
   @ManyToOne(() => Usuario)
   @JoinColumn({ name: 'id_usuario' })
