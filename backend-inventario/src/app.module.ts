@@ -10,6 +10,7 @@ import { Module } from '@nestjs/common';
 import { RolesModule } from './roles/roles.module';
 
 import { validate } from './config';
+import { AuditoriaModule } from './auditoria/auditoria.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { validate } from './config';
     UsuariosModule,
     AuthModule,
     RolesModule,
+    AuditoriaModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],
