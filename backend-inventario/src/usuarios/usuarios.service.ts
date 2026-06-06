@@ -21,13 +21,27 @@ export class UsuariosService {
   async findOne(id: number): Promise<Usuario | null> {
     return this.usuarioRepository.findOneBy({ id_usuario: id });
   }
-  async create(createUsuarioDto: CreateUsuarioDto): Promise<Usuario> {
+  async create(
+    createUsuarioDto: CreateUsuarioDto,
+    usuarioAuditorId: number,
+  ): Promise<Usuario> {
     const salt = await bcrypt.genSalt(10);
     const hash = await bcrypt.hash(createUsuarioDto.password, salt);
-    return this.usuarioRepository.save({
+    const nuevoUsuario = await this.usuarioRepository.save({
       ...createUsuarioDto,
       password_hash: hash,
     });
+    if (usuarioAuditorId) {
+      await this.auditoriaService.create({
+        id_usuario: usuarioAuditorId,
+        accion: 'CREAR',
+        entidad_afectada: 'usuario',
+        id_entidad_afectada: nuevoUsuario.id_usuario,
+        valor_anterior: null,
+        valor_nuevo: nuevoUsuario,
+      });
+    }
+    return nuevoUsuario;
   }
   async remove(id: number): Promise<void> {
     await this.usuarioRepository.delete(id);

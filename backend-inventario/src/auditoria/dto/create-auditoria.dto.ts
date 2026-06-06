@@ -5,5 +5,5 @@ export class CreateAuditoriaDto {
   id_entidad_afectada: number;
   valor_anterior: any;
   valor_nuevo: any;
-  ip_origen: string;
+  ip_origen?: string;
 }

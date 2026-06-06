@@ -7,7 +7,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './jwt.strategy';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { AuditoriaService } from 'src/auditoria/auditoria.service';
+import { AuditoriaModule } from 'src/auditoria/auditoria.module';
 
 @Module({
   imports: [
@@ -21,7 +21,7 @@ import { AuditoriaService } from 'src/auditoria/auditoria.service';
       }),
     }),
     PassportModule.register({ defaultStrategy: 'jwt' }),
-    AuditoriaService,
+    AuditoriaModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],

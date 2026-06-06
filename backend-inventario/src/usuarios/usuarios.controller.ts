@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { UsuariosService } from './usuarios.service';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
@@ -23,8 +24,8 @@ export class UsuariosController {
   @Post()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('ADMIN')
-  create(@Body() createUsuarioDto: CreateUsuarioDto) {
-    return this.usuariosService.create(createUsuarioDto);
+  create(@Body() createUsuarioDto: CreateUsuarioDto, @Req() req) {
+    return this.usuariosService.create(createUsuarioDto, req.user.sub);
   }
 
   @Get()
