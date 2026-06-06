@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query } from '@nestjs/common';
 import { AuditoriaService } from './auditoria.service';
 import { CreateAuditoriaDto } from './dto/create-auditoria.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { UseGuards } from '@nestjs/common';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { FiltrarAuditoriaDto } from './dto/filtrar-auditoria.dto';
 
 @Controller('auditoria')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -19,7 +20,7 @@ export class AuditoriaController {
 
   @Get()
   @Roles('ADMIN')
-  findAll() {
-    return this.auditoriaService.findAll();
+  findAll(@Query() filtros: FiltrarAuditoriaDto) {
+    return this.auditoriaService.findAll(filtros);
   }
 }

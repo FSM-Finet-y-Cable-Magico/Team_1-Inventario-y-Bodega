@@ -4,11 +4,13 @@ import { UpdateRoleDto } from './dto/update-role.dto';
 import { Repository } from 'typeorm';
 import { Rol } from './entities/rol.entity';
 import { InjectRepository } from '@nestjs/typeorm';
+import { AuditoriaService } from 'src/auditoria/auditoria.service';
 
 @Injectable()
 export class RolesService {
   constructor(
     @InjectRepository(Rol)
+    @InjectRepository(AuditoriaService)
     private readonly rolRepository: Repository<Rol>,
   ) {}
 

@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { CreateAuditoriaDto } from './dto/create-auditoria.dto';
-import { UpdateAuditoriaDto } from './dto/update-auditoria.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Between } from 'typeorm';
 import { Auditoria } from './entities/auditoria.entity';
+import { FiltrarAuditoriaDto } from './dto/filtrar-auditoria.dto';
 
 @Injectable()
 export class AuditoriaService {
@@ -17,19 +17,19 @@ export class AuditoriaService {
     return await this.auditoriaRepository.save(auditoria);
   }
 
-  findAll() {
-    return `This action returns all auditoria`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} auditoria`;
-  }
-
-  update(id: number, updateAuditoriaDto: UpdateAuditoriaDto) {
-    return `This action updates a #${id} auditoria`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} auditoria`;
+  async findAll(filtros?: FiltrarAuditoriaDto) {
+    const where: any = {};
+    if (filtros?.id_usuario) where.id_usuario = filtros.id_usuario;
+    if (filtros?.accion) where.accion = filtros.accion;
+    if (filtros?.fecha_inicio && filtros?.fecha_fin) {
+      where.fecha_hora = Between(filtros.fecha_inicio, filtros.fecha_fin);
+    }
+    const pagina = filtros?.pagina ?? 1;
+    const limite = filtros?.limite ?? 20;
+    return await this.auditoriaRepository.find({
+      where,
+      skip: (pagina - 1) * limite,
+      take: limite,
+    });
   }
 }

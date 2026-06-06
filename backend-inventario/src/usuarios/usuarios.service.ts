@@ -5,12 +5,14 @@ import { Usuario } from './entities/usuario.entity';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 import * as bcrypt from 'bcrypt';
+import { AuditoriaService } from 'src/auditoria/auditoria.service';
 
 @Injectable()
 export class UsuariosService {
   constructor(
     @InjectRepository(Usuario)
     private readonly usuarioRepository: Repository<Usuario>,
+    private readonly auditoriaService: AuditoriaService,
   ) {}
   async findAll(): Promise<Usuario[]> {
     return this.usuarioRepository.find();

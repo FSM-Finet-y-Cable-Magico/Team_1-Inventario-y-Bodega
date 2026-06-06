@@ -5,11 +5,13 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
+import { AuditoriaService } from 'src/auditoria/auditoria.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(Usuario)
+    @InjectRepository(AuditoriaService)
     private readonly usuarioRepository: Repository<Usuario>,
     private readonly jwtService: JwtService,
   ) {}
