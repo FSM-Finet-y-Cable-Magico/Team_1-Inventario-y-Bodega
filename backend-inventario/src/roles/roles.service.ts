@@ -10,8 +10,8 @@ import { AuditoriaService } from 'src/auditoria/auditoria.service';
 export class RolesService {
   constructor(
     @InjectRepository(Rol)
-    @InjectRepository(AuditoriaService)
     private readonly rolRepository: Repository<Rol>,
+    private readonly auditoriaService: AuditoriaService,
   ) {}
 
   async create(createRoleDto: CreateRoleDto): Promise<Rol> {

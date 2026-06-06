@@ -11,9 +11,9 @@ import { AuditoriaService } from 'src/auditoria/auditoria.service';
 export class AuthService {
   constructor(
     @InjectRepository(Usuario)
-    @InjectRepository(AuditoriaService)
     private readonly usuarioRepository: Repository<Usuario>,
     private readonly jwtService: JwtService,
+    private readonly auditoriaService: AuditoriaService,
   ) {}
 
   async login(loginDto: LoginDto) {
