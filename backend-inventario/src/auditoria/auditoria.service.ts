@@ -1,11 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { CreateAuditoriaDto } from './dto/create-auditoria.dto';
 import { UpdateAuditoriaDto } from './dto/update-auditoria.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Auditoria } from './entities/auditoria.entity';
 
 @Injectable()
 export class AuditoriaService {
-  create(createAuditoriaDto: CreateAuditoriaDto) {
-    return 'This action adds a new auditoria';
+  constructor(
+    @InjectRepository(Auditoria)
+    private auditoriaRepository: Repository<Auditoria>,
+  ) {}
+
+  async create(createAuditoriaDto: CreateAuditoriaDto) {
+    const auditoria = this.auditoriaRepository.create(createAuditoriaDto);
+    return await this.auditoriaRepository.save(auditoria);
   }
 
   findAll() {

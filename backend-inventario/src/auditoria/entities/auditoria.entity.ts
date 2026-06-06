@@ -23,10 +23,10 @@ export class Auditoria {
   id_entidad_afectada: number;
 
   @Column({ type: 'jsonb', nullable: true })
-  valor_anterior: object;
+  valor_anterior: any;
 
   @Column({ type: 'jsonb', nullable: false })
-  valor_nuevo: object;
+  valor_nuevo: any;
 
   @Column({ type: 'inet', nullable: true })
   ip_origen: string;
