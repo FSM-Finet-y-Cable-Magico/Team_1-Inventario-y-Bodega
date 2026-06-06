@@ -1,0 +1,83 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Req,
+  Query,
+} from '@nestjs/common';
+import { BodegasService } from './bodegas.service';
+import { CreateBodegaDto } from './dto/create-bodega.dto';
+import { UpdateBodegaDto } from './dto/update-bodega.dto';
+import { ConfigurarUmbralDto } from './dto/configurar-umbral.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+
+@Controller('bodegas')
+@UseGuards(AuthGuard('jwt'), RolesGuard)
+export class BodegasController {
+  constructor(private readonly bodegasService: BodegasService) {}
+
+  @Post()
+  @Roles('ADMIN', 'SUPERUSUARIO')
+  create(@Body() dto: CreateBodegaDto, @Req() req) {
+    const actorId = req.user.id_usuario ?? req.user.sub;
+    return this.bodegasService.create(dto, actorId);
+  }
+
+  @Patch(':id')
+  @Roles('ADMIN', 'SUPERUSUARIO')
+  update(@Param('id') id: string, @Body() dto: UpdateBodegaDto, @Req() req) {
+    const actorId = req.user.id_usuario ?? req.user.sub;
+    return this.bodegasService.update(+id, dto, actorId);
+  }
+
+  @Delete(':id/desactivar')
+  @Roles('ADMIN', 'SUPERUSUARIO')
+  deactivate(@Param('id') id: string, @Req() req) {
+    const actorId = req.user.id_usuario ?? req.user.sub;
+    return this.bodegasService.deactivate(+id, actorId);
+  }
+
+  @Get()
+  @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
+  findAll(
+    @Query('activo') activa: string,
+    @Query('nombre') nombre: string,
+    @Req() req,
+  ) {
+    const userEmpresaId = req.user.id_empresa ?? 1;
+    const isSuperuser = req.user.roles?.includes('SUPERUSUARIO');
+    const parseActiva =
+      activa === 'true' ? true : activa === 'false' ? false : undefined;
+    return this.bodegasService.findAll(
+      { activa: parseActiva, nombre },
+      userEmpresaId,
+      isSuperuser,
+    );
+  }
+
+  @Get(':id/stock')
+  @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
+  getStock(@Param('id') id: string, @Req() req) {
+    const userEmpresaId = req.user.id_empresa ?? 1;
+    const isSuperuser = req.user.roles?.includes('SUPERUSUARIO');
+    return this.bodegasService.getStock(+id, userEmpresaId, isSuperuser);
+  }
+
+  @Post(':id/umbral')
+  @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
+  configurarUmbral(
+    @Param('id') id: string,
+    @Body() dto: ConfigurarUmbralDto,
+    @Req() req,
+  ) {
+    const actorId = req.user.id_usuario ?? req.user.sub;
+    return this.bodegasService.configurarUmbral(+id, dto, actorId);
+  }
+}

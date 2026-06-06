@@ -11,6 +11,7 @@ import { RolesModule } from './roles/roles.module';
 
 import { validate } from './config';
 import { AuditoriaModule } from './auditoria/auditoria.module';
+import { BodegasModule } from './bodegas/bodegas.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { AuditoriaModule } from './auditoria/auditoria.module';
     AuthModule,
     RolesModule,
     AuditoriaModule,
+    BodegasModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],
