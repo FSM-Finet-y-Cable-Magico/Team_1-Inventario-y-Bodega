@@ -1,7 +1,9 @@
 import { Controller, Post, Get, Patch, Delete, Body, Query, Param, UseGuards, UseInterceptors, UploadedFile, BadRequestException } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { CatalogService } from "./catalog.service";
-import { CompanyIsolationGuard} from "../auth/guards/company-isolation.guard.ts";
+import { CompanyIsolationGuard } from "src/auth/guards/company-isolation.guard";
+import { CurrentUser } from "src/auth/decorators/current-user.decorator";
+import { Usuario } from "src/usuarios/entities/usuario.entity";
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 
@@ -16,8 +18,19 @@ export class CatalogController {
     }
 
     @Get()
-    async buscarCatalogo(@Query() query: any) {
-        return this.catalogService.consultar(query);
+    async buscarCatalogo(@Query() query: any, @CurrentUser() actor: Usuario) {
+        // Pasamos los filtros de la URL junto con el id_empresa real extraído del token JWT del usuario
+        return this.catalogService.consultar({
+        categoria: query.categoria,
+        activo: query.activo,
+        buscar: query.buscar,
+        id_empresa: actor.id_empresa
+        });
+    }
+
+    @Get(':id/ficha-tecnica')
+    async verFichaTecnica(@Param('id') id: string, @CurrentUser() actor: Usuario){
+        return this.catalogService.obtenerFichaPdf(id,actor.id_empresa);
     }
 
     @Patch(':id')
@@ -26,16 +39,17 @@ export class CatalogController {
     }
 
     @Delete(':id')
-    async desactivarTipoEquipo(@Param('id') id: string) {
-        return this.catalogService.desactivarTipo(id);
+    async desactivarTipoEquipo(@Param('id') id: string, @CurrentUser() actor: Usuario) {
+        return this.catalogService.desactivarTipo(id, actor.id_empresa);
     }
 
-    @Post(':id/adjuntar-pdf')
+    @Post(':id/ficha-tecnica')
     @UseInterceptors(
         FileInterceptor('file', {
             storage: diskStorage({
                 destination: './uploads/fichas_tecnicas',
                 filename: (req, file, cb) => {
+                    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
                     cb(null, `${req.params.id}${extname(file.originalname)}`);
                 },
             }),
@@ -49,8 +63,11 @@ export class CatalogController {
         }),
     )
 
-    async subirFichaPdf(@Param('id') id: string, @UploadedFile() file: Express.Multer.File) {
-        if (!file) throw new BadRequestException('Archivo PDF no recibido.');
-        return this.catalogService.adjuntarPdfPath(id, file.path);
+    async subirFichaPdf(@Param('id') id: string, @UploadedFile() file: any) {
+        if (!file) {
+            throw new BadRequestException('Archivo PDF no recibido.')
+        }
+        const urlArchivo = file.path;
+        return this.catalogService.adjuntarPdfPath(id, urlArchivo);
     }
 }
