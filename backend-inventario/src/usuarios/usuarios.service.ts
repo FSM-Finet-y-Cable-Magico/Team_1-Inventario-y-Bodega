@@ -49,12 +49,24 @@ export class UsuariosService {
   async update(
     id: number,
     updateUsuarioDto: UpdateUsuarioDto,
+    usuarioAuditorId: number,
   ): Promise<Usuario> {
     const usuario = await this.findOne(id);
     if (!usuario) throw new Error('Usuario no encontrado');
-    return this.usuarioRepository.save({
+    const usuarioActualizado = await this.usuarioRepository.save({
       ...usuario,
       ...updateUsuarioDto,
     });
+    if (usuarioAuditorId) {
+      await this.auditoriaService.create({
+        id_usuario: usuarioAuditorId,
+        accion: 'ACTUALIZAR',
+        entidad_afectada: 'usuario',
+        id_entidad_afectada: id,
+        valor_anterior: usuario,
+        valor_nuevo: usuarioActualizado,
+      });
+    }
+    return usuarioActualizado;
   }
 }

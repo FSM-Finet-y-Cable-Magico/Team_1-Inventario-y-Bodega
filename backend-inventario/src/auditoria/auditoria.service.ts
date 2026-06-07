@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CreateAuditoriaDto } from './dto/create-auditoria.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between } from 'typeorm';
+import { Repository, Between, FindOptionsWhere } from 'typeorm';
 import { Auditoria } from './entities/auditoria.entity';
 import { FiltrarAuditoriaDto } from './dto/filtrar-auditoria.dto';
 
@@ -18,7 +18,7 @@ export class AuditoriaService {
   }
 
   async findAll(filtros?: FiltrarAuditoriaDto) {
-    const where: any = {};
+    const where: FindOptionsWhere<Auditoria> = {};
     if (filtros?.id_usuario) where.id_usuario = filtros.id_usuario;
     if (filtros?.accion) where.accion = filtros.accion;
     if (filtros?.fecha_inicio && filtros?.fecha_fin) {

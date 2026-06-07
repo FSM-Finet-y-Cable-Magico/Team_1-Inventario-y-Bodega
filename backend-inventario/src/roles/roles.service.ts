@@ -11,7 +11,7 @@ export class RolesService {
   constructor(
     @InjectRepository(Rol)
     private readonly rolRepository: Repository<Rol>,
-    private readonly auditoriaService: AuditoriaService,
+    private readonly auditoriaService: AuditoriaService, //??
   ) {}
 
   async create(createRoleDto: CreateRoleDto): Promise<Rol> {
