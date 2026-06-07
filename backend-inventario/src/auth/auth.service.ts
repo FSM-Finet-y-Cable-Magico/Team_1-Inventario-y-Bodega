@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
+import { AuditoriaService } from 'src/auditoria/auditoria.service';
 
 @Injectable()
 export class AuthService {
@@ -12,11 +13,19 @@ export class AuthService {
     @InjectRepository(Usuario)
     private readonly usuarioRepository: Repository<Usuario>,
     private readonly jwtService: JwtService,
+    private readonly auditoriaService: AuditoriaService,
   ) {}
 
   async login(loginDto: LoginDto) {
-    const usuario = await this.usuarioRepository.findOneBy({
-      nombre_usuario: loginDto.nombre_usuario,
+    const usuario = await this.usuarioRepository.findOne({
+      where: {
+        nombre_usuario: loginDto.nombre_usuario,
+      },
+      relations: {
+        usuarioRoles: {
+          rol: true,
+        },
+      },
     });
     if (!usuario) throw new UnauthorizedException('Credenciales inválidas');
     const match = await bcrypt.compare(
@@ -27,6 +36,7 @@ export class AuthService {
     const payload = {
       sub: usuario.id_usuario,
       nombre_usuario: usuario.nombre_usuario,
+      roles: usuario.usuarioRoles?.map((ur) => ur.rol.nombre_rol) ?? [],
     };
     const access_token = await this.jwtService.signAsync(payload);
     return { access_token };

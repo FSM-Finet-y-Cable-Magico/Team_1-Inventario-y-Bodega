@@ -2,3 +2,5 @@ allowBuilds:
   '@nestjs/core': true
   bcrypt: true
   unrs-resolver: true
+
+minimumReleaseAge: 1440 # 24 hours
