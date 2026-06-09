@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Req,
+  Query,
 } from '@nestjs/common';
 import { UsuariosService } from './usuarios.service';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
@@ -22,40 +23,43 @@ export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}
 
   @Post()
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'SUPERUSUARIO')
   create(@Body() createUsuarioDto: CreateUsuarioDto, @Req() req) {
-    return this.usuariosService.create(createUsuarioDto, req.user.sub);
+    return this.usuariosService.create(createUsuarioDto, req.user.sub, req.user.roles ?? []);
   }
 
+  // CU-05: filtros por activo y buscar (nombre)
   @Get()
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('ADMIN')
-  findAll() {
-    return this.usuariosService.findAll();
+  @Roles('ADMIN', 'SUPERUSUARIO')
+  findAll(
+    @Query('activo') activo: string,
+    @Query('buscar') buscar: string,
+    @Req() req,
+  ) {
+    const filtros: { activo?: boolean; buscar?: string } = {};
+    if (activo !== undefined) filtros.activo = activo === 'true';
+    if (buscar) filtros.buscar = buscar;
+    return this.usuariosService.findAll(filtros, req.user.id_empresa);
   }
 
   @Get(':id')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'SUPERUSUARIO')
   findOne(@Param('id') id: string) {
     return this.usuariosService.findOne(+id);
   }
 
   @Patch(':id')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'SUPERUSUARIO')
   update(
     @Param('id') id: string,
     @Body() updateUsuarioDto: UpdateUsuarioDto,
     @Req() req,
   ) {
-    return this.usuariosService.update(+id, updateUsuarioDto, req.user.sub);
+    return this.usuariosService.update(+id, updateUsuarioDto, req.user.sub, req.user.roles ?? []);
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'SUPERUSUARIO')
   remove(@Param('id') id: string, @Req() req) {
     return this.usuariosService.remove(+id, req.user.sub);
   }

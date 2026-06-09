@@ -100,34 +100,44 @@ export class UnitsService {
         }
 
         if (nuevoEstado === 'En revisión') {
-            // EXCEPCIÓN 1: Bloqueo de payload vacío
+            // CU-40 Excepción 1: diagnóstico técnico obligatorio al ingresar a revisión
             if (!diagnosticoPayload || diagnosticoPayload.trim() === '') {
                 throw new BadRequestException(
-                'Regla de Control (CU-40): Es estrictamente obligatorio ingresar un diagnóstico técnico descriptivo ' +
-                'cuando un equipo ingresa al estado de [En revisión].'
+                    'Debe seleccionar un diagnóstico técnico para enviar el equipo a revisión.',
                 );
             }
 
-
-            const diagnosticosMaestrosPermitidos = [
+            const DIAGNOSTICOS_PERMITIDOS = [
                 'No enciende',
+                'Se reinicia continuamente',
                 'Sin señal óptica',
+                'Copla o puerto dañado',
+                'Falla de configuración',
                 'Daño físico visible',
-                'Fallo de firmware',
-                'Puerto Ethernet dañado',
-                'Pérdida de potencia'
+                'Causa desconocida',
+                'Otro',
             ];
 
             const diagnosticoNormalizado = diagnosticoPayload.trim();
 
-            if (!diagnosticosMaestrosPermitidos.includes(diagnosticoNormalizado)) {
+            if (!DIAGNOSTICOS_PERMITIDOS.includes(diagnosticoNormalizado)) {
                 throw new BadRequestException(
-                `Error de Validación (CU-40): El diagnóstico [${diagnosticoNormalizado}] no está permitido. ` +
-                `Debe seleccionar una de las siguientes opciones estandarizadas: ${diagnosticosMaestrosPermitidos.join(', ')}.`
+                    `El diagnóstico seleccionado no es válido. Opciones permitidas: ${DIAGNOSTICOS_PERMITIDOS.join(', ')}.`,
                 );
             }
 
-            unidad.diagnosticoTecnico = diagnosticoNormalizado;
+            // CU-40 Excepción 1: si selecciona "Otro" debe incluir descripción en motivoPayload
+            if (diagnosticoNormalizado === 'Otro') {
+                const descripcion = motivoPayload?.trim() ?? '';
+                if (descripcion.length < 5 || descripcion.length > 200) {
+                    throw new BadRequestException(
+                        'Debe ingresar una descripción cuando selecciona Otro (entre 5 y 200 caracteres).',
+                    );
+                }
+                unidad.diagnosticoTecnico = `Otro: ${descripcion}`;
+            } else {
+                unidad.diagnosticoTecnico = diagnosticoNormalizado;
+            }
         }
 
         if (estadoOrigen === 'En bodega' && nuevoEstado !== 'En bodega') {
