@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, ConflictException, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository, DataSource, Not } from "typeorm";
+import { Repository, DataSource } from "typeorm";
 import { UnidadEquipo } from "./entities/unidad-equipo.entity";
 import { CatalogService } from "./catalog.service";
 import { HistorialEstado } from "./entities/historial-estado.entity";
@@ -16,7 +16,7 @@ export class UnitsService {
         private readonly dataSource: DataSource,
     ) {}
 
-    async registrarUnidad(dto: { id_tipo_equipo: number; numero_serie: string; modelo?: string; id_bodega_actual: number; fecha_adquisicion?: string }, idEmpresaContexto: number) {
+    async registrarUnidad(dto: { id_tipo_equipo: number; numero_serie: string; modelo?: string; id_bodega_actual: number; fecha_adquisicion?: string; fecha_venc_garantia?: string }, idEmpresaContexto: number) {
 
         if (!dto.id_tipo_equipo || !dto.numero_serie || !dto.id_bodega_actual) {
             throw new BadRequestException('El tipo de equipo, el número de serie y la bodega de destino son campos obligatorios.');
@@ -46,14 +46,18 @@ export class UnitsService {
             );
         }
 
+        const fechaAdq = dto.fecha_adquisicion ? new Date(dto.fecha_adquisicion) : new Date();
+        const fechaVencGarantia = dto.fecha_venc_garantia ? new Date(dto.fecha_venc_garantia) : null;
+
         const datosNuevaUnidad: Partial<UnidadEquipo> = {
             id_tipo_equipo: dto.id_tipo_equipo,
             id_empresa: idEmpresaContexto,
             serialNumber: serieNormalizada,
-            modelo: dto.modelo ? dto.modelo.trim() : undefined, // Corregido null por undefined
+            modelo: dto.modelo ? dto.modelo.trim() : undefined,
             estado: 'En bodega',
             id_bodega_actual: dto.id_bodega_actual,
-            fechaAdquisicion: dto.fecha_adquisicion ? new Date(dto.fecha_adquisicion) : new Date()
+            fechaAdquisicion: fechaAdq,
+            fechaVencGarantia: fechaVencGarantia,
         };
 
         const nuevaUnidad = this.unitRepository.create(datosNuevaUnidad);
@@ -199,7 +203,7 @@ export class UnitsService {
         fechaVencimiento.setHours(0, 0, 0, 0);
 
         const diferenciaMilisegundos = fechaVencimiento.getTime() - hoy.getTime();
-        const diasCalculados = Math.ceil(diferenciaMilisegundos / (1024 * 60 * 60 * 24));
+        const diasCalculados = Math.ceil(diferenciaMilisegundos / (1000 * 60 * 60 * 24));
 
         if (diasCalculados >= 0) {
             alertaGarantia = {
@@ -234,6 +238,37 @@ export class UnitsService {
                 categoria_inventario: unidad.tipoEquipo.categoria,
                 ficha_tecnica_pdf_url: unidad.tipoEquipo.fichaTecnicaPdfUrl ?? 'No disponible'
             }
+        };
+    }
+
+    async editarDatos(
+        idUnidad: number,
+        dto: { observaciones?: string; id_bodega_actual?: number; numero_poste?: string; modelo?: string },
+        actor: any
+    ) {
+        if (!idUnidad || isNaN(idUnidad)) {
+            throw new BadRequestException('El ID de la unidad es inválido.');
+        }
+
+        const unidad = await this.unitRepository.findOne({
+            where: { id_unidad: idUnidad, id_empresa: actor.id_empresa },
+        });
+
+        if (!unidad) {
+            throw new NotFoundException(`No se encontró la unidad con ID [${idUnidad}] en su empresa.`);
+        }
+
+        if (dto.observaciones !== undefined) unidad.diagnosticoTecnico = dto.observaciones;
+        if (dto.id_bodega_actual !== undefined) unidad.id_bodega_actual = dto.id_bodega_actual;
+        if (dto.numero_poste !== undefined) unidad.numeroPoste = dto.numero_poste;
+        if (dto.modelo !== undefined) unidad.modelo = dto.modelo;
+
+        await this.unitRepository.save(unidad);
+
+        return {
+            success: true,
+            id_unidad: unidad.id_unidad,
+            message: 'Los datos de la unidad fueron actualizados correctamente.'
         };
     }
 
