@@ -56,7 +56,7 @@ export class UsuariosController {
   @Delete(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('ADMIN')
-  remove(@Param('id') id: string) {
-    return this.usuariosService.remove(+id);
+  remove(@Param('id') id: string, @Req() req) {
+    return this.usuariosService.remove(+id, req.user.sub);
   }
 }
