@@ -11,6 +11,11 @@ import { LoginDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
 import { AuditoriaService } from 'src/auditoria/auditoria.service';
 
+const MAX_INTENTOS = 5;
+const MINUTOS_BLOQUEO = 15;
+const MSG_GENERICO = 'Usuario o contraseña incorrectos.';
+const MSG_BLOQUEADO = 'Cuenta bloqueada temporalmente. Intente nuevamente en 15 minutos.';
+
 @Injectable()
 export class AuthService {
   private readonly tokenBlacklist = new Set<string>();
@@ -27,13 +32,42 @@ export class AuthService {
       where: { nombre_usuario: loginDto.nombre_usuario },
       relations: { usuarioRoles: { rol: true } },
     });
-    if (!usuario) throw new UnauthorizedException('Credenciales inválidas');
+
+    // CU-01 Excepción 1 y 2: mensaje genérico sin revelar cuál campo falló
+    if (!usuario) throw new UnauthorizedException(MSG_GENERICO);
+
+    // CU-01 Excepción 3: cuenta bloqueada por intentos fallidos
+    if (usuario.bloqueado_hasta && usuario.bloqueado_hasta > new Date()) {
+      throw new UnauthorizedException(MSG_BLOQUEADO);
+    }
 
     if (!usuario.activo)
       throw new UnauthorizedException('Cuenta desactivada. Contacte al administrador.');
 
     const match = await bcrypt.compare(loginDto.password, usuario.password_hash);
-    if (!match) throw new UnauthorizedException('Credenciales inválidas');
+
+    if (!match) {
+      const nuevosIntentos = (usuario.intentos_fallidos ?? 0) + 1;
+      const actualizacion: Partial<Usuario> = { intentos_fallidos: nuevosIntentos };
+
+      if (nuevosIntentos >= MAX_INTENTOS) {
+        const bloqueadoHasta = new Date();
+        bloqueadoHasta.setMinutes(bloqueadoHasta.getMinutes() + MINUTOS_BLOQUEO);
+        actualizacion.bloqueado_hasta = bloqueadoHasta;
+        actualizacion.intentos_fallidos = 0;
+        await this.usuarioRepository.update(usuario.id_usuario, actualizacion);
+        throw new UnauthorizedException(MSG_BLOQUEADO);
+      }
+
+      await this.usuarioRepository.update(usuario.id_usuario, actualizacion);
+      throw new UnauthorizedException(MSG_GENERICO);
+    }
+
+    // Login exitoso: resetear contador
+    await this.usuarioRepository.update(usuario.id_usuario, {
+      intentos_fallidos: 0,
+      bloqueado_hasta: null,
+    });
 
     const payload = {
       sub: usuario.id_usuario,
@@ -76,19 +110,27 @@ export class AuthService {
     const usuario = await this.usuarioRepository.findOne({
       where: { id_usuario: targetId },
     });
-    if (!usuario) throw new NotFoundException('Usuario no encontrado.');
-    if (!usuario.activo) throw new UnauthorizedException('El usuario está desactivado.');
 
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$';
+    // CU-10 Excepción 1: usuario inactivo o inexistente → mensaje unificado
+    if (!usuario || !usuario.activo) {
+      throw new NotFoundException(
+        'No es posible restablecer la contraseña de un usuario inactivo o inexistente.',
+      );
+    }
+
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let passwordTemporal = '';
     for (let i = 0; i < 10; i++) {
       passwordTemporal += chars.charAt(Math.floor(Math.random() * chars.length));
     }
 
-    const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(12);
     const hash = await bcrypt.hash(passwordTemporal, salt);
 
-    await this.usuarioRepository.update(targetId, { password_hash: hash });
+    await this.usuarioRepository.update(targetId, {
+      password_hash: hash,
+      debe_cambiar_password: true,
+    });
 
     await this.auditoriaService.create({
       id_usuario: actorId,

@@ -119,6 +119,19 @@ export class TransferenciasService {
             throw new NotFoundException(`No existe una transferencia pendiente con ID [${idTransferencia}].`);
         }
 
+        // CU-21 Excepción 1: verificar que ninguna unidad cambió de estado desde que se registró la solicitud
+        const idsUnidades = movimientos.map((m) => m.id_unidad);
+        const unidades = await this.unidadRepository.findBy({ id_unidad: In(idsUnidades) });
+
+        const unidadesInvalidas = unidades.filter((u) => u.estado !== 'En bodega');
+        if (unidadesInvalidas.length > 0) {
+            const seriales = unidadesInvalidas.map((u) => `${u.serialNumber} (${u.estado})`).join(', ');
+            throw new BadRequestException(
+                `Las siguientes unidades cambiaron de estado desde que se registró la solicitud y no pueden transferirse: ${seriales}. ` +
+                `Corríjalas o elimínelas del listado antes de aprobar.`,
+            );
+        }
+
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
         await queryRunner.startTransaction();
@@ -162,6 +175,20 @@ export class TransferenciasService {
     }
 
     async rechazarTransferencia(idTransferencia: number, observaciones: string, actor: any): Promise<any> {
+        // CU-22 Excepción 1: motivo de rechazo obligatorio
+        if (!observaciones || observaciones.trim() === '') {
+            throw new BadRequestException(
+                'Debe ingresar un motivo de rechazo para continuar.',
+            );
+        }
+
+        // CU-22 Excepción 2: motivo no puede superar 200 caracteres
+        if (observaciones.trim().length > 200) {
+            throw new BadRequestException(
+                'El motivo de rechazo no puede superar los 200 caracteres.',
+            );
+        }
+
         const movimientos = await this.movimientoRepository.find({
             where: { referencia_id: idTransferencia, tipo_movimiento: ESTADO_PENDIENTE },
         });

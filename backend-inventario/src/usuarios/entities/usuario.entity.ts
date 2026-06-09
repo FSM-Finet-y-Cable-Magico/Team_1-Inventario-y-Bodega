@@ -27,6 +27,15 @@ export class Usuario {
   @Column({ nullable: true, default: true }) //los default no los vi documentados, asumo que sera asi
   activo: boolean;
 
+  @Column({ type: 'int', default: 0, nullable: false })
+  intentos_fallidos: number;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  bloqueado_hasta: Date | null;
+
+  @Column({ type: 'boolean', default: false, nullable: false })
+  debe_cambiar_password: boolean;
+
   @CreateDateColumn({ type: 'timestamptz', nullable: true })
   fecha_creacion: Date;
 
