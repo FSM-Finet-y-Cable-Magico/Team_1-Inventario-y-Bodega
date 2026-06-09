@@ -43,8 +43,20 @@ export class UsuariosService {
     }
     return nuevoUsuario;
   }
-  async remove(id: number): Promise<void> {
-    await this.usuarioRepository.delete(id);
+  async remove(id: number, usuarioAuditorId?: number): Promise<void> {
+    const usuario = await this.findOne(id);
+    if (!usuario) throw new Error('Usuario no encontrado');
+    await this.usuarioRepository.update(id, { activo: false });
+    if (usuarioAuditorId) {
+      await this.auditoriaService.create({
+        id_usuario: usuarioAuditorId,
+        accion: 'DESACTIVAR',
+        entidad_afectada: 'usuario',
+        id_entidad_afectada: id,
+        valor_anterior: { activo: true },
+        valor_nuevo: { activo: false },
+      });
+    }
   }
   async update(
     id: number,

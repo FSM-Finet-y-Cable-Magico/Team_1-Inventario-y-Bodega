@@ -8,10 +8,12 @@ import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Module } from '@nestjs/common';
 import { RolesModule } from './roles/roles.module';
-
 import { validate } from './config';
 import { AuditoriaModule } from './auditoria/auditoria.module';
 import { BodegasModule } from './bodegas/bodegas.module';
+import { InventarioModule } from './inventario/inventario.module';
+import { TransferenciasModule } from './transferencias/transferencias.module';
+import { CompaniesModule } from './companies/companies.module';
 
 @Module({
   imports: [
@@ -39,6 +41,9 @@ import { BodegasModule } from './bodegas/bodegas.module';
     RolesModule,
     AuditoriaModule,
     BodegasModule,
+    InventarioModule,
+    TransferenciasModule,
+    CompaniesModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],

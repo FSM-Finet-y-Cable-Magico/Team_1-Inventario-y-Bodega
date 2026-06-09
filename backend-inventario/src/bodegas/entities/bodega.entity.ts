@@ -1,11 +1,4 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
-import { Usuario } from '../../usuarios/entities/usuario.entity';
+import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
 @Entity('bodega')
 export class Bodega {
@@ -23,11 +16,4 @@ export class Bodega {
 
   @Column({ default: true })
   activa: boolean;
-
-  @Column({ nullable: false })
-  id_responsable: number;
-
-  @ManyToOne(() => Usuario)
-  @JoinColumn({ name: 'id_responsable' })
-  responsable: Usuario;
 }

@@ -6,7 +6,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { Bodega } from './bodega.entity';
-import { TipoEquipo } from '../../equipos/entities/tipo-equipo.entity';
+import { TipoEquipo } from '../../inventario/entities/tipo-equipo.entity';
 
 @Entity('stock_consumible')
 export class StockConsumible {

@@ -6,6 +6,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 interface JwtPayload {
   sub: number;
   nombre_usuario: string;
+  id_empresa: number;
   roles: string[];
 }
 
@@ -22,6 +23,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     return {
       id_usuario: payload.sub,
       nombre_usuario: payload.nombre_usuario,
+      id_empresa: payload.id_empresa,
       roles: payload.roles,
     };
   }
