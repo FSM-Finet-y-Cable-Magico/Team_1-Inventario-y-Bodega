@@ -5,12 +5,22 @@ import { CompanyIsolationGuard } from "src/auth/guards/company-isolation.guard";
 import { RolesGuard } from "src/auth/guards/roles.guard";
 import { Roles } from "src/auth/decorators/roles.decorator";
 import { CurrentUser } from "src/auth/decorators/current-user.decorator";
-import { Usuario } from '../usuarios/entities/usuario.entity';
+import { EditarDatosUnidadDto } from "./dto/editar-datos-unidad.dto";
 
 @Controller('unidades')
 @UseGuards(AuthGuard('jwt'), CompanyIsolationGuard, RolesGuard)
 export class UnitsController {
     constructor(private readonly unitsService: UnitsService) {}
+
+    @Get()
+    @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
+    async listarUnidades(
+        @Query('estado') estado: string,
+        @Query('buscar') buscar: string,
+        @CurrentUser() actor: any,
+    ) {
+        return this.unitsService.listarUnidades({ estado, buscar }, actor.id_empresa);
+    }
 
     @Post()
     @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
@@ -52,7 +62,7 @@ export class UnitsController {
     @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
     async editarDatosUnidad(
         @Param('id') id: string,
-        @Body() body: { observaciones?: string; id_bodega_actual?: number; numero_poste?: string; modelo?: string },
+        @Body() body: EditarDatosUnidadDto,
         @CurrentUser() actor: any
     ) {
         return this.unitsService.editarDatos(parseInt(id), body, actor);

@@ -1,0 +1,23 @@
+# Dependencias
+node_modules/
+
+# Salida generada por SvelteKit/Vite (cache, no se versiona)
+.svelte-kit/
+build/
+dist/
+.output/
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# Variables de entorno
+.env
+.env.*
+!.env.example
+
+# pnpm (el repo usa npm con package-lock.json)
+pnpm-lock.yaml
+pnpm-workspace.yaml
+
+# Logs y OS
+*.log
+.DS_Store

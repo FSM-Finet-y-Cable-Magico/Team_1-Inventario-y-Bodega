@@ -1,0 +1,45 @@
+@startuml CU02-normal
+title CU-02 — Verificar permisos del rol al acceder a una funcionalidad (flujo normal)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 70
+skinparam ActorPadding 30
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_Usuarios" as view
+participant "C_RolesGuard" as guard
+participant "C_UsuariosController" as ctrl
+
+user -> view : Solicita lista de usuarios
+activate view
+
+view -> guard : GET /usuario\n(JWT con roles en req.user)
+activate guard
+
+guard -> guard : reflector.get('roles',\ngetHandler())\n→ ['ADMIN','SUPERUSUARIO']
+activate guard
+deactivate guard
+
+guard -> guard : roles.some(role =>\nuser.roles?.includes(role))\n→ true
+activate guard
+deactivate guard
+
+guard --> ctrl : canActivate() = true\n(acceso autorizado)
+deactivate guard
+activate ctrl
+
+ctrl --> view : 200 OK\n[Lista de usuarios]
+deactivate ctrl
+
+view --> user : Muestra lista de usuarios
+deactivate view
+
+@enduml

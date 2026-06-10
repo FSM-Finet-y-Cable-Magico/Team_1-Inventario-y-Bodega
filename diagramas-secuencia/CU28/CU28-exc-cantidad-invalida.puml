@@ -1,0 +1,23 @@
+@startuml CU28-exc-cantidad-invalida
+title CU-28 — Validar número de serie de equipo (excepción: cantidad inválida)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+participant "C_UnitsService" as units
+participant "C_CatalogService" as catalog
+
+units -> catalog : validarFormatoSerialNumber(numero_serie)
+activate catalog
+
+catalog --> units : throw BadRequestException\n('La cantidad ingresada debe ser mayor a cero.')
+deactivate catalog
+
+@enduml

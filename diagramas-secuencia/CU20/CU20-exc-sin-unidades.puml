@@ -1,0 +1,53 @@
+@startuml CU20-exc-sin-unidades
+title CU-20 — Registrando solicitud de transferencia inter-empresa\n(excepción: listado de unidades vacío)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 70
+skinparam ActorPadding 30
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_Transferencias" as view
+participant "C_TransferenciasController" as ctrl
+participant "C_TransferenciasService" as svc
+participant "C_AuditoriaService" as aud
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as uent
+participant "transferencia_equipo" as tent
+participant "movimiento_inventario" as ment
+participant "log_auditoria" as aent
+
+user -> view : Completa formulario sin\nagregar unidades al listado\n(ids_unidades vacío)
+activate view
+
+view -> ctrl : POST /transferencias\n{ CreateTransferenciaDto }
+activate ctrl
+
+ctrl -> svc : registrarTransferencia(dto, req.user)
+activate svc
+
+svc -> svc : Verifica empresa origen\n!= empresa destino: OK
+activate svc
+deactivate svc
+
+svc -> svc : Verifica ids_unidades no vacío:\n!dto.ids_unidades ||\ndto.ids_unidades.length === 0
+activate svc
+deactivate svc
+
+svc --> ctrl : throw BadRequestException\n('Debe especificar al menos\nuna unidad para transferir.')
+deactivate svc
+
+ctrl --> view : 400 Bad Request
+deactivate ctrl
+
+view --> user : Muestra error:\n"Debe especificar al menos\nuna unidad para transferir."
+deactivate view
+
+@enduml

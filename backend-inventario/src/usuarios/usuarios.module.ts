@@ -4,10 +4,11 @@ import { UsuariosController } from './usuarios.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Usuario } from './entities/usuario.entity';
 import { UsuarioRol } from './entities/usuario-rol.entity';
+import { Rol } from '../roles/entities/rol.entity';
 import { AuditoriaModule } from 'src/auditoria/auditoria.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Usuario, UsuarioRol]), AuditoriaModule],
+  imports: [TypeOrmModule.forFeature([Usuario, UsuarioRol, Rol]), AuditoriaModule],
   controllers: [UsuariosController],
   providers: [UsuariosService],
 })

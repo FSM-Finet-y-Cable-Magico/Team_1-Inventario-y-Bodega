@@ -1,0 +1,90 @@
+@startuml CU19-normal
+title CU-19 — Desactivar tipo de equipo con aislamiento de empresa (flujo normal)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 70
+skinparam ActorPadding 30
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_Catalogo" as view
+participant "C_RolesGuard" as guard
+participant "C_CatalogController" as ctrl
+participant "C_CatalogService" as svc
+participant "C_TypeORM" as orm
+participant "tipo_equipo" as tent
+participant "unidad_equipo" as uent
+
+user -> view : Solicita desactivar\ntipo de equipo (id)
+activate view
+
+view -> guard : DELETE /catalogo/:id\n[JWT, id_empresa]
+activate guard
+
+guard --> view : Autorizado\n(ADMIN / SUPERUSUARIO)
+deactivate guard
+
+view -> ctrl : DELETE /catalogo/:id
+activate ctrl
+
+ctrl -> svc : desactivarTipo(id, actor.id_empresa)
+activate svc
+
+svc -> svc : parseInt(id) — valida\nque sea número
+activate svc
+deactivate svc
+
+svc -> orm : findOne({ id_tipo_equipo: idNum,\nid_empresa: idEmpresaContexto })
+activate orm
+
+orm -> tent : SELECT tipo_equipo\nWHERE id_tipo_equipo = idNum\nAND id_empresa = idEmpresaContexto
+activate tent
+tent --> orm : Registro encontrado (tipo)
+deactivate tent
+
+orm --> svc : tipo (existe y pertenece\na la empresa)
+deactivate orm
+
+svc -> orm : count({ id_tipo_equipo: idNum })
+activate orm
+
+orm -> uent : SELECT COUNT(*)\nFROM unidad_equipo\nWHERE id_tipo_equipo = idNum
+activate uent
+uent --> orm : totalUnidades (> 0)
+deactivate uent
+
+orm --> svc : totalUnidades
+deactivate orm
+
+svc -> svc : totalUnidades > 0\n→ desactivación LÓGICA\ntipo.activo = false
+activate svc
+deactivate svc
+
+svc -> orm : save(tipo)
+activate orm
+
+orm -> tent : UPDATE tipo_equipo\nSET activo = false\nWHERE id_tipo_equipo = idNum
+activate tent
+tent --> orm : Actualizado
+deactivate tent
+
+orm --> svc : tipo actualizado
+deactivate orm
+
+svc --> ctrl : { success: true,\ntipoDesactivacion: 'LÓGICA',\nmessage: '...' }
+deactivate svc
+
+ctrl --> view : 200 OK\n{ success, tipoDesactivacion,\nmessage }
+deactivate ctrl
+
+view --> user : Tipo de equipo desactivado\ncorrectamente
+deactivate view
+
+@enduml

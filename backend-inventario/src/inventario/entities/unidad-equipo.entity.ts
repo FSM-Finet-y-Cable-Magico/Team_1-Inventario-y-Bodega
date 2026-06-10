@@ -43,6 +43,9 @@ export class UnidadEquipo {
     @Column({ type: 'integer', name: 'id_caja_nap', nullable: true })
     id_caja_nap?: number;
 
+    @Column({ type: 'varchar', length: 17, name: 'mac_address', nullable: true, unique: true })
+    macAddress?: string | null;
+
     // Relaciones tipadas de TypeORM mapeadas a tus llaves foráneas reales
     @ManyToOne(() => TipoEquipo, (tipo) => tipo.unidades, { eager: true })
     @JoinColumn({ name: 'id_tipo_equipo' })

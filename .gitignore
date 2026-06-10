@@ -1,0 +1,9 @@
+# Dependencias
+node_modules/
+
+# Comprimidos de trabajo (no subir)
+diagramas-secuencia.zip
+*.zip
+
+# OS
+.DS_Store

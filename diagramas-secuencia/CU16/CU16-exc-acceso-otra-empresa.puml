@@ -1,0 +1,48 @@
+@startuml CU16-exc-acceso-otra-empresa
+title CU-16 — Consultando datos aislados por empresa\n(excepción: intento de acceso a datos de otra empresa)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 70
+skinparam ActorPadding 30
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_Catalogo" as view
+participant "C_CompanyIsolationGuard" as guard
+participant "C_CatalogController" as ctrl
+participant "C_CatalogService" as svc
+participant "C_TypeORM" as orm
+participant "tipo_equipo" as tent
+
+user -> view : Intenta acceder a datos\nde otra empresa (manipulación\ndel token o del contexto)
+activate view
+
+view -> guard : GET /catalogo\n(JWT manipulado o sin id_empresa)
+activate guard
+
+guard -> guard : canActivate():\nextraer user = request.user
+activate guard
+deactivate guard
+
+guard -> guard : Verificar user.id_empresa:\nnull o undefined detectado
+activate guard
+deactivate guard
+
+guard --> ctrl : throw ForbiddenException\n('Su cuenta no tiene una empresa\nasignada. Contacte al administrador.')
+activate ctrl
+deactivate ctrl
+
+guard --> view : 403 Forbidden
+deactivate guard
+
+view --> user : Muestra error de acceso\nno autorizado (no revela si\nel recurso existe en otra empresa)
+deactivate view
+
+@enduml

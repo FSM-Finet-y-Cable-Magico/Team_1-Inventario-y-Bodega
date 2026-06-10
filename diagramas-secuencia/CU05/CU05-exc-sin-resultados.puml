@@ -1,0 +1,58 @@
+@startuml CU05-exc-sin-resultados
+title CU-05 — Consultando listado de usuarios (excepción: sin resultados)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 70
+skinparam ActorPadding 30
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_ListaUsuarios" as view
+participant "C_RolesGuard" as guard
+participant "C_UsuariosController" as ctrl
+participant "C_UsuariosService" as svc
+participant "C_TypeORM" as orm
+participant "usuario" as ent
+
+user -> view : Consulta listado de usuarios\n(con filtros que no\ncoinciden con ningún registro)
+activate view
+
+view -> ctrl : GET /usuario\n?activo=&buscar=
+activate ctrl
+
+ctrl -> guard : Verifica JWT y roles\n(ADMIN | SUPERUSUARIO)
+activate guard
+guard --> ctrl : Acceso permitido
+deactivate guard
+
+ctrl -> svc : findAll(filtros, id_empresa)
+activate svc
+
+svc -> orm : find({ where: { id_empresa,\nactivo?, nombre_completo ILike? } })
+activate orm
+
+orm -> ent : SELECT usuario\nWHERE id_empresa\n[AND activo]\n[AND nombre_completo ILIKE]
+activate ent
+ent --> orm : (sin resultados)
+deactivate ent
+
+orm --> svc : []
+deactivate orm
+
+svc --> ctrl : throw NotFoundException\n('No se encontraron usuarios\ncon los filtros seleccionados.')
+deactivate svc
+
+ctrl --> view : 404 Not Found
+deactivate ctrl
+
+view --> user : Muestra "No se encontraron usuarios\ncon los filtros seleccionados."
+deactivate view
+
+@enduml

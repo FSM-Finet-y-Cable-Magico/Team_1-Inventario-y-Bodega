@@ -47,19 +47,29 @@ export class BodegasController {
   @Get()
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
   findAll(
-    @Query('activo') activa: string,
+    @Query('activa') activa: string,
+    @Query('activo') activo: string,
     @Query('nombre') nombre: string,
     @Req() req,
   ) {
     const userEmpresaId = req.user.id_empresa ?? 1;
     const isSuperuser = req.user.roles?.includes('SUPERUSUARIO');
+    const valor = activa ?? activo;
     const parseActiva =
-      activa === 'true' ? true : activa === 'false' ? false : undefined;
+      valor === 'true' ? true : valor === 'false' ? false : undefined;
     return this.bodegasService.findAll(
       { activa: parseActiva, nombre },
       userEmpresaId,
       isSuperuser,
     );
+  }
+
+  @Get(':id')
+  @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
+  findOne(@Param('id') id: string, @Req() req) {
+    const userEmpresaId = req.user.id_empresa ?? 1;
+    const isSuperuser = req.user.roles?.includes('SUPERUSUARIO');
+    return this.bodegasService.findOne(+id, userEmpresaId, isSuperuser);
   }
 
   @Get(':id/stock')

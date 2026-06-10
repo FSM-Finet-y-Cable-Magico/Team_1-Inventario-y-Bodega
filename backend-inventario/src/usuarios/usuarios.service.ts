@@ -6,8 +6,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ILike, Repository } from 'typeorm';
+import { ILike, In, Repository } from 'typeorm';
 import { Usuario } from './entities/usuario.entity';
+import { UsuarioRol } from './entities/usuario-rol.entity';
+import { Rol } from '../roles/entities/rol.entity';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 import * as bcrypt from 'bcrypt';
@@ -18,6 +20,10 @@ export class UsuariosService {
   constructor(
     @InjectRepository(Usuario)
     private readonly usuarioRepository: Repository<Usuario>,
+    @InjectRepository(UsuarioRol)
+    private readonly usuarioRolRepository: Repository<UsuarioRol>,
+    @InjectRepository(Rol)
+    private readonly rolRepository: Repository<Rol>,
     private readonly auditoriaService: AuditoriaService,
   ) {}
 
@@ -33,33 +39,73 @@ export class UsuariosService {
       where.nombre_completo = ILike(`%${filtros.buscar}%`);
     }
 
-    const usuarios = await this.usuarioRepository.find({ where });
+    const usuarios = await this.usuarioRepository.find({
+      where,
+      relations: { usuarioRoles: { rol: true } },
+    });
 
     // CU-05 Excepción 1: no hay resultados con los filtros aplicados
     if (usuarios.length === 0) {
       throw new NotFoundException('No se encontraron usuarios con los filtros seleccionados.');
     }
 
-    return usuarios;
+    return usuarios.map((u) => this.conRoles(u));
   }
 
   async findOne(id: number): Promise<Usuario | null> {
-    return this.usuarioRepository.findOneBy({ id_usuario: id });
+    const usuario = await this.usuarioRepository.findOne({
+      where: { id_usuario: id },
+      relations: { usuarioRoles: { rol: true } },
+    });
+    return usuario ? this.conRoles(usuario) : null;
+  }
+
+  // El front consume `roles` plano; usuarioRoles es el detalle de la tabla intermedia.
+  // El hash de la contraseña nunca debe salir del backend.
+  private conRoles(usuario: Usuario): Usuario & { roles: Rol[] } {
+    const { password_hash, ...usuarioSeguro } = usuario;
+    return {
+      ...usuarioSeguro,
+      roles: usuario.usuarioRoles?.map((ur) => ur.rol).filter(Boolean) ?? [],
+    } as Usuario & { roles: Rol[] };
   }
 
   async create(
     createUsuarioDto: CreateUsuarioDto,
-    actorId: number,
-    actorRoles: string[],
+    actor: { sub?: number; id_usuario?: number; id_empresa: number; roles?: string[] },
   ): Promise<Usuario> {
-    // CU-04 Excepción 2: el Administrador no puede asignar rol Superusuario
-    if (
-      (createUsuarioDto as any).rol === 'SUPERUSUARIO' &&
-      !actorRoles.includes('SUPERUSUARIO')
-    ) {
-      throw new ForbiddenException(
-        'Solo un Superusuario puede asignar el rol de Superusuario.',
-      );
+    const actorId = actor.id_usuario ?? actor.sub;
+    const actorRoles = actor.roles ?? [];
+    const esSuperusuario = actorRoles.includes('SUPERUSUARIO');
+
+    // El usuario nuevo hereda la empresa del actor; solo un Superusuario puede asignar otra
+    let idEmpresa = actor.id_empresa;
+    if (createUsuarioDto.id_empresa !== undefined && createUsuarioDto.id_empresa !== actor.id_empresa) {
+      if (!esSuperusuario) {
+        throw new ForbiddenException(
+          'Solo un Superusuario puede crear usuarios en otra empresa.',
+        );
+      }
+      idEmpresa = createUsuarioDto.id_empresa;
+    }
+
+    // Validar roles solicitados
+    let rolesAsignar: Rol[] = [];
+    if (createUsuarioDto.roles?.length) {
+      const idsRoles = [...new Set(createUsuarioDto.roles)];
+      rolesAsignar = await this.rolRepository.findBy({ id_rol: In(idsRoles) });
+      if (rolesAsignar.length !== idsRoles.length) {
+        throw new BadRequestException('Uno o más roles seleccionados no existen.');
+      }
+      // CU-04 Excepción 2: el Administrador no puede asignar rol Superusuario
+      if (
+        rolesAsignar.some((r) => r.nombre_rol === 'SUPERUSUARIO') &&
+        !esSuperusuario
+      ) {
+        throw new ForbiddenException(
+          'Solo un Superusuario puede asignar el rol de Superusuario.',
+        );
+      }
     }
 
     // CU-04 Excepción 3: nombre de usuario ya existe
@@ -75,9 +121,23 @@ export class UsuariosService {
     const salt = await bcrypt.genSalt(12);
     const hash = await bcrypt.hash(createUsuarioDto.password, salt);
     const nuevoUsuario = await this.usuarioRepository.save({
-      ...createUsuarioDto,
+      nombre_usuario: createUsuarioDto.nombre_usuario,
+      nombre_completo: createUsuarioDto.nombre_completo,
+      email: createUsuarioDto.email,
+      id_empresa: idEmpresa,
       password_hash: hash,
     });
+
+    if (rolesAsignar.length) {
+      await this.usuarioRolRepository.save(
+        rolesAsignar.map((r) =>
+          this.usuarioRolRepository.create({
+            id_usuario: nuevoUsuario.id_usuario,
+            id_rol: r.id_rol,
+          }),
+        ),
+      );
+    }
 
     if (actorId) {
       await this.auditoriaService.create({
@@ -90,11 +150,13 @@ export class UsuariosService {
           nombre_completo: nuevoUsuario.nombre_completo,
           nombre_usuario: nuevoUsuario.nombre_usuario,
           id_empresa: nuevoUsuario.id_empresa,
+          roles: rolesAsignar.map((r) => r.nombre_rol),
         },
       });
     }
 
-    return nuevoUsuario;
+    const { password_hash, ...usuarioSeguro } = nuevoUsuario;
+    return usuarioSeguro as Usuario;
   }
 
   async remove(id: number, actorId: number): Promise<void> {
@@ -139,10 +201,23 @@ export class UsuariosService {
       );
     }
 
+    // roles/password no se actualizan por esta vía; id_empresa solo lo cambia un Superusuario
+    const { roles, password, id_empresa, ...cambios } = updateUsuarioDto;
+    if (
+      id_empresa !== undefined &&
+      id_empresa !== usuario.id_empresa &&
+      !actorRoles.includes('SUPERUSUARIO')
+    ) {
+      throw new ForbiddenException(
+        'Solo un Superusuario puede cambiar la empresa de un usuario.',
+      );
+    }
+
     const anterior = { ...usuario };
     const usuarioActualizado = await this.usuarioRepository.save({
       ...usuario,
-      ...updateUsuarioDto,
+      ...cambios,
+      ...(id_empresa !== undefined ? { id_empresa } : {}),
     });
 
     if (actorId) {

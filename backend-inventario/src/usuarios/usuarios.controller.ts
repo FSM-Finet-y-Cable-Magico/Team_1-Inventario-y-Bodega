@@ -25,7 +25,7 @@ export class UsuariosController {
   @Post()
   @Roles('ADMIN', 'SUPERUSUARIO')
   create(@Body() createUsuarioDto: CreateUsuarioDto, @Req() req) {
-    return this.usuariosService.create(createUsuarioDto, req.user.sub, req.user.roles ?? []);
+    return this.usuariosService.create(createUsuarioDto, req.user);
   }
 
   // CU-05: filtros por activo y buscar (nombre)

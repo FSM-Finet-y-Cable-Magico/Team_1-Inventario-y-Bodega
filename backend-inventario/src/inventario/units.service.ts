@@ -4,6 +4,9 @@ import { Repository, DataSource } from "typeorm";
 import { UnidadEquipo } from "./entities/unidad-equipo.entity";
 import { CatalogService } from "./catalog.service";
 import { HistorialEstado } from "./entities/historial-estado.entity";
+import { EditarDatosUnidadDto } from "./dto/editar-datos-unidad.dto";
+
+const MAC_REGEX = /^([0-9A-Fa-f]{2}[:\-]){5}[0-9A-Fa-f]{2}$/;
 
 @Injectable()
 export class UnitsService {
@@ -16,7 +19,39 @@ export class UnitsService {
         private readonly dataSource: DataSource,
     ) {}
 
-    async registrarUnidad(dto: { id_tipo_equipo: number; numero_serie: string; modelo?: string; id_bodega_actual: number; fecha_adquisicion?: string; fecha_venc_garantia?: string }, idEmpresaContexto: number) {
+    async listarUnidades(filtros: { estado?: string; buscar?: string }, idEmpresaContexto: number) {
+        const qb = this.unitRepository.createQueryBuilder('unidad')
+            .leftJoinAndSelect('unidad.tipoEquipo', 'tipoEquipo')
+            .where('unidad.id_empresa = :idEmpresa', { idEmpresa: idEmpresaContexto });
+
+        if (filtros.estado) {
+            qb.andWhere('unidad.estado = :estado', { estado: filtros.estado });
+        }
+
+        if (filtros.buscar) {
+            qb.andWhere(
+                '(unidad.serialNumber ILIKE :buscar OR unidad.modelo ILIKE :buscar)',
+                { buscar: `%${filtros.buscar.trim()}%` },
+            );
+        }
+
+        const unidades = await qb.orderBy('unidad.id_unidad', 'DESC').getMany();
+
+        return unidades.map((u) => ({
+            id_unidad: u.id_unidad,
+            numero_serie: u.serialNumber,
+            modelo: u.modelo ?? null,
+            estado: u.estado,
+            fecha_adquisicion: u.fechaAdquisicion,
+            fecha_venc_garantia: u.fechaVencGarantia,
+            id_bodega_actual: u.id_bodega_actual,
+            tipo_equipo: u.tipoEquipo
+                ? { nombre: u.tipoEquipo.nombre, categoria: u.tipoEquipo.categoria }
+                : null,
+        }));
+    }
+
+    async registrarUnidad(dto: { id_tipo_equipo: number; numero_serie: string; modelo?: string; id_bodega_actual: number; fecha_adquisicion?: string; fecha_venc_garantia?: string; mac_address?: string }, idEmpresaContexto: number) {
 
         if (!dto.id_tipo_equipo || !dto.numero_serie || !dto.id_bodega_actual) {
             throw new BadRequestException('El tipo de equipo, el número de serie y la bodega de destino son campos obligatorios.');
@@ -46,6 +81,22 @@ export class UnitsService {
             );
         }
 
+        let macNormalizada: string | undefined;
+        if (dto.mac_address) {
+            macNormalizada = dto.mac_address.trim().toUpperCase();
+            if (!MAC_REGEX.test(macNormalizada)) {
+                throw new BadRequestException(
+                    'El formato de la dirección MAC es inválido. Debe tener el formato XX:XX:XX:XX:XX:XX con dígitos hexadecimales.'
+                );
+            }
+            const existeMac = await this.unitRepository.findOne({ where: { macAddress: macNormalizada } });
+            if (existeMac) {
+                throw new ConflictException(
+                    `Conflicto de Inventario: La dirección MAC [${macNormalizada}] ya está registrada en otro equipo del sistema.`
+                );
+            }
+        }
+
         const fechaAdq = dto.fecha_adquisicion ? new Date(dto.fecha_adquisicion) : new Date();
         const fechaVencGarantia = dto.fecha_venc_garantia ? new Date(dto.fecha_venc_garantia) : null;
 
@@ -58,6 +109,7 @@ export class UnitsService {
             id_bodega_actual: dto.id_bodega_actual,
             fechaAdquisicion: fechaAdq,
             fechaVencGarantia: fechaVencGarantia,
+            macAddress: macNormalizada ?? null,
         };
 
         const nuevaUnidad = this.unitRepository.create(datosNuevaUnidad);
@@ -253,7 +305,7 @@ export class UnitsService {
 
     async editarDatos(
         idUnidad: number,
-        dto: { observaciones?: string; id_bodega_actual?: number; numero_poste?: string; modelo?: string },
+        dto: EditarDatosUnidadDto,
         actor: any
     ) {
         if (!idUnidad || isNaN(idUnidad)) {

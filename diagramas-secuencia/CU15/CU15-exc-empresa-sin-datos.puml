@@ -1,0 +1,94 @@
+@startuml CU15-exc-empresa-sin-datos
+title CU-15 — Consultando dashboard consolidado de ambas empresas (excepción: empresa sin datos)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 70
+skinparam ActorPadding 30
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_Dashboard" as view
+participant "C_RolesGuard" as guard
+participant "C_CompaniesController" as ctrl
+participant "C_CompaniesService" as svc
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as uent
+participant "bodega" as bent
+participant "stock_consumible" as sent
+
+user -> view : Solicita dashboard\nconsolidado
+activate view
+
+view -> guard : GET /empresas/dashboard\n(JWT token)
+activate guard
+
+guard -> guard : Verifica rol:\nROL === SUPERUSUARIO
+activate guard
+deactivate guard
+
+guard -> ctrl : Acceso permitido
+deactivate guard
+
+activate ctrl
+
+ctrl -> svc : getDashboard()
+activate svc
+
+svc -> orm : find(unidad_equipo\nWHERE id_empresa = 1)
+activate orm
+
+orm -> uent : SELECT unidad_equipo\nWHERE id_empresa = 1
+activate uent
+uent --> orm : [] (sin registros)
+deactivate uent
+
+orm --> svc : []
+deactivate orm
+
+svc -> svc : estadisticasEstado = {}\ntotal_unidades = 0
+activate svc
+deactivate svc
+
+svc -> orm : count(bodega\nWHERE id_empresa = 1\nAND activa = true)
+activate orm
+
+orm -> bent : SELECT COUNT(*) bodega\nWHERE id_empresa = 1\nAND activa = true
+activate bent
+bent --> orm : 0
+deactivate bent
+
+orm --> svc : bodegasActivas = 0
+deactivate orm
+
+svc -> orm : SUM(stock_consumible.cantidad_disponible)\nINNER JOIN bodega\nWHERE b.id_empresa = 1
+activate orm
+
+orm -> sent : SELECT SUM(s.cantidad_disponible)\nFROM stock_consumible s\nINNER JOIN bodega b\nON b.id_empresa = 1
+activate sent
+sent --> orm : { total: null }
+deactivate sent
+
+orm --> svc : { total: null }
+deactivate orm
+
+svc -> svc : stock_consumible_total =\nNumber(null ?? 0) = 0
+activate svc
+deactivate svc
+
+svc --> ctrl : { dashboard_consolidado:\n[{ empresa: 'Finet', total_unidades: 0,\nunidades_por_estado: {},\nbodegas_activas: 0,\nstock_consumible_total: 0 }, ...] }
+deactivate svc
+
+ctrl --> view : 200 OK\n{ dashboard_consolidado\n(contadores en 0 para empresa sin datos) }
+deactivate ctrl
+
+view --> user : Muestra dashboard con\ncontadores en 0 para la empresa sin datos
+deactivate view
+
+@enduml

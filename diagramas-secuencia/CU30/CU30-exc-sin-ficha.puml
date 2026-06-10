@@ -1,0 +1,69 @@
+@startuml CU30-exc-sin-ficha
+title CU-30 — Descargar ficha técnica de tipo de equipo (excepción: sin ficha adjunta)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 70
+skinparam ActorPadding 30
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_FichaTecnica" as view
+participant "C_AuthGuard" as guard
+participant "C_CatalogController" as ctrl
+participant "C_CatalogService" as svc
+participant "C_TypeORM" as orm
+participant "tipo_equipo" as ent
+
+user -> view : Solicita ficha técnica\ndel tipo de equipo
+activate view
+
+view -> guard : GET /catalogo/:id/ficha-tecnica\n+ JWT token
+activate guard
+
+guard -> guard : Valida JWT y rol
+activate guard
+deactivate guard
+
+guard --> ctrl : Solicitud autorizada
+deactivate guard
+activate ctrl
+
+ctrl -> svc : obtenerFichaPdf(id, id_empresa)
+activate svc
+
+svc -> svc : parseInt(id)\nvalida número
+activate svc
+deactivate svc
+
+svc -> orm : findOne({ id_tipo_equipo: idNum,\nid_empresa: idEmpresaContexto })
+activate orm
+
+orm -> ent : SELECT tipo_equipo\nWHERE id_tipo_equipo AND id_empresa
+activate ent
+ent --> orm : Registro tipo_equipo\n(fichaTecnicaPdfUrl: null)
+deactivate ent
+
+orm --> svc : tipo (sin fichaTecnicaPdfUrl)
+deactivate orm
+
+svc -> svc : Verifica fichaTecnicaPdfUrl —\nes nulo o vacío
+activate svc
+deactivate svc
+
+svc --> ctrl : { tieneFicha: false,\nficha_tecnica_pdf_url: null,\nmessage: "El tipo de equipo [...]\nno posee ficha técnica PDF" }
+deactivate svc
+
+ctrl --> view : 200 OK\n{ tieneFicha: false }
+deactivate ctrl
+
+view --> user : Oculta botón de descarga\ne informa que no hay\nficha técnica disponible
+deactivate view
+
+@enduml

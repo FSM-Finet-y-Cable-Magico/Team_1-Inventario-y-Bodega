@@ -1,0 +1,44 @@
+@startuml CU04-exc-formato-invalido
+title CU-04 — Crear cuenta de usuario (excepción: formato de campos inválido)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 70
+skinparam ActorPadding 30
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador" as user
+participant "V_CrearUsuario" as view
+participant "C_RolesGuard" as guard
+participant "C_UsuariosController" as ctrl
+participant "C_UsuariosService" as svc
+participant "C_AuditoriaService" as aud
+participant "C_TypeORM" as orm
+participant "usuario" as uent
+participant "log_auditoria" as aent
+
+user -> view : Completa formulario con\ndatos inválidos (nombre_usuario\ncorto, email malformado\no password débil)
+activate view
+
+view -> guard : POST /usuario\n{ CreateUsuarioDto inválido }
+activate guard
+
+guard --> view : Acceso permitido\n(rol ADMIN o SUPERUSUARIO)
+deactivate guard
+
+view -> ctrl : POST /usuario\n{ CreateUsuarioDto inválido }
+activate ctrl
+
+ctrl --> view : 400 Bad Request\n{ message: [...errores\nde validación], error: "Bad Request" }
+deactivate ctrl
+
+view --> user : Muestra errores de validación\n(campos inválidos)
+deactivate view
+
+@enduml

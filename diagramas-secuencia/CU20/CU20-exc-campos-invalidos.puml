@@ -1,0 +1,49 @@
+@startuml CU20-exc-campos-invalidos
+title CU-20 — Registrando solicitud de transferencia inter-empresa\n(excepción: empresa origen == empresa destino)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 70
+skinparam ActorPadding 30
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_Transferencias" as view
+participant "C_TransferenciasController" as ctrl
+participant "C_TransferenciasService" as svc
+participant "C_AuditoriaService" as aud
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as uent
+participant "transferencia_equipo" as tent
+participant "movimiento_inventario" as ment
+participant "log_auditoria" as aent
+
+user -> view : Completa formulario con\nid_empresa_destino igual\na su empresa de origen
+activate view
+
+view -> ctrl : POST /transferencias\n{ CreateTransferenciaDto }
+activate ctrl
+
+ctrl -> svc : registrarTransferencia(dto, req.user)
+activate svc
+
+svc -> svc : Verifica empresa origen\n!= empresa destino:\nidEmpresaOrigen === dto.id_empresa_destino
+activate svc
+deactivate svc
+
+svc --> ctrl : throw BadRequestException\n('La empresa de origen y destino\nno pueden ser la misma.')
+deactivate svc
+
+ctrl --> view : 400 Bad Request
+deactivate ctrl
+
+view --> user : Muestra error:\n"La empresa de origen y destino\nno pueden ser la misma."
+deactivate view
+
+@enduml

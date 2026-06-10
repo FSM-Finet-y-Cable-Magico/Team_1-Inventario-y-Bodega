@@ -1,0 +1,49 @@
+@startuml CU24-exc-consumible-sin-unidad
+title CU-24 — Creando tipo de equipo en el catálogo (excepción: consumible sin unidad de medida)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 70
+skinparam ActorPadding 30
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_CrearTipoEquipo" as view
+participant "C_CatalogController" as ctrl
+participant "C_CatalogService" as svc
+participant "C_TypeORM" as orm
+participant "tipo_equipo" as tent
+
+user -> view : Selecciona\nrequiereSerialNumber = false\nsin ingresar unidadMedida
+activate view
+
+view -> ctrl : POST /catalogo\n{ nombre, categoria,\nrequiereSerialNumber: false,\nunidadMedida: "" }
+activate ctrl
+
+ctrl -> svc : crearTipo({ nombre, categoria,\nrequiereSerialNumber: false,\nunidadMedida: "",\nid_empresa: actor.id_empresa })
+activate svc
+
+svc -> svc : Valida campos obligatorios:\nnombre, categoria,\nrequiereSerialNumber definido
+activate svc
+deactivate svc
+
+svc -> svc : Verifica requiereSerialNumber == false:\nunidadMedida vacía o ausente
+activate svc
+deactivate svc
+
+svc --> ctrl : throw BadRequestException\n('Regla de Negocio: Al ser un equipo consumible\n(No individualizable), debe especificar\nobligatoriamente una unidad de medida\n(ej: Metros, Unidades).')
+deactivate svc
+
+ctrl --> view : 400 Bad Request\n{ message: "...unidad de medida\nes obligatoria para consumibles." }
+deactivate ctrl
+
+view --> user : Muestra "La unidad de medida\nes obligatoria para\nequipos consumibles"
+deactivate view
+
+@enduml
