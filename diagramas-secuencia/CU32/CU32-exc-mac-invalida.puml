@@ -15,7 +15,9 @@ actor "Usuario" as user
 participant "V_RegistrarUnidad" as view
 participant "C_UnitsController" as ctrl
 participant "C_UnitsService" as svc
+participant "C_CatalogService" as cat
 participant "C_TypeORM" as orm
+participant "tipo_equipo" as tent
 participant "unidad_equipo" as uent
 
 user -> view : Ingresa numero_serie válido\ny dirección MAC inválida\no ya existente

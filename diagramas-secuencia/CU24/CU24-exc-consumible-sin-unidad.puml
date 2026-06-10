@@ -17,6 +17,8 @@ actor "Usuario" as user
 participant "V_CrearTipoEquipo" as view
 participant "C_CatalogController" as ctrl
 participant "C_CatalogService" as svc
+participant "C_TypeORM" as orm
+participant "tipo_equipo" as tent
 
 user -> view : Selecciona\nrequiereSerialNumber = false\nsin ingresar unidadMedida
 activate view

@@ -15,6 +15,13 @@ actor "Usuario" as user
 participant "V_ConfigurarUmbral" as view
 participant "C_RolesGuard" as guard
 participant "C_BodegasController" as ctrl
+participant "C_BodegasService" as svc
+participant "C_AuditoriaService" as aud
+participant "C_TypeORM" as orm
+participant "bodega" as bent
+participant "tipo_equipo" as tent
+participant "stock_consumible" as scent
+participant "log_auditoria" as aent
 
 user -> view : Ingresa id_tipo_equipo\ny umbral fuera de rango (< 0 o > 9999)\no no es número entero
 activate view

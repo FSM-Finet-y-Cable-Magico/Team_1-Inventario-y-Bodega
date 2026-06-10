@@ -17,6 +17,11 @@ actor "Administrador" as user
 participant "V_EditarUsuario" as view
 participant "C_RolesGuard" as guard
 participant "C_UsuariosController" as ctrl
+participant "C_UsuariosService" as svc
+participant "C_AuditoriaService" as aud
+participant "C_TypeORM" as orm
+participant "usuario" as uent
+participant "log_auditoria" as aent
 
 user -> view : Ingresa datos con\nformato incorrecto
 activate view

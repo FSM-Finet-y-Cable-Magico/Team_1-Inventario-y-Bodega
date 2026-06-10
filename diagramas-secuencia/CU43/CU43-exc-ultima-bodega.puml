@@ -15,8 +15,10 @@ actor "Usuario" as user
 participant "V_Bodegas" as view
 participant "C_BodegasController" as ctrl
 participant "C_BodegasService" as svc
+participant "C_AuditoriaService" as aud
 participant "C_TypeORM" as orm
 participant "bodega" as bent
+participant "log_auditoria" as aent
 
 user -> view : Solicita desactivar\nla única bodega activa
 activate view

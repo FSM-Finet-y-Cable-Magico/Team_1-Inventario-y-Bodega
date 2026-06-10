@@ -16,6 +16,7 @@ hide footbox
 actor "Usuario" as user
 participant "V_Sistema" as view
 participant "C_JwtAuthGuard" as guard
+participant "C_AuthController" as ctrl
 participant "C_JwtStrategy" as strat
 
 user -> view : Permanece inactivo\n(sin clics, teclado\nni scroll)

@@ -20,6 +20,7 @@ participant "C_UnitsController" as ctrl
 participant "C_UnitsService" as svc
 participant "C_TypeORM" as orm
 participant "unidad_equipo" as uent
+participant "tipo_equipo" as tent
 
 user -> view : Selecciona unidad\nde equipo (id inexistente)
 activate view

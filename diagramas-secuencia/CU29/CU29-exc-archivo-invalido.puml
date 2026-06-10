@@ -16,6 +16,9 @@ hide footbox
 actor "Usuario" as user
 participant "V_FichaTecnica" as view
 participant "C_CatalogController" as ctrl
+participant "C_CatalogService" as svc
+participant "C_TypeORM" as orm
+participant "tipo_equipo" as tent
 
 user -> view : Selecciona tipo de equipo\ny adjunta archivo no PDF\no mayor a 5 MB
 activate view

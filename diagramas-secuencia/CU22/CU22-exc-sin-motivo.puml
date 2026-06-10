@@ -18,6 +18,10 @@ participant "V_RechazarTransferencia" as view
 participant "C_RolesGuard" as guard
 participant "C_TransferenciasController" as ctrl
 participant "C_TransferenciasService" as svc
+participant "C_AuditoriaService" as aud
+participant "C_TypeORM" as orm
+participant "movimiento_inventario" as ment
+participant "log_auditoria" as aent
 
 user -> view : Confirma rechazo sin\ningresar motivo
 activate view

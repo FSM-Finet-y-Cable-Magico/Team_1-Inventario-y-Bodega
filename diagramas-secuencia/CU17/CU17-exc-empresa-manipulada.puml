@@ -16,6 +16,11 @@ hide footbox
 actor "Usuario" as user
 participant "V_CrearTipoEquipo" as view
 participant "C_CompanyIsolationGuard" as guard
+participant "C_RolesGuard" as roles
+participant "C_CatalogController" as ctrl
+participant "C_CatalogService" as svc
+participant "C_TypeORM" as orm
+participant "tipo_equipo" as tent
 
 user -> view : Envía body con id_empresa\nde otra empresa (manipulado)
 activate view

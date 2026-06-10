@@ -20,6 +20,7 @@ participant "C_CatalogController" as ctrl
 participant "C_CatalogService" as svc
 participant "C_TypeORM" as orm
 participant "tipo_equipo" as tent
+participant "unidad_equipo" as uent
 
 user -> view : Modifica nombre del tipo\npor uno ya existente
 activate view

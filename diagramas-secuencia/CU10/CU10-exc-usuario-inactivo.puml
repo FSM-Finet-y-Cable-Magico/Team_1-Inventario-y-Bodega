@@ -17,8 +17,10 @@ actor "Administrador" as user
 participant "V_RestablecerPassword" as view
 participant "C_AuthController" as ctrl
 participant "C_AuthService" as svc
+participant "C_AuditoriaService" as aud
 participant "C_TypeORM" as orm
 participant "usuario" as uent
+participant "log_auditoria" as aent
 
 user -> view : Solicita restablecer\ncontraseña del usuario (id)
 activate view

@@ -16,6 +16,7 @@ hide footbox
 actor "Usuario" as user
 participant "V_Usuarios" as view
 participant "C_RolesGuard" as guard
+participant "C_UsuariosController" as ctrl
 
 user -> view : Solicita lista de usuarios
 activate view

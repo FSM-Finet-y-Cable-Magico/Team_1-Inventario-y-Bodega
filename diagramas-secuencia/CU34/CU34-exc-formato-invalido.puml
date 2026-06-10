@@ -18,6 +18,8 @@ participant "V_EditarUnidad" as view
 participant "C_RolesGuard" as guard
 participant "C_UnitsController" as ctrl
 participant "C_UnitsService" as svc
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as ent
 
 user -> view : Envía campos con\nformato o longitud inválidos
 activate view

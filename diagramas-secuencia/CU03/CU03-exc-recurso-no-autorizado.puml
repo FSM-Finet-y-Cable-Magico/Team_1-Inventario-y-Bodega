@@ -16,6 +16,7 @@ hide footbox
 actor "Usuario" as user
 participant "V_Recurso" as view
 participant "C_RolesGuard" as guard
+participant "C_RecursoController" as ctrl
 participant "C_AuditoriaService" as aud
 participant "C_TypeORM" as orm
 participant "log_auditoria" as aent

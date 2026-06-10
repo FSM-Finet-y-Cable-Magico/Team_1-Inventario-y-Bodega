@@ -15,6 +15,11 @@ hide footbox
 
 actor "Usuario" as user
 participant "V_Dashboard" as view
+participant "C_AuthController" as ctrl
+participant "C_AuthService" as svc
+participant "C_AuditoriaService" as aud
+participant "C_TypeORM" as orm
+participant "log_auditoria" as aent
 
 user -> view : Solicita cerrar sesión
 activate view

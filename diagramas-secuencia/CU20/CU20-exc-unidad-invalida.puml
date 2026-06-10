@@ -17,8 +17,12 @@ actor "Usuario" as user
 participant "V_Transferencias" as view
 participant "C_TransferenciasController" as ctrl
 participant "C_TransferenciasService" as svc
+participant "C_AuditoriaService" as aud
 participant "C_TypeORM" as orm
 participant "unidad_equipo" as uent
+participant "transferencia_equipo" as tent
+participant "movimiento_inventario" as ment
+participant "log_auditoria" as aent
 
 user -> view : Completa formulario con\nunidad que no cumple\ncondiciones de transferencia
 activate view

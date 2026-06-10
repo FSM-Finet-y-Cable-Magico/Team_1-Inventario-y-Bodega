@@ -18,6 +18,9 @@ participant "C_BodegasController" as ctrl
 participant "C_BodegasService" as svc
 participant "C_TypeORM" as orm
 participant "bodega" as bent
+participant "unidad_equipo" as uent
+participant "stock_consumible" as scent
+participant "tipo_equipo" as tent
 
 user -> view : Solicita ver stock\nde bodega (id inexistente)
 activate view

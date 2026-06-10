@@ -16,8 +16,10 @@ participant "V_EditarBodega" as view
 participant "C_RolesGuard" as guard
 participant "C_BodegasController" as ctrl
 participant "C_BodegasService" as svc
+participant "C_AuditoriaService" as aud
 participant "C_TypeORM" as orm
 participant "bodega" as bent
+participant "log_auditoria" as aent
 
 user -> view : Ingresa nuevo nombre\n(ya existe en la empresa)
 activate view

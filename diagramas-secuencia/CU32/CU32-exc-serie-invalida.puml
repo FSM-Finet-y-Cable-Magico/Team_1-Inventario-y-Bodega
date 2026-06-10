@@ -20,6 +20,7 @@ participant "C_UnitsService" as svc
 participant "C_CatalogService" as cat
 participant "C_TypeORM" as orm
 participant "tipo_equipo" as tent
+participant "unidad_equipo" as uent
 
 user -> view : Ingresa id_tipo_equipo,\nnumero_serie con formato inválido\n(ej: "AB 1@", espacios/especiales)
 activate view

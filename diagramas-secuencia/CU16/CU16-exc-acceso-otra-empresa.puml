@@ -17,6 +17,9 @@ actor "Usuario" as user
 participant "V_Catalogo" as view
 participant "C_CompanyIsolationGuard" as guard
 participant "C_CatalogController" as ctrl
+participant "C_CatalogService" as svc
+participant "C_TypeORM" as orm
+participant "tipo_equipo" as tent
 
 user -> view : Intenta acceder a datos\nde otra empresa (manipulación\ndel token o del contexto)
 activate view

@@ -20,6 +20,7 @@ participant "C_UnitsController" as ctrl
 participant "C_UnitsService" as svc
 participant "C_TypeORM" as orm
 participant "unidad_equipo" as uent
+participant "historial_estado_equipo" as hent
 
 user -> view : Selecciona equipo y\nnuevo estado no permitido
 activate view

@@ -17,8 +17,10 @@ actor "Usuario" as user
 participant "V_Login" as view
 participant "C_AuthController" as ctrl
 participant "C_AuthService" as svc
+participant "C_AuditoriaService" as aud
 participant "C_TypeORM" as orm
 participant "usuario" as uent
+participant "log_auditoria" as aent
 
 user -> view : Ingresa nombre_usuario\ny password incorrectos
 activate view
