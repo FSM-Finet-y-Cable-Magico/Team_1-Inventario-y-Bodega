@@ -31,6 +31,6 @@ export class Auditoria {
   @Column({ type: 'inet', nullable: true })
   ip_origen: string;
 
-  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   fecha_hora: Date;
 }

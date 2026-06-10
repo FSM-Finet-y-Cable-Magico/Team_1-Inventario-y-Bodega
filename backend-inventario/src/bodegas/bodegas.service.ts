@@ -185,12 +185,24 @@ export class BodegasService {
         direccion: b.direccion,
         empresa: b.id_empresa === 1 ? 'Finet' : 'Cable Mágico',
         responsable: nombreResponsable,
+        activa: b.activa,
         estado: b.activa ? 'Activa' : 'Inactiva',
         resumen_stock_total: Number(stockConsumibles || 0) + countUnidades,
       });
     }
 
     return result;
+  }
+
+  async findOne(id: number, userEmpresaId: number, isSuperuser: boolean): Promise<Bodega> {
+    const bodega = await this.bodegaRepository.findOne({ where: { id_bodega: id } });
+    if (!bodega) throw new NotFoundException('Bodega no encontrada');
+
+    if (!isSuperuser && bodega.id_empresa !== userEmpresaId) {
+      throw new BadRequestException('No tiene permisos para acceder a esta bodega.');
+    }
+
+    return bodega;
   }
 
   async getStock(id: number, userEmpresaId: number, isSuperuser: boolean): Promise<any> {
@@ -217,28 +229,35 @@ export class BodegasService {
       const te = u.tipoEquipo;
       if (!stockPorTipo[te.id_tipo_equipo]) {
         stockPorTipo[te.id_tipo_equipo] = {
-          tipo_equipo: te.nombre,
-          categoria: te.categoria,
+          id_tipo_equipo: te.id_tipo_equipo,
+          tipo_equipo: { nombre: te.nombre, categoria: te.categoria },
           requiere_serie: te.requiereSerialNumber,
-          stock: { 'En bodega': 0, 'Asignado a técnico': 0, 'En revisión': 0, 'En préstamo externo': 0 },
+          cantidad_disponible: 0,
+          umbral_minimo: null,
+          desglose_estados: { 'En bodega': 0, 'Asignado a técnico': 0, 'En revisión': 0, 'En préstamo externo': 0 },
         };
       }
-      if (u.estado in stockPorTipo[te.id_tipo_equipo].stock) {
-        stockPorTipo[te.id_tipo_equipo].stock[u.estado]++;
+      const registro = stockPorTipo[te.id_tipo_equipo];
+      if (u.estado in registro.desglose_estados) {
+        registro.desglose_estados[u.estado]++;
+      }
+      // Para serializados, la cantidad disponible son las unidades físicamente en bodega
+      if (u.estado === 'En bodega') {
+        registro.cantidad_disponible++;
       }
     }
 
     for (const c of consumibles) {
       const te = c.tipoEquipo;
-      if (!stockPorTipo[te.id_tipo_equipo]) {
-        stockPorTipo[te.id_tipo_equipo] = {
-          tipo_equipo: te.nombre,
-          categoria: te.categoria,
-          requiere_serie: te.requiereSerialNumber,
-          stock: 0,
-        };
-      }
-      stockPorTipo[te.id_tipo_equipo].stock = Number(c.cantidad_disponible);
+      stockPorTipo[te.id_tipo_equipo] = {
+        id_tipo_equipo: te.id_tipo_equipo,
+        tipo_equipo: { nombre: te.nombre, categoria: te.categoria },
+        requiere_serie: te.requiereSerialNumber,
+        cantidad_disponible: Number(c.cantidad_disponible),
+        umbral_minimo: c.umbral_minimo === null || c.umbral_minimo === undefined
+          ? null
+          : Number(c.umbral_minimo),
+      };
     }
 
     return Object.values(stockPorTipo);
@@ -252,6 +271,13 @@ export class BodegasService {
       where: { id_tipo_equipo: dto.id_tipo_equipo },
     });
     if (!tipoEquipo) throw new NotFoundException('Tipo de equipo no encontrado');
+
+    // Los umbrales solo aplican a consumibles; los serializados se gestionan por unidad
+    if (tipoEquipo.requiereSerialNumber === true) {
+      throw new BadRequestException(
+        `El tipo [${tipoEquipo.nombre}] es un equipo serializado. Los umbrales de stock mínimo solo aplican a tipos consumibles.`,
+      );
+    }
 
     let record = await this.stockConsumibleRepository.findOne({
       where: { id_bodega: id, id_tipo_equipo: dto.id_tipo_equipo },

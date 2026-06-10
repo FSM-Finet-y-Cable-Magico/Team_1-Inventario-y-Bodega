@@ -19,6 +19,38 @@ export class UnitsService {
         private readonly dataSource: DataSource,
     ) {}
 
+    async listarUnidades(filtros: { estado?: string; buscar?: string }, idEmpresaContexto: number) {
+        const qb = this.unitRepository.createQueryBuilder('unidad')
+            .leftJoinAndSelect('unidad.tipoEquipo', 'tipoEquipo')
+            .where('unidad.id_empresa = :idEmpresa', { idEmpresa: idEmpresaContexto });
+
+        if (filtros.estado) {
+            qb.andWhere('unidad.estado = :estado', { estado: filtros.estado });
+        }
+
+        if (filtros.buscar) {
+            qb.andWhere(
+                '(unidad.serialNumber ILIKE :buscar OR unidad.modelo ILIKE :buscar)',
+                { buscar: `%${filtros.buscar.trim()}%` },
+            );
+        }
+
+        const unidades = await qb.orderBy('unidad.id_unidad', 'DESC').getMany();
+
+        return unidades.map((u) => ({
+            id_unidad: u.id_unidad,
+            numero_serie: u.serialNumber,
+            modelo: u.modelo ?? null,
+            estado: u.estado,
+            fecha_adquisicion: u.fechaAdquisicion,
+            fecha_venc_garantia: u.fechaVencGarantia,
+            id_bodega_actual: u.id_bodega_actual,
+            tipo_equipo: u.tipoEquipo
+                ? { nombre: u.tipoEquipo.nombre, categoria: u.tipoEquipo.categoria }
+                : null,
+        }));
+    }
+
     async registrarUnidad(dto: { id_tipo_equipo: number; numero_serie: string; modelo?: string; id_bodega_actual: number; fecha_adquisicion?: string; fecha_venc_garantia?: string; mac_address?: string }, idEmpresaContexto: number) {
 
         if (!dto.id_tipo_equipo || !dto.numero_serie || !dto.id_bodega_actual) {

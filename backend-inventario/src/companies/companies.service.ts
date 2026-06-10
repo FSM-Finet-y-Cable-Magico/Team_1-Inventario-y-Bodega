@@ -25,33 +25,43 @@ export class CompaniesService {
         const resultado: any[] = [];
 
         for (const empresa of EMPRESAS) {
-            const unidades = await this.unidadRepository.find({ where: { id_empresa: empresa.id } });
-
-            const estadisticasEstado: Record<string, number> = {};
-            for (const u of unidades) {
-                estadisticasEstado[u.estado] = (estadisticasEstado[u.estado] ?? 0) + 1;
-            }
-
-            const bodegasActivas = await this.bodegaRepository.count({
-                where: { id_empresa: empresa.id, activa: true },
-            });
-
-            const stockConsumible = await this.stockRepository
-                .createQueryBuilder('s')
-                .innerJoin('s.bodega', 'b', 'b.id_empresa = :empresa', { empresa: empresa.id })
-                .select('SUM(s.cantidad_disponible)', 'total')
-                .getRawOne();
-
-            resultado.push({
-                empresa: empresa.nombre,
-                id_empresa: empresa.id,
-                total_unidades: unidades.length,
-                unidades_por_estado: estadisticasEstado,
-                bodegas_activas: bodegasActivas,
-                stock_consumible_total: Number(stockConsumible?.total ?? 0),
-            });
+            resultado.push(await this.getEstadisticasEmpresa(empresa.id, empresa.nombre));
         }
 
         return { dashboard_consolidado: resultado };
+    }
+
+    // Dashboard de la propia empresa del actor (cualquier rol autenticado)
+    async getMiDashboard(idEmpresa: number): Promise<any> {
+        const empresa = EMPRESAS.find((e) => e.id === idEmpresa);
+        return this.getEstadisticasEmpresa(idEmpresa, empresa?.nombre ?? `Empresa ${idEmpresa}`);
+    }
+
+    private async getEstadisticasEmpresa(id: number, nombre: string): Promise<any> {
+        const unidades = await this.unidadRepository.find({ where: { id_empresa: id } });
+
+        const estadisticasEstado: Record<string, number> = {};
+        for (const u of unidades) {
+            estadisticasEstado[u.estado] = (estadisticasEstado[u.estado] ?? 0) + 1;
+        }
+
+        const bodegasActivas = await this.bodegaRepository.count({
+            where: { id_empresa: id, activa: true },
+        });
+
+        const stockConsumible = await this.stockRepository
+            .createQueryBuilder('s')
+            .innerJoin('s.bodega', 'b', 'b.id_empresa = :empresa', { empresa: id })
+            .select('SUM(s.cantidad_disponible)', 'total')
+            .getRawOne();
+
+        return {
+            empresa: nombre,
+            id_empresa: id,
+            total_unidades: unidades.length,
+            unidades_por_estado: estadisticasEstado,
+            bodegas_activas: bodegasActivas,
+            stock_consumible_total: Number(stockConsumible?.total ?? 0),
+        };
     }
 }

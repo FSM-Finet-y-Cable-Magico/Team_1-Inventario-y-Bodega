@@ -12,6 +12,16 @@ import { EditarDatosUnidadDto } from "./dto/editar-datos-unidad.dto";
 export class UnitsController {
     constructor(private readonly unitsService: UnitsService) {}
 
+    @Get()
+    @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
+    async listarUnidades(
+        @Query('estado') estado: string,
+        @Query('buscar') buscar: string,
+        @CurrentUser() actor: any,
+    ) {
+        return this.unitsService.listarUnidades({ estado, buscar }, actor.id_empresa);
+    }
+
     @Post()
     @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
     async registrarNuevaUnidad(@Body() body: any, @CurrentUser() actor: any) {
