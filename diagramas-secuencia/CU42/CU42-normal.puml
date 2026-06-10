@@ -1,0 +1,103 @@
+@startuml CU42-normal
+title CU-42 — Editar bodega (flujo normal)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 70
+skinparam ActorPadding 30
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_EditarBodega" as view
+participant "C_RolesGuard" as guard
+participant "C_BodegasController" as ctrl
+participant "C_BodegasService" as svc
+participant "C_AuditoriaService" as aud
+participant "C_TypeORM" as orm
+participant "bodega" as bent
+participant "log_auditoria" as aent
+
+user -> view : Ingresa nuevos datos\n(nombre, dirección)
+activate view
+
+view -> guard : PATCH /bodegas/:id\n{ nombre?, direccion? }
+activate guard
+guard --> view : Token JWT válido\n(rol ADMIN o SUPERUSUARIO)
+deactivate guard
+
+view -> ctrl : PATCH /bodegas/:id\n{ nombre?, direccion? }
+activate ctrl
+
+ctrl -> svc : update(id, updateBodegaDto, actorId)
+activate svc
+
+svc -> orm : findOne({ id_bodega: id })
+activate orm
+
+orm -> bent : SELECT bodega\nWHERE id_bodega = :id
+activate bent
+bent --> orm : Datos bodega
+deactivate bent
+
+orm --> svc : bodega (existe)
+deactivate orm
+
+svc -> orm : findOne({ nombre: dto.nombre,\nid_empresa: bodega.id_empresa })
+activate orm
+
+orm -> bent : SELECT bodega\nWHERE nombre = :nombre\nAND id_empresa = :id_empresa
+activate bent
+bent --> orm : null (nombre disponible)
+deactivate bent
+
+orm --> svc : null
+deactivate orm
+
+svc -> svc : Aplica cambios:\nbodega.nombre = dto.nombre\nbodega.direccion = dto.direccion
+activate svc
+deactivate svc
+
+svc -> orm : save(bodega)
+activate orm
+
+orm -> bent : UPDATE bodega\nSET nombre, direccion\nWHERE id_bodega = :id
+activate bent
+bent --> orm : Bodega actualizada
+deactivate bent
+
+orm --> svc : bodegaActualizada
+deactivate orm
+
+svc -> aud : create({ id_usuario: actorId,\naccion: 'MODIFICAR',\nentidad_afectada: 'bodega',\nid_entidad_afectada,\nvalor_anterior, valor_nuevo })
+activate aud
+
+aud -> orm : save(log)
+activate orm
+
+orm -> aent : INSERT log_auditoria
+activate aent
+aent --> orm : Registrado
+deactivate aent
+
+orm --> aud : Log guardado
+deactivate orm
+
+aud --> svc : Auditoría registrada
+deactivate aud
+
+svc --> ctrl : bodegaActualizada
+deactivate svc
+
+ctrl --> view : 200 OK\n{ bodegaActualizada }
+deactivate ctrl
+
+view --> user : Muestra bodega\ncon datos actualizados
+deactivate view
+
+@enduml

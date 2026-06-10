@@ -1,0 +1,39 @@
+@startuml CU46-exc-umbral-invalido
+title CU-46 — Configurar umbral de stock mínimo (excepción: umbral inválido)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 70
+skinparam ActorPadding 30
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_ConfigurarUmbral" as view
+participant "C_RolesGuard" as guard
+participant "C_BodegasController" as ctrl
+
+user -> view : Ingresa id_tipo_equipo\ny umbral fuera de rango (< 0 o > 9999)\no no es número entero
+activate view
+
+view -> guard : POST /bodegas/:id/umbral\n{ id_tipo_equipo, umbral inválido }
+activate guard
+
+guard --> view : Acceso permitido\n(ADMIN / SUPERUSUARIO / ADMIN_BODEGA)
+deactivate guard
+
+view -> ctrl : POST /bodegas/:id/umbral\n{ id_tipo_equipo, umbral inválido }
+activate ctrl
+
+ctrl --> view : 400 Bad Request\n('El umbral debe ser un número\nentero entre 0 y 9999.')
+deactivate ctrl
+
+view --> user : Muestra error de validación
+deactivate view
+
+@enduml

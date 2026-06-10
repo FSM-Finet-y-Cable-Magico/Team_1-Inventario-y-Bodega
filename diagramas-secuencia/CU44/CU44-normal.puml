@@ -1,0 +1,113 @@
+@startuml CU44-normal
+title CU-44 — Consultar listado de bodegas (flujo normal)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 70
+skinparam ActorPadding 30
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_ListaBodegas" as view
+participant "C_RolesGuard" as guard
+participant "C_BodegasController" as ctrl
+participant "C_BodegasService" as svc
+participant "C_TypeORM" as orm
+participant "bodega" as bent
+participant "log_auditoria" as aent
+participant "usuario" as uent
+participant "stock_consumible" as scent
+participant "unidad_equipo" as ueent
+
+user -> view : Solicita listado de bodegas\n(filtros opcionales: activo, nombre)
+activate view
+
+view -> guard : GET /bodegas\n?activo=...&nombre=...\n[Authorization: Bearer token]
+activate guard
+
+guard -> guard : Valida JWT y verifica rol\n(ADMIN | SUPERUSUARIO | ADMIN_BODEGA)
+activate guard
+deactivate guard
+
+guard -> ctrl : findAll(activa, nombre, req)
+deactivate guard
+activate ctrl
+
+ctrl -> svc : findAll({ activa, nombre },\nuserEmpresaId, isSuperuser)
+activate svc
+
+svc -> orm : createQueryBuilder('bodega')\n+ filtros WHERE aplicados
+activate orm
+
+orm -> bent : SELECT bodega\nWHERE id_empresa = ? (si no SUPERUSUARIO)\nAND activa = ? (si filtro)\nAND nombre ILIKE ? (si filtro)
+activate bent
+bent --> orm : Lista de bodegas
+deactivate bent
+
+orm --> svc : bodegas[]
+deactivate orm
+
+svc -> orm : createQueryBuilder('log')\nWHERE entidad_afectada='bodega'\nAND accion='CREAR'\nAND id_entidad_afectada IN (ids)
+activate orm
+
+orm -> aent : SELECT log_auditoria\nWHERE entidad_afectada='bodega'\nAND accion='CREAR'\nAND id_entidad_afectada IN (ids)
+activate aent
+aent --> orm : logsCreacion[]
+deactivate aent
+
+orm --> svc : logsCreacion[]
+deactivate orm
+
+svc -> orm : findBy({ id_usuario: In(idsUsuarios) })
+activate orm
+
+orm -> uent : SELECT usuario\nWHERE id_usuario IN (ids)
+activate uent
+uent --> orm : usuarios[]
+deactivate uent
+
+orm --> svc : usuarios[]
+deactivate orm
+
+svc -> svc : Construye mapaUsuarios\ny mapaCreadores
+activate svc
+deactivate svc
+
+svc -> orm : sum('cantidad_disponible',\n{ id_bodega }) — por cada bodega
+activate orm
+
+orm -> scent : SELECT SUM(cantidad_disponible)\nFROM stock_consumible\nWHERE id_bodega = ?
+activate scent
+scent --> orm : totalConsumibles
+deactivate scent
+
+orm --> svc : totalConsumibles
+deactivate orm
+
+svc -> orm : count({ id_bodega_actual })\n— por cada bodega
+activate orm
+
+orm -> ueent : SELECT COUNT(*)\nFROM unidad_equipo\nWHERE id_bodega_actual = ?
+activate ueent
+ueent --> orm : countUnidades
+deactivate ueent
+
+orm --> svc : countUnidades
+deactivate orm
+
+svc --> ctrl : [{ id_bodega, nombre,\ndireccion, empresa,\nresponsable, estado,\nresumen_stock_total }]
+deactivate svc
+
+ctrl --> view : 200 OK\n[{ id_bodega, nombre,\ndireccion, empresa,\nresponsable, estado,\nresumen_stock_total }]
+deactivate ctrl
+
+view --> user : Muestra tabla con\nlistado de bodegas
+deactivate view
+
+@enduml

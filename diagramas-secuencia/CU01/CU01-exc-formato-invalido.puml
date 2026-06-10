@@ -1,0 +1,32 @@
+@startuml CU01-exc-formato-invalido
+title CU-01 — Iniciar sesión en el sistema (excepción: formato inválido)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 70
+skinparam ActorPadding 30
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_Login" as view
+participant "C_AuthController" as ctrl
+
+user -> view : Ingresa datos con\nformato inválido
+activate view
+
+view -> ctrl : POST /auth/login\n{ nombre_usuario, password }
+activate ctrl
+
+ctrl --> view : 400 Bad Request\n'Usuario o contraseña incorrectos.'
+deactivate ctrl
+
+view --> user : Muestra "Usuario o contraseña incorrectos."
+deactivate view
+
+@enduml

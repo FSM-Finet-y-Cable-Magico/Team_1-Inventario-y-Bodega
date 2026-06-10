@@ -1,0 +1,91 @@
+@startuml CU41-normal
+title CU-41 — Crear bodega (flujo normal)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 70
+skinparam ActorPadding 30
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_CrearBodega" as view
+participant "C_RolesGuard" as guard
+participant "C_BodegasController" as ctrl
+participant "C_BodegasService" as svc
+participant "C_AuditoriaService" as aud
+participant "C_TypeORM" as orm
+participant "bodega" as bent
+participant "log_auditoria" as aent
+
+user -> view : Ingresa nombre, id_empresa\ny direccion (opcional)
+activate view
+
+view -> guard : POST /bodegas\n{ nombre, id_empresa, direccion }
+activate guard
+
+guard -> guard : Verifica JWT y rol\n(ADMIN | SUPERUSUARIO)
+activate guard
+deactivate guard
+
+guard --> ctrl : Solicitud autorizada
+deactivate guard
+activate ctrl
+
+ctrl -> svc : create(dto, actorId)
+activate svc
+
+svc -> orm : findOne({ nombre: dto.nombre,\nid_empresa: dto.id_empresa })
+activate orm
+
+orm -> bent : SELECT bodega\nWHERE nombre AND id_empresa
+activate bent
+bent --> orm : null (no existe)
+deactivate bent
+
+orm --> svc : null
+deactivate orm
+
+svc -> orm : save(bodegaRepository.create\n({ ...dto, activa: true }))
+activate orm
+
+orm -> bent : INSERT bodega\n(nombre, id_empresa, direccion, activa)
+activate bent
+bent --> orm : Bodega insertada
+deactivate bent
+
+orm --> svc : nuevaBodega
+deactivate orm
+
+svc -> aud : create({ id_usuario: actorId,\naccion: 'CREAR',\nentidad_afectada: 'bodega',\nid_entidad_afectada: nuevaBodega.id_bodega,\nvalor_nuevo: nuevaBodega })
+activate aud
+
+aud -> orm : save(log)
+activate orm
+
+orm -> aent : INSERT log_auditoria
+activate aent
+aent --> orm : Registrado
+deactivate aent
+
+orm --> aud : Log guardado
+deactivate orm
+
+aud --> svc : Auditoria registrada
+deactivate aud
+
+svc --> ctrl : nuevaBodega
+deactivate svc
+
+ctrl --> view : 201 Created { bodega }
+deactivate ctrl
+
+view --> user : Bodega creada exitosamente
+deactivate view
+
+@enduml

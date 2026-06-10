@@ -1,0 +1,49 @@
+@startuml CU08-exc-error-escritura
+title CU-08 — Registrar evento en el log de auditoría\n(excepción: error al escribir en log_auditoria)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 70
+skinparam ActorPadding 30
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+note over caller, aent
+  «PENDIENTE DE IMPLEMENTAR EN EL BACKEND»
+  Reintentos (hasta 3) y escritura en logs internos
+  no están implementados. Se modela el fallo simple.
+end note
+
+participant "C_AuthService" as caller
+participant "C_AuditoriaService" as aud
+participant "C_TypeORM" as orm
+participant "log_auditoria" as aent
+
+caller -> aud : create(createAuditoriaDto)
+activate aud
+
+aud -> orm : auditoriaRepository.create(createAuditoriaDto)
+activate orm
+orm --> aud : Instancia Auditoria (en memoria)
+deactivate orm
+
+aud -> orm : auditoriaRepository.save(auditoria)
+activate orm
+
+orm -> aent : INSERT log_auditoria
+activate aent
+aent --> orm : Error — fallo de escritura\n(p. ej. QueryFailedError)
+deactivate aent
+
+orm --> aud : throw QueryFailedError
+deactivate orm
+
+aud --> caller : throw QueryFailedError\n(propagado al llamante)
+deactivate aud
+
+@enduml

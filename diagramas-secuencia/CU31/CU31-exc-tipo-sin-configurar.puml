@@ -1,0 +1,46 @@
+@startuml CU31-exc-tipo-sin-configurar
+title CU-31 — Distinguir naturaleza de equipo (excepción: tipo sin campo requiere_serie_individual configurado)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 70
+skinparam ActorPadding 30
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+note over units, tent
+  «PENDIENTE DE IMPLEMENTAR EN EL BACKEND»
+end note
+
+participant "C_UnitsService" as units
+participant "C_CatalogService" as catalog
+participant "C_TypeORM" as orm
+participant "tipo_equipo" as tent
+
+units -> catalog : determinarNaturalezaEquipo(\nidTipoEquipo, idEmpresaContexto)
+activate catalog
+
+catalog -> orm : findOne({ id_tipo_equipo,\nid_empresa })
+activate orm
+
+orm -> tent : SELECT tipo_equipo\nWHERE id_tipo_equipo\nAND id_empresa
+activate tent
+tent --> orm : Registro tipo_equipo\n(requiereSerialNumber = null)
+deactivate tent
+
+orm --> catalog : tipo (requiereSerialNumber = null)
+deactivate orm
+
+catalog -> catalog : Evalúa tipo.requiereSerialNumber\n→ null / undefined detectado
+activate catalog
+deactivate catalog
+
+catalog --> units : throw BadRequestException\n('Error de configuración: el tipo de equipo\nno tiene definido requiere_serie_individual')
+deactivate catalog
+
+@enduml

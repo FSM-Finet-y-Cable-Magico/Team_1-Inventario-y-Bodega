@@ -1,0 +1,43 @@
+@startuml CU08-normal
+title CU-08 — Registrar evento en el log de auditoría (flujo normal)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 70
+skinparam ActorPadding 30
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+participant "C_AuthService" as caller
+participant "C_AuditoriaService" as aud
+participant "C_TypeORM" as orm
+participant "log_auditoria" as aent
+
+caller -> aud : create(createAuditoriaDto)
+activate aud
+
+aud -> orm : auditoriaRepository.create(createAuditoriaDto)
+activate orm
+orm --> aud : Instancia Auditoria (en memoria)
+deactivate orm
+
+aud -> orm : auditoriaRepository.save(auditoria)
+activate orm
+
+orm -> aent : INSERT log_auditoria\n(id_usuario, accion, entidad_afectada,\nid_entidad_afectada, valor_anterior,\nvalor_nuevo, ip_origen, fecha_hora)
+activate aent
+aent --> orm : Registro guardado
+deactivate aent
+
+orm --> aud : Entidad Auditoria guardada
+deactivate orm
+
+aud --> caller : Entidad Auditoria guardada
+deactivate aud
+
+@enduml

@@ -1,0 +1,50 @@
+@startuml CU34-exc-formato-invalido
+title CU-34 — Editar datos de unidad de equipo (excepción: formato inválido)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 70
+skinparam ActorPadding 30
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_EditarUnidad" as view
+participant "C_RolesGuard" as guard
+participant "C_UnitsController" as ctrl
+participant "C_UnitsService" as svc
+
+user -> view : Envía campos con\nformato o longitud inválidos
+activate view
+
+view -> guard : PATCH /unidades/:id\n{ body con datos inválidos, JWT }
+activate guard
+
+guard --> view : Acceso permitido
+deactivate guard
+
+view -> ctrl : editarDatosUnidad(id, body, actor)
+activate ctrl
+
+ctrl -> svc : editarDatos(idUnidad, dto, actor)
+activate svc
+
+svc -> svc : ValidationPipe detecta\nformato o longitud inválidos
+activate svc
+deactivate svc
+
+svc --> ctrl : throw BadRequestException\n('Datos inválidos')
+deactivate svc
+
+ctrl --> view : 400 Bad Request
+deactivate ctrl
+
+view --> user : Muestra error de validación\n"Los campos no cumplen\nlas validaciones requeridas"
+deactivate view
+
+@enduml

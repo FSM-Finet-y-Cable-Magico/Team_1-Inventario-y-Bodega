@@ -1,0 +1,72 @@
+@startuml CU26-exc-nombre-duplicado
+title CU-26 — Editar tipo de equipo existente\n(excepción: nombre duplicado en el catálogo)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 70
+skinparam ActorPadding 30
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_EditarTipoEquipo" as view
+participant "C_RolesGuard" as guard
+participant "C_CatalogController" as ctrl
+participant "C_CatalogService" as svc
+participant "C_TypeORM" as orm
+participant "tipo_equipo" as tent
+
+user -> view : Modifica nombre del tipo\npor uno ya existente
+activate view
+
+view -> guard : PATCH /catalogo/:id\n{ nombre: <nombre duplicado> }
+activate guard
+
+guard -> guard : Verifica roles:\nADMIN / SUPERUSUARIO
+activate guard
+deactivate guard
+
+guard -> ctrl : Solicitud autorizada
+deactivate guard
+activate ctrl
+
+ctrl -> svc : editarTipo(id, { nombre,\nid_empresa })
+activate svc
+
+svc -> orm : findOne(tipo_equipo\npor id y id_empresa)
+activate orm
+
+orm -> tent : SELECT tipo_equipo\nWHERE id_tipo_equipo = id\nAND id_empresa = id_empresa
+activate tent
+tent --> orm : Registro tipo_equipo
+deactivate tent
+
+orm --> svc : tipo (existe)
+deactivate orm
+
+svc -> orm : findOne(tipo_equipo por\nnombre, id_empresa, activo=true)
+activate orm
+
+orm -> tent : SELECT tipo_equipo\nWHERE nombre = dto.nombre\nAND id_empresa = id_empresa\nAND activo = true
+activate tent
+tent --> orm : Registro existente\n(id distinto al editado)
+deactivate tent
+
+orm --> svc : duplicado (id_tipo_equipo != id)
+deactivate orm
+
+svc --> ctrl : throw ConflictException\n('Ya existe otro tipo de equipo activo\nregistrado con el nombre [nombre]\npara su empresa.')
+deactivate svc
+
+ctrl --> view : 409 Conflict
+deactivate ctrl
+
+view --> user : Muestra error\n"Ya existe un tipo de equipo\ncon ese nombre en el catálogo"
+deactivate view
+
+@enduml

@@ -1,0 +1,63 @@
+@startuml CU43-exc-ultima-bodega
+title CU-43 — Desactivar bodega (excepción: última bodega activa)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 70
+skinparam ActorPadding 30
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_Bodegas" as view
+participant "C_BodegasController" as ctrl
+participant "C_BodegasService" as svc
+participant "C_TypeORM" as orm
+participant "bodega" as bent
+
+user -> view : Solicita desactivar\nla única bodega activa
+activate view
+
+view -> ctrl : DELETE /bodegas/:id/desactivar
+activate ctrl
+
+ctrl -> svc : deactivate(id, actorId)
+activate svc
+
+svc -> orm : findOne(bodega WHERE id_bodega = id)
+activate orm
+
+orm -> bent : SELECT bodega\nWHERE id_bodega = id
+activate bent
+bent --> orm : Bodega encontrada
+deactivate bent
+
+orm --> svc : Bodega (activa = true)
+deactivate orm
+
+svc -> orm : count(bodega WHERE\nid_empresa = bodega.id_empresa\nAND activa = true)
+activate orm
+
+orm -> bent : SELECT COUNT(*) bodega\nWHERE id_empresa AND activa = true
+activate bent
+bent --> orm : count = 1
+deactivate bent
+
+orm --> svc : activeCount <= 1
+deactivate orm
+
+svc --> ctrl : throw BadRequestException\n('No es posible desactivar la última\nbodega activa de la empresa.')
+deactivate svc
+
+ctrl --> view : 400 Bad Request
+deactivate ctrl
+
+view --> user : Muestra error: "No es posible desactivar\nla última bodega activa de la empresa."
+deactivate view
+
+@enduml

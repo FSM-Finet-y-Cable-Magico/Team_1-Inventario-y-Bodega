@@ -1,0 +1,59 @@
+@startuml CU33-exc-unidad-no-encontrada
+title CU-33 — Consultar ficha de detalle de unidad de equipo (excepción: unidad no encontrada)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 70
+skinparam ActorPadding 30
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_FichaUnidad" as view
+participant "C_RolesGuard" as guard
+participant "C_UnitsController" as ctrl
+participant "C_UnitsService" as svc
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as uent
+
+user -> view : Selecciona unidad\nde equipo (id inexistente)
+activate view
+
+view -> guard : GET /unidades/:id/ficha\n[JWT válido]
+activate guard
+
+guard --> view : Rol autorizado\n(ADMIN / SUPERUSUARIO\n/ ADMIN_BODEGA)
+deactivate guard
+
+view -> ctrl : GET /unidades/:id/ficha
+activate ctrl
+
+ctrl -> svc : verFichaDetalle(id, id_empresa)
+activate svc
+
+svc -> orm : findOne({ id_unidad, id_empresa },\nrelations: tipoEquipo)
+activate orm
+
+orm -> uent : SELECT unidad_equipo\nWHERE id_unidad AND id_empresa
+activate uent
+uent --> orm : (sin resultados)
+deactivate uent
+
+orm --> svc : null
+deactivate orm
+
+svc --> ctrl : throw NotFoundException\n('No se encontró ninguna unidad\ncon el ID [id].')
+deactivate svc
+
+ctrl --> view : 404 Not Found
+deactivate ctrl
+
+view --> user : Muestra "No se encontró\nninguna unidad con ese ID"
+deactivate view
+
+@enduml

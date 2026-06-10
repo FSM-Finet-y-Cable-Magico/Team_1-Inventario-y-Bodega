@@ -1,0 +1,29 @@
+@startuml CU28-exc-formato-invalido
+title CU-28 — Validar número de serie de equipo (excepción: formato inválido)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 70
+skinparam ActorPadding 30
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+participant "C_UnitsService" as units
+participant "C_CatalogService" as catalog
+
+units -> catalog : validarFormatoSerialNumber(numero_serie)
+activate catalog
+
+catalog -> catalog : Aplica regex:\n/^[A-Z0-9-]{4,30}$/.test(serial)
+activate catalog
+deactivate catalog
+
+catalog --> units : throw BadRequestException\n('El formato del numero de serie es invalido.\nDebe contener entre 4 y 30 caracteres\nalfanumericos y guiones.')
+deactivate catalog
+
+@enduml
