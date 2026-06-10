@@ -50,5 +50,8 @@ pids
 *.seed
 *.pid.lock
 
-# Session / handoff (local only)
+
 PROGRESS.md
+/backend-inventario/cus.json
+cus.json
+bdd.sql
