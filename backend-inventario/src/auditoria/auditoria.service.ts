@@ -13,8 +13,17 @@ export class AuditoriaService {
   ) {}
 
   async create(createAuditoriaDto: CreateAuditoriaDto) {
-    const auditoria = this.auditoriaRepository.create(createAuditoriaDto);
-    return await this.auditoriaRepository.save(auditoria);
+    const MAX_REINTENTOS = 3;
+    let ultimo_error: unknown;
+    for (let intento = 1; intento <= MAX_REINTENTOS; intento++) {
+      try {
+        const auditoria = this.auditoriaRepository.create(createAuditoriaDto);
+        return await this.auditoriaRepository.save(auditoria);
+      } catch (err) {
+        ultimo_error = err;
+      }
+    }
+    throw ultimo_error;
   }
 
   async findAll(filtros?: FiltrarAuditoriaDto) {

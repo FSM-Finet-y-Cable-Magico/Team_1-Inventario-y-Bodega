@@ -69,6 +69,10 @@ export class AuthService {
       bloqueado_hasta: null,
     });
 
+    if (usuario.id_empresa === null || usuario.id_empresa === undefined) {
+      throw new UnauthorizedException('Su cuenta no tiene una empresa asignada. Contacte al administrador del sistema.');
+    }
+
     const payload = {
       sub: usuario.id_usuario,
       nombre_usuario: usuario.nombre_usuario,

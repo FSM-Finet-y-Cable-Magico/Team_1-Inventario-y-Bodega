@@ -40,7 +40,7 @@ export class CatalogController {
     @Patch(':id')
     @Roles('ADMIN', 'SUPERUSUARIO')
     async editarTipoEquipo(@Param('id') id: string, @Body() body: any, @CurrentUser() actor: any) {
-        return this.catalogService.editarTipo(id, { ...body, id_empresa: actor.id_empresa });
+        return this.catalogService.editarTipo(id, { ...body, id_empresa: actor.id_empresa }, actor.id_usuario);
     }
 
     @Delete(':id')

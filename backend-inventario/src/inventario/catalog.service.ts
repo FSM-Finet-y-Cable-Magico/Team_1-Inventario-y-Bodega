@@ -3,15 +3,18 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { TipoEquipo } from "./entities/tipo-equipo.entity";
 import { UnidadEquipo } from "./entities/unidad-equipo.entity";
+import { AuditoriaService } from "src/auditoria/auditoria.service";
 
 @Injectable()
 export class CatalogService {
     constructor(
         @InjectRepository(TipoEquipo)
         private readonly catalogRepository: Repository<TipoEquipo>,
-    
+
         @InjectRepository(UnidadEquipo)
-        private readonly unitRepository: Repository<UnidadEquipo>
+        private readonly unitRepository: Repository<UnidadEquipo>,
+
+        private readonly auditoriaService: AuditoriaService,
     ){}
 
     async crearTipo(dto: {nombre: string; categoria: string; requiereSerialNumber: boolean; unidadMedida?: string; id_empresa: number}) {
@@ -77,17 +80,25 @@ export class CatalogService {
         return resultados;
     }
 
-    async editarTipo(id: string, dto: { nombre?: string; categoria?: string; requiereSerialNumber?: boolean; id_empresa: number }) {
+    async editarTipo(id: string, dto: { nombre?: string; categoria?: string; requiereSerialNumber?: boolean; id_empresa: number }, actorId?: number) {
         const idNum = parseInt(id);
         if (isNaN(idNum)) {
             throw new BadRequestException('El ID del tipo de equipo proporcionado debe ser un número válido.');
         }
 
-        const tipo = await this.catalogRepository.findOne({ 
-            where: { id_tipo_equipo: idNum, id_empresa: dto.id_empresa } 
+        const tipo = await this.catalogRepository.findOne({
+            where: { id_tipo_equipo: idNum, id_empresa: dto.id_empresa }
         });
 
         if (!tipo) {
+            await this.auditoriaService.create({
+                id_usuario: actorId ?? 0,
+                accion: 'ACCESO_DENEGADO',
+                entidad_afectada: 'tipo_equipo',
+                id_entidad_afectada: idNum,
+                valor_anterior: null,
+                valor_nuevo: { motivo: 'Intento de modificar registro de otra empresa', id_empresa_actor: dto.id_empresa },
+            });
             throw new NotFoundException('El tipo de equipo que intenta modificar no existe o no pertenece a su empresa.');
         }
 
@@ -239,7 +250,12 @@ export class CatalogService {
             throw new NotFoundException('El tipo de equipo consultado no existe en el catálogo de su empresa.');
         }
 
-        // Evaluamos la columna 'requiere_serie_individual' de tu base de datos real
+        if (tipo.requiereSerialNumber === null || tipo.requiereSerialNumber === undefined) {
+            throw new BadRequestException(
+                `Error de configuración: el tipo de equipo [${tipo.nombre}] no tiene definida la propiedad 'requiereSerialNumber'. Contacte al administrador.`
+            );
+        }
+
         if (tipo.requiereSerialNumber === true) {
             return {
                 id_tipo_equipo: tipo.id_tipo_equipo,
