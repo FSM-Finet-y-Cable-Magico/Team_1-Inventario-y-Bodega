@@ -149,6 +149,10 @@ export function getDashboard() {
 	return api.get<any>('/empresas/dashboard');
 }
 
+export function getMyDashboard() {
+	return api.get<any>('/empresas/mi-dashboard');
+}
+
 export function getAuditLog(filters?: Record<string, string | number | undefined>) {
 	const qs = new URLSearchParams();
 	if (filters) {

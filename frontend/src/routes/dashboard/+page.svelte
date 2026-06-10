@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { authStore, userRoles } from '$lib/stores/auth';
-	import { getDashboard } from '$lib/api/index';
+	import { userRoles } from '$lib/stores/auth';
+	import { getDashboard, getMyDashboard } from '$lib/api/index';
 	import { onMount } from 'svelte';
-	import { Building2, Package, Warehouse } from '@lucide/svelte';
+	import { Building2, Package, Warehouse, Boxes } from '@lucide/svelte';
 
 	let roles = $state<string[]>([]);
 	userRoles.subscribe((r) => (roles = r));
@@ -14,22 +14,28 @@
 		total_equipos: number;
 		por_estado: Record<string, number>;
 		total_bodegas: number;
-		nombre_empresa?: string;
+		stock_consumible: number;
 	}[]>([]);
+
+	// El backend habla en términos de unidades/bodegas_activas (CU-15)
+	function mapEmpresa(e: any) {
+		return {
+			empresa: e.empresa,
+			total_equipos: e.total_unidades ?? 0,
+			por_estado: e.unidades_por_estado ?? {},
+			total_bodegas: e.bodegas_activas ?? 0,
+			stock_consumible: e.stock_consumible_total ?? 0
+		};
+	}
 
 	onMount(async () => {
 		try {
 			if (roles.includes('SUPERUSUARIO')) {
 				const data = await getDashboard();
-				dashboard = Array.isArray(data) ? data : [data];
+				dashboard = (data?.dashboard_consolidado ?? []).map(mapEmpresa);
 			} else {
-				dashboard = [{
-					empresa: String($authStore.id_empresa ?? ''),
-					nombre_empresa: 'Mi Empresa',
-					total_equipos: 0,
-					por_estado: {},
-					total_bodegas: 0
-				}];
+				const data = await getMyDashboard();
+				dashboard = [mapEmpresa(data)];
 			}
 		} catch (err: unknown) {
 			error = err instanceof Error ? err.message : 'Error al cargar dashboard';
@@ -64,7 +70,7 @@
 				<div class="bg-white rounded-lg border border-border p-6">
 					<div class="flex items-center gap-2 mb-4">
 						<Building2 class="h-5 w-5 text-accent" />
-						<h2 class="text-base font-semibold text-foreground">{empresa.nombre_empresa || empresa.empresa}</h2>
+						<h2 class="text-base font-semibold text-foreground">{empresa.empresa}</h2>
 					</div>
 					<div class="grid grid-cols-2 gap-4">
 						<div class="bg-surface rounded-lg p-3">
@@ -77,9 +83,16 @@
 						<div class="bg-surface rounded-lg p-3">
 							<div class="flex items-center gap-2 text-muted text-xs mb-1">
 								<Warehouse class="h-3.5 w-3.5" />
-								<span>Bodegas</span>
+								<span>Bodegas activas</span>
 							</div>
 							<span class="text-2xl font-bold text-foreground">{empresa.total_bodegas}</span>
+						</div>
+						<div class="bg-surface rounded-lg p-3">
+							<div class="flex items-center gap-2 text-muted text-xs mb-1">
+								<Boxes class="h-3.5 w-3.5" />
+								<span>Stock consumible</span>
+							</div>
+							<span class="text-2xl font-bold text-foreground">{empresa.stock_consumible}</span>
 						</div>
 					</div>
 					{#if Object.keys(empresa.por_estado).length > 0}

@@ -118,7 +118,7 @@
 								<td class="px-4 py-3 text-muted whitespace-nowrap">
 									{new Date(log.fecha_hora).toLocaleString('es-CL')}
 								</td>
-								<td class="px-4 py-3 font-mono text-xs text-foreground">#{log.id_usuario}</td>
+								<td class="px-4 py-3 text-xs text-foreground">{log.usuario_nombre ?? `#${log.id_usuario}`}</td>
 								<td class="px-4 py-3">
 									<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
 										{accionBadge[log.accion] === 'info' ? 'bg-blue-50 text-blue-700' :

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { getUnits, getCatalog, createUnit } from '$lib/api/index';
+	import { getUnits, getCatalog, createUnit, getWarehouses } from '$lib/api/index';
 	import type { UnidadEquipo, TipoEquipo } from '$lib/types';
 	import Button from '$lib/components/Button.svelte';
 	import Modal from '$lib/components/Modal.svelte';
@@ -13,6 +13,7 @@
 
 	let units = $state<UnidadEquipo[]>([]);
 	let tipos = $state<TipoEquipo[]>([]);
+	let bodegas = $state<{ id_bodega: number; nombre: string }[]>([]);
 	let loading = $state(true);
 	let error = $state('');
 	let search = $state('');
@@ -20,23 +21,24 @@
 
 	let showCreate = $state(false);
 	let createForm = $state({
-		id_tipo_equipo: 0, numero_serie: '', modelo: '', estado: 'En bodega' as string,
+		id_tipo_equipo: 0, numero_serie: '', modelo: '',
 		fecha_adquisicion: '', fecha_venc_garantia: '', id_bodega_actual: 0
 	});
 	let createError = $state('');
 	let creating = $state(false);
 
+	// Deben coincidir exactamente (tildes incluidas) con los estados del backend
 	const estados = [
-		'En bodega', 'Asignado a tecnico', 'Instalado en cliente',
-		'En revision', 'En prestamo externo', 'Dado de baja'
+		'En bodega', 'Asignado a técnico', 'Instalado en cliente',
+		'En revisión', 'En préstamo externo', 'Dado de baja'
 	];
 
 	const estadoBadge: Record<string, string> = {
 		'En bodega': 'default',
-		'Asignado a tecnico': 'info',
+		'Asignado a técnico': 'info',
 		'Instalado en cliente': 'success',
-		'En revision': 'warning',
-		'En prestamo externo': 'info',
+		'En revisión': 'warning',
+		'En préstamo externo': 'info',
 		'Dado de baja': 'danger'
 	};
 
@@ -44,12 +46,14 @@
 		loading = true;
 		error = '';
 		try {
-			const [unitsData, tiposData] = await Promise.all([
+			const [unitsData, tiposData, bodegasData] = await Promise.all([
 				getUnits({ estado: estadoFilter || undefined, buscar: search || undefined }),
-				getCatalog({ activo: true })
+				getCatalog({ activo: true }),
+				getWarehouses({ activa: true })
 			]);
 			units = unitsData;
 			tipos = tiposData;
+			bodegas = bodegasData;
 		} catch (err: unknown) {
 			error = err instanceof Error ? err.message : 'Error al cargar unidades';
 		} finally {
@@ -67,7 +71,7 @@
 		try {
 			await createUnit(createForm as unknown as Record<string, unknown>);
 			showCreate = false;
-			createForm = { id_tipo_equipo: 0, numero_serie: '', modelo: '', estado: 'En bodega',
+			createForm = { id_tipo_equipo: 0, numero_serie: '', modelo: '',
 				fecha_adquisicion: '', fecha_venc_garantia: '', id_bodega_actual: 0 };
 			await load();
 		} catch (err: unknown) {
@@ -180,7 +184,7 @@
 			helper="4-30 caracteres, mayúsculas, números y guiones">
 			<input id="serie" type="text" required bind:value={createForm.numero_serie}
 				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary font-mono"
-				placeholder="Ej: ONT-2024-0001" pattern="^[A-Z0-9-]{4,30}$"
+				placeholder="Ej: ONT-2024-0001" pattern={'^[A-Z0-9\\-]{4,30}$'}
 				title="4-30 caracteres, solo mayúsculas, números y guiones" />
 		</FormField>
 
@@ -190,11 +194,12 @@
 				placeholder="Ej: HG8245H" />
 		</FormField>
 
-		<FormField label="Estado inicial" name="est">
-			<select id="est" bind:value={createForm.estado}
+		<FormField label="Bodega de destino" name="bod" required>
+			<select id="bod" required bind:value={createForm.id_bodega_actual}
 				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
-				{#each estados as est}
-					<option value={est}>{est}</option>
+				<option value={0} disabled>Seleccionar bodega</option>
+				{#each bodegas as b}
+					<option value={b.id_bodega}>{b.nombre}</option>
 				{/each}
 			</select>
 		</FormField>

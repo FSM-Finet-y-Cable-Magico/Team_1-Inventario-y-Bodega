@@ -208,7 +208,7 @@
 			<select id="te" required bind:value={thresholdForm.id_tipo_equipo}
 				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
 				<option value={0} disabled>Seleccionar...</option>
-				{#each tipos as t}
+				{#each tipos.filter((t) => t.requiereSerialNumber === false) as t}
 					<option value={t.id_tipo_equipo}>{t.nombre}</option>
 				{/each}
 			</select>
