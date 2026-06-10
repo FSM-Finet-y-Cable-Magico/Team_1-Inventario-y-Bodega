@@ -1,0 +1,15 @@
+{
+	"/": [],
+	"/auditoria": [],
+	"/bodegas": [],
+	"/bodegas/[id]": [],
+	"/catalogo": [],
+	"/catalogo/[id]": [],
+	"/dashboard": [],
+	"/login": [],
+	"/transferencias": [],
+	"/unidades": [],
+	"/unidades/[id]": [],
+	"/usuarios": [],
+	"/usuarios/[id]": []
+}
