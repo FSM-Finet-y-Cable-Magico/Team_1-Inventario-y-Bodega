@@ -5,8 +5,6 @@ skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-skinparam ParticipantPadding 70
-skinparam ActorPadding 30
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black
@@ -15,13 +13,6 @@ hide footbox
 
 participant "C_UnitsService" as units
 participant "C_CatalogService" as catalog
-
-note over units, catalog
-  «PENDIENTE DE IMPLEMENTAR EN EL BACKEND»
-  registrarUnidad() no recibe ni valida un campo
-  "cantidad": registra siempre una sola unidad por
-  llamada. La validación de cantidad <= 0 no existe.
-end note
 
 units -> catalog : validarFormatoSerialNumber(numero_serie)
 activate catalog

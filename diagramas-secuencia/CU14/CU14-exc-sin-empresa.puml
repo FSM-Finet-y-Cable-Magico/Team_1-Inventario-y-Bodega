@@ -5,8 +5,6 @@ skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-skinparam ParticipantPadding 70
-skinparam ActorPadding 30
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black
@@ -19,8 +17,6 @@ participant "C_AuthController" as ctrl
 participant "C_AuthService" as svc
 participant "C_TypeORM" as orm
 participant "usuario" as uent
-
-note over svc : «PENDIENTE DE IMPLEMENTAR EN EL BACKEND»
 
 user -> view : Ingresa nombre_usuario\ny password
 activate view

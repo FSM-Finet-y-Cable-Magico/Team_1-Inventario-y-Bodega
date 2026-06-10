@@ -5,17 +5,11 @@ skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-skinparam ParticipantPadding 70
-skinparam ActorPadding 30
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black
 }
 hide footbox
-
-note over units, tent
-  «PENDIENTE DE IMPLEMENTAR EN EL BACKEND»
-end note
 
 participant "C_UnitsService" as units
 participant "C_CatalogService" as catalog

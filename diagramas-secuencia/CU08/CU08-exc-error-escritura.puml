@@ -5,19 +5,11 @@ skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-skinparam ParticipantPadding 70
-skinparam ActorPadding 30
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black
 }
 hide footbox
-
-note over caller, aent
-  «PENDIENTE DE IMPLEMENTAR EN EL BACKEND»
-  Reintentos (hasta 3) y escritura en logs internos
-  no están implementados. Se modela el fallo simple.
-end note
 
 participant "C_AuthService" as caller
 participant "C_AuditoriaService" as aud

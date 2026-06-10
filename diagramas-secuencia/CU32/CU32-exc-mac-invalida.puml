@@ -5,8 +5,6 @@ skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-skinparam ParticipantPadding 70
-skinparam ActorPadding 30
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black
@@ -19,8 +17,6 @@ participant "C_UnitsController" as ctrl
 participant "C_UnitsService" as svc
 participant "C_TypeORM" as orm
 participant "unidad_equipo" as uent
-
-note over svc : «PENDIENTE DE IMPLEMENTAR EN EL BACKEND»
 
 user -> view : Ingresa numero_serie válido\ny dirección MAC inválida\no ya existente
 activate view

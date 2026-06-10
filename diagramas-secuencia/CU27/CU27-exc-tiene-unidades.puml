@@ -5,8 +5,6 @@ skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-skinparam ParticipantPadding 70
-skinparam ActorPadding 30
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black
@@ -43,13 +41,6 @@ deactivate tent
 
 orm --> svc : null
 deactivate orm
-
-note over svc
-«PENDIENTE DE IMPLEMENTAR EN EL BACKEND»
-Excepción "tiene unidades": el código actual siempre
-realiza desactivación lógica (activo=false) incluso
-cuando existen unidades registradas, sin lanzar excepción.
-end note
 
 svc --> ctrl : throw NotFoundException\n('El tipo de equipo que intenta desactivar\nno existe o no pertenece a su empresa.')
 deactivate svc
