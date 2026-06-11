@@ -50,10 +50,13 @@ async function main() {
       continue;
     }
 
-    const rol = await ds.query('SELECT id_rol FROM rol WHERE nombre_rol = $1', [u.rol]);
+    let rol = await ds.query('SELECT id_rol FROM rol WHERE nombre_rol = $1', [u.rol]);
     if (!rol.length) {
-      console.log(`- ${u.nombre_usuario}: rol ${u.rol} no existe en la tabla rol, se omite`);
-      continue;
+      rol = await ds.query(
+        'INSERT INTO rol (nombre_rol, descripcion) VALUES ($1, $2) RETURNING id_rol',
+        [u.rol, `Rol ${u.rol} (creado por seed:qa)`],
+      );
+      console.log(`✓ rol ${u.rol} no existía, creado`);
     }
 
     const hash = await bcrypt.hash(u.password, 12);
