@@ -19,8 +19,8 @@ export function cambiarPassword(dto: {
 	return api.post<{ message: string }>('/auth/cambiar-password', dto);
 }
 
-export async function restablecerPassword(id: number): Promise<{ nueva_password: string }> {
-	return api.post<{ nueva_password: string }>(`/auth/restablecer-password/${id}`);
+export async function restablecerPassword(id: number): Promise<{ password_temporal: string }> {
+	return api.post<{ password_temporal: string }>(`/auth/restablecer-password/${id}`);
 }
 
 export function getUsers(filtros?: { activo?: boolean; buscar?: string; rol?: string }): Promise<Usuario[]> {

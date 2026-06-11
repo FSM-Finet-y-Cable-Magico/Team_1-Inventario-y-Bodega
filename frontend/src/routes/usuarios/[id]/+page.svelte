@@ -65,7 +65,7 @@
 		resetResult = '';
 		try {
 			const res = await restablecerPassword(Number($page.params.id));
-			resetResult = res.nueva_password;
+			resetResult = res.password_temporal;
 			showResetConfirm = false;
 			success = 'Contraseña restablecida correctamente';
 		} catch (err: unknown) {
@@ -137,7 +137,16 @@
 					<Badge variant={usuario.activo ? 'success' : 'danger'}>
 						{usuario.activo ? 'Activo' : 'Inactivo'}
 					</Badge>
-					<Button variant="secondary" size="sm" onclick={() => (showResetConfirm = true)}>
+					<!-- CU-10 Excepción 1: no se restablece la contraseña de un usuario inactivo -->
+					<Button
+						variant="secondary"
+						size="sm"
+						disabled={!usuario.activo}
+						title={!usuario.activo
+							? 'No es posible restablecer la contraseña de un usuario inactivo.'
+							: undefined}
+						onclick={() => (showResetConfirm = true)}
+					>
 						<KeyRound class="h-4 w-4" />
 						Reset password
 					</Button>
