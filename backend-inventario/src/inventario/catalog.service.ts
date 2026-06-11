@@ -17,34 +17,80 @@ export class CatalogService {
         private readonly auditoriaService: AuditoriaService,
     ){}
 
-    async crearTipo(dto: {nombre: string; categoria: string; requiereSerialNumber: boolean; unidadMedida?: string; id_empresa: number}) {
-        if (!dto.nombre || !dto.categoria || dto.requiereSerialNumber === undefined) {
-            throw new BadRequestException('El nombre, la categoría y la definición de serie individual son campos obligatorios.');
+    // CU-24: categorías y unidades de medida permitidas
+    static readonly CATEGORIAS = [
+        'ONT/ONU', 'Decodificador', 'Splitter', 'Herramienta',
+        'Consumible fibra óptica', 'Consumible conector', 'Consumible otro', 'Otro',
+    ];
+    static readonly UNIDADES_MEDIDA = ['Unidad', 'Metro', 'Rollo'];
+
+    async crearTipo(dto: {
+        nombre: string;
+        categoria: string;
+        marca?: string;
+        modelo?: string;
+        descripcionTecnica?: string;
+        requiereSerialNumber: boolean;
+        unidadMedida?: string;
+        garantiaDias?: number;
+        id_empresa: number;
+    }) {
+        // CU-24 Excepción 1: validaciones de formato con errores específicos
+        const errores: string[] = [];
+        const nombre = dto.nombre?.trim() ?? '';
+        const marca = dto.marca?.trim() ?? '';
+        const modelo = dto.modelo?.trim() ?? '';
+        const descripcion = dto.descripcionTecnica?.trim() ?? '';
+        const garantia = dto.garantiaDias ?? 0;
+
+        if (nombre.length < 3 || nombre.length > 80) {
+            errores.push('El nombre del tipo debe tener entre 3 y 80 caracteres.');
+        }
+        if (!dto.categoria || !CatalogService.CATEGORIAS.includes(dto.categoria)) {
+            errores.push(`La categoría es obligatoria y debe ser una de: ${CatalogService.CATEGORIAS.join(', ')}.`);
+        }
+        if (marca.length < 2 || marca.length > 50) {
+            errores.push('La marca es obligatoria y debe tener entre 2 y 50 caracteres.');
+        }
+        if (modelo.length < 1 || modelo.length > 50) {
+            errores.push('El modelo es obligatorio y debe tener entre 1 y 50 caracteres.');
+        }
+        if (descripcion.length > 500) {
+            errores.push('La descripción técnica no puede superar los 500 caracteres.');
+        }
+        if (dto.requiereSerialNumber === undefined || dto.requiereSerialNumber === null) {
+            errores.push("El campo 'Requiere número de serie individual' es obligatorio.");
+        }
+        if (!Number.isInteger(garantia) || garantia < 0 || garantia > 3650) {
+            errores.push('La duración de garantía debe ser un entero entre 0 y 3650 días.');
+        }
+        // CU-24 Excepción 2: unidad de medida obligatoria solo si no requiere serie
+        if (dto.requiereSerialNumber === false) {
+            if (!dto.unidadMedida || !CatalogService.UNIDADES_MEDIDA.includes(dto.unidadMedida)) {
+                errores.push(`Debe seleccionar la unidad de medida (${CatalogService.UNIDADES_MEDIDA.join(', ')}) cuando el tipo no requiere número de serie individual.`);
+            }
+        }
+        if (errores.length) {
+            throw new BadRequestException(errores.join(' '));
         }
 
-        if (dto.requiereSerialNumber === false) {
-            if (!dto.unidadMedida || dto.unidadMedida.trim() === '') {
-                throw new BadRequestException('Regla de Negocio: Al ser un equipo consumible (No individualizable), debe especificar obligatoriamente una unidad de medida (ej: Metros, Unidades).');
-            }
-        
-            dto.categoria = `${dto.categoria} (${dto.unidadMedida})`;
-        }
+        // CU-24 Excepción 3: unicidad de la combinación nombre+marca+modelo
         const existeDuplicado = await this.catalogRepository.findOne({
-            where: { 
-                nombre: dto.nombre, 
-                id_empresa: dto.id_empresa,
-                activo: true 
-            }
+            where: { nombre, marca, modelo, activo: true },
         });
-        
         if (existeDuplicado) {
-            throw new ConflictException(`Restricción de catálogo: Ya existe un tipo de equipo registrado con el nombre [${dto.nombre}] para esta empresa.`);
+            throw new ConflictException('Ya existe un tipo de equipo con esa combinación de nombre, marca y modelo.');
         }
 
         const nuevoTipo = this.catalogRepository.create({
             id_empresa: dto.id_empresa,
-            nombre: dto.nombre,
+            nombre,
             categoria: dto.categoria,
+            marca,
+            modelo,
+            descripcionTecnica: descripcion || null,
+            unidadMedida: dto.requiereSerialNumber === false ? dto.unidadMedida : null,
+            garantiaDias: garantia,
             requiereSerialNumber: dto.requiereSerialNumber,
             activo: true
         });

@@ -161,12 +161,15 @@ export interface ConfigurarUmbralDto {
 	umbral: number;
 }
 
+// Respuesta de GET /transferencias (CU-23)
 export interface Transferencia {
 	id_transferencia: number;
-	id_empresa_origen: number | null;
-	id_empresa_destino: number | null;
-	id_usuario_registro: number | null;
-	fecha_transferencia: string | null;
+	empresa_origen: string;
+	empresa_destino: string;
+	fecha: string | null;
+	estado: string;
+	unidades: number;
+	solicitante: string | null;
 	observaciones: string | null;
 }
 

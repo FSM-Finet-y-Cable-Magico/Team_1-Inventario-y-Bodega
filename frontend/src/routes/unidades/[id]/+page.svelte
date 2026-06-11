@@ -2,13 +2,13 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { getUnit, changeUnitState, getUnitHistory, getWarehouses } from '$lib/api/index';
+	import { getUnit, changeUnitState, getUnitHistory, getWarehouses, updateUnit } from '$lib/api/index';
 	import type { UnidadEquipo, HistorialEstado, EstadoUnidad, Bodega } from '$lib/types';
 	import Button from '$lib/components/Button.svelte';
 	import Modal from '$lib/components/Modal.svelte';
 	import FormField from '$lib/components/FormField.svelte';
 	import Badge from '$lib/components/Badge.svelte';
-	import { ArrowLeft, RotateCw } from '@lucide/svelte';
+	import { ArrowLeft, RotateCw, Pencil } from '@lucide/svelte';
 
 	let unit = $state<UnidadEquipo | null>(null);
 	let history = $state<HistorialEstado[]>([]);
@@ -21,6 +21,12 @@
 	let changeForm = $state({ estado_nuevo: '' as EstadoUnidad | '', diagnostico: '', motivoPayload: '' });
 	let changeError = $state('');
 	let changing = $state(false);
+
+	// CU-18: edición de los datos de la unidad
+	let showEdit = $state(false);
+	let editForm = $state({ modelo: '', id_bodega_actual: 0, numero_poste: '' });
+	let editError = $state('');
+	let savingEdit = $state(false);
 
 	const estadoBadge: Record<string, string> = {
 		'En bodega': 'default', 'Asignado a tecnico': 'info', 'Instalado en cliente': 'success',
@@ -64,6 +70,37 @@
 	}
 
 	onMount(load);
+
+	function abrirEdicion() {
+		if (!unit) return;
+		editForm = {
+			modelo: unit.modelo ?? '',
+			id_bodega_actual: unit.id_bodega_actual ?? 0,
+			numero_poste: unit.numero_poste ?? ''
+		};
+		editError = '';
+		showEdit = true;
+	}
+
+	async function handleEdit() {
+		if (!unit) return;
+		editError = '';
+		savingEdit = true;
+		try {
+			const payload: Record<string, unknown> = {};
+			if (editForm.modelo.trim()) payload.modelo = editForm.modelo.trim();
+			if (editForm.id_bodega_actual) payload.id_bodega_actual = editForm.id_bodega_actual;
+			if (editForm.numero_poste.trim()) payload.numero_poste = editForm.numero_poste.trim();
+			await updateUnit(unit.id_unidad, payload);
+			showEdit = false;
+			success = 'Unidad actualizada correctamente';
+			await load();
+		} catch (err: unknown) {
+			editError = err instanceof Error ? err.message : 'Error al actualizar unidad';
+		} finally {
+			savingEdit = false;
+		}
+	}
 
 	async function handleChangeState() {
 		if (!unit) return;
@@ -155,8 +192,8 @@
 						</div>
 					</div>
 
-					{#if transiciones[unit.estado]?.length}
-						<div class="mt-6 pt-4 border-t border-border">
+					<div class="mt-6 pt-4 border-t border-border flex items-center gap-3">
+						{#if transiciones[unit.estado]?.length}
 							<Button onclick={() => {
 								changeForm.estado_nuevo = '';
 								showChangeState = true;
@@ -164,8 +201,13 @@
 								<RotateCw class="h-4 w-4" />
 								Cambiar estado
 							</Button>
-						</div>
-					{/if}
+						{/if}
+						<!-- CU-18: edición de los datos de la unidad -->
+						<Button variant="secondary" onclick={abrirEdicion}>
+							<Pencil class="h-4 w-4" />
+							Editar datos
+						</Button>
+					</div>
 				</div>
 
 				<div class="bg-white rounded-lg border border-border p-6">
@@ -217,6 +259,40 @@
 		</div>
 	{/if}
 </div>
+
+<!-- CU-18: edición de datos de la unidad -->
+<Modal title="Editar unidad" open={showEdit} onclose={() => (showEdit = false)}>
+	<form onsubmit={(e: Event) => { e.preventDefault(); handleEdit(); }} class="space-y-4">
+		{#if editError}
+			<div class="bg-red-50 border border-red-200 text-destructive text-sm rounded-md px-3 py-2">{editError}</div>
+		{/if}
+
+		<FormField label="Modelo" name="ed_mod">
+			<input id="ed_mod" type="text" bind:value={editForm.modelo} maxlength={80}
+				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+		</FormField>
+
+		<FormField label="Bodega" name="ed_bod">
+			<select id="ed_bod" bind:value={editForm.id_bodega_actual}
+				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+				<option value={0} disabled>Seleccionar...</option>
+				{#each warehouses as wh}
+					<option value={wh.id_bodega}>{wh.nombre}</option>
+				{/each}
+			</select>
+		</FormField>
+
+		<FormField label="Número de poste" name="ed_poste">
+			<input id="ed_poste" type="text" bind:value={editForm.numero_poste} maxlength={30}
+				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+		</FormField>
+
+		<div class="flex justify-end gap-3 pt-2">
+			<Button variant="secondary" onclick={() => (showEdit = false)} type="button">Cancelar</Button>
+			<Button type="submit" loading={savingEdit}>Guardar cambios</Button>
+		</div>
+	</form>
+</Modal>
 
 <Modal title="Cambiar estado" open={showChangeState} onclose={() => (showChangeState = false)}>
 	<form onsubmit={(e: Event) => { e.preventDefault(); handleChangeState(); }} class="space-y-4">

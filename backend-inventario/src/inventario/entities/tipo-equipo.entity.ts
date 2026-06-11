@@ -15,6 +15,23 @@ export class TipoEquipo {
     @Column({ type: 'varchar', length: 40, nullable: true })
     categoria?: string;
 
+    // CU-24: marca, modelo, descripción técnica, unidad de medida y garantía.
+    // Requieren la migración: npm run migrar (ALTER TABLE tipo_equipo ...)
+    @Column({ type: 'varchar', length: 50, nullable: true })
+    marca?: string | null;
+
+    @Column({ type: 'varchar', length: 50, nullable: true })
+    modelo?: string | null;
+
+    @Column({ type: 'varchar', length: 500, name: 'descripcion_tecnica', nullable: true })
+    descripcionTecnica?: string | null;
+
+    @Column({ type: 'varchar', length: 20, name: 'unidad_medida', nullable: true })
+    unidadMedida?: string | null;
+
+    @Column({ type: 'integer', name: 'garantia_dias', nullable: true, default: 0 })
+    garantiaDias?: number | null;
+
     @Column({ type: 'boolean', name: 'requiere_serie_individual', nullable: true })
     requiereSerialNumber!: boolean;
 

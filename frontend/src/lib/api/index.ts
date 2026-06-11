@@ -143,9 +143,15 @@ export function setStockThreshold(id: number, data: { id_tipo_equipo: number; um
 	return api.post<any>(`/bodegas/${id}/umbral`, data);
 }
 
-export function getTransfers(params?: { estado?: string }) {
-	const qs = params?.estado ? `?estado=${params.estado}` : '';
-	return api.get<any[]>(`/transferencias${qs}`);
+// CU-23: filtros por estado, rango de fechas o empresa
+export function getTransfers(params?: { estado?: string; id_empresa?: string; fecha_inicio?: string; fecha_fin?: string }) {
+	const qs = new URLSearchParams();
+	if (params?.estado) qs.set('estado', params.estado);
+	if (params?.id_empresa) qs.set('id_empresa', params.id_empresa);
+	if (params?.fecha_inicio) qs.set('fecha_inicio', params.fecha_inicio);
+	if (params?.fecha_fin) qs.set('fecha_fin', params.fecha_fin);
+	const query = qs.toString();
+	return api.get<any[]>(`/transferencias${query ? '?' + query : ''}`);
 }
 
 export function createTransfer(data: Record<string, unknown>) {
@@ -156,7 +162,8 @@ export function approveTransfer(id: number) {
 	return api.patch<any>(`/transferencias/${id}/aprobar`);
 }
 
-export function rejectTransfer(id: number, data: { motivo: string }) {
+export function rejectTransfer(id: number, data: { observaciones: string }) {
+	// el backend espera el motivo en el campo 'observaciones'
 	return api.patch<any>(`/transferencias/${id}/rechazar`, data);
 }
 
