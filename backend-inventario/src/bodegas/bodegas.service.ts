@@ -59,9 +59,45 @@ export class BodegasService {
     return nuevaBodega;
   }
 
-  async update(id: number, dto: UpdateBodegaDto, actorId: number): Promise<Bodega> {
+  // CU-16/CU-18/CU-19 Excepción 1: el acceso a una bodega de otra empresa se
+  // rechaza con el mismo 404 que una bodega inexistente (no se revela si el
+  // registro existe) y el intento queda en el log de auditoría.
+  private async verificarPertenencia(
+    bodega: Bodega,
+    userEmpresaId: number,
+    isSuperuser: boolean,
+    actorId: number,
+    operacion: string,
+  ): Promise<void> {
+    if (isSuperuser || bodega.id_empresa === userEmpresaId) return;
+
+    if (actorId) {
+      await this.auditoriaService.create({
+        id_usuario: actorId,
+        accion: 'ACCESO_DENEGADO',
+        entidad_afectada: 'bodega',
+        id_entidad_afectada: bodega.id_bodega,
+        valor_anterior: null,
+        valor_nuevo: {
+          motivo: 'Intento de acceso a bodega de otra empresa',
+          operacion,
+          id_empresa_actor: userEmpresaId,
+        },
+      });
+    }
+    throw new NotFoundException('Bodega no encontrada');
+  }
+
+  async update(
+    id: number,
+    dto: UpdateBodegaDto,
+    actorId: number,
+    userEmpresaId: number,
+    isSuperuser: boolean,
+  ): Promise<Bodega> {
     const bodega = await this.bodegaRepository.findOne({ where: { id_bodega: id } });
     if (!bodega) throw new NotFoundException('Bodega no encontrada');
+    await this.verificarPertenencia(bodega, userEmpresaId, isSuperuser, actorId, 'MODIFICAR');
 
     const anterior = { ...bodega };
 
@@ -95,9 +131,15 @@ export class BodegasService {
     return bodegaActualizada;
   }
 
-  async deactivate(id: number, actorId: number): Promise<Bodega> {
+  async deactivate(
+    id: number,
+    actorId: number,
+    userEmpresaId: number,
+    isSuperuser: boolean,
+  ): Promise<Bodega> {
     const bodega = await this.bodegaRepository.findOne({ where: { id_bodega: id } });
     if (!bodega) throw new NotFoundException('Bodega no encontrada');
+    await this.verificarPertenencia(bodega, userEmpresaId, isSuperuser, actorId, 'DESACTIVAR');
 
     if (!bodega.activa) return bodega;
 
@@ -198,24 +240,28 @@ export class BodegasService {
     return result;
   }
 
-  async findOne(id: number, userEmpresaId: number, isSuperuser: boolean): Promise<Bodega> {
+  async findOne(
+    id: number,
+    userEmpresaId: number,
+    isSuperuser: boolean,
+    actorId?: number,
+  ): Promise<Bodega> {
     const bodega = await this.bodegaRepository.findOne({ where: { id_bodega: id } });
     if (!bodega) throw new NotFoundException('Bodega no encontrada');
-
-    if (!isSuperuser && bodega.id_empresa !== userEmpresaId) {
-      throw new BadRequestException('No tiene permisos para acceder a esta bodega.');
-    }
+    await this.verificarPertenencia(bodega, userEmpresaId, isSuperuser, actorId ?? 0, 'CONSULTAR');
 
     return bodega;
   }
 
-  async getStock(id: number, userEmpresaId: number, isSuperuser: boolean): Promise<any> {
+  async getStock(
+    id: number,
+    userEmpresaId: number,
+    isSuperuser: boolean,
+    actorId?: number,
+  ): Promise<any> {
     const bodega = await this.bodegaRepository.findOne({ where: { id_bodega: id } });
     if (!bodega) throw new NotFoundException('Bodega no encontrada');
-
-    if (!isSuperuser && bodega.id_empresa !== userEmpresaId) {
-      throw new BadRequestException('No tiene permisos para acceder a esta bodega.');
-    }
+    await this.verificarPertenencia(bodega, userEmpresaId, isSuperuser, actorId ?? 0, 'CONSULTAR_STOCK');
 
     const unidades = await this.unidadEquipoRepository.find({
       where: { id_bodega_actual: id },
@@ -269,9 +315,16 @@ export class BodegasService {
     return Object.values(stockPorTipo);
   }
 
-  async configurarUmbral(id: number, dto: ConfigurarUmbralDto, actorId: number): Promise<StockConsumible> {
+  async configurarUmbral(
+    id: number,
+    dto: ConfigurarUmbralDto,
+    actorId: number,
+    userEmpresaId: number,
+    isSuperuser: boolean,
+  ): Promise<StockConsumible> {
     const bodega = await this.bodegaRepository.findOne({ where: { id_bodega: id } });
     if (!bodega) throw new NotFoundException('Bodega no encontrada');
+    await this.verificarPertenencia(bodega, userEmpresaId, isSuperuser, actorId, 'CONFIGURAR_UMBRAL');
 
     const tipoEquipo = await this.tipoEquipoRepository.findOne({
       where: { id_tipo_equipo: dto.id_tipo_equipo },

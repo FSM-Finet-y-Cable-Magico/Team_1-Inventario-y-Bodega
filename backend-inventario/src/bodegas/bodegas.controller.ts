@@ -38,14 +38,18 @@ export class BodegasController {
   @Roles('ADMIN', 'SUPERUSUARIO')
   update(@Param('id') id: string, @Body() dto: UpdateBodegaDto, @Req() req) {
     const actorId = req.user.id_usuario ?? req.user.sub;
-    return this.bodegasService.update(+id, dto, actorId);
+    // CU-18: solo se editan bodegas de la propia empresa
+    const isSuperuser = req.user.roles?.includes('SUPERUSUARIO');
+    return this.bodegasService.update(+id, dto, actorId, req.user.id_empresa, isSuperuser);
   }
 
   @Delete(':id/desactivar')
   @Roles('ADMIN', 'SUPERUSUARIO')
   deactivate(@Param('id') id: string, @Req() req) {
     const actorId = req.user.id_usuario ?? req.user.sub;
-    return this.bodegasService.deactivate(+id, actorId);
+    // CU-19: solo se desactivan bodegas de la propia empresa
+    const isSuperuser = req.user.roles?.includes('SUPERUSUARIO');
+    return this.bodegasService.deactivate(+id, actorId, req.user.id_empresa, isSuperuser);
   }
 
   @Get()
@@ -73,7 +77,8 @@ export class BodegasController {
   findOne(@Param('id') id: string, @Req() req) {
     const userEmpresaId = req.user.id_empresa ?? 1;
     const isSuperuser = req.user.roles?.includes('SUPERUSUARIO');
-    return this.bodegasService.findOne(+id, userEmpresaId, isSuperuser);
+    const actorId = req.user.id_usuario ?? req.user.sub;
+    return this.bodegasService.findOne(+id, userEmpresaId, isSuperuser, actorId);
   }
 
   @Get(':id/stock')
@@ -81,7 +86,8 @@ export class BodegasController {
   getStock(@Param('id') id: string, @Req() req) {
     const userEmpresaId = req.user.id_empresa ?? 1;
     const isSuperuser = req.user.roles?.includes('SUPERUSUARIO');
-    return this.bodegasService.getStock(+id, userEmpresaId, isSuperuser);
+    const actorId = req.user.id_usuario ?? req.user.sub;
+    return this.bodegasService.getStock(+id, userEmpresaId, isSuperuser, actorId);
   }
 
   @Post(':id/umbral')
@@ -92,6 +98,8 @@ export class BodegasController {
     @Req() req,
   ) {
     const actorId = req.user.id_usuario ?? req.user.sub;
-    return this.bodegasService.configurarUmbral(+id, dto, actorId);
+    // CU-18: el umbral solo se configura en bodegas de la propia empresa
+    const isSuperuser = req.user.roles?.includes('SUPERUSUARIO');
+    return this.bodegasService.configurarUmbral(+id, dto, actorId, req.user.id_empresa, isSuperuser);
   }
 }
