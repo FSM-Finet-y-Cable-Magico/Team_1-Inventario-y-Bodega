@@ -15,7 +15,7 @@ export class Bodega {
   direccion: string;
 
   // CU-41: responsable de la bodega. Requiere migración: npm run migrar
-  @Column({ nullable: true })
+  @Column({ type: 'int', nullable: true })
   id_usuario_responsable: number | null;
 
   @Column({ default: true })
