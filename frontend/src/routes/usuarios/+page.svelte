@@ -54,7 +54,10 @@
 		createError = '';
 		creating = true;
 		try {
-			await createUser(createForm as unknown as Record<string, unknown>);
+			// el email es opcional: si va vacío no se envía (el backend lo validaría)
+			const { email, ...rest } = createForm;
+			const payload: Record<string, unknown> = email.trim() ? { ...rest, email: email.trim() } : rest;
+			await createUser(payload);
 			showCreate = false;
 			createForm = { nombre_usuario: '', nombre_completo: '', email: '', password: '', roles: [] };
 			await load();
@@ -172,22 +175,27 @@
 </div>
 
 <Modal title="Nuevo usuario" open={showCreate} onclose={() => (showCreate = false)}>
-	<form onsubmit={(e: Event) => { e.preventDefault(); handleCreate(); }} class="space-y-4">
+	<!-- autocomplete=off + new-password: evita que el navegador autocomplete las
+	     credenciales del admin en el formulario y que ofrezca guardar la contraseña -->
+	<form onsubmit={(e: Event) => { e.preventDefault(); handleCreate(); }} class="space-y-4" autocomplete="off">
 		{#if createError}
 			<div class="bg-red-50 border border-red-200 text-destructive text-sm rounded-md px-3 py-2">{createError}</div>
 		{/if}
 
 		<FormField label="Nombre de usuario" name="nu" required>
 			<input id="nu" type="text" required bind:value={createForm.nombre_usuario}
+				autocomplete="off"
 				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-				placeholder="ej: jperez" pattern="^[a-z0-9_]{4,20}$"
+				placeholder="ej: jperez" pattern={'^[a-z0-9_]{4,20}$'}
 				title="4-20 caracteres, minúsculas, números y guión bajo" />
 		</FormField>
 
 		<FormField label="Nombre completo" name="nc" required>
 			<input id="nc" type="text" required bind:value={createForm.nombre_completo}
+				autocomplete="off"
 				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-				placeholder="Juan Pérez" />
+				placeholder="Juan Pérez" pattern={'^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]{2,80}$'}
+				title="2-80 caracteres, solo letras, espacios y tildes" />
 		</FormField>
 
 		<FormField label="Email" name="em">
@@ -198,8 +206,11 @@
 
 		<FormField label="Contraseña" name="pw" required>
 			<input id="pw" type="password" required bind:value={createForm.password}
+				autocomplete="new-password"
 				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-				placeholder="Mín. 8 caracteres" minlength={8} />
+				placeholder="Mín. 8 caracteres" minlength={8} maxlength={64}
+				pattern={'^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[A-Za-z\\d\\W_]{8,64}$'}
+				title="8-64 caracteres, con al menos una mayúscula, una minúscula y un número" />
 		</FormField>
 
 		<FormField label="Roles" name="rl" required>

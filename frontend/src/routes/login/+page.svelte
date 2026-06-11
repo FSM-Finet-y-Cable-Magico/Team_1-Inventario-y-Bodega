@@ -9,16 +9,30 @@
 	let error = $state('');
 	let loading = $state(false);
 
+	// CU-01 Excepción 1: formato inválido muestra el mensaje genérico
+	// sin especificar cuál campo falló.
+	const MSG_GENERICO = 'Usuario o contraseña incorrectos.';
+
+	function formatoValido() {
+		return /^[a-z0-9_]{4,20}$/.test(nombre_usuario) && password.length >= 8 && password.length <= 64;
+	}
+
 	async function handleSubmit(e: Event) {
 		e.preventDefault();
 		error = '';
+		if (!formatoValido()) {
+			error = MSG_GENERICO;
+			return;
+		}
 		loading = true;
 		try {
 			const res = await apiLogin({ nombre_usuario, password });
 			authStore.login(res.access_token, res.usuario);
 			goto('/dashboard');
 		} catch (err: unknown) {
-			error = err instanceof Error ? err.message : 'Error al iniciar sesión';
+			const msg = err instanceof Error ? err.message : '';
+			// 400 de validación del backend también se traduce al genérico (CU-01)
+			error = msg.includes('must') || !msg ? MSG_GENERICO : msg;
 		} finally {
 			loading = false;
 		}

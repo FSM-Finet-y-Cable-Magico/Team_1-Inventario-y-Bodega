@@ -31,7 +31,9 @@ async function request<T>(
 		body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined
 	});
 
-	if (res.status === 401) {
+	// Un 401 del propio login son credenciales inválidas, no una sesión expirada:
+	// debe mostrar el mensaje del backend (CU-01) sin redirigir.
+	if (res.status === 401 && !path.startsWith('/auth/login')) {
 		authStore.logout();
 		goto('/login');
 		throw new ApiError('Sesión expirada', 401);
@@ -46,10 +48,14 @@ async function request<T>(
 	}
 
 	if (!res.ok) {
-		const msg =
+		// ValidationPipe de NestJS devuelve message como string[]
+		const raw =
 			typeof data === 'object' && data !== null
-				? (data as Record<string, unknown>).message as string || 'Error del servidor'
-				: 'Error del servidor';
+				? (data as Record<string, unknown>).message
+				: undefined;
+		const msg = Array.isArray(raw)
+			? [...new Set(raw)].join('. ')
+			: (raw as string) || 'Error del servidor';
 		throw new ApiError(msg, res.status);
 	}
 
