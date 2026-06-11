@@ -136,6 +136,8 @@ export class UsuariosService {
       email: createUsuarioDto.email,
       id_empresa: idEmpresa,
       password_hash: hash,
+      // CU-04: estado inicial seleccionado en el formulario (Activo por defecto)
+      activo: createUsuarioDto.activo ?? true,
     });
 
     if (rolesAsignar.length) {

@@ -24,14 +24,24 @@
 
 	// CU-18: edición de los datos de la unidad
 	let showEdit = $state(false);
-	let editForm = $state({ modelo: '', id_bodega_actual: 0, numero_poste: '' });
+	// CU-34: editables: observaciones, ubicación física (solo En bodega) y complementarios
+	let editForm = $state({ modelo: '', id_bodega_actual: 0, numero_poste: '', observaciones: '', ubicacion_fisica: '' });
 	let editError = $state('');
 	let savingEdit = $state(false);
 
+	// Las claves deben coincidir exactamente (tildes incluidas) con el backend
 	const estadoBadge: Record<string, string> = {
-		'En bodega': 'default', 'Asignado a tecnico': 'info', 'Instalado en cliente': 'success',
-		'En revision': 'warning', 'En prestamo externo': 'info', 'Dado de baja': 'danger'
+		'En bodega': 'default', 'Asignado a técnico': 'info', 'Instalado en cliente': 'success',
+		'En revisión': 'warning', 'En préstamo externo': 'info', 'Dado de baja': 'danger'
 	};
+
+	// CU-33: formato de fechas DD/MM/YYYY
+	function fmtFecha(fecha: string | null | undefined): string {
+		if (!fecha) return '-';
+		return new Date(fecha).toLocaleDateString('en-GB', {
+			day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'America/Santiago'
+		});
+	}
 
 	const diagnosticos = [
 		'No enciende', 'Se reinicia continuamente', 'Sin señal óptica',
@@ -41,11 +51,11 @@
 
 	type TransitionMap = Record<string, string[]>;
 	const transiciones: TransitionMap = {
-		'En bodega': ['Asignado a tecnico', 'En prestamo externo', 'Dado de baja'],
-		'Asignado a tecnico': ['Instalado en cliente', 'En bodega', 'En revision'],
-		'Instalado en cliente': ['En revision'],
-		'En revision': ['En bodega', 'En prestamo externo', 'Dado de baja'],
-		'En prestamo externo': ['En bodega'],
+		'En bodega': ['Asignado a técnico', 'En préstamo externo', 'Dado de baja'],
+		'Asignado a técnico': ['Instalado en cliente', 'En bodega', 'En revisión'],
+		'Instalado en cliente': ['En revisión'],
+		'En revisión': ['En bodega', 'En préstamo externo', 'Dado de baja'],
+		'En préstamo externo': ['En bodega'],
 		'Dado de baja': []
 	};
 
@@ -76,7 +86,9 @@
 		editForm = {
 			modelo: unit.modelo ?? '',
 			id_bodega_actual: unit.id_bodega_actual ?? 0,
-			numero_poste: unit.numero_poste ?? ''
+			numero_poste: unit.numero_poste ?? '',
+			observaciones: unit.observaciones ?? '',
+			ubicacion_fisica: unit.ubicacion_fisica ?? ''
 		};
 		editError = '';
 		showEdit = true;
@@ -91,6 +103,9 @@
 			if (editForm.modelo.trim()) payload.modelo = editForm.modelo.trim();
 			if (editForm.id_bodega_actual) payload.id_bodega_actual = editForm.id_bodega_actual;
 			if (editForm.numero_poste.trim()) payload.numero_poste = editForm.numero_poste.trim();
+			payload.observaciones = editForm.observaciones.trim();
+			// CU-34: la ubicación física solo aplica con la unidad en bodega
+			if (unit.estado === 'En bodega') payload.ubicacion_fisica = editForm.ubicacion_fisica.trim();
 			await updateUnit(unit.id_unidad, payload);
 			showEdit = false;
 			success = 'Unidad actualizada correctamente';
@@ -107,14 +122,14 @@
 		changeError = '';
 		changing = true;
 		try {
+			// El backend espera nuevoEstado/diagnostico/observacion (CU-35/CU-40)
 			const payload: Record<string, unknown> = {
-				estado_nuevo: changeForm.estado_nuevo
+				nuevoEstado: changeForm.estado_nuevo
 			};
-			if (changeForm.estado_nuevo === 'En revision') {
+			if (changeForm.estado_nuevo === 'En revisión') {
+				payload.diagnostico = changeForm.diagnostico;
 				if (changeForm.diagnostico === 'Otro') {
-					payload.motivoPayload = changeForm.motivoPayload;
-				} else {
-					payload.diagnostico = changeForm.diagnostico;
+					payload.observacion = changeForm.motivoPayload;
 				}
 			}
 			await changeUnitState(unit.id_unidad, payload);
@@ -165,30 +180,65 @@
 						</Badge>
 					</div>
 
+					<!-- CU-33: ficha de detalle completa de la unidad -->
 					<div class="grid grid-cols-2 gap-4 text-sm">
 						<div>
-							<span class="text-muted">Tipo:</span>
+							<span class="text-muted">Tipo de equipo:</span>
 							<p class="text-foreground font-medium">{unit.tipo_equipo?.nombre || '-'}</p>
+						</div>
+						<div>
+							<span class="text-muted">Dirección MAC:</span>
+							<p class="text-foreground font-mono">{unit.mac_address || '-'}</p>
+						</div>
+						<div>
+							<span class="text-muted">Marca:</span>
+							<p class="text-foreground">{unit.marca || unit.tipo_equipo?.marca || '-'}</p>
 						</div>
 						<div>
 							<span class="text-muted">Modelo:</span>
 							<p class="text-foreground font-medium">{unit.modelo || '-'}</p>
 						</div>
 						<div>
-							<span class="text-muted">Adquisición:</span>
-							<p class="text-foreground">{unit.fecha_adquisicion || '-'}</p>
+							<span class="text-muted">Empresa propietaria:</span>
+							<p class="text-foreground">{unit.empresa || '-'}</p>
 						</div>
 						<div>
-							<span class="text-muted">Garantía:</span>
-							<p class="text-foreground">{unit.fecha_venc_garantia || 'Sin garantía'}</p>
+							<span class="text-muted">Proveedor:</span>
+							<p class="text-foreground">{unit.proveedor || '-'}</p>
 						</div>
 						<div>
-							<span class="text-muted">Bodega:</span>
-							<p class="text-foreground">{unit.id_bodega_actual ? `ID: ${unit.id_bodega_actual}` : '-'}</p>
+							<span class="text-muted">Fecha de adquisición:</span>
+							<p class="text-foreground">{fmtFecha(unit.fecha_adquisicion)}</p>
 						</div>
 						<div>
-							<span class="text-muted">Poste:</span>
-							<p class="text-foreground">{unit.numero_poste || '-'}</p>
+							<span class="text-muted">Vencimiento de garantía:</span>
+							<p class="text-foreground">
+								{unit.fecha_venc_garantia ? fmtFecha(unit.fecha_venc_garantia) : 'Sin garantía'}
+								{#if unit.garantia?.garantia_vigente}
+									<!-- CU-39: indicador visual de garantía vigente -->
+									<span class="inline-flex items-center gap-1 ml-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">⚠ En garantía</span>
+								{/if}
+							</p>
+						</div>
+						{#if unit.estado === 'En bodega'}
+							<div>
+								<span class="text-muted">Bodega actual:</span>
+								<p class="text-foreground">{unit.bodega || (unit.id_bodega_actual ? `ID: ${unit.id_bodega_actual}` : '-')}</p>
+							</div>
+							<div>
+								<span class="text-muted">Ubicación física en bodega:</span>
+								<p class="text-foreground">{unit.ubicacion_fisica || '-'}</p>
+							</div>
+						{:else}
+							<!-- CU-33: fuera de bodega se indica la ubicación externa según el estado -->
+							<div class="col-span-2">
+								<span class="text-muted">Ubicación externa:</span>
+								<p class="text-foreground">{unit.estado}{unit.estado === 'Instalado en cliente' && unit.id_cliente_instalado ? ` (cliente #${unit.id_cliente_instalado})` : ''}</p>
+							</div>
+						{/if}
+						<div class="col-span-2">
+							<span class="text-muted">Observaciones:</span>
+							<p class="text-foreground">{unit.observaciones || '-'}</p>
 						</div>
 					</div>
 
@@ -287,6 +337,20 @@
 				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
 		</FormField>
 
+		<!-- CU-34: ubicación física en bodega (máx. 60, solo en estado En bodega) -->
+		{#if unit?.estado === 'En bodega'}
+			<FormField label="Ubicación física en bodega" name="ed_ubi" helper="Máximo 60 caracteres">
+				<input id="ed_ubi" type="text" bind:value={editForm.ubicacion_fisica} maxlength={60}
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+					placeholder="Ej: Estante B, fila 3" />
+			</FormField>
+		{/if}
+
+		<FormField label="Observaciones" name="ed_obs" helper="Máximo 300 caracteres">
+			<textarea id="ed_obs" bind:value={editForm.observaciones} maxlength={300} rows="2"
+				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
+		</FormField>
+
 		<div class="flex justify-end gap-3 pt-2">
 			<Button variant="secondary" onclick={() => (showEdit = false)} type="button">Cancelar</Button>
 			<Button type="submit" loading={savingEdit}>Guardar cambios</Button>
@@ -302,6 +366,14 @@
 		{#if unit}
 			<p class="text-sm text-muted">Estado actual: <strong>{unit.estado}</strong></p>
 
+			<!-- CU-39: aviso si el equipo tiene garantía vigente -->
+			{#if (changeForm.estado_nuevo === 'Dado de baja' || changeForm.estado_nuevo === 'En revisión') && unit.garantia?.garantia_vigente}
+				<div class="bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-md px-3 py-2">
+					AVISO: Este equipo tiene garantía vigente hasta {fmtFecha(unit.fecha_venc_garantia)}.
+					Considere su devolución al proveedor antes de proceder.
+				</div>
+			{/if}
+
 			<FormField label="Nuevo estado" name="nuevo_est" required>
 				<select id="nuevo_est" required bind:value={changeForm.estado_nuevo}
 					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
@@ -312,7 +384,7 @@
 				</select>
 			</FormField>
 
-			{#if changeForm.estado_nuevo === 'En revision'}
+			{#if changeForm.estado_nuevo === 'En revisión'}
 				<FormField label="Diagnóstico" name="diag" required>
 					<select id="diag" bind:value={changeForm.diagnostico}
 						class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">

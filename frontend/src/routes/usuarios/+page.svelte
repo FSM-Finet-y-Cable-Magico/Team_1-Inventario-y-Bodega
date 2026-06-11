@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { getUsers, getRoles, createUser, deleteUser } from '$lib/api/index';
-	import type { Usuario, Rol } from '$lib/types';
+	import { getUsers, getRoles, createUser, deleteUser, getEmpresas } from '$lib/api/index';
+	import type { Usuario, Rol, Empresa } from '$lib/types';
 	import Button from '$lib/components/Button.svelte';
 	import Modal from '$lib/components/Modal.svelte';
 	import FormField from '$lib/components/FormField.svelte';
@@ -10,7 +10,7 @@
 	import Badge from '$lib/components/Badge.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
-	import { currentUser } from '$lib/stores/auth';
+	import { currentUser, userRoles } from '$lib/stores/auth';
 	import { Plus, RotateCw, Pencil, Trash2 } from '@lucide/svelte';
 
 	let usuarios = $state<Usuario[]>([]);
@@ -31,7 +31,11 @@
 	}
 
 	let showCreate = $state(false);
-	let createForm = $state({ nombre_usuario: '', nombre_completo: '', email: '', password: '', roles: [] as number[] });
+	// CU-04: nombre completo, usuario, contraseña, empresa, rol y estado
+	let createForm = $state({ nombre_usuario: '', nombre_completo: '', password: '', roles: [] as number[], id_empresa: 0, activo: true });
+	let empresas = $state<Empresa[]>([]);
+	// Solo el Superusuario puede asignar otra empresa (CU-04)
+	const esSuperusuario = $derived($userRoles.includes('SUPERUSUARIO'));
 	let createError = $state('');
 	let creating = $state(false);
 
@@ -58,7 +62,10 @@
 		}
 	}
 
-	onMount(load);
+	onMount(async () => {
+		load();
+		try { empresas = await getEmpresas(); } catch { /* sin permiso */ }
+	});
 
 	$effect(() => {
 		search; filtroRol; filtroEstado;
@@ -69,12 +76,12 @@
 		createError = '';
 		creating = true;
 		try {
-			// el email es opcional: si va vacío no se envía (el backend lo validaría)
-			const { email, ...rest } = createForm;
-			const payload: Record<string, unknown> = email.trim() ? { ...rest, email: email.trim() } : rest;
+			const { id_empresa, ...rest } = createForm;
+			// la empresa solo se envía si el Superusuario eligió una distinta
+			const payload: Record<string, unknown> = esSuperusuario && id_empresa ? { ...rest, id_empresa } : rest;
 			await createUser(payload);
 			showCreate = false;
-			createForm = { nombre_usuario: '', nombre_completo: '', email: '', password: '', roles: [] };
+			createForm = { nombre_usuario: '', nombre_completo: '', password: '', roles: [], id_empresa: 0, activo: true };
 			await load();
 		} catch (err: unknown) {
 			createError = err instanceof Error ? err.message : 'Error al crear usuario';
@@ -227,10 +234,20 @@
 				title="2-80 caracteres, solo letras, espacios y tildes" />
 		</FormField>
 
-		<FormField label="Email" name="em">
-			<input id="em" type="email" bind:value={createForm.email}
-				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-				placeholder="juan@ejemplo.cl" />
+		<!-- CU-04: empresa asignada; un Administrador solo crea en su propia empresa -->
+		<FormField label="Empresa" name="emp">
+			{#if esSuperusuario}
+				<select id="emp" bind:value={createForm.id_empresa}
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+					<option value={0}>Mi empresa ({$currentUser?.empresa?.nombre ?? '—'})</option>
+					{#each empresas as emp}
+						<option value={emp.id}>{emp.nombre}</option>
+					{/each}
+				</select>
+			{:else}
+				<input id="emp" type="text" disabled value={$currentUser?.empresa?.nombre ?? '—'}
+					class="w-full px-3 py-2 border border-border rounded-md text-sm bg-surface-alt text-muted" />
+			{/if}
 		</FormField>
 
 		<FormField label="Contraseña" name="pw" required>
@@ -259,6 +276,14 @@
 					</label>
 				{/each}
 			</div>
+		</FormField>
+
+		<!-- CU-04: estado inicial de la cuenta -->
+		<FormField label="Estado" name="est">
+			<label class="flex items-center gap-2 text-sm cursor-pointer">
+				<input type="checkbox" bind:checked={createForm.activo} class="rounded border-border" />
+				<span>Usuario activo</span>
+			</label>
 		</FormField>
 
 		<div class="flex justify-end gap-3 pt-2">

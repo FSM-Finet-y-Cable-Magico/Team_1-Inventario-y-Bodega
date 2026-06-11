@@ -76,6 +76,8 @@ export class BodegasService {
     }
 
     if (dto.direccion !== undefined) bodega.direccion = dto.direccion;
+    // CU-42: el responsable es editable
+    if (dto.id_usuario_responsable !== undefined) bodega.id_usuario_responsable = dto.id_usuario_responsable;
 
     const bodegaActualizada = await this.bodegaRepository.save(bodega);
 
@@ -159,7 +161,9 @@ export class BodegasService {
       : [];
 
     // Resolvemos los nombres de los responsables en una sola query
-    const idsUsuarios = [...new Set(logsCreacion.map((l) => l.id_usuario))];
+    // (responsable explícito CU-41 o, como respaldo, el creador según auditoría)
+    const idsResponsables = bodegas.map((b) => b.id_usuario_responsable).filter(Boolean) as number[];
+    const idsUsuarios = [...new Set([...logsCreacion.map((l) => l.id_usuario), ...idsResponsables])];
     const usuarios = idsUsuarios.length > 0
       ? await this.usuarioRepository.findBy({ id_usuario: In(idsUsuarios) as any })
       : [];
@@ -176,8 +180,8 @@ export class BodegasService {
         where: { id_bodega_actual: b.id_bodega },
       });
 
-      const idCreador = mapaCreadores.get(b.id_bodega);
-      const nombreResponsable = idCreador ? (mapaUsuarios.get(idCreador) ?? null) : null;
+      const idResponsable = b.id_usuario_responsable ?? mapaCreadores.get(b.id_bodega);
+      const nombreResponsable = idResponsable ? (mapaUsuarios.get(idResponsable) ?? null) : null;
 
       result.push({
         id_bodega: b.id_bodega,
@@ -253,6 +257,8 @@ export class BodegasService {
         id_tipo_equipo: te.id_tipo_equipo,
         tipo_equipo: { nombre: te.nombre, categoria: te.categoria },
         requiere_serie: te.requiereSerialNumber,
+        // CU-45: los consumibles se expresan en su unidad de medida
+        unidad_medida: te.unidadMedida ?? null,
         cantidad_disponible: Number(c.cantidad_disponible),
         umbral_minimo: c.umbral_minimo === null || c.umbral_minimo === undefined
           ? null

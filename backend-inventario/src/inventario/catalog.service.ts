@@ -113,17 +113,17 @@ export class CatalogService {
         query.andWhere('tipo.activo = :activo', { activo: esActivo });
         }
 
+        // CU-25: la búsqueda aplica sobre nombre, marca o modelo
         if (filtros.buscar && filtros.buscar.trim() !== '') {
-        query.andWhere('tipo.nombre ILIKE :buscar', { buscar: `%${filtros.buscar}%` });
+        query.andWhere(
+            '(tipo.nombre ILIKE :buscar OR tipo.marca ILIKE :buscar OR tipo.modelo ILIKE :buscar)',
+            { buscar: `%${filtros.buscar}%` },
+        );
         }
 
-        const resultados = await query.getMany();
-
-        if (!resultados || resultados.length === 0) {
-        throw new NotFoundException('No se encontraron tipos de equipos en el catálogo que coincidan con los filtros de búsqueda seleccionados.');
-        }
-
-        return resultados;
+        // CU-25 Excepción 1: sin coincidencias se retorna el listado vacío;
+        // el frontend muestra el mensaje correspondiente
+        return await query.getMany();
     }
 
     async editarTipo(id: string, dto: { nombre?: string; categoria?: string; requiereSerialNumber?: boolean; id_empresa: number }, actorId?: number) {

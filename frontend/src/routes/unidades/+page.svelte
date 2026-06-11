@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { getUnits, getCatalog, createUnit, getWarehouses } from '$lib/api/index';
+	import { currentUser } from '$lib/stores/auth';
 	import type { UnidadEquipo, TipoEquipo } from '$lib/types';
 	import Button from '$lib/components/Button.svelte';
 	import Modal from '$lib/components/Modal.svelte';
@@ -20,10 +21,15 @@
 	let estadoFilter = $state('');
 
 	let showCreate = $state(false);
+	// CU-32: NS, MAC, tipo (solo con serie), empresa (automática), bodega,
+	// proveedor, fecha de adquisición (no futura) y observaciones iniciales
 	let createForm = $state({
-		id_tipo_equipo: 0, numero_serie: '', modelo: '',
-		fecha_adquisicion: '', fecha_venc_garantia: '', id_bodega_actual: 0
+		id_tipo_equipo: 0, numero_serie: '', mac_address: '', modelo: '',
+		proveedor: '', fecha_adquisicion: '', observaciones: '', id_bodega_actual: 0
 	});
+	const hoyISO = new Date().toISOString().slice(0, 10);
+	// CU-31/CU-32: solo tipos individualizables (requieren número de serie)
+	const tiposConSerie = $derived(tipos.filter((t) => t.requiereSerialNumber !== false));
 	let createError = $state('');
 	let creating = $state(false);
 
@@ -71,8 +77,8 @@
 		try {
 			await createUnit(createForm as unknown as Record<string, unknown>);
 			showCreate = false;
-			createForm = { id_tipo_equipo: 0, numero_serie: '', modelo: '',
-				fecha_adquisicion: '', fecha_venc_garantia: '', id_bodega_actual: 0 };
+			createForm = { id_tipo_equipo: 0, numero_serie: '', mac_address: '', modelo: '',
+				proveedor: '', fecha_adquisicion: '', observaciones: '', id_bodega_actual: 0 };
 			await load();
 		} catch (err: unknown) {
 			createError = err instanceof Error ? err.message : 'Error al registrar unidad';
@@ -174,7 +180,7 @@
 			<select id="tipo" required bind:value={createForm.id_tipo_equipo}
 				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
 				<option value={0} disabled>Seleccionar tipo</option>
-				{#each tipos as t}
+				{#each tiposConSerie as t}
 					<option value={t.id_tipo_equipo}>{t.nombre} {t.categoria ? `(${t.categoria})` : ''}</option>
 				{/each}
 			</select>
@@ -186,6 +192,20 @@
 				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary font-mono"
 				placeholder="Ej: ONT-2024-0001" pattern={'^[A-Z0-9\\-]{4,30}$'}
 				title="4-30 caracteres, solo mayúsculas, números y guiones" />
+		</FormField>
+
+		<FormField label="Dirección MAC" name="mac" helper="Opcional, formato XX:XX:XX:XX:XX:XX">
+			<input id="mac" type="text" bind:value={createForm.mac_address}
+				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary font-mono"
+				placeholder="A1:B2:C3:D4:E5:F6"
+				pattern={'^([0-9A-Fa-f]{2}[:\\-]){5}[0-9A-Fa-f]{2}$'}
+				title="Formato XX:XX:XX:XX:XX:XX con dígitos hexadecimales" />
+		</FormField>
+
+		<!-- CU-17/CU-32: la empresa propietaria es la del usuario autenticado -->
+		<FormField label="Empresa propietaria" name="emp">
+			<input id="emp" type="text" disabled value={$currentUser?.empresa?.nombre ?? '—'}
+				class="w-full px-3 py-2 border border-border rounded-md text-sm bg-surface-alt text-muted" />
 		</FormField>
 
 		<FormField label="Modelo" name="mod">
@@ -205,15 +225,24 @@
 		</FormField>
 
 		<div class="grid grid-cols-2 gap-4">
-			<FormField label="Fecha adquisición" name="fec_adq">
-				<input id="fec_adq" type="date" bind:value={createForm.fecha_adquisicion}
-					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+			<FormField label="Proveedor" name="prov">
+				<input id="prov" type="text" bind:value={createForm.proveedor} maxlength={80}
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+					placeholder="Nombre del proveedor" />
 			</FormField>
-			<FormField label="Venc. garantía" name="fec_gar">
-				<input id="fec_gar" type="date" bind:value={createForm.fecha_venc_garantia}
+			<!-- CU-32: la fecha de adquisición no puede ser futura -->
+			<FormField label="Fecha adquisición" name="fec_adq">
+				<input id="fec_adq" type="date" bind:value={createForm.fecha_adquisicion} max={hoyISO}
 					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
 			</FormField>
 		</div>
+
+		<!-- CU-38: el vencimiento de garantía lo calcula el sistema
+		     (fecha de adquisición + días de garantía del tipo de equipo) -->
+		<FormField label="Observaciones iniciales" name="obs" helper="Opcional, máximo 300 caracteres">
+			<textarea id="obs" bind:value={createForm.observaciones} maxlength={300} rows="2"
+				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
+		</FormField>
 
 		<div class="flex justify-end gap-3 pt-2">
 			<Button variant="secondary" onclick={() => (showCreate = false)} type="button">Cancelar</Button>

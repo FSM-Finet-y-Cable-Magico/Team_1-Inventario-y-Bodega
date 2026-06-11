@@ -59,8 +59,17 @@ export interface TipoEquipo {
 	id_empresa: number | null;
 	nombre: string;
 	categoria: string | null;
-	requiere_serie_individual: boolean | null;
-	ficha_tecnica_pdf_url: string | null;
+	// la API serializa la propiedad de la entidad (requiereSerialNumber)
+	requiereSerialNumber?: boolean | null;
+	requiere_serie_individual?: boolean | null;
+	// CU-24
+	marca?: string | null;
+	modelo?: string | null;
+	descripcionTecnica?: string | null;
+	unidadMedida?: string | null;
+	garantiaDias?: number | null;
+	ficha_tecnica_pdf_url?: string | null;
+	fichaTecnicaPdfUrl?: string | null;
 	activo: boolean;
 }
 
@@ -76,12 +85,13 @@ export interface UpdateTipoEquipoDto {
 	requiereSerialNumber?: boolean;
 }
 
+// Deben coincidir exactamente (tildes incluidas) con los estados del backend
 export type EstadoUnidad =
 	| 'En bodega'
-	| 'Asignado a tecnico'
+	| 'Asignado a técnico'
 	| 'Instalado en cliente'
-	| 'En revision'
-	| 'En prestamo externo'
+	| 'En revisión'
+	| 'En préstamo externo'
 	| 'Dado de baja';
 
 export interface UnidadEquipo {
@@ -99,6 +109,20 @@ export interface UnidadEquipo {
 	numero_poste: string | null;
 	id_caja_nap: number | null;
 	tipo_equipo?: TipoEquipo;
+	// CU-32/CU-33
+	mac_address?: string | null;
+	proveedor?: string | null;
+	observaciones?: string | null;
+	ubicacion_fisica?: string | null;
+	marca?: string | null;
+	empresa?: string | null;
+	bodega?: string | null;
+	garantia?: {
+		posee_garantia: boolean;
+		garantia_vigente: boolean;
+		dias_restantes: number;
+		mensaje_alerta: string;
+	};
 }
 
 export interface CreateUnidadDto {
@@ -134,6 +158,12 @@ export interface Bodega {
 	nombre: string;
 	direccion: string | null;
 	activa: boolean;
+	// CU-44: campos del listado
+	empresa?: string;
+	responsable?: string | null;
+	estado?: string;
+	resumen_stock_total?: number;
+	id_usuario_responsable?: number | null;
 }
 
 export interface CreateBodegaDto {

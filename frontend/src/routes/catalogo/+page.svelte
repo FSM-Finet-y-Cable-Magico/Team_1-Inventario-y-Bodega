@@ -17,6 +17,8 @@
 	let error = $state('');
 	let search = $state('');
 	let categFilter = $state('');
+	// CU-25: filtro por estado (Activo/Inactivo/Todos)
+	let estadoFilter = $state('true');
 
 	let showCreate = $state(false);
 	// CU-24: nombre, categoría, marca, modelo, descripción técnica,
@@ -45,7 +47,7 @@
 		error = '';
 		try {
 			items = await getCatalog({
-				activo: true,
+				activo: estadoFilter === '' ? undefined : estadoFilter === 'true',
 				buscar: search || undefined,
 				categoria: categFilter || undefined
 			});
@@ -58,7 +60,7 @@
 
 	onMount(load);
 
-	$effect(() => { search; categFilter; load(); });
+	$effect(() => { search; categFilter; estadoFilter; load(); });
 
 	async function handleCreate() {
 		createError = '';
@@ -105,7 +107,7 @@
 
 	<div class="flex items-center gap-4 mb-4">
 		<div class="flex-1 max-w-xs">
-			<SearchInput bind:value={search} placeholder="Buscar por nombre..." />
+			<SearchInput bind:value={search} placeholder="Buscar por nombre, marca o modelo..." />
 		</div>
 		<select
 			bind:value={categFilter}
@@ -115,6 +117,12 @@
 			{#each categorias as cat}
 				<option value={cat}>{cat}</option>
 			{/each}
+		</select>
+		<select bind:value={estadoFilter} aria-label="Filtrar por estado"
+			class="px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+			<option value="">Todos los estados</option>
+			<option value="true">Activo</option>
+			<option value="false">Inactivo</option>
 		</select>
 	</div>
 
@@ -126,7 +134,7 @@
 		{#if loading}
 			<div class="p-8 text-center text-sm text-muted">Cargando...</div>
 		{:else if items.length === 0}
-			<EmptyState message="No hay tipos de equipo registrados" action={() => (showCreate = true)} actionlabel="Crear tipo" />
+			<EmptyState message="No se encontraron tipos de equipo con los filtros seleccionados." action={() => (showCreate = true)} actionlabel="Crear tipo" />
 		{:else}
 			<div class="overflow-x-auto">
 				<table class="w-full text-sm">
@@ -134,7 +142,12 @@
 						<tr class="border-b border-border bg-surface/50">
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Nombre</th>
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Categoría</th>
-							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Naturaleza</th>
+							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Marca</th>
+							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Modelo</th>
+							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Estado</th>
+							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Req. N° serie</th>
+							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">U. medida</th>
+							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Garantía (días)</th>
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Ficha técnica</th>
 							<th class="text-right px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Acciones</th>
 						</tr>
@@ -146,11 +159,18 @@
 								<td class="px-4 py-3">
 									<Badge>{item.categoria || 'Sin categoría'}</Badge>
 								</td>
+								<td class="px-4 py-3 text-foreground">{item.marca || '-'}</td>
+								<td class="px-4 py-3 text-foreground">{item.modelo || '-'}</td>
 								<td class="px-4 py-3">
-									<Badge variant={item.requiere_serie_individual ? 'info' : 'default'}>
-										{item.requiere_serie_individual ? 'Individualizable' : 'Consumible'}
+									<Badge variant={item.activo ? 'success' : 'danger'}>{item.activo ? 'Activo' : 'Inactivo'}</Badge>
+								</td>
+								<td class="px-4 py-3">
+									<Badge variant={item.requiereSerialNumber ? 'info' : 'default'}>
+										{item.requiereSerialNumber ? 'Sí' : 'No'}
 									</Badge>
 								</td>
+								<td class="px-4 py-3 text-muted">{item.unidadMedida || '-'}</td>
+								<td class="px-4 py-3 text-muted">{item.garantiaDias ?? 0}</td>
 								<td class="px-4 py-3">
 									{#if item.ficha_tecnica_pdf_url}
 										<a href={item.ficha_tecnica_pdf_url} target="_blank" class="inline-flex items-center gap-1 text-accent hover:text-accent-hover">

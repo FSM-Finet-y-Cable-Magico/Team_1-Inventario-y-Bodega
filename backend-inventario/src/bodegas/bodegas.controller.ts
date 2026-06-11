@@ -27,7 +27,11 @@ export class BodegasController {
   @Roles('ADMIN', 'SUPERUSUARIO')
   create(@Body() dto: CreateBodegaDto, @Req() req) {
     const actorId = req.user.id_usuario ?? req.user.sub;
-    return this.bodegasService.create(dto, actorId);
+    // CU-17/CU-41: la bodega pertenece a la empresa del actor;
+    // solo un Superusuario puede crearla en otra empresa
+    const isSuperuser = req.user.roles?.includes('SUPERUSUARIO');
+    const idEmpresa = isSuperuser && dto.id_empresa ? dto.id_empresa : req.user.id_empresa;
+    return this.bodegasService.create({ ...dto, id_empresa: idEmpresa }, actorId);
   }
 
   @Patch(':id')

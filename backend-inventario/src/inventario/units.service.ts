@@ -2,6 +2,9 @@ import { Injectable, BadRequestException, ConflictException, NotFoundException }
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, DataSource } from "typeorm";
 import { UnidadEquipo } from "./entities/unidad-equipo.entity";
+import { TipoEquipo } from "./entities/tipo-equipo.entity";
+import { Bodega } from "../bodegas/entities/bodega.entity";
+import { EMPRESAS } from "../companies/companies.service";
 import { CatalogService } from "./catalog.service";
 import { HistorialEstado } from "./entities/historial-estado.entity";
 import { EditarDatosUnidadDto } from "./dto/editar-datos-unidad.dto";
@@ -40,18 +43,20 @@ export class UnitsService {
         return unidades.map((u) => ({
             id_unidad: u.id_unidad,
             numero_serie: u.serialNumber,
-            modelo: u.modelo ?? null,
+            mac_address: u.macAddress ?? null,
+            modelo: u.modelo ?? u.tipoEquipo?.modelo ?? null,
             estado: u.estado,
+            proveedor: u.proveedor ?? null,
             fecha_adquisicion: u.fechaAdquisicion,
             fecha_venc_garantia: u.fechaVencGarantia,
             id_bodega_actual: u.id_bodega_actual,
             tipo_equipo: u.tipoEquipo
-                ? { nombre: u.tipoEquipo.nombre, categoria: u.tipoEquipo.categoria }
+                ? { nombre: u.tipoEquipo.nombre, categoria: u.tipoEquipo.categoria, marca: u.tipoEquipo.marca ?? null, modelo: u.tipoEquipo.modelo ?? null }
                 : null,
         }));
     }
 
-    async registrarUnidad(dto: { id_tipo_equipo: number; numero_serie: string; modelo?: string; id_bodega_actual: number; fecha_adquisicion?: string; fecha_venc_garantia?: string; mac_address?: string }, idEmpresaContexto: number) {
+    async registrarUnidad(dto: { id_tipo_equipo: number; numero_serie: string; modelo?: string; id_bodega_actual: number; fecha_adquisicion?: string; mac_address?: string; proveedor?: string; observaciones?: string }, idEmpresaContexto: number) {
 
         if (!dto.id_tipo_equipo || !dto.numero_serie || !dto.id_bodega_actual) {
             throw new BadRequestException('El tipo de equipo, el número de serie y la bodega de destino son campos obligatorios.');
@@ -76,8 +81,7 @@ export class UnitsService {
 
         if (existeUnidad) {
             throw new ConflictException(
-                `Conflicto de Inventario: El número de serie [${serieNormalizada}] ya se encuentra registrado en el sistema ` +
-                `en el estado [${existeUnidad.estado}]. No se permiten registros duplicados.`
+                `El número de serie [${serieNormalizada}] ya se encuentra registrado en el sistema.`
             );
         }
 
@@ -98,7 +102,22 @@ export class UnitsService {
         }
 
         const fechaAdq = dto.fecha_adquisicion ? new Date(dto.fecha_adquisicion) : new Date();
-        const fechaVencGarantia = dto.fecha_venc_garantia ? new Date(dto.fecha_venc_garantia) : null;
+        // CU-32: la fecha de adquisición no puede ser futura
+        const hoyFin = new Date();
+        hoyFin.setHours(23, 59, 59, 999);
+        if (fechaAdq > hoyFin) {
+            throw new BadRequestException('La fecha de adquisición no puede ser una fecha futura.');
+        }
+
+        // CU-38: vencimiento de garantía = fecha de adquisición + días del tipo de equipo
+        const tipo = await this.dataSource.getRepository(TipoEquipo).findOne({
+            where: { id_tipo_equipo: dto.id_tipo_equipo },
+        });
+        let fechaVencGarantia: Date | null = null;
+        if (tipo?.garantiaDias && tipo.garantiaDias > 0) {
+            fechaVencGarantia = new Date(fechaAdq);
+            fechaVencGarantia.setDate(fechaVencGarantia.getDate() + tipo.garantiaDias);
+        }
 
         const datosNuevaUnidad: Partial<UnidadEquipo> = {
             id_tipo_equipo: dto.id_tipo_equipo,
@@ -110,6 +129,8 @@ export class UnitsService {
             fechaAdquisicion: fechaAdq,
             fechaVencGarantia: fechaVencGarantia,
             macAddress: macNormalizada ?? null,
+            proveedor: dto.proveedor?.trim() || null,
+            observaciones: dto.observaciones?.trim().slice(0, 300) || null,
         };
 
         const nuevaUnidad = this.unitRepository.create(datosNuevaUnidad);
@@ -284,22 +305,40 @@ export class UnitsService {
             }
         }
 
+        // CU-33: bodega actual (nombre) y empresa propietaria
+        const bodega = unidad.id_bodega_actual
+            ? await this.dataSource.getRepository(Bodega).findOne({ where: { id_bodega: unidad.id_bodega_actual } })
+            : null;
+        const empresa = EMPRESAS.find((e) => e.id === unidad.id_empresa) ?? null;
+
+        // CU-33: ficha plana con todos los campos del caso de uso
         return {
-            success: true,
-            datos_unidad: {
-                id_unidad: unidad.id_unidad,
-                numero_serie: unidad.serialNumber,
-                modelo: unidad.modelo ?? 'No especificado',
-                estado_actual: unidad.estado,
-                fecha_adquisicion: unidad.fechaAdquisicion,
-                fecha_vencimiento_garantia: unidad.fechaVencGarantia ?? 'Sin registrar'
+            id_unidad: unidad.id_unidad,
+            numero_serie: unidad.serialNumber,
+            mac_address: unidad.macAddress ?? null,
+            tipo_equipo: {
+                nombre: unidad.tipoEquipo?.nombre ?? null,
+                categoria: unidad.tipoEquipo?.categoria ?? null,
+                marca: unidad.tipoEquipo?.marca ?? null,
+                modelo: unidad.tipoEquipo?.modelo ?? null,
+                ficha_tecnica_pdf_url: unidad.tipoEquipo?.fichaTecnicaPdfUrl ?? null,
             },
-            alerta_visual_garantia: alertaGarantia,
-            especificaciones_catalogo: {
-                nombre_comercial: unidad.tipoEquipo.nombre,
-                categoria_inventario: unidad.tipoEquipo.categoria,
-                ficha_tecnica_pdf_url: unidad.tipoEquipo.fichaTecnicaPdfUrl ?? 'No disponible'
-            }
+            marca: unidad.tipoEquipo?.marca ?? null,
+            modelo: unidad.modelo ?? unidad.tipoEquipo?.modelo ?? null,
+            empresa: empresa?.nombre ?? null,
+            id_empresa: unidad.id_empresa,
+            bodega: bodega?.nombre ?? null,
+            id_bodega_actual: unidad.id_bodega_actual ?? null,
+            estado: unidad.estado,
+            proveedor: unidad.proveedor ?? null,
+            fecha_adquisicion: unidad.fechaAdquisicion ?? null,
+            fecha_venc_garantia: unidad.fechaVencGarantia ?? null,
+            garantia: alertaGarantia,
+            ubicacion_fisica: unidad.ubicacionFisica ?? null,
+            observaciones: unidad.observaciones ?? null,
+            numero_poste: unidad.numeroPoste ?? null,
+            id_cliente_instalado: unidad.id_cliente_instalado ?? null,
+            id_caja_nap: unidad.id_caja_nap ?? null,
         };
     }
 
@@ -320,7 +359,17 @@ export class UnitsService {
             throw new NotFoundException(`No se encontró la unidad con ID [${idUnidad}] en su empresa.`);
         }
 
-        if (dto.observaciones !== undefined) unidad.diagnosticoTecnico = dto.observaciones;
+        // CU-34: las observaciones van a su propio campo (no al diagnóstico técnico)
+        if (dto.observaciones !== undefined) unidad.observaciones = dto.observaciones;
+        // CU-34: la ubicación física solo aplica con la unidad en bodega
+        if (dto.ubicacion_fisica !== undefined) {
+            if (unidad.estado !== 'En bodega') {
+                throw new BadRequestException(
+                    'La ubicación física en bodega solo puede editarse cuando la unidad está en estado [En bodega].',
+                );
+            }
+            unidad.ubicacionFisica = dto.ubicacion_fisica;
+        }
         if (dto.id_bodega_actual !== undefined) unidad.id_bodega_actual = dto.id_bodega_actual;
         if (dto.numero_poste !== undefined) unidad.numeroPoste = dto.numero_poste;
         if (dto.modelo !== undefined) unidad.modelo = dto.modelo;

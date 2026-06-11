@@ -46,6 +46,17 @@ export class UnidadEquipo {
     @Column({ type: 'varchar', length: 17, name: 'mac_address', nullable: true, unique: true })
     macAddress?: string | null;
 
+    // CU-32/CU-33/CU-34: proveedor, observaciones y ubicación física.
+    // Requieren migración: npm run migrar
+    @Column({ type: 'varchar', length: 80, nullable: true })
+    proveedor?: string | null;
+
+    @Column({ type: 'varchar', length: 300, nullable: true })
+    observaciones?: string | null;
+
+    @Column({ type: 'varchar', length: 60, name: 'ubicacion_fisica', nullable: true })
+    ubicacionFisica?: string | null;
+
     // Relaciones tipadas de TypeORM mapeadas a tus llaves foráneas reales
     @ManyToOne(() => TipoEquipo, (tipo) => tipo.unidades, { eager: true })
     @JoinColumn({ name: 'id_tipo_equipo' })

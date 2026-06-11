@@ -1,10 +1,17 @@
 import { IsString, IsOptional, MaxLength, IsInt, IsPositive } from 'class-validator';
 
 export class EditarDatosUnidadDto {
+  // CU-34: observaciones de máximo 300 caracteres
   @IsOptional()
   @IsString()
-  @MaxLength(500)
+  @MaxLength(300)
   observaciones?: string;
+
+  // CU-34: ubicación física en bodega (máximo 60 caracteres)
+  @IsOptional()
+  @IsString()
+  @MaxLength(60)
+  ubicacion_fisica?: string;
 
   @IsOptional()
   @IsInt()

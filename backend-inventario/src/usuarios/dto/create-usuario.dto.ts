@@ -1,5 +1,6 @@
 import {
   IsArray,
+  IsBoolean,
   IsEmail,
   IsInt,
   IsNotEmpty,
@@ -45,4 +46,8 @@ export class CreateUsuarioDto {
   @IsArray()
   @IsInt({ each: true })
   roles?: number[];
+  // CU-04: estado inicial de la cuenta (Activo/Inactivo)
+  @IsOptional()
+  @IsBoolean({ message: 'El estado debe ser un valor booleano' })
+  activo?: boolean;
 }
