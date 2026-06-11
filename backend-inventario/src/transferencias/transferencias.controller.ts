@@ -32,6 +32,14 @@ export class TransferenciasController {
         return this.transferenciasService.rechazarTransferencia(+id, observaciones, req.user);
     }
 
+    // CU-21: detalle completo de una transferencia (empresas, bodegas,
+    // unidades con número de serie y tipo, fecha, motivo y solicitante)
+    @Get(':id')
+    @Roles('ADMIN', 'SUPERUSUARIO')
+    consultarDetalle(@Param('id') id: string, @Req() req) {
+        return this.transferenciasService.consultarDetalle(+id, req.user);
+    }
+
     // CU-23: filtros por estado, rango de fechas o empresa
     @Get()
     @Roles('ADMIN', 'SUPERUSUARIO')

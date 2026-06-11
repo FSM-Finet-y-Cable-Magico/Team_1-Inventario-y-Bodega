@@ -154,6 +154,11 @@ export function getTransfers(params?: { estado?: string; id_empresa?: string; fe
 	return api.get<any[]>(`/transferencias${query ? '?' + query : ''}`);
 }
 
+// CU-21: detalle completo de una transferencia (empresas, bodegas, unidades, motivo, solicitante)
+export function getTransferDetail(id: number) {
+	return api.get<import('$lib/types').TransferenciaDetalle>(`/transferencias/${id}`);
+}
+
 export function createTransfer(data: Record<string, unknown>) {
 	return api.post<any>('/transferencias', data);
 }

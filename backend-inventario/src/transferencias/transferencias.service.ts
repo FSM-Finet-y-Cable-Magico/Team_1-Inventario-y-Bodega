@@ -222,6 +222,73 @@ export class TransferenciasService {
         };
     }
 
+    // CU-21: detalle completo de una transferencia seleccionada
+    async consultarDetalle(idTransferencia: number, actor: any): Promise<any> {
+        const t = await this.transferenciaRepository.findOne({
+            where: { id_transferencia: idTransferencia },
+        });
+        if (!t) throw new NotFoundException('Transferencia no encontrada');
+
+        // Aislamiento: un Admin solo ve transferencias donde participa su empresa
+        const isSuperusuario = actor.roles?.includes('SUPERUSUARIO');
+        if (
+            !isSuperusuario &&
+            t.id_empresa_origen !== actor.id_empresa &&
+            t.id_empresa_destino !== actor.id_empresa
+        ) {
+            throw new NotFoundException('Transferencia no encontrada');
+        }
+
+        const movimientos = await this.movimientoRepository.find({
+            where: { referencia_id: idTransferencia },
+        });
+
+        const unidades = movimientos.length
+            ? await this.unidadRepository.find({
+                  where: { id_unidad: In(movimientos.map((m) => m.id_unidad)) },
+                  relations: { tipoEquipo: true },
+              })
+            : [];
+
+        const idsBodegas = [
+            ...new Set(movimientos.flatMap((m) => [m.id_bodega_origen, m.id_bodega_destino]).filter(Boolean)),
+        ];
+        const bodegas = idsBodegas.length
+            ? await this.dataSource.query(
+                  'SELECT id_bodega, nombre FROM bodega WHERE id_bodega = ANY($1)',
+                  [idsBodegas],
+              )
+            : [];
+        const mapaBodegas = new Map(bodegas.map((b: any) => [b.id_bodega, b.nombre]));
+
+        const solicitante = t.id_usuario_registro
+            ? await this.dataSource.getRepository(Usuario).findOne({
+                  where: { id_usuario: t.id_usuario_registro },
+              })
+            : null;
+
+        const mapaEmpresas = new Map(EMPRESAS.map((e) => [e.id, e.nombre]));
+        const primerMov = movimientos[0];
+
+        return {
+            id_transferencia: t.id_transferencia,
+            empresa_origen: mapaEmpresas.get(t.id_empresa_origen) ?? `Empresa ${t.id_empresa_origen}`,
+            empresa_destino: mapaEmpresas.get(t.id_empresa_destino) ?? `Empresa ${t.id_empresa_destino}`,
+            bodega_origen: primerMov ? (mapaBodegas.get(primerMov.id_bodega_origen) ?? null) : null,
+            bodega_destino: primerMov ? (mapaBodegas.get(primerMov.id_bodega_destino) ?? null) : null,
+            fecha: t.fecha_transferencia,
+            estado: primerMov?.tipo_movimiento ?? 'SIN_MOVIMIENTOS',
+            motivo: t.observaciones,
+            solicitante: solicitante ? (solicitante.nombre_completo ?? solicitante.nombre_usuario) : null,
+            unidades: unidades.map((u) => ({
+                id_unidad: u.id_unidad,
+                numero_serie: u.serialNumber,
+                tipo_equipo: u.tipoEquipo?.nombre ?? null,
+                estado: u.estado,
+            })),
+        };
+    }
+
     // CU-23: listado con filtros por estado, rango de fechas o empresa
     async consultarTransferencias(
         filtros: { estado?: string; id_empresa?: number; fecha_inicio?: string; fecha_fin?: string },

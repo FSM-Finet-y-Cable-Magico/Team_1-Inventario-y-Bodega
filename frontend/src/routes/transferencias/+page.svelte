@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { getTransfers, createTransfer, approveTransfer, rejectTransfer, getUnits, getWarehouses, getEmpresas } from '$lib/api/index';
-	import type { Transferencia, Bodega, UnidadEquipo, Empresa } from '$lib/types';
+	import { getTransfers, getTransferDetail, createTransfer, approveTransfer, rejectTransfer, getUnits, getWarehouses, getEmpresas } from '$lib/api/index';
+	import type { Transferencia, TransferenciaDetalle, Bodega, UnidadEquipo, Empresa } from '$lib/types';
 	import Button from '$lib/components/Button.svelte';
 	import Modal from '$lib/components/Modal.svelte';
 	import FormField from '$lib/components/FormField.svelte';
@@ -9,7 +9,7 @@
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { userRoles, currentUser } from '$lib/stores/auth';
-	import { Plus, RotateCw, CheckCircle, XCircle } from '@lucide/svelte';
+	import { Plus, RotateCw, CheckCircle, XCircle, Eye } from '@lucide/svelte';
 
 	let transfers = $state<Transferencia[]>([]);
 	let warehouses = $state<Bodega[]>([]);
@@ -32,6 +32,11 @@
 	let showReject = $state(false);
 	let rejectError = $state('');
 	let rejecting = $state(false);
+
+	// CU-21: detalle completo al seleccionar una transferencia
+	let detalle = $state<TransferenciaDetalle | null>(null);
+	let showDetalle = $state(false);
+	let loadingDetalle = $state(false);
 
 	const estadoBadge: Record<string, string> = {
 		'TRANSFERENCIA_PENDIENTE': 'warning',
@@ -128,8 +133,32 @@
 		}
 	}
 
+	async function verDetalle(id: number) {
+		loadingDetalle = true;
+		showDetalle = true;
+		detalle = null;
+		try {
+			detalle = await getTransferDetail(id);
+		} catch (err: unknown) {
+			error = err instanceof Error ? err.message : 'Error al cargar el detalle';
+			showDetalle = false;
+		} finally {
+			loadingDetalle = false;
+		}
+	}
+
 	async function handleReject() {
 		rejectError = '';
+		// CU-22 Excepción 1: el motivo de rechazo es obligatorio
+		if (!rejectForm.motivo.trim()) {
+			rejectError = 'Debe ingresar un motivo de rechazo para continuar.';
+			return;
+		}
+		// CU-22 Excepción 2: el motivo no puede superar los 200 caracteres
+		if (rejectForm.motivo.trim().length > 200) {
+			rejectError = 'El motivo de rechazo no puede superar los 200 caracteres.';
+			return;
+		}
 		rejecting = true;
 		try {
 			await rejectTransfer(rejectForm.id, { observaciones: rejectForm.motivo });
@@ -222,13 +251,19 @@
 								<td class="px-4 py-3 text-muted max-w-[200px] truncate">{tr.observaciones || '-'}</td>
 								<td class="px-4 py-3">
 									<div class="flex items-center gap-1">
+										<!-- CU-21: ver el detalle completo de la transferencia -->
+										<button onclick={() => verDetalle(tr.id_transferencia)}
+											class="p-1.5 rounded-md text-muted hover:bg-surface-alt transition-colors"
+											aria-label="Ver detalle de la transferencia">
+											<Eye class="h-4 w-4" />
+										</button>
 										{#if roles.includes('SUPERUSUARIO') && tr.estado === 'TRANSFERENCIA_PENDIENTE'}
 											<button onclick={() => handleApprove(tr.id_transferencia)}
 												class="p-1.5 rounded-md text-emerald-600 hover:bg-emerald-50 transition-colors"
 												aria-label="Aprobar transferencia">
 												<CheckCircle class="h-4 w-4" />
 											</button>
-											<button onclick={() => { rejectForm.id = tr.id_transferencia; showReject = true; }}
+											<button onclick={() => { rejectForm = { id: tr.id_transferencia, motivo: '' }; rejectError = ''; showReject = true; }}
 												class="p-1.5 rounded-md text-destructive hover:bg-red-50 transition-colors"
 												aria-label="Rechazar transferencia">
 												<XCircle class="h-4 w-4" />
@@ -339,10 +374,15 @@
 		{#if rejectError}
 			<div class="bg-red-50 border border-red-200 text-destructive text-sm rounded-md px-3 py-2">{rejectError}</div>
 		{/if}
+		<!-- CU-22: sin `required` ni `maxlength` nativos — las excepciones 1 y 2
+		     se validan al confirmar, con los mensajes que exige el caso de uso -->
 		<FormField label="Motivo del rechazo" name="motivo" required helper="Máximo 200 caracteres">
-			<textarea id="motivo" required bind:value={rejectForm.motivo}
+			<textarea id="motivo" bind:value={rejectForm.motivo}
 				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-				rows="3" maxlength={200}></textarea>
+				rows="3"></textarea>
+			<p class="text-xs mt-1 text-right {rejectForm.motivo.trim().length > 200 ? 'text-destructive font-medium' : 'text-muted'}">
+				{rejectForm.motivo.trim().length}/200
+			</p>
 		</FormField>
 		<div class="flex justify-end gap-3 pt-2">
 			<Button variant="secondary" onclick={() => (showReject = false)} type="button">Cancelar</Button>
@@ -352,4 +392,80 @@
 			</Button>
 		</div>
 	</form>
+</Modal>
+
+<!-- CU-21: detalle completo de la transferencia seleccionada -->
+<Modal title="Detalle de transferencia" open={showDetalle} onclose={() => (showDetalle = false)}>
+	{#if loadingDetalle}
+		<p class="text-sm text-muted text-center py-6">Cargando detalle...</p>
+	{:else if detalle}
+		<div class="space-y-4 text-sm">
+			<div class="flex items-center justify-between">
+				<span class="font-mono text-foreground">#{detalle.id_transferencia}</span>
+				<Badge variant={(estadoBadge[detalle.estado] ?? 'default') as 'default' | 'success' | 'warning' | 'danger' | 'info'}>
+					{estadoLabel[detalle.estado] ?? detalle.estado}
+				</Badge>
+			</div>
+
+			<div class="grid grid-cols-2 gap-3">
+				<div>
+					<p class="text-xs text-muted uppercase tracking-wider mb-0.5">Empresa origen</p>
+					<p class="text-foreground">{detalle.empresa_origen}</p>
+				</div>
+				<div>
+					<p class="text-xs text-muted uppercase tracking-wider mb-0.5">Empresa destino</p>
+					<p class="text-foreground">{detalle.empresa_destino}</p>
+				</div>
+				<div>
+					<p class="text-xs text-muted uppercase tracking-wider mb-0.5">Bodega origen</p>
+					<p class="text-foreground">{detalle.bodega_origen ?? '-'}</p>
+				</div>
+				<div>
+					<p class="text-xs text-muted uppercase tracking-wider mb-0.5">Bodega destino</p>
+					<p class="text-foreground">{detalle.bodega_destino ?? '-'}</p>
+				</div>
+				<div>
+					<p class="text-xs text-muted uppercase tracking-wider mb-0.5">Fecha</p>
+					<p class="text-foreground">{fmtFecha(detalle.fecha)}</p>
+				</div>
+				<div>
+					<p class="text-xs text-muted uppercase tracking-wider mb-0.5">Solicitante</p>
+					<p class="text-foreground">{detalle.solicitante ?? '-'}</p>
+				</div>
+			</div>
+
+			<div>
+				<p class="text-xs text-muted uppercase tracking-wider mb-0.5">Motivo</p>
+				<p class="text-foreground">{detalle.motivo || '-'}</p>
+			</div>
+
+			<div>
+				<p class="text-xs text-muted uppercase tracking-wider mb-1">Unidades ({detalle.unidades.length})</p>
+				<div class="max-h-48 overflow-y-auto border border-border rounded-md divide-y divide-border">
+					{#each detalle.unidades as u}
+						<div class="flex items-center justify-between px-3 py-2">
+							<span class="font-mono text-xs">{u.numero_serie}</span>
+							<span class="text-muted text-xs">{u.tipo_equipo ?? '-'}</span>
+						</div>
+					{/each}
+					{#if detalle.unidades.length === 0}
+						<p class="text-xs text-muted text-center py-2">Sin unidades asociadas</p>
+					{/if}
+				</div>
+			</div>
+
+			{#if roles.includes('SUPERUSUARIO') && detalle.estado === 'TRANSFERENCIA_PENDIENTE'}
+				<div class="flex justify-end gap-3 pt-2 border-t border-border">
+					<Button variant="destructive" onclick={() => { rejectForm = { id: detalle!.id_transferencia, motivo: '' }; rejectError = ''; showDetalle = false; showReject = true; }}>
+						<XCircle class="h-4 w-4" />
+						Rechazar
+					</Button>
+					<Button onclick={async () => { await handleApprove(detalle!.id_transferencia); showDetalle = false; }}>
+						<CheckCircle class="h-4 w-4" />
+						Confirmar transferencia
+					</Button>
+				</div>
+			{/if}
+		</div>
+	{/if}
 </Modal>

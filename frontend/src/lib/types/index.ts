@@ -203,6 +203,20 @@ export interface Transferencia {
 	observaciones: string | null;
 }
 
+// CU-21: detalle completo al seleccionar una transferencia
+export interface TransferenciaDetalle {
+	id_transferencia: number;
+	empresa_origen: string;
+	empresa_destino: string;
+	bodega_origen: string | null;
+	bodega_destino: string | null;
+	fecha: string | null;
+	estado: string;
+	motivo: string | null;
+	solicitante: string | null;
+	unidades: { id_unidad: number; numero_serie: string; tipo_equipo: string | null; estado: string }[];
+}
+
 export interface CreateTransferenciaDto {
 	id_empresa_destino: number;
 	id_bodega_origen: number;
