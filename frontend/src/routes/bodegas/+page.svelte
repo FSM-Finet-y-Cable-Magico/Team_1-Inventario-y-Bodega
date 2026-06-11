@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { getWarehouses, createWarehouse, deactivateWarehouse } from '$lib/api/index';
-	import type { Bodega } from '$lib/types';
+	import { getWarehouses, createWarehouse, deactivateWarehouse, getUsers } from '$lib/api/index';
+	import type { Bodega, Usuario } from '$lib/types';
+	import { currentUser } from '$lib/stores/auth';
+	import SearchInput from '$lib/components/SearchInput.svelte';
 	import Button from '$lib/components/Button.svelte';
 	import Modal from '$lib/components/Modal.svelte';
 	import FormField from '$lib/components/FormField.svelte';
@@ -12,11 +14,16 @@
 	import { Plus, RotateCw, Pencil, Trash2 } from '@lucide/svelte';
 
 	let warehouses = $state<Bodega[]>([]);
+	let usuarios = $state<Usuario[]>([]);
 	let loading = $state(true);
 	let error = $state('');
+	// CU-44: filtro por estado o búsqueda por nombre
+	let search = $state('');
+	let estadoFilter = $state('');
 
 	let showCreate = $state(false);
-	let createForm = $state({ nombre: '', direccion: '' });
+	// CU-41: nombre, empresa (la del actor), descripción de ubicación y responsable
+	let createForm = $state({ nombre: '', direccion: '', id_usuario_responsable: 0 });
 	let createError = $state('');
 	let creating = $state(false);
 
@@ -26,7 +33,10 @@
 		loading = true;
 		error = '';
 		try {
-			warehouses = await getWarehouses();
+			warehouses = await getWarehouses({
+				activa: estadoFilter === '' ? undefined : estadoFilter === 'true',
+				nombre: search || undefined
+			});
 		} catch (err: unknown) {
 			error = err instanceof Error ? err.message : 'Error al cargar bodegas';
 		} finally {
@@ -34,15 +44,25 @@
 		}
 	}
 
-	onMount(load);
+	onMount(async () => {
+		load();
+		// CU-41: responsable elegido entre los usuarios activos de la empresa
+		try { usuarios = await getUsers({ activo: true }); } catch { /* sin permiso */ }
+	});
+
+	$effect(() => { search; estadoFilter; load(); });
 
 	async function handleCreate() {
 		createError = '';
 		creating = true;
+		if (!createForm.id_usuario_responsable) {
+			createError = 'Debe seleccionar el responsable de la bodega.';
+			return;
+		}
 		try {
 			await createWarehouse(createForm as unknown as Record<string, unknown>);
 			showCreate = false;
-			createForm = { nombre: '', direccion: '' };
+			createForm = { nombre: '', direccion: '', id_usuario_responsable: 0 };
 			await load();
 		} catch (err: unknown) {
 			createError = err instanceof Error ? err.message : 'Error al crear bodega';
@@ -79,6 +99,19 @@
 		</div>
 	</div>
 
+	<!-- CU-44: filtro por estado o búsqueda por nombre -->
+	<div class="flex flex-wrap items-center gap-3 mb-4">
+		<div class="flex-1 max-w-xs">
+			<SearchInput bind:value={search} placeholder="Buscar por nombre..." />
+		</div>
+		<select bind:value={estadoFilter} aria-label="Filtrar por estado"
+			class="px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+			<option value="">Todos los estados</option>
+			<option value="true">Activa</option>
+			<option value="false">Inactiva</option>
+		</select>
+	</div>
+
 	{#if error}
 		<div class="bg-red-50 border border-red-200 text-destructive rounded-md p-4 text-sm mb-4">{error}</div>
 	{/if}
@@ -93,7 +126,7 @@
 			{/each}
 		{:else if warehouses.length === 0}
 			<div class="col-span-full">
-				<EmptyState message="No hay bodegas registradas" action={() => (showCreate = true)} actionlabel="Crear bodega" />
+				<EmptyState message="No se encontraron bodegas con los filtros seleccionados." action={() => (showCreate = true)} actionlabel="Crear bodega" />
 			</div>
 		{:else}
 			{#each warehouses as wh}
@@ -107,7 +140,13 @@
 						<h3 class="text-base font-semibold text-foreground">{wh.nombre}</h3>
 						<Badge variant={wh.activa ? 'success' : 'danger'}>{wh.activa ? 'Activa' : 'Inactiva'}</Badge>
 					</div>
-					<p class="text-sm text-muted">{wh.direccion || 'Sin dirección'}</p>
+					<p class="text-sm text-muted">{wh.direccion || 'Sin descripción de ubicación'}</p>
+					<!-- CU-44: empresa, responsable y resumen de stock total -->
+					<div class="mt-2 space-y-0.5 text-xs text-muted">
+						<p>Empresa: <span class="text-foreground font-medium">{wh.empresa ?? '-'}</span></p>
+						<p>Responsable: <span class="text-foreground font-medium">{wh.responsable ?? 'Sin asignar'}</span></p>
+						<p>Stock total: <span class="text-foreground font-medium">{wh.resumen_stock_total ?? 0}</span></p>
+					</div>
 					<div class="flex items-center gap-1 mt-3 pt-3 border-t border-border">
 						<button onclick={(e: Event) => { e.stopPropagation(); goto(`/bodegas/${wh.id_bodega}`); }}
 							class="p-1.5 rounded-md hover:bg-surface-alt text-muted hover:text-foreground transition-colors"
@@ -140,10 +179,27 @@
 				placeholder="Ej: Bodega Central" minlength={3} maxlength={60} />
 		</FormField>
 
-		<FormField label="Dirección" name="dir" helper="Máximo 200 caracteres">
+		<!-- CU-41/CU-17: la empresa propietaria es la del usuario autenticado -->
+		<FormField label="Empresa propietaria" name="emp">
+			<input id="emp" type="text" disabled value={$currentUser?.empresa?.nombre ?? '—'}
+				class="w-full px-3 py-2 border border-border rounded-md text-sm bg-surface-alt text-muted" />
+		</FormField>
+
+		<FormField label="Descripción de ubicación" name="dir" helper="Opcional, máximo 200 caracteres">
 			<input id="dir" type="text" bind:value={createForm.direccion}
 				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-				placeholder="Dirección física" maxlength={200} />
+				placeholder="Ej: Galpón 2, sector norte" maxlength={200} />
+		</FormField>
+
+		<!-- CU-41: responsable obligatorio (usuario activo de la empresa) -->
+		<FormField label="Responsable" name="resp" required>
+			<select id="resp" required bind:value={createForm.id_usuario_responsable}
+				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+				<option value={0} disabled>Seleccionar responsable...</option>
+				{#each usuarios as u}
+					<option value={u.id_usuario}>{u.nombre_completo}</option>
+				{/each}
+			</select>
 		</FormField>
 
 		<div class="flex justify-end gap-3 pt-2">

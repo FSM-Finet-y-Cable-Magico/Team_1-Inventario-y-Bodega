@@ -1,26 +1,30 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { getTransfers, createTransfer, approveTransfer, rejectTransfer, getUnits, getWarehouses } from '$lib/api/index';
-	import type { Transferencia, Bodega, UnidadEquipo } from '$lib/types';
+	import { getTransfers, createTransfer, approveTransfer, rejectTransfer, getUnits, getWarehouses, getEmpresas } from '$lib/api/index';
+	import type { Transferencia, Bodega, UnidadEquipo, Empresa } from '$lib/types';
 	import Button from '$lib/components/Button.svelte';
 	import Modal from '$lib/components/Modal.svelte';
 	import FormField from '$lib/components/FormField.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
-	import { userRoles } from '$lib/stores/auth';
+	import { userRoles, currentUser } from '$lib/stores/auth';
 	import { Plus, RotateCw, CheckCircle, XCircle } from '@lucide/svelte';
 
 	let transfers = $state<Transferencia[]>([]);
 	let warehouses = $state<Bodega[]>([]);
 	let units = $state<UnidadEquipo[]>([]);
+	let empresas = $state<Empresa[]>([]);
 	let loading = $state(true);
 	let error = $state('');
 	let roles: string[] = [];
 	userRoles.subscribe((r) => (roles = r));
 
+	// CU-23: filtros por estado, rango de fechas o empresa
+	let filters = $state({ estado: '', id_empresa: '', fecha_inicio: '', fecha_fin: '' });
+
 	let showCreate = $state(false);
-	let createForm = $state({ id_empresa_destino: 2, id_bodega_origen: 0, id_bodega_destino: 0, ids_unidades: [] as number[], observaciones: '' });
+	let createForm = $state({ id_empresa_destino: 0, id_bodega_origen: 0, id_bodega_destino: 0, ids_unidades: [] as number[], observaciones: '' });
 	let createError = $state('');
 	let creating = $state(false);
 
@@ -34,13 +38,43 @@
 		'TRANSFERENCIA_APROBADA': 'success',
 		'TRANSFERENCIA_RECHAZADA': 'danger'
 	};
+	// CU-23: estado legible (Pendiente/Aprobada/Rechazada)
+	const estadoLabel: Record<string, string> = {
+		'TRANSFERENCIA_PENDIENTE': 'Pendiente',
+		'TRANSFERENCIA_APROBADA': 'Aprobada',
+		'TRANSFERENCIA_RECHAZADA': 'Rechazada'
+	};
+
+	function fmtFecha(fecha: string | null): string {
+		if (!fecha) return '-';
+		return new Date(fecha).toLocaleDateString('en-GB', {
+			day: '2-digit', month: '2-digit', year: 'numeric',
+			timeZone: 'America/Santiago'
+		});
+	}
+
+	// CU-20: la empresa origen es la del usuario autenticado (sin posibilidad de elegir otra)
+	const empresaOrigen = $derived($currentUser?.empresa ?? null);
+	const empresasDestino = $derived(empresas.filter((e) => e.id !== empresaOrigen?.id));
+	// CU-20 Excepción 3: las unidades deben estar en la bodega de origen indicada
+	const unidadesDisponibles = $derived(
+		createForm.id_bodega_origen
+			? units.filter((u) => u.id_bodega_actual === createForm.id_bodega_origen)
+			: units
+	);
+	const hoy = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'America/Santiago' });
 
 	async function load() {
 		loading = true;
 		error = '';
 		try {
 			const [transfersData, whData, unitsData] = await Promise.all([
-				getTransfers(),
+				getTransfers({
+					estado: filters.estado || undefined,
+					id_empresa: filters.id_empresa || undefined,
+					fecha_inicio: filters.fecha_inicio || undefined,
+					fecha_fin: filters.fecha_fin || undefined
+				}),
 				getWarehouses({ activa: true }),
 				getUnits()
 			]);
@@ -54,15 +88,29 @@
 		}
 	}
 
-	onMount(load);
+	onMount(async () => {
+		load();
+		try { empresas = await getEmpresas(); } catch { /* sin permiso */ }
+	});
+
+	$effect(() => { filters.estado; filters.id_empresa; filters.fecha_inicio; filters.fecha_fin; load(); });
 
 	async function handleCreate() {
 		createError = '';
+		// CU-20 Excepción 2: al menos una unidad en el listado
+		if (createForm.ids_unidades.length === 0) {
+			createError = 'Debe agregar al menos una unidad al listado.';
+			return;
+		}
+		if (!createForm.observaciones.trim()) {
+			createError = 'El motivo es obligatorio.';
+			return;
+		}
 		creating = true;
 		try {
 			await createTransfer(createForm as unknown as Record<string, unknown>);
 			showCreate = false;
-			createForm = { id_empresa_destino: 2, id_bodega_origen: 0, id_bodega_destino: 0, ids_unidades: [], observaciones: '' };
+			createForm = { id_empresa_destino: 0, id_bodega_origen: 0, id_bodega_destino: 0, ids_unidades: [], observaciones: '' };
 			await load();
 		} catch (err: unknown) {
 			createError = err instanceof Error ? err.message : 'Error al crear transferencia';
@@ -84,7 +132,7 @@
 		rejectError = '';
 		rejecting = true;
 		try {
-			await rejectTransfer(rejectForm.id, { motivo: rejectForm.motivo });
+			await rejectTransfer(rejectForm.id, { observaciones: rejectForm.motivo });
 			showReject = false;
 			rejectForm = { id: 0, motivo: '' };
 			await load();
@@ -106,9 +154,31 @@
 			</Button>
 			<Button onclick={() => (showCreate = true)}>
 				<Plus class="h-4 w-4" />
-				Nueva transferencia
+				Nueva transferencia inter-empresa
 			</Button>
 		</div>
+	</div>
+
+	<!-- CU-23: filtros por estado, rango de fechas o empresa -->
+	<div class="flex flex-wrap items-center gap-3 mb-4">
+		<select bind:value={filters.estado} aria-label="Filtrar por estado"
+			class="px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+			<option value="">Todos los estados</option>
+			<option value="PENDIENTE">Pendiente</option>
+			<option value="APROBADA">Aprobada</option>
+			<option value="RECHAZADA">Rechazada</option>
+		</select>
+		<select bind:value={filters.id_empresa} aria-label="Filtrar por empresa"
+			class="px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+			<option value="">Todas las empresas</option>
+			{#each empresas as emp}
+				<option value={String(emp.id)}>{emp.nombre}</option>
+			{/each}
+		</select>
+		<input type="date" bind:value={filters.fecha_inicio} aria-label="Fecha inicio"
+			class="px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+		<input type="date" bind:value={filters.fecha_fin} aria-label="Fecha fin"
+			class="px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
 	</div>
 
 	{#if error}
@@ -119,17 +189,21 @@
 		{#if loading}
 			<div class="p-8 text-center text-sm text-muted">Cargando...</div>
 		{:else if transfers.length === 0}
-			<EmptyState message="No hay transferencias registradas" action={() => (showCreate = true)} actionlabel="Nueva transferencia" />
+			<EmptyState message="No se encontraron transferencias con los filtros seleccionados." action={() => (showCreate = true)} actionlabel="Nueva transferencia inter-empresa" />
 		{:else}
 			<div class="overflow-x-auto">
 				<table class="w-full text-sm">
 					<thead>
+						<!-- CU-23: correlativo, empresas, cantidad, fecha, estado y solicitante -->
 						<tr class="border-b border-border bg-surface/50">
-							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">ID</th>
+							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">N°</th>
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Empresa origen</th>
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Empresa destino</th>
+							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Unidades</th>
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Fecha</th>
-							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Observaciones</th>
+							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Estado</th>
+							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Solicitante</th>
+							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Motivo</th>
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Acciones</th>
 						</tr>
 					</thead>
@@ -137,13 +211,18 @@
 						{#each transfers as tr, i}
 							<tr class="border-b border-border {i % 2 === 0 ? 'bg-white' : 'bg-surface/30'}">
 								<td class="px-4 py-3 font-mono text-foreground">#{tr.id_transferencia}</td>
-								<td class="px-4 py-3 text-foreground">Empresa {tr.id_empresa_origen}</td>
-								<td class="px-4 py-3 text-foreground">Empresa {tr.id_empresa_destino}</td>
-								<td class="px-4 py-3 text-muted">{tr.fecha_transferencia ? new Date(tr.fecha_transferencia).toLocaleDateString('es-CL') : '-'}</td>
+								<td class="px-4 py-3 text-foreground">{tr.empresa_origen}</td>
+								<td class="px-4 py-3 text-foreground">{tr.empresa_destino}</td>
+								<td class="px-4 py-3 text-foreground text-center">{tr.unidades}</td>
+								<td class="px-4 py-3 text-muted whitespace-nowrap">{fmtFecha(tr.fecha)}</td>
+								<td class="px-4 py-3">
+									<Badge variant={(estadoBadge[tr.estado] ?? 'default') as 'default' | 'success' | 'warning' | 'danger' | 'info'}>{estadoLabel[tr.estado] ?? tr.estado}</Badge>
+								</td>
+								<td class="px-4 py-3 text-muted">{tr.solicitante ?? '-'}</td>
 								<td class="px-4 py-3 text-muted max-w-[200px] truncate">{tr.observaciones || '-'}</td>
 								<td class="px-4 py-3">
 									<div class="flex items-center gap-1">
-										{#if roles.includes('SUPERUSUARIO')}
+										{#if roles.includes('SUPERUSUARIO') && tr.estado === 'TRANSFERENCIA_PENDIENTE'}
 											<button onclick={() => handleApprove(tr.id_transferencia)}
 												class="p-1.5 rounded-md text-emerald-600 hover:bg-emerald-50 transition-colors"
 												aria-label="Aprobar transferencia">
@@ -166,19 +245,28 @@
 	</div>
 </div>
 
-<Modal title="Nueva transferencia" open={showCreate} onclose={() => (showCreate = false)}>
+<Modal title="Nueva transferencia inter-empresa" open={showCreate} onclose={() => (showCreate = false)}>
 	<form onsubmit={(e: Event) => { e.preventDefault(); handleCreate(); }} class="space-y-4">
 		{#if createError}
 			<div class="bg-red-50 border border-red-200 text-destructive text-sm rounded-md px-3 py-2">{createError}</div>
 		{/if}
 
-		<FormField label="Empresa destino" name="emp_dest" required>
-			<select id="emp_dest" required bind:value={createForm.id_empresa_destino}
-				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
-				<option value={1}>Finet (ID: 1)</option>
-				<option value={2}>Cable Mágico (ID: 2)</option>
-			</select>
-		</FormField>
+		<div class="grid grid-cols-2 gap-4">
+			<!-- CU-20/CU-17: la empresa origen es la del usuario autenticado -->
+			<FormField label="Empresa origen" name="emp_ori">
+				<input id="emp_ori" type="text" disabled value={empresaOrigen?.nombre ?? '—'}
+					class="w-full px-3 py-2 border border-border rounded-md text-sm bg-surface-alt text-muted" />
+			</FormField>
+			<FormField label="Empresa destino" name="emp_dest" required>
+				<select id="emp_dest" required bind:value={createForm.id_empresa_destino}
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+					<option value={0} disabled>Seleccionar...</option>
+					{#each empresasDestino as emp}
+						<option value={emp.id}>{emp.nombre}</option>
+					{/each}
+				</select>
+			</FormField>
+		</div>
 
 		<div class="grid grid-cols-2 gap-4">
 			<FormField label="Bodega origen" name="bod_ori" required>
@@ -201,9 +289,15 @@
 			</FormField>
 		</div>
 
+		<!-- CU-20: fecha de la solicitud (la registra el sistema) -->
+		<FormField label="Fecha" name="fch">
+			<input id="fch" type="text" disabled value={hoy}
+				class="w-full px-3 py-2 border border-border rounded-md text-sm bg-surface-alt text-muted" />
+		</FormField>
+
 		<FormField label="Unidades a transferir" name="unds" required>
 			<div class="max-h-48 overflow-y-auto space-y-1 border border-border rounded-md p-2">
-				{#each units as u}
+				{#each unidadesDisponibles as u}
 					<label class="flex items-center gap-2 text-sm cursor-pointer px-2 py-1 hover:bg-surface-alt rounded">
 						<input type="checkbox" value={u.id_unidad}
 							checked={createForm.ids_unidades.includes(u.id_unidad)}
@@ -218,14 +312,17 @@
 						<span class="text-muted text-xs">{u.tipo_equipo?.nombre || ''}</span>
 					</label>
 				{/each}
-				{#if units.length === 0}
-					<p class="text-xs text-muted text-center py-2">No hay unidades disponibles en bodega</p>
+				{#if unidadesDisponibles.length === 0}
+					<p class="text-xs text-muted text-center py-2">
+						{createForm.id_bodega_origen ? 'No hay unidades disponibles en la bodega de origen seleccionada' : 'No hay unidades disponibles en bodega'}
+					</p>
 				{/if}
 			</div>
 		</FormField>
 
-		<FormField label="Observaciones" name="obs">
-			<textarea id="obs" bind:value={createForm.observaciones}
+		<!-- CU-20: motivo de la transferencia (máximo 200 caracteres) -->
+		<FormField label="Motivo" name="obs" required helper="Máximo 200 caracteres">
+			<textarea id="obs" required bind:value={createForm.observaciones}
 				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
 				rows="2" maxlength={200}></textarea>
 		</FormField>

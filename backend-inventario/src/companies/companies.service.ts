@@ -5,7 +5,7 @@ import { UnidadEquipo } from '../inventario/entities/unidad-equipo.entity';
 import { Bodega } from '../bodegas/entities/bodega.entity';
 import { StockConsumible } from '../bodegas/entities/stock-consumible.entity';
 
-const EMPRESAS = [
+export const EMPRESAS = [
     { id: 1, nombre: 'Finet' },
     { id: 2, nombre: 'Cable Mágico' },
 ];
@@ -20,6 +20,11 @@ export class CompaniesService {
         @InjectRepository(StockConsumible)
         private readonly stockRepository: Repository<StockConsumible>,
     ) {}
+
+    // CU-06: listado de empresas para el selector de edición de usuarios
+    findAll() {
+        return EMPRESAS;
+    }
 
     async getDashboard(): Promise<any> {
         const resultado: any[] = [];
@@ -55,6 +60,16 @@ export class CompaniesService {
             .select('SUM(s.cantidad_disponible)', 'total')
             .getRawOne();
 
+        // CU-46: alertas de stock bajo el umbral mínimo configurado
+        const bajoUmbral = await this.stockRepository
+            .createQueryBuilder('s')
+            .innerJoinAndSelect('s.bodega', 'b', 'b.id_empresa = :empresa', { empresa: id })
+            .innerJoinAndSelect('s.tipoEquipo', 't')
+            .where('s.umbral_minimo IS NOT NULL')
+            .andWhere('s.umbral_minimo > 0')
+            .andWhere('s.cantidad_disponible < s.umbral_minimo')
+            .getMany();
+
         return {
             empresa: nombre,
             id_empresa: id,
@@ -62,6 +77,12 @@ export class CompaniesService {
             unidades_por_estado: estadisticasEstado,
             bodegas_activas: bodegasActivas,
             stock_consumible_total: Number(stockConsumible?.total ?? 0),
+            alertas_stock_minimo: bajoUmbral.map((r: any) => ({
+                bodega: r.bodega?.nombre ?? `Bodega ${r.id_bodega}`,
+                tipo_equipo: r.tipoEquipo?.nombre ?? `Tipo ${r.id_tipo_equipo}`,
+                cantidad_disponible: Number(r.cantidad_disponible),
+                umbral_minimo: Number(r.umbral_minimo),
+            })),
         };
     }
 }

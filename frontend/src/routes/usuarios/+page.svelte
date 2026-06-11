@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { getUsers, getRoles, createUser, deleteUser } from '$lib/api/index';
-	import type { Usuario, Rol } from '$lib/types';
+	import { getUsers, getRoles, createUser, deleteUser, getEmpresas } from '$lib/api/index';
+	import type { Usuario, Rol, Empresa } from '$lib/types';
 	import Button from '$lib/components/Button.svelte';
 	import Modal from '$lib/components/Modal.svelte';
 	import FormField from '$lib/components/FormField.svelte';
@@ -10,6 +10,7 @@
 	import Badge from '$lib/components/Badge.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import { currentUser, userRoles } from '$lib/stores/auth';
 	import { Plus, RotateCw, Pencil, Trash2 } from '@lucide/svelte';
 
 	let usuarios = $state<Usuario[]>([]);
@@ -17,10 +18,24 @@
 	let loading = $state(true);
 	let error = $state('');
 	let search = $state('');
-	let showInactivos = $state(false);
+	let filtroRol = $state('');
+	let filtroEstado = $state('');
+
+	// CU-05: fecha de creación en formato DD/MM/YYYY
+	function fmtFecha(fecha: string): string {
+		if (!fecha) return '-';
+		return new Date(fecha).toLocaleDateString('en-GB', {
+			day: '2-digit', month: '2-digit', year: 'numeric',
+			timeZone: 'America/Santiago'
+		});
+	}
 
 	let showCreate = $state(false);
-	let createForm = $state({ nombre_usuario: '', nombre_completo: '', email: '', password: '', roles: [] as number[] });
+	// CU-04: nombre completo, usuario, contraseña, empresa, rol y estado
+	let createForm = $state({ nombre_usuario: '', nombre_completo: '', password: '', roles: [] as number[], id_empresa: 0, activo: true });
+	let empresas = $state<Empresa[]>([]);
+	// Solo el Superusuario puede asignar otra empresa (CU-04)
+	const esSuperusuario = $derived($userRoles.includes('SUPERUSUARIO'));
 	let createError = $state('');
 	let creating = $state(false);
 
@@ -31,7 +46,11 @@
 		error = '';
 		try {
 			const [usersData, rolesData] = await Promise.all([
-				getUsers(showInactivos ? undefined : true, search || undefined),
+				getUsers({
+					activo: filtroEstado === '' ? undefined : filtroEstado === 'true',
+					buscar: search || undefined,
+					rol: filtroRol || undefined
+				}),
 				getRoles()
 			]);
 			usuarios = usersData;
@@ -43,10 +62,13 @@
 		}
 	}
 
-	onMount(load);
+	onMount(async () => {
+		load();
+		try { empresas = await getEmpresas(); } catch { /* sin permiso */ }
+	});
 
 	$effect(() => {
-		search; showInactivos;
+		search; filtroRol; filtroEstado;
 		load();
 	});
 
@@ -54,9 +76,12 @@
 		createError = '';
 		creating = true;
 		try {
-			await createUser(createForm as unknown as Record<string, unknown>);
+			const { id_empresa, ...rest } = createForm;
+			// la empresa solo se envía si el Superusuario eligió una distinta
+			const payload: Record<string, unknown> = esSuperusuario && id_empresa ? { ...rest, id_empresa } : rest;
+			await createUser(payload);
 			showCreate = false;
-			createForm = { nombre_usuario: '', nombre_completo: '', email: '', password: '', roles: [] };
+			createForm = { nombre_usuario: '', nombre_completo: '', password: '', roles: [], id_empresa: 0, activo: true };
 			await load();
 		} catch (err: unknown) {
 			createError = err instanceof Error ? err.message : 'Error al crear usuario';
@@ -93,14 +118,24 @@
 		</div>
 	</div>
 
-	<div class="flex items-center gap-4 mb-4">
+	<!-- CU-05: filtros por rol, estado o nombre (completo o de usuario) -->
+	<div class="flex flex-wrap items-center gap-3 mb-4">
 		<div class="flex-1 max-w-xs">
-			<SearchInput bind:value={search} placeholder="Buscar usuarios..." />
+			<SearchInput bind:value={search} placeholder="Buscar por nombre o usuario..." />
 		</div>
-		<label class="flex items-center gap-2 text-sm text-foreground cursor-pointer select-none">
-			<input type="checkbox" bind:checked={showInactivos} class="rounded border-border" />
-			Mostrar inactivos
-		</label>
+		<select bind:value={filtroRol} aria-label="Filtrar por rol"
+			class="px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+			<option value="">Todos los roles</option>
+			{#each roles as rol}
+				<option value={rol.nombre_rol}>{rol.nombre_rol}</option>
+			{/each}
+		</select>
+		<select bind:value={filtroEstado} aria-label="Filtrar por estado"
+			class="px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+			<option value="">Todos los estados</option>
+			<option value="true">Activo</option>
+			<option value="false">Inactivo</option>
+		</select>
 	</div>
 
 	{#if error}
@@ -111,29 +146,26 @@
 		{#if loading}
 			<div class="p-8 text-center text-sm text-muted">Cargando...</div>
 		{:else if usuarios.length === 0}
-			<EmptyState message="No se encontraron usuarios" action={() => (showCreate = true)} actionlabel="Crear usuario" />
+			<EmptyState message="No se encontraron usuarios con los filtros seleccionados." action={() => (showCreate = true)} actionlabel="Crear usuario" />
 		{:else}
 			<div class="overflow-x-auto">
 				<table class="w-full text-sm">
 					<thead>
+						<!-- CU-05: nombre completo, nombre de usuario, rol, estado y fecha de creación -->
 						<tr class="border-b border-border bg-surface/50">
-							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Usuario</th>
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Nombre completo</th>
-							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Email</th>
+							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Nombre de usuario</th>
+							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Rol</th>
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Estado</th>
-							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Roles</th>
+							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Fecha de creación</th>
 							<th class="text-right px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Acciones</th>
 						</tr>
 					</thead>
 					<tbody>
 						{#each usuarios as user, i}
 							<tr class="border-b border-border transition-colors hover:bg-surface-alt/50 {i % 2 === 0 ? 'bg-white' : 'bg-surface/30'}">
-								<td class="px-4 py-3 font-medium text-foreground">{user.nombre_usuario}</td>
-								<td class="px-4 py-3 text-foreground">{user.nombre_completo}</td>
-								<td class="px-4 py-3 text-muted">{user.email || '-'}</td>
-								<td class="px-4 py-3">
-									<Badge variant={user.activo ? 'success' : 'danger'}>{user.activo ? 'Activo' : 'Inactivo'}</Badge>
-								</td>
+								<td class="px-4 py-3 font-medium text-foreground">{user.nombre_completo}</td>
+								<td class="px-4 py-3 text-foreground">{user.nombre_usuario}</td>
 								<td class="px-4 py-3">
 									<div class="flex flex-wrap gap-1">
 										{#each user.roles ?? [] as rol}
@@ -144,6 +176,10 @@
 										{/if}
 									</div>
 								</td>
+								<td class="px-4 py-3">
+									<Badge variant={user.activo ? 'success' : 'danger'}>{user.activo ? 'Activo' : 'Inactivo'}</Badge>
+								</td>
+								<td class="px-4 py-3 text-muted whitespace-nowrap">{fmtFecha(user.fecha_creacion)}</td>
 								<td class="px-4 py-3 text-right">
 									<div class="flex items-center justify-end gap-1">
 										<button
@@ -153,13 +189,16 @@
 										>
 											<Pencil class="h-4 w-4" />
 										</button>
-										<button
-											onclick={() => (deletingUser = user)}
-											class="p-1.5 rounded-md hover:bg-red-50 text-muted hover:text-destructive transition-colors"
-											aria-label="Desactivar usuario"
-										>
-											<Trash2 class="h-4 w-4" />
-										</button>
+										<!-- CU-07 Excepción 1: no se puede desactivar la cuenta propia -->
+										{#if user.activo && user.id_usuario !== $currentUser?.id_usuario}
+											<button
+												onclick={() => (deletingUser = user)}
+												class="p-1.5 rounded-md hover:bg-red-50 text-muted hover:text-destructive transition-colors"
+												aria-label="Desactivar usuario"
+											>
+												<Trash2 class="h-4 w-4" />
+											</button>
+										{/if}
 									</div>
 								</td>
 							</tr>
@@ -172,34 +211,52 @@
 </div>
 
 <Modal title="Nuevo usuario" open={showCreate} onclose={() => (showCreate = false)}>
-	<form onsubmit={(e: Event) => { e.preventDefault(); handleCreate(); }} class="space-y-4">
+	<!-- autocomplete=off + new-password: evita que el navegador autocomplete las
+	     credenciales del admin en el formulario y que ofrezca guardar la contraseña -->
+	<form onsubmit={(e: Event) => { e.preventDefault(); handleCreate(); }} class="space-y-4" autocomplete="off">
 		{#if createError}
 			<div class="bg-red-50 border border-red-200 text-destructive text-sm rounded-md px-3 py-2">{createError}</div>
 		{/if}
 
 		<FormField label="Nombre de usuario" name="nu" required>
 			<input id="nu" type="text" required bind:value={createForm.nombre_usuario}
+				autocomplete="off"
 				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-				placeholder="ej: jperez" pattern="^[a-z0-9_]{4,20}$"
+				placeholder="ej: jperez" pattern={'^[a-z0-9_]{4,20}$'}
 				title="4-20 caracteres, minúsculas, números y guión bajo" />
 		</FormField>
 
 		<FormField label="Nombre completo" name="nc" required>
 			<input id="nc" type="text" required bind:value={createForm.nombre_completo}
+				autocomplete="off"
 				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-				placeholder="Juan Pérez" />
+				placeholder="Juan Pérez" pattern={'^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]{2,80}$'}
+				title="2-80 caracteres, solo letras, espacios y tildes" />
 		</FormField>
 
-		<FormField label="Email" name="em">
-			<input id="em" type="email" bind:value={createForm.email}
-				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-				placeholder="juan@ejemplo.cl" />
+		<!-- CU-04: empresa asignada; un Administrador solo crea en su propia empresa -->
+		<FormField label="Empresa" name="emp">
+			{#if esSuperusuario}
+				<select id="emp" bind:value={createForm.id_empresa}
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+					<option value={0}>Mi empresa ({$currentUser?.empresa?.nombre ?? '—'})</option>
+					{#each empresas as emp}
+						<option value={emp.id}>{emp.nombre}</option>
+					{/each}
+				</select>
+			{:else}
+				<input id="emp" type="text" disabled value={$currentUser?.empresa?.nombre ?? '—'}
+					class="w-full px-3 py-2 border border-border rounded-md text-sm bg-surface-alt text-muted" />
+			{/if}
 		</FormField>
 
 		<FormField label="Contraseña" name="pw" required>
 			<input id="pw" type="password" required bind:value={createForm.password}
+				autocomplete="new-password"
 				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-				placeholder="Mín. 8 caracteres" minlength={8} />
+				placeholder="Mín. 8 caracteres" minlength={8} maxlength={64}
+				pattern={'^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[A-Za-z\\d\\W_]{8,64}$'}
+				title="8-64 caracteres, con al menos una mayúscula, una minúscula y un número" />
 		</FormField>
 
 		<FormField label="Roles" name="rl" required>
@@ -221,6 +278,14 @@
 			</div>
 		</FormField>
 
+		<!-- CU-04: estado inicial de la cuenta -->
+		<FormField label="Estado" name="est">
+			<label class="flex items-center gap-2 text-sm cursor-pointer">
+				<input type="checkbox" bind:checked={createForm.activo} class="rounded border-border" />
+				<span>Usuario activo</span>
+			</label>
+		</FormField>
+
 		<div class="flex justify-end gap-3 pt-2">
 			<Button variant="secondary" onclick={() => (showCreate = false)} type="button">Cancelar</Button>
 			<Button type="submit" loading={creating}>Crear usuario</Button>
@@ -231,7 +296,7 @@
 <ConfirmDialog
 	open={deletingUser !== null}
 	title="Desactivar usuario"
-	message={deletingUser ? `¿Desactivar a "${deletingUser.nombre_completo}"? Esta acción no se puede revertir.` : ''}
+	message={deletingUser ? `¿Está seguro que desea desactivar la cuenta de ${deletingUser.nombre_usuario}? Esta acción impedirá futuros inicios de sesión.` : ''}
 	confirmlabel="Desactivar"
 	onconfirm={handleDelete}
 	oncancel={() => (deletingUser = null)}

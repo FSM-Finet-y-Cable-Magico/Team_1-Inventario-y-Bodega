@@ -32,9 +32,24 @@ export class TransferenciasController {
         return this.transferenciasService.rechazarTransferencia(+id, observaciones, req.user);
     }
 
+    // CU-23: filtros por estado, rango de fechas o empresa
     @Get()
     @Roles('ADMIN', 'SUPERUSUARIO')
-    consultar(@Query('estado') estado: string, @Req() req) {
-        return this.transferenciasService.consultarTransferencias({ estado }, req.user);
+    consultar(
+        @Query('estado') estado: string,
+        @Query('id_empresa') id_empresa: string,
+        @Query('fecha_inicio') fecha_inicio: string,
+        @Query('fecha_fin') fecha_fin: string,
+        @Req() req,
+    ) {
+        return this.transferenciasService.consultarTransferencias(
+            {
+                estado,
+                id_empresa: id_empresa ? +id_empresa : undefined,
+                fecha_inicio,
+                fecha_fin,
+            },
+            req.user,
+        );
     }
 }

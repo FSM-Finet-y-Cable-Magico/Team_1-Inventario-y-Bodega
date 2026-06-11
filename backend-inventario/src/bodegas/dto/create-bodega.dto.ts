@@ -6,9 +6,15 @@ export class CreateBodegaDto {
   @Length(3, 60)
   nombre: string;
 
+  // La empresa la asigna el backend según el actor; solo un Superusuario puede indicarla
   @IsNumber()
-  @IsNotEmpty()
-  id_empresa: number;
+  @IsOptional()
+  id_empresa?: number;
+
+  // CU-41: responsable de la bodega (usuario activo de la empresa)
+  @IsNumber()
+  @IsOptional()
+  id_usuario_responsable?: number;
 
   @IsString()
   @IsOptional()

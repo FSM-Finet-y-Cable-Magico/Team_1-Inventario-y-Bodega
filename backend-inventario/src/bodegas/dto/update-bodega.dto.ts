@@ -1,4 +1,4 @@
-import { IsString, Length, IsOptional } from 'class-validator';
+import { IsString, Length, IsOptional, IsNumber } from 'class-validator';
 
 export class UpdateBodegaDto {
   @IsString()
@@ -10,4 +10,9 @@ export class UpdateBodegaDto {
   @IsOptional()
   @Length(0, 200)
   direccion?: string;
+
+  // CU-42: responsable editable
+  @IsNumber()
+  @IsOptional()
+  id_usuario_responsable?: number;
 }

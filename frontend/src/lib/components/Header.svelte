@@ -2,13 +2,17 @@
 	import { authStore, currentUser } from '$lib/stores/auth';
 	import { Building2 } from '@lucide/svelte';
 
-	let user = $state<{ nombre_completo: string; roles?: { nombre_rol: string }[] } | null>(null);
+	let user = $state<{ nombre_completo: string; roles?: { nombre_rol: string }[]; empresa?: { id: number; nombre: string } | null } | null>(null);
 	currentUser.subscribe((u) => (user = u));
 </script>
 
 <header class="h-14 bg-white border-b border-border flex items-center justify-between px-6">
 	<div class="flex items-center gap-2 text-sm text-muted">
 		<Building2 class="h-4 w-4" />
+		<!-- CU-13/CU-16: contexto de la empresa del usuario autenticado -->
+		{#if user?.empresa}
+			<span class="font-medium text-foreground">{user.empresa.nombre}</span>
+		{/if}
 		{#if user?.roles?.length}
 			<span class="text-xs bg-surface-alt text-primary-light px-2 py-0.5 rounded font-medium">
 				{user.roles.map((r) => r.nombre_rol).join(', ')}

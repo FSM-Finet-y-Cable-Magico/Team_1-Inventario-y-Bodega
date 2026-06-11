@@ -10,6 +10,7 @@ export interface Usuario {
 	debe_cambiar_password: boolean;
 	fecha_creacion: string;
 	roles?: Rol[];
+	empresa?: Empresa | null;
 }
 
 export interface CreateUsuarioDto {
@@ -25,6 +26,12 @@ export interface UpdateUsuarioDto {
 	email?: string;
 	activo?: boolean;
 	roles?: number[];
+	id_empresa?: number;
+}
+
+export interface Empresa {
+	id: number;
+	nombre: string;
 }
 
 export interface Rol {
@@ -41,8 +48,10 @@ export interface LoginDto {
 }
 
 export interface LoginResponse {
-	access_token: string;
-	usuario: Usuario;
+	access_token?: string;
+	usuario?: Usuario;
+	// CU-10: cuenta marcada con cambio obligatorio de contraseña
+	debe_cambiar_password?: boolean;
 }
 
 export interface TipoEquipo {
@@ -50,8 +59,17 @@ export interface TipoEquipo {
 	id_empresa: number | null;
 	nombre: string;
 	categoria: string | null;
-	requiere_serie_individual: boolean | null;
-	ficha_tecnica_pdf_url: string | null;
+	// la API serializa la propiedad de la entidad (requiereSerialNumber)
+	requiereSerialNumber?: boolean | null;
+	requiere_serie_individual?: boolean | null;
+	// CU-24
+	marca?: string | null;
+	modelo?: string | null;
+	descripcionTecnica?: string | null;
+	unidadMedida?: string | null;
+	garantiaDias?: number | null;
+	ficha_tecnica_pdf_url?: string | null;
+	fichaTecnicaPdfUrl?: string | null;
 	activo: boolean;
 }
 
@@ -67,12 +85,13 @@ export interface UpdateTipoEquipoDto {
 	requiereSerialNumber?: boolean;
 }
 
+// Deben coincidir exactamente (tildes incluidas) con los estados del backend
 export type EstadoUnidad =
 	| 'En bodega'
-	| 'Asignado a tecnico'
+	| 'Asignado a técnico'
 	| 'Instalado en cliente'
-	| 'En revision'
-	| 'En prestamo externo'
+	| 'En revisión'
+	| 'En préstamo externo'
 	| 'Dado de baja';
 
 export interface UnidadEquipo {
@@ -90,6 +109,20 @@ export interface UnidadEquipo {
 	numero_poste: string | null;
 	id_caja_nap: number | null;
 	tipo_equipo?: TipoEquipo;
+	// CU-32/CU-33
+	mac_address?: string | null;
+	proveedor?: string | null;
+	observaciones?: string | null;
+	ubicacion_fisica?: string | null;
+	marca?: string | null;
+	empresa?: string | null;
+	bodega?: string | null;
+	garantia?: {
+		posee_garantia: boolean;
+		garantia_vigente: boolean;
+		dias_restantes: number;
+		mensaje_alerta: string;
+	};
 }
 
 export interface CreateUnidadDto {
@@ -125,6 +158,12 @@ export interface Bodega {
 	nombre: string;
 	direccion: string | null;
 	activa: boolean;
+	// CU-44: campos del listado
+	empresa?: string;
+	responsable?: string | null;
+	estado?: string;
+	resumen_stock_total?: number;
+	id_usuario_responsable?: number | null;
 }
 
 export interface CreateBodegaDto {
@@ -152,12 +191,15 @@ export interface ConfigurarUmbralDto {
 	umbral: number;
 }
 
+// Respuesta de GET /transferencias (CU-23)
 export interface Transferencia {
 	id_transferencia: number;
-	id_empresa_origen: number | null;
-	id_empresa_destino: number | null;
-	id_usuario_registro: number | null;
-	fecha_transferencia: string | null;
+	empresa_origen: string;
+	empresa_destino: string;
+	fecha: string | null;
+	estado: string;
+	unidades: number;
+	solicitante: string | null;
 	observaciones: string | null;
 }
 
@@ -187,6 +229,9 @@ export interface MovimientoInventario {
 export interface LogAuditoria {
 	id_log: number;
 	id_usuario: number;
+	usuario_nombre?: string | null;
+	empresa?: string | null;
+	descripcion?: string;
 	accion: string;
 	entidad_afectada: string | null;
 	id_entidad_afectada: number;

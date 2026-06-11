@@ -17,22 +17,37 @@
 	let error = $state('');
 	let search = $state('');
 	let categFilter = $state('');
+	// CU-25: filtro por estado (Activo/Inactivo/Todos)
+	let estadoFilter = $state('true');
 
 	let showCreate = $state(false);
-	let createForm = $state({ nombre: '', categoria: '', requiereSerialNumber: true });
+	// CU-24: nombre, categoría, marca, modelo, descripción técnica,
+	// requiere serie, unidad de medida (solo si no requiere serie) y garantía
+	let createForm = $state({
+		nombre: '',
+		categoria: '',
+		marca: '',
+		modelo: '',
+		descripcionTecnica: '',
+		requiereSerialNumber: true,
+		unidadMedida: '',
+		garantiaDias: 0
+	});
 	let createError = $state('');
 	let creating = $state(false);
 
 	let deletingItem = $state<TipoEquipo | null>(null);
 
-	const categorias = ['ONT/ONU', 'Decodificador', 'Splitter', 'Router', 'Fuente de poder', 'Fibra óptica', 'Conector', 'Otro'];
+	// CU-24: categorías y unidades de medida definidas en el caso de uso
+	const categorias = ['ONT/ONU', 'Decodificador', 'Splitter', 'Herramienta', 'Consumible fibra óptica', 'Consumible conector', 'Consumible otro', 'Otro'];
+	const unidadesMedida = ['Unidad', 'Metro', 'Rollo'];
 
 	async function load() {
 		loading = true;
 		error = '';
 		try {
 			items = await getCatalog({
-				activo: true,
+				activo: estadoFilter === '' ? undefined : estadoFilter === 'true',
 				buscar: search || undefined,
 				categoria: categFilter || undefined
 			});
@@ -45,7 +60,7 @@
 
 	onMount(load);
 
-	$effect(() => { search; categFilter; load(); });
+	$effect(() => { search; categFilter; estadoFilter; load(); });
 
 	async function handleCreate() {
 		createError = '';
@@ -53,7 +68,7 @@
 		try {
 			await createCatalogItem(createForm as unknown as Record<string, unknown>);
 			showCreate = false;
-			createForm = { nombre: '', categoria: '', requiereSerialNumber: true };
+			createForm = { nombre: '', categoria: '', marca: '', modelo: '', descripcionTecnica: '', requiereSerialNumber: true, unidadMedida: '', garantiaDias: 0 };
 			await load();
 		} catch (err: unknown) {
 			createError = err instanceof Error ? err.message : 'Error al crear tipo de equipo';
@@ -92,7 +107,7 @@
 
 	<div class="flex items-center gap-4 mb-4">
 		<div class="flex-1 max-w-xs">
-			<SearchInput bind:value={search} placeholder="Buscar por nombre..." />
+			<SearchInput bind:value={search} placeholder="Buscar por nombre, marca o modelo..." />
 		</div>
 		<select
 			bind:value={categFilter}
@@ -102,6 +117,12 @@
 			{#each categorias as cat}
 				<option value={cat}>{cat}</option>
 			{/each}
+		</select>
+		<select bind:value={estadoFilter} aria-label="Filtrar por estado"
+			class="px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+			<option value="">Todos los estados</option>
+			<option value="true">Activo</option>
+			<option value="false">Inactivo</option>
 		</select>
 	</div>
 
@@ -113,7 +134,7 @@
 		{#if loading}
 			<div class="p-8 text-center text-sm text-muted">Cargando...</div>
 		{:else if items.length === 0}
-			<EmptyState message="No hay tipos de equipo registrados" action={() => (showCreate = true)} actionlabel="Crear tipo" />
+			<EmptyState message="No se encontraron tipos de equipo con los filtros seleccionados." action={() => (showCreate = true)} actionlabel="Crear tipo" />
 		{:else}
 			<div class="overflow-x-auto">
 				<table class="w-full text-sm">
@@ -121,7 +142,12 @@
 						<tr class="border-b border-border bg-surface/50">
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Nombre</th>
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Categoría</th>
-							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Naturaleza</th>
+							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Marca</th>
+							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Modelo</th>
+							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Estado</th>
+							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Req. N° serie</th>
+							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">U. medida</th>
+							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Garantía (días)</th>
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Ficha técnica</th>
 							<th class="text-right px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Acciones</th>
 						</tr>
@@ -133,11 +159,18 @@
 								<td class="px-4 py-3">
 									<Badge>{item.categoria || 'Sin categoría'}</Badge>
 								</td>
+								<td class="px-4 py-3 text-foreground">{item.marca || '-'}</td>
+								<td class="px-4 py-3 text-foreground">{item.modelo || '-'}</td>
 								<td class="px-4 py-3">
-									<Badge variant={item.requiere_serie_individual ? 'info' : 'default'}>
-										{item.requiere_serie_individual ? 'Individualizable' : 'Consumible'}
+									<Badge variant={item.activo ? 'success' : 'danger'}>{item.activo ? 'Activo' : 'Inactivo'}</Badge>
+								</td>
+								<td class="px-4 py-3">
+									<Badge variant={item.requiereSerialNumber ? 'info' : 'default'}>
+										{item.requiereSerialNumber ? 'Sí' : 'No'}
 									</Badge>
 								</td>
+								<td class="px-4 py-3 text-muted">{item.unidadMedida || '-'}</td>
+								<td class="px-4 py-3 text-muted">{item.garantiaDias ?? 0}</td>
 								<td class="px-4 py-3">
 									{#if item.ficha_tecnica_pdf_url}
 										<a href={item.ficha_tecnica_pdf_url} target="_blank" class="inline-flex items-center gap-1 text-accent hover:text-accent-hover">
@@ -177,33 +210,72 @@
 			<div class="bg-red-50 border border-red-200 text-destructive text-sm rounded-md px-3 py-2">{createError}</div>
 		{/if}
 
-		<FormField label="Nombre" name="nom" required>
+		<FormField label="Nombre del tipo" name="nom" required helper="3-80 caracteres">
 			<input id="nom" type="text" required bind:value={createForm.nombre}
+				minlength={3} maxlength={80}
 				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-				placeholder="Ej: ONT Huawei" />
+				placeholder="Ej: ONT Huawei EchoLife" />
 		</FormField>
 
-		<FormField label="Categoría" name="cat">
-			<select id="cat" bind:value={createForm.categoria}
+		<FormField label="Categoría" name="cat" required>
+			<select id="cat" required bind:value={createForm.categoria}
 				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
-				<option value="">Sin categoría</option>
+				<option value="" disabled>Seleccionar...</option>
 				{#each categorias as cat}
 					<option value={cat}>{cat}</option>
 				{/each}
 			</select>
 		</FormField>
 
-		<FormField label="Naturaleza" name="nat">
+		<div class="grid grid-cols-2 gap-4">
+			<FormField label="Marca" name="mar" required helper="2-50 caracteres">
+				<input id="mar" type="text" required bind:value={createForm.marca}
+					minlength={2} maxlength={50}
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+					placeholder="Ej: Huawei" />
+			</FormField>
+			<FormField label="Modelo" name="mod" required helper="1-50 caracteres">
+				<input id="mod" type="text" required bind:value={createForm.modelo}
+					minlength={1} maxlength={50}
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+					placeholder="Ej: EG8145V5" />
+			</FormField>
+		</div>
+
+		<FormField label="Descripción técnica" name="desc" helper="Opcional, máximo 500 caracteres">
+			<textarea id="desc" bind:value={createForm.descripcionTecnica} maxlength={500} rows="2"
+				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
+		</FormField>
+
+		<FormField label="¿Requiere número de serie individual?" name="nat" required>
 			<div class="flex gap-4">
 				<label class="flex items-center gap-2 text-sm cursor-pointer">
 					<input type="radio" name="naturaleza" bind:group={createForm.requiereSerialNumber} value={true} class="text-accent" />
-					Individualizable (con serie)
+					Sí
 				</label>
 				<label class="flex items-center gap-2 text-sm cursor-pointer">
 					<input type="radio" name="naturaleza" bind:group={createForm.requiereSerialNumber} value={false} class="text-accent" />
-					Consumible / Volumen
+					No
 				</label>
 			</div>
+		</FormField>
+
+		<!-- CU-24: la unidad de medida solo aplica (y es obligatoria) si NO requiere serie -->
+		{#if createForm.requiereSerialNumber === false}
+			<FormField label="Unidad de medida" name="um" required>
+				<select id="um" required bind:value={createForm.unidadMedida}
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+					<option value="" disabled>Seleccionar...</option>
+					{#each unidadesMedida as um}
+						<option value={um}>{um}</option>
+					{/each}
+				</select>
+			</FormField>
+		{/if}
+
+		<FormField label="Duración de garantía (días)" name="gar" helper="0 a 3650; 0 significa sin garantía">
+			<input id="gar" type="number" min={0} max={3650} step={1} bind:value={createForm.garantiaDias}
+				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
 		</FormField>
 
 		<div class="flex justify-end gap-3 pt-2">

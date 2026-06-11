@@ -9,8 +9,10 @@ import { Repository, DataSource, In } from 'typeorm';
 import { Transferencia } from './entities/transferencia.entity';
 import { MovimientoInventario } from './entities/movimiento-inventario.entity';
 import { UnidadEquipo } from '../inventario/entities/unidad-equipo.entity';
+import { Usuario } from '../usuarios/entities/usuario.entity';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { CreateTransferenciaDto } from './dto/create-transferencia.dto';
+import { EMPRESAS } from '../companies/companies.service';
 
 const ESTADO_PENDIENTE = 'TRANSFERENCIA_PENDIENTE';
 const ESTADO_APROBADA = 'TRANSFERENCIA_APROBADA';
@@ -220,7 +222,11 @@ export class TransferenciasService {
         };
     }
 
-    async consultarTransferencias(filtros: { estado?: string; id_empresa?: number }, actor: any): Promise<any[]> {
+    // CU-23: listado con filtros por estado, rango de fechas o empresa
+    async consultarTransferencias(
+        filtros: { estado?: string; id_empresa?: number; fecha_inicio?: string; fecha_fin?: string },
+        actor: any,
+    ): Promise<any[]> {
         const isSuperusuario = actor.roles?.includes('SUPERUSUARIO');
 
         const query = this.transferenciaRepository
@@ -234,7 +240,33 @@ export class TransferenciasService {
             );
         }
 
+        if (filtros.id_empresa) {
+            query.andWhere(
+                '(t.id_empresa_origen = :fe OR t.id_empresa_destino = :fe)',
+                { fe: filtros.id_empresa }
+            );
+        }
+        if (filtros.fecha_inicio) {
+            query.andWhere('t.fecha_transferencia >= :fi', { fi: filtros.fecha_inicio });
+        }
+        if (filtros.fecha_fin) {
+            query.andWhere('t.fecha_transferencia <= :ff', { ff: filtros.fecha_fin });
+        }
+
         const transferencias = await query.getMany();
+
+        // El filtro acepta tanto 'PENDIENTE' como 'TRANSFERENCIA_PENDIENTE'
+        const estadoFiltro = filtros.estado
+            ? (filtros.estado.startsWith('TRANSFERENCIA_') ? filtros.estado : `TRANSFERENCIA_${filtros.estado}`)
+            : undefined;
+
+        // CU-23: nombre del usuario solicitante, resuelto en una sola query
+        const idsSolicitantes = [...new Set(transferencias.map((t) => t.id_usuario_registro).filter(Boolean))];
+        const solicitantes = idsSolicitantes.length
+            ? await this.dataSource.getRepository(Usuario).findBy({ id_usuario: In(idsSolicitantes as number[]) })
+            : [];
+        const mapaSolicitantes = new Map(solicitantes.map((u) => [u.id_usuario, u.nombre_usuario ?? u.nombre_completo]));
+        const mapaEmpresas = new Map(EMPRESAS.map((e) => [e.id, e.nombre]));
 
         const resultado: any[] = [];
 
@@ -245,15 +277,16 @@ export class TransferenciasService {
 
             const estadoActual = movimientos.length > 0 ? movimientos[0].tipo_movimiento : 'SIN_MOVIMIENTOS';
 
-            if (filtros.estado && estadoActual !== filtros.estado) continue;
+            if (estadoFiltro && estadoActual !== estadoFiltro) continue;
 
             resultado.push({
                 id_transferencia: t.id_transferencia,
-                empresa_origen: t.id_empresa_origen === 1 ? 'Finet' : 'Cable Mágico',
-                empresa_destino: t.id_empresa_destino === 1 ? 'Finet' : 'Cable Mágico',
+                empresa_origen: mapaEmpresas.get(t.id_empresa_origen) ?? `Empresa ${t.id_empresa_origen}`,
+                empresa_destino: mapaEmpresas.get(t.id_empresa_destino) ?? `Empresa ${t.id_empresa_destino}`,
                 fecha: t.fecha_transferencia,
                 estado: estadoActual,
                 unidades: movimientos.length,
+                solicitante: mapaSolicitantes.get(t.id_usuario_registro) ?? null,
                 observaciones: t.observaciones,
             });
         }

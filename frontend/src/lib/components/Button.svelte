@@ -6,7 +6,7 @@
 		disabled = false,
 		loading = false,
 		type = 'button' as 'button' | 'submit',
-		onclick,
+		onclick = undefined as ((e: MouseEvent) => void) | undefined,
 		...rest
 	} = $props();
 

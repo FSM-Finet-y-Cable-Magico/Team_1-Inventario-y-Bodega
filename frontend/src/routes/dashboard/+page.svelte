@@ -15,6 +15,7 @@
 		por_estado: Record<string, number>;
 		total_bodegas: number;
 		stock_consumible: number;
+		alertas: { bodega: string; tipo_equipo: string; cantidad_disponible: number; umbral_minimo: number }[];
 	}[]>([]);
 
 	// El backend habla en términos de unidades/bodegas_activas (CU-15)
@@ -24,7 +25,8 @@
 			total_equipos: e.total_unidades ?? 0,
 			por_estado: e.unidades_por_estado ?? {},
 			total_bodegas: e.bodegas_activas ?? 0,
-			stock_consumible: e.stock_consumible_total ?? 0
+			stock_consumible: e.stock_consumible_total ?? 0,
+			alertas: e.alertas_stock_minimo ?? []
 		};
 	}
 
@@ -95,7 +97,21 @@
 							<span class="text-2xl font-bold text-foreground">{empresa.stock_consumible}</span>
 						</div>
 					</div>
-					{#if Object.keys(empresa.por_estado).length > 0}
+					<!-- CU-46: alertas de stock bajo el umbral mínimo -->
+				{#if empresa.alertas.length > 0}
+					<div class="mt-4 bg-amber-50 border border-amber-200 rounded-md p-3">
+						<h3 class="text-xs font-semibold text-amber-800 mb-2">⚠ Alertas de stock mínimo</h3>
+						<div class="space-y-1">
+							{#each empresa.alertas as alerta}
+								<p class="text-xs text-amber-800">
+									<strong>{alerta.tipo_equipo}</strong> en {alerta.bodega}:
+									{alerta.cantidad_disponible} disponibles (umbral: {alerta.umbral_minimo})
+								</p>
+							{/each}
+						</div>
+					</div>
+				{/if}
+				{#if Object.keys(empresa.por_estado).length > 0}
 						<div class="mt-4">
 							<h3 class="text-xs font-medium text-muted mb-2">Equipos por estado</h3>
 							<div class="space-y-1.5">

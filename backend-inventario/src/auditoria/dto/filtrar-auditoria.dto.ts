@@ -5,6 +5,10 @@ export class FiltrarAuditoriaDto {
   fecha_fin?: Date;
   @Type(() => Number)
   id_usuario?: number;
+  // CU-09: filtros por nombre de usuario (parcial) y empresa
+  usuario?: string;
+  @Type(() => Number)
+  id_empresa?: number;
   @Type(() => Number)
   id_entidad_afectada?: number;
   ip_origen?: string;

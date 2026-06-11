@@ -4,7 +4,7 @@
 	let {
 		value = $bindable(''),
 		placeholder = 'Buscar...',
-		onsearch
+		onsearch = undefined as ((value: string) => void) | undefined
 	} = $props();
 
 	let timer: ReturnType<typeof setTimeout>;

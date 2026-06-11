@@ -5,20 +5,35 @@ export async function login(dto: LoginDto): Promise<LoginResponse> {
 	return api.post<LoginResponse>('/auth/login', dto);
 }
 
-export async function logout(): Promise<void> {
-	await api.post<void>('/auth/logout');
+// CU-11/CU-12: el motivo distingue el cierre manual del cierre por inactividad
+export async function logout(motivo: 'manual' | 'inactividad' = 'manual'): Promise<void> {
+	await api.post<void>('/auth/logout', { motivo });
+}
+
+// CU-10: establecer nueva contraseña tras un restablecimiento
+export function cambiarPassword(dto: {
+	nombre_usuario: string;
+	password_actual: string;
+	nueva_password: string;
+}): Promise<{ message: string }> {
+	return api.post<{ message: string }>('/auth/cambiar-password', dto);
 }
 
 export async function restablecerPassword(id: number): Promise<{ nueva_password: string }> {
 	return api.post<{ nueva_password: string }>(`/auth/restablecer-password/${id}`);
 }
 
-export function getUsers(activo?: boolean, buscar?: string): Promise<Usuario[]> {
+export function getUsers(filtros?: { activo?: boolean; buscar?: string; rol?: string }): Promise<Usuario[]> {
 	const params = new URLSearchParams();
-	if (activo !== undefined) params.set('activo', String(activo));
-	if (buscar) params.set('buscar', buscar);
+	if (filtros?.activo !== undefined) params.set('activo', String(filtros.activo));
+	if (filtros?.buscar) params.set('buscar', filtros.buscar);
+	if (filtros?.rol) params.set('rol', filtros.rol);
 	const qs = params.toString();
 	return api.get<Usuario[]>(`/usuario${qs ? '?' + qs : ''}`);
+}
+
+export function getEmpresas() {
+	return api.get<{ id: number; nombre: string }[]>('/empresas');
 }
 
 export function getUser(id: number): Promise<Usuario> {
@@ -128,9 +143,15 @@ export function setStockThreshold(id: number, data: { id_tipo_equipo: number; um
 	return api.post<any>(`/bodegas/${id}/umbral`, data);
 }
 
-export function getTransfers(params?: { estado?: string }) {
-	const qs = params?.estado ? `?estado=${params.estado}` : '';
-	return api.get<any[]>(`/transferencias${qs}`);
+// CU-23: filtros por estado, rango de fechas o empresa
+export function getTransfers(params?: { estado?: string; id_empresa?: string; fecha_inicio?: string; fecha_fin?: string }) {
+	const qs = new URLSearchParams();
+	if (params?.estado) qs.set('estado', params.estado);
+	if (params?.id_empresa) qs.set('id_empresa', params.id_empresa);
+	if (params?.fecha_inicio) qs.set('fecha_inicio', params.fecha_inicio);
+	if (params?.fecha_fin) qs.set('fecha_fin', params.fecha_fin);
+	const query = qs.toString();
+	return api.get<any[]>(`/transferencias${query ? '?' + query : ''}`);
 }
 
 export function createTransfer(data: Record<string, unknown>) {
@@ -141,7 +162,8 @@ export function approveTransfer(id: number) {
 	return api.patch<any>(`/transferencias/${id}/aprobar`);
 }
 
-export function rejectTransfer(id: number, data: { motivo: string }) {
+export function rejectTransfer(id: number, data: { observaciones: string }) {
+	// el backend espera el motivo en el campo 'observaciones'
 	return api.patch<any>(`/transferencias/${id}/rechazar`, data);
 }
 
