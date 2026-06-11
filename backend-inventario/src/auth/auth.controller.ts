@@ -2,6 +2,7 @@ import { Controller, Post, Body, Param, UseGuards, Req } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { CambiarPasswordDto } from './dto/cambiar-password.dto';
 import { RolesGuard } from './guards/roles.guard';
 import { Roles } from './decorators/roles.decorator';
 
@@ -16,9 +17,15 @@ export class AuthController {
 
   @Post('logout')
   @UseGuards(AuthGuard('jwt'))
-  logout(@Req() req) {
+  logout(@Req() req, @Body() body?: { motivo?: string }) {
     const token = req.headers.authorization?.replace('Bearer ', '') ?? '';
-    return this.authService.logout(token, req.user.id_usuario);
+    return this.authService.logout(token, req.user.id_usuario, body?.motivo);
+  }
+
+  // CU-10: cambio obligatorio de contraseña tras un restablecimiento
+  @Post('cambiar-password')
+  cambiarPassword(@Body() dto: CambiarPasswordDto) {
+    return this.authService.cambiarPassword(dto);
   }
 
   @Post('restablecer-password/:id')

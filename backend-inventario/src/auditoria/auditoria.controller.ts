@@ -19,7 +19,7 @@ export class AuditoriaController {
   }
 
   @Get()
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'SUPERUSUARIO')
   findAll(@Query() filtros: FiltrarAuditoriaDto) {
     return this.auditoriaService.findAll(filtros);
   }

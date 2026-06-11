@@ -10,6 +10,7 @@ export interface Usuario {
 	debe_cambiar_password: boolean;
 	fecha_creacion: string;
 	roles?: Rol[];
+	empresa?: Empresa | null;
 }
 
 export interface CreateUsuarioDto {
@@ -25,6 +26,12 @@ export interface UpdateUsuarioDto {
 	email?: string;
 	activo?: boolean;
 	roles?: number[];
+	id_empresa?: number;
+}
+
+export interface Empresa {
+	id: number;
+	nombre: string;
 }
 
 export interface Rol {
@@ -41,8 +48,10 @@ export interface LoginDto {
 }
 
 export interface LoginResponse {
-	access_token: string;
-	usuario: Usuario;
+	access_token?: string;
+	usuario?: Usuario;
+	// CU-10: cuenta marcada con cambio obligatorio de contraseña
+	debe_cambiar_password?: boolean;
 }
 
 export interface TipoEquipo {
@@ -187,6 +196,9 @@ export interface MovimientoInventario {
 export interface LogAuditoria {
 	id_log: number;
 	id_usuario: number;
+	usuario_nombre?: string | null;
+	empresa?: string | null;
+	descripcion?: string;
 	accion: string;
 	entidad_afectada: string | null;
 	id_entidad_afectada: number;

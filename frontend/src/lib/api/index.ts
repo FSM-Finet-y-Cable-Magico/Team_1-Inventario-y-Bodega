@@ -5,20 +5,35 @@ export async function login(dto: LoginDto): Promise<LoginResponse> {
 	return api.post<LoginResponse>('/auth/login', dto);
 }
 
-export async function logout(): Promise<void> {
-	await api.post<void>('/auth/logout');
+// CU-11/CU-12: el motivo distingue el cierre manual del cierre por inactividad
+export async function logout(motivo: 'manual' | 'inactividad' = 'manual'): Promise<void> {
+	await api.post<void>('/auth/logout', { motivo });
+}
+
+// CU-10: establecer nueva contraseña tras un restablecimiento
+export function cambiarPassword(dto: {
+	nombre_usuario: string;
+	password_actual: string;
+	nueva_password: string;
+}): Promise<{ message: string }> {
+	return api.post<{ message: string }>('/auth/cambiar-password', dto);
 }
 
 export async function restablecerPassword(id: number): Promise<{ nueva_password: string }> {
 	return api.post<{ nueva_password: string }>(`/auth/restablecer-password/${id}`);
 }
 
-export function getUsers(activo?: boolean, buscar?: string): Promise<Usuario[]> {
+export function getUsers(filtros?: { activo?: boolean; buscar?: string; rol?: string }): Promise<Usuario[]> {
 	const params = new URLSearchParams();
-	if (activo !== undefined) params.set('activo', String(activo));
-	if (buscar) params.set('buscar', buscar);
+	if (filtros?.activo !== undefined) params.set('activo', String(filtros.activo));
+	if (filtros?.buscar) params.set('buscar', filtros.buscar);
+	if (filtros?.rol) params.set('rol', filtros.rol);
 	const qs = params.toString();
 	return api.get<Usuario[]>(`/usuario${qs ? '?' + qs : ''}`);
+}
+
+export function getEmpresas() {
+	return api.get<{ id: number; nombre: string }[]>('/empresas');
 }
 
 export function getUser(id: number): Promise<Usuario> {

@@ -9,6 +9,13 @@ import { Roles } from '../auth/decorators/roles.decorator';
 export class CompaniesController {
     constructor(private readonly companiesService: CompaniesService) {}
 
+    // CU-06: listado de empresas (selector en gestión de usuarios)
+    @Get()
+    @Roles('ADMIN', 'SUPERUSUARIO')
+    findAll() {
+        return this.companiesService.findAll();
+    }
+
     // CU-15: consolidado de ambas empresas, exclusivo SUPERUSUARIO
     @Get('dashboard')
     @Roles('SUPERUSUARIO')

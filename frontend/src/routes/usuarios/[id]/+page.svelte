@@ -2,38 +2,52 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { getUser, getRoles, updateUser, restablecerPassword } from '$lib/api/index';
-	import type { Usuario, Rol } from '$lib/types';
+	import { getUser, getRoles, getEmpresas, updateUser, restablecerPassword } from '$lib/api/index';
+	import type { Usuario, Rol, Empresa } from '$lib/types';
 	import Button from '$lib/components/Button.svelte';
 	import FormField from '$lib/components/FormField.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import { currentUser, userRoles } from '$lib/stores/auth';
 	import { ArrowLeft, Save, KeyRound } from '@lucide/svelte';
 
 	let usuario = $state<Usuario | null>(null);
 	let roles = $state<Rol[]>([]);
+	let empresas = $state<Empresa[]>([]);
 	let loading = $state(true);
 	let saving = $state(false);
 	let error = $state('');
 	let success = $state('');
 
-	let editForm = $state({ nombre_completo: '', email: '', activo: true, roles: [] as number[] });
+	// CU-06: campos editables: nombre completo, empresa, rol y estado
+	let editForm = $state({ nombre_completo: '', id_empresa: null as number | null, activo: true });
 	let selectedRoles = $state<number[]>([]);
 
 	let showResetConfirm = $state(false);
+	let showDeactivateConfirm = $state(false);
 	let resetResult = $state('');
 	let resetting = $state(false);
+
+	// CU-07 Excepción 1: no se puede desactivar la cuenta propia
+	const esCuentaPropia = $derived(usuario?.id_usuario === $currentUser?.id_usuario);
+	// Solo el Superusuario puede cambiar la empresa de un usuario
+	const esSuperusuario = $derived($userRoles.includes('SUPERUSUARIO'));
 
 	async function load() {
 		loading = true;
 		error = '';
 		const id = Number($page.params.id);
 		try {
-			const [userData, rolesData] = await Promise.all([getUser(id), getRoles()]);
+			const [userData, rolesData, empresasData] = await Promise.all([
+				getUser(id),
+				getRoles(),
+				getEmpresas()
+			]);
 			usuario = userData;
 			roles = rolesData;
+			empresas = empresasData;
 			editForm.nombre_completo = userData.nombre_completo;
-			editForm.email = userData.email ?? '';
+			editForm.id_empresa = userData.id_empresa;
 			editForm.activo = userData.activo;
 			selectedRoles = userData.roles?.map((r: Rol) => r.id_rol) ?? [];
 		} catch (err: unknown) {
@@ -61,7 +75,17 @@
 		}
 	}
 
-	async function handleSave() {
+	function handleSave() {
+		// CU-07: desactivar una cuenta activa requiere confirmación explícita
+		if (usuario?.activo && !editForm.activo) {
+			showDeactivateConfirm = true;
+			return;
+		}
+		doSave();
+	}
+
+	async function doSave() {
+		showDeactivateConfirm = false;
 		saving = true;
 		error = '';
 		success = '';
@@ -69,9 +93,9 @@
 		try {
 			await updateUser(id, {
 				nombre_completo: editForm.nombre_completo,
-				email: editForm.email || undefined,
 				activo: editForm.activo,
-				roles: selectedRoles
+				roles: selectedRoles,
+				...(editForm.id_empresa != null ? { id_empresa: editForm.id_empresa } : {})
 			});
 			success = 'Usuario actualizado correctamente';
 			await load();
@@ -138,19 +162,33 @@
 			<form onsubmit={(e: Event) => { e.preventDefault(); handleSave(); }} class="p-6 space-y-4">
 				<FormField label="Nombre completo" name="nc" required>
 					<input id="nc" type="text" required bind:value={editForm.nombre_completo}
-						class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+						class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+						pattern={'^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]{2,80}$'}
+						title="2-80 caracteres, solo letras, espacios y tildes" />
 				</FormField>
 
-				<FormField label="Email" name="em">
-					<input id="em" type="email" bind:value={editForm.email}
-						class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+				<!-- CU-06: empresa del usuario; solo el Superusuario puede cambiarla -->
+				<FormField label="Empresa" name="emp">
+					<select id="emp" bind:value={editForm.id_empresa} disabled={!esSuperusuario}
+						class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white disabled:bg-surface-alt disabled:text-muted">
+						<option value={null}>Sin empresa asignada</option>
+						{#each empresas as emp}
+							<option value={emp.id}>{emp.nombre}</option>
+						{/each}
+					</select>
+					{#if !esSuperusuario}
+						<p class="text-xs text-muted mt-1">Solo un Superusuario puede cambiar la empresa.</p>
+					{/if}
 				</FormField>
 
 				<FormField label="Estado" name="st">
-					<label class="flex items-center gap-2 text-sm cursor-pointer">
-						<input type="checkbox" bind:checked={editForm.activo} class="rounded border-border" />
+					<label class="flex items-center gap-2 text-sm {esCuentaPropia ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}">
+						<input type="checkbox" bind:checked={editForm.activo} disabled={esCuentaPropia} class="rounded border-border" />
 						<span>Usuario activo</span>
 					</label>
+					{#if esCuentaPropia}
+						<p class="text-xs text-muted mt-1">No es posible desactivar su propia cuenta.</p>
+					{/if}
 				</FormField>
 
 				<FormField label="Roles" name="rl">
@@ -183,6 +221,16 @@
 		</div>
 	{/if}
 </div>
+
+<!-- CU-07: confirmación al desactivar la cuenta desde la edición -->
+<ConfirmDialog
+	open={showDeactivateConfirm}
+	title="Desactivar usuario"
+	message={usuario ? `¿Está seguro que desea desactivar la cuenta de ${usuario.nombre_usuario}? Esta acción impedirá futuros inicios de sesión.` : ''}
+	confirmlabel="Desactivar"
+	onconfirm={doSave}
+	oncancel={() => (showDeactivateConfirm = false)}
+/>
 
 <ConfirmDialog
 	open={showResetConfirm}

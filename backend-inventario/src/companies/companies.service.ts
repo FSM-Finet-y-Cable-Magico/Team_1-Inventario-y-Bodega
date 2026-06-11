@@ -5,7 +5,7 @@ import { UnidadEquipo } from '../inventario/entities/unidad-equipo.entity';
 import { Bodega } from '../bodegas/entities/bodega.entity';
 import { StockConsumible } from '../bodegas/entities/stock-consumible.entity';
 
-const EMPRESAS = [
+export const EMPRESAS = [
     { id: 1, nombre: 'Finet' },
     { id: 2, nombre: 'Cable Mágico' },
 ];
@@ -20,6 +20,11 @@ export class CompaniesService {
         @InjectRepository(StockConsumible)
         private readonly stockRepository: Repository<StockConsumible>,
     ) {}
+
+    // CU-06: listado de empresas para el selector de edición de usuarios
+    findAll() {
+        return EMPRESAS;
+    }
 
     async getDashboard(): Promise<any> {
         const resultado: any[] = [];

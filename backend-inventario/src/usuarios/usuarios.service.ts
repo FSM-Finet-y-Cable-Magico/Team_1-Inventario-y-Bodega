@@ -27,29 +27,39 @@ export class UsuariosService {
     private readonly auditoriaService: AuditoriaService,
   ) {}
 
-  // CU-05: listado con filtros por rol, estado y nombre
+  // CU-05: listado con filtros por rol, estado y nombre (completo o de usuario)
   async findAll(filtros: { rol?: string; activo?: boolean; buscar?: string }, idEmpresaActor: number): Promise<Usuario[]> {
-    const where: any = { id_empresa: idEmpresaActor };
+    const base: any = { id_empresa: idEmpresaActor };
 
     if (filtros.activo !== undefined) {
-      where.activo = filtros.activo;
+      base.activo = filtros.activo;
     }
 
-    if (filtros.buscar) {
-      where.nombre_completo = ILike(`%${filtros.buscar}%`);
-    }
+    // La búsqueda aplica sobre nombre completo O nombre de usuario
+    const where = filtros.buscar
+      ? [
+          { ...base, nombre_completo: ILike(`%${filtros.buscar}%`) },
+          { ...base, nombre_usuario: ILike(`%${filtros.buscar}%`) },
+        ]
+      : base;
 
     const usuarios = await this.usuarioRepository.find({
       where,
       relations: { usuarioRoles: { rol: true } },
+      order: { nombre_completo: 'ASC' },
     });
 
-    // CU-05 Excepción 1: no hay resultados con los filtros aplicados
-    if (usuarios.length === 0) {
-      throw new NotFoundException('No se encontraron usuarios con los filtros seleccionados.');
+    let resultado = usuarios.map((u) => this.conRoles(u));
+
+    if (filtros.rol) {
+      resultado = resultado.filter((u) =>
+        u.roles.some((r) => r.nombre_rol === filtros.rol),
+      );
     }
 
-    return usuarios.map((u) => this.conRoles(u));
+    // CU-05 Excepción 1: sin coincidencias se retorna el listado vacío;
+    // el frontend muestra el mensaje correspondiente
+    return resultado;
   }
 
   async findOne(id: number): Promise<Usuario | null> {
@@ -191,17 +201,12 @@ export class UsuariosService {
     const usuario = await this.findOne(id);
     if (!usuario) throw new NotFoundException('Usuario no encontrado.');
 
-    // CU-06 Excepción 2: el Administrador no puede cambiar el rol a Superusuario
-    if (
-      (updateUsuarioDto as any).rol === 'SUPERUSUARIO' &&
-      !actorRoles.includes('SUPERUSUARIO')
-    ) {
-      throw new ForbiddenException(
-        'Solo un Superusuario puede asignar el rol de Superusuario.',
-      );
+    // CU-07 Excepción 1: tampoco por edición se puede desactivar la cuenta propia
+    if (updateUsuarioDto.activo === false && id === actorId) {
+      throw new BadRequestException('No es posible desactivar su propia cuenta.');
     }
 
-    // roles/password no se actualizan por esta vía; id_empresa solo lo cambia un Superusuario
+    // password no se actualiza por esta vía; id_empresa solo lo cambia un Superusuario
     const { roles, password, id_empresa, ...cambios } = updateUsuarioDto;
     if (
       id_empresa !== undefined &&
@@ -213,12 +218,45 @@ export class UsuariosService {
       );
     }
 
+    // CU-06: el rol es editable. Validar y reemplazar los roles asignados
+    let rolesAsignar: Rol[] | null = null;
+    if (roles !== undefined) {
+      const idsRoles = [...new Set(roles)];
+      rolesAsignar = idsRoles.length
+        ? await this.rolRepository.findBy({ id_rol: In(idsRoles) })
+        : [];
+      if (rolesAsignar.length !== idsRoles.length) {
+        throw new BadRequestException('Uno o más roles seleccionados no existen.');
+      }
+      // CU-06 Excepción 2: el Administrador no puede asignar rol Superusuario
+      if (
+        rolesAsignar.some((r) => r.nombre_rol === 'SUPERUSUARIO') &&
+        !actorRoles.includes('SUPERUSUARIO')
+      ) {
+        throw new ForbiddenException(
+          'Solo un Superusuario puede asignar el rol de Superusuario.',
+        );
+      }
+    }
+
     const anterior = { ...usuario };
+    const { usuarioRoles: _ur, roles: _roles, ...datosUsuario } = usuario as any;
     const usuarioActualizado = await this.usuarioRepository.save({
-      ...usuario,
+      ...datosUsuario,
       ...cambios,
       ...(id_empresa !== undefined ? { id_empresa } : {}),
     });
+
+    if (rolesAsignar !== null) {
+      await this.usuarioRolRepository.delete({ id_usuario: id });
+      if (rolesAsignar.length) {
+        await this.usuarioRolRepository.save(
+          rolesAsignar.map((r) =>
+            this.usuarioRolRepository.create({ id_usuario: id, id_rol: r.id_rol }),
+          ),
+        );
+      }
+    }
 
     if (actorId) {
       await this.auditoriaService.create({
@@ -227,7 +265,12 @@ export class UsuariosService {
         entidad_afectada: 'usuario',
         id_entidad_afectada: id,
         valor_anterior: anterior,
-        valor_nuevo: usuarioActualizado,
+        valor_nuevo: {
+          ...usuarioActualizado,
+          ...(rolesAsignar !== null
+            ? { roles: rolesAsignar.map((r) => r.nombre_rol) }
+            : {}),
+        },
       });
     }
 

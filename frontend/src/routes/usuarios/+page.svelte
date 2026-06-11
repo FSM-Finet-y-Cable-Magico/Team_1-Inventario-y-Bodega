@@ -10,6 +10,7 @@
 	import Badge from '$lib/components/Badge.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import { currentUser } from '$lib/stores/auth';
 	import { Plus, RotateCw, Pencil, Trash2 } from '@lucide/svelte';
 
 	let usuarios = $state<Usuario[]>([]);
@@ -17,7 +18,17 @@
 	let loading = $state(true);
 	let error = $state('');
 	let search = $state('');
-	let showInactivos = $state(false);
+	let filtroRol = $state('');
+	let filtroEstado = $state('');
+
+	// CU-05: fecha de creación en formato DD/MM/YYYY
+	function fmtFecha(fecha: string): string {
+		if (!fecha) return '-';
+		return new Date(fecha).toLocaleDateString('en-GB', {
+			day: '2-digit', month: '2-digit', year: 'numeric',
+			timeZone: 'America/Santiago'
+		});
+	}
 
 	let showCreate = $state(false);
 	let createForm = $state({ nombre_usuario: '', nombre_completo: '', email: '', password: '', roles: [] as number[] });
@@ -31,7 +42,11 @@
 		error = '';
 		try {
 			const [usersData, rolesData] = await Promise.all([
-				getUsers(showInactivos ? undefined : true, search || undefined),
+				getUsers({
+					activo: filtroEstado === '' ? undefined : filtroEstado === 'true',
+					buscar: search || undefined,
+					rol: filtroRol || undefined
+				}),
 				getRoles()
 			]);
 			usuarios = usersData;
@@ -46,7 +61,7 @@
 	onMount(load);
 
 	$effect(() => {
-		search; showInactivos;
+		search; filtroRol; filtroEstado;
 		load();
 	});
 
@@ -96,14 +111,24 @@
 		</div>
 	</div>
 
-	<div class="flex items-center gap-4 mb-4">
+	<!-- CU-05: filtros por rol, estado o nombre (completo o de usuario) -->
+	<div class="flex flex-wrap items-center gap-3 mb-4">
 		<div class="flex-1 max-w-xs">
-			<SearchInput bind:value={search} placeholder="Buscar usuarios..." />
+			<SearchInput bind:value={search} placeholder="Buscar por nombre o usuario..." />
 		</div>
-		<label class="flex items-center gap-2 text-sm text-foreground cursor-pointer select-none">
-			<input type="checkbox" bind:checked={showInactivos} class="rounded border-border" />
-			Mostrar inactivos
-		</label>
+		<select bind:value={filtroRol} aria-label="Filtrar por rol"
+			class="px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+			<option value="">Todos los roles</option>
+			{#each roles as rol}
+				<option value={rol.nombre_rol}>{rol.nombre_rol}</option>
+			{/each}
+		</select>
+		<select bind:value={filtroEstado} aria-label="Filtrar por estado"
+			class="px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+			<option value="">Todos los estados</option>
+			<option value="true">Activo</option>
+			<option value="false">Inactivo</option>
+		</select>
 	</div>
 
 	{#if error}
@@ -114,29 +139,26 @@
 		{#if loading}
 			<div class="p-8 text-center text-sm text-muted">Cargando...</div>
 		{:else if usuarios.length === 0}
-			<EmptyState message="No se encontraron usuarios" action={() => (showCreate = true)} actionlabel="Crear usuario" />
+			<EmptyState message="No se encontraron usuarios con los filtros seleccionados." action={() => (showCreate = true)} actionlabel="Crear usuario" />
 		{:else}
 			<div class="overflow-x-auto">
 				<table class="w-full text-sm">
 					<thead>
+						<!-- CU-05: nombre completo, nombre de usuario, rol, estado y fecha de creación -->
 						<tr class="border-b border-border bg-surface/50">
-							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Usuario</th>
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Nombre completo</th>
-							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Email</th>
+							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Nombre de usuario</th>
+							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Rol</th>
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Estado</th>
-							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Roles</th>
+							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Fecha de creación</th>
 							<th class="text-right px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Acciones</th>
 						</tr>
 					</thead>
 					<tbody>
 						{#each usuarios as user, i}
 							<tr class="border-b border-border transition-colors hover:bg-surface-alt/50 {i % 2 === 0 ? 'bg-white' : 'bg-surface/30'}">
-								<td class="px-4 py-3 font-medium text-foreground">{user.nombre_usuario}</td>
-								<td class="px-4 py-3 text-foreground">{user.nombre_completo}</td>
-								<td class="px-4 py-3 text-muted">{user.email || '-'}</td>
-								<td class="px-4 py-3">
-									<Badge variant={user.activo ? 'success' : 'danger'}>{user.activo ? 'Activo' : 'Inactivo'}</Badge>
-								</td>
+								<td class="px-4 py-3 font-medium text-foreground">{user.nombre_completo}</td>
+								<td class="px-4 py-3 text-foreground">{user.nombre_usuario}</td>
 								<td class="px-4 py-3">
 									<div class="flex flex-wrap gap-1">
 										{#each user.roles ?? [] as rol}
@@ -147,6 +169,10 @@
 										{/if}
 									</div>
 								</td>
+								<td class="px-4 py-3">
+									<Badge variant={user.activo ? 'success' : 'danger'}>{user.activo ? 'Activo' : 'Inactivo'}</Badge>
+								</td>
+								<td class="px-4 py-3 text-muted whitespace-nowrap">{fmtFecha(user.fecha_creacion)}</td>
 								<td class="px-4 py-3 text-right">
 									<div class="flex items-center justify-end gap-1">
 										<button
@@ -156,13 +182,16 @@
 										>
 											<Pencil class="h-4 w-4" />
 										</button>
-										<button
-											onclick={() => (deletingUser = user)}
-											class="p-1.5 rounded-md hover:bg-red-50 text-muted hover:text-destructive transition-colors"
-											aria-label="Desactivar usuario"
-										>
-											<Trash2 class="h-4 w-4" />
-										</button>
+										<!-- CU-07 Excepción 1: no se puede desactivar la cuenta propia -->
+										{#if user.activo && user.id_usuario !== $currentUser?.id_usuario}
+											<button
+												onclick={() => (deletingUser = user)}
+												class="p-1.5 rounded-md hover:bg-red-50 text-muted hover:text-destructive transition-colors"
+												aria-label="Desactivar usuario"
+											>
+												<Trash2 class="h-4 w-4" />
+											</button>
+										{/if}
 									</div>
 								</td>
 							</tr>
@@ -242,7 +271,7 @@
 <ConfirmDialog
 	open={deletingUser !== null}
 	title="Desactivar usuario"
-	message={deletingUser ? `¿Desactivar a "${deletingUser.nombre_completo}"? Esta acción no se puede revertir.` : ''}
+	message={deletingUser ? `¿Está seguro que desea desactivar la cuenta de ${deletingUser.nombre_usuario}? Esta acción impedirá futuros inicios de sesión.` : ''}
 	confirmlabel="Desactivar"
 	onconfirm={handleDelete}
 	oncancel={() => (deletingUser = null)}

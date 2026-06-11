@@ -16,6 +16,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { logout as apiLogout } from '$lib/api/index';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	type RolNombre = 'SUPERUSUARIO' | 'ADMIN' | 'ADMIN_BODEGA' | 'TECNICO_TERRENO';
 
 	interface NavItem {
@@ -46,8 +47,12 @@
 		return $page.url.pathname.startsWith(path);
 	}
 
+	// CU-12: cerrar sesión requiere confirmación explícita
+	let showLogoutConfirm = $state(false);
+
 	async function handleLogout() {
-		try { await apiLogout(); } catch { /* ignore */ }
+		showLogoutConfirm = false;
+		try { await apiLogout('manual'); } catch { /* ignore */ }
 		authStore.logout();
 		goto('/login');
 	}
@@ -100,7 +105,7 @@
 
 	<div class="border-t border-border p-2">
 		<button
-			onclick={handleLogout}
+			onclick={() => (showLogoutConfirm = true)}
 			class="flex items-center gap-3 w-full px-3 py-2 rounded-md text-sm text-muted hover:text-destructive hover:bg-red-50 transition-colors"
 		>
 			<LogOut class="h-4 w-4 shrink-0" />
@@ -110,3 +115,14 @@
 		</button>
 	</div>
 </aside>
+
+<!-- CU-12: confirmación de cierre de sesión -->
+<ConfirmDialog
+	open={showLogoutConfirm}
+	title="Cerrar sesión"
+	message="¿Está seguro que desea cerrar su sesión?"
+	confirmlabel="Confirmar"
+	cancellabel="Cancelar"
+	onconfirm={handleLogout}
+	oncancel={() => (showLogoutConfirm = false)}
+/>
