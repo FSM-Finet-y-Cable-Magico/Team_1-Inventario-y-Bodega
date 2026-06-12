@@ -138,6 +138,11 @@ export function getWarehouse(id: number) {
 	return api.get<any>(`/bodegas/${id}`);
 }
 
+// CU-20: bodegas activas de la empresa destino de una transferencia
+export function getWarehousesByEmpresa(idEmpresa: number) {
+	return api.get<any[]>(`/bodegas/empresa/${idEmpresa}`);
+}
+
 export function createWarehouse(data: Record<string, unknown>) {
 	return api.post<any>('/bodegas', data);
 }

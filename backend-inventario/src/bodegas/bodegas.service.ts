@@ -240,6 +240,16 @@ export class BodegasService {
     return result;
   }
 
+  // CU-20: bodegas activas de otra empresa, usadas como destino de una
+  // transferencia inter-empresa; expone solo id y nombre
+  async findActivasByEmpresa(idEmpresa: number): Promise<Pick<Bodega, 'id_bodega' | 'nombre'>[]> {
+    return this.bodegaRepository.find({
+      where: { id_empresa: idEmpresa, activa: true },
+      select: { id_bodega: true, nombre: true },
+      order: { nombre: 'ASC' },
+    });
+  }
+
   async findOne(
     id: number,
     userEmpresaId: number,

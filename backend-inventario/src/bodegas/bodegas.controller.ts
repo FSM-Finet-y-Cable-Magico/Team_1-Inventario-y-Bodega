@@ -72,6 +72,14 @@ export class BodegasController {
     );
   }
 
+  // CU-20: bodegas activas de la empresa destino, para elegir el destino
+  // de una transferencia inter-empresa (lista mínima, sin stock ni metadatos)
+  @Get('empresa/:idEmpresa')
+  @Roles('ADMIN', 'SUPERUSUARIO')
+  findActivasByEmpresa(@Param('idEmpresa') idEmpresa: string) {
+    return this.bodegasService.findActivasByEmpresa(+idEmpresa);
+  }
+
   @Get(':id')
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
   findOne(@Param('id') id: string, @Req() req) {

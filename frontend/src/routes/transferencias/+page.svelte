@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { getTransfers, getTransferDetail, createTransfer, approveTransfer, rejectTransfer, getUnits, getWarehouses, getEmpresas } from '$lib/api/index';
+	import { getTransfers, getTransferDetail, createTransfer, approveTransfer, rejectTransfer, getUnits, getWarehouses, getWarehousesByEmpresa, getEmpresas } from '$lib/api/index';
 	import type { Transferencia, TransferenciaDetalle, Bodega, UnidadEquipo, Empresa } from '$lib/types';
 	import Button from '$lib/components/Button.svelte';
 	import Modal from '$lib/components/Modal.svelte';
@@ -61,6 +61,18 @@
 	// CU-20: la empresa origen es la del usuario autenticado (sin posibilidad de elegir otra)
 	const empresaOrigen = $derived($currentUser?.empresa ?? null);
 	const empresasDestino = $derived(empresas.filter((e) => e.id !== empresaOrigen?.id));
+	// CU-20: las bodegas destino son las de la empresa destino, no las del usuario
+	let bodegasDestino = $state<Bodega[]>([]);
+	$effect(() => {
+		const idEmpresa = createForm.id_empresa_destino;
+		createForm.id_bodega_destino = 0;
+		bodegasDestino = [];
+		if (idEmpresa) {
+			getWarehousesByEmpresa(idEmpresa)
+				.then((b) => (bodegasDestino = b))
+				.catch(() => (bodegasDestino = []));
+		}
+	});
 	// CU-20 Excepción 3: las unidades deben estar en la bodega de origen indicada
 	const unidadesDisponibles = $derived(
 		createForm.id_bodega_origen
@@ -315,9 +327,10 @@
 			</FormField>
 			<FormField label="Bodega destino" name="bod_des" required>
 				<select id="bod_des" required bind:value={createForm.id_bodega_destino}
-					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
-					<option value={0} disabled>Seleccionar...</option>
-					{#each warehouses as wh}
+					disabled={!createForm.id_empresa_destino}
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white disabled:bg-surface-alt disabled:text-muted">
+					<option value={0} disabled>{createForm.id_empresa_destino ? 'Seleccionar...' : 'Seleccione empresa destino primero'}</option>
+					{#each bodegasDestino as wh}
 						<option value={wh.id_bodega}>{wh.nombre}</option>
 					{/each}
 				</select>
