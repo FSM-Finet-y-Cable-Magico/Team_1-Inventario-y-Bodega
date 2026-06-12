@@ -28,6 +28,13 @@ export class UnitsController {
         return this.unitsService.registrarUnidad(body, actor.id_empresa);
     }
 
+    // CU-28/CU-31: ingreso de consumibles por cantidad y unidad de medida
+    @Post('consumibles')
+    @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
+    async ingresarConsumible(@Body() body: any, @CurrentUser() actor: any) {
+        return this.unitsService.ingresarConsumible(body, actor.id_empresa);
+    }
+
     @Get(':id/ficha')
     @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
     async verFichaDeSeguimiento(@Param('id') id: string, @CurrentUser() actor: any) {
@@ -47,6 +54,7 @@ export class UnitsController {
         @Body('nuevoEstado') nuevoEstado: string,
         @Body('observacion') observacion: string,
         @Body('diagnostico') diagnostico: string,
+        @Body('descripcionOtro') descripcionOtro: string,
         @CurrentUser() actor: any
     ) {
         return this.unitsService.transicionarEstado(
@@ -54,7 +62,8 @@ export class UnitsController {
             nuevoEstado,
             actor,
             observacion,
-            diagnostico
+            diagnostico,
+            descripcionOtro
         );
     }
 

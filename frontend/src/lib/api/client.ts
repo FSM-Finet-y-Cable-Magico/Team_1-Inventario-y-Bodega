@@ -62,11 +62,54 @@ async function request<T>(
 	return data;
 }
 
+// Descarga autenticada de archivos (el token viaja en el header Authorization,
+// por lo que un enlace <a href> directo no sirve). CU-29/CU-30.
+async function download(path: string, fallbackName: string): Promise<void> {
+	const token = get(authStore).token;
+	const headers: Record<string, string> = {};
+	if (token) headers['Authorization'] = `Bearer ${token}`;
+
+	const res = await fetch(`${BASE}${path}`, { headers });
+
+	if (res.status === 401) {
+		authStore.logout();
+		goto('/login');
+		throw new ApiError('Sesión expirada', 401);
+	}
+
+	if (!res.ok) {
+		let msg = 'Error al descargar el archivo';
+		try {
+			const data = await res.json();
+			const raw = (data as Record<string, unknown>).message;
+			msg = Array.isArray(raw) ? raw.join('. ') : ((raw as string) || msg);
+		} catch {
+			/* cuerpo no JSON: se mantiene el mensaje genérico */
+		}
+		throw new ApiError(msg, res.status);
+	}
+
+	const disposition = res.headers.get('Content-Disposition') ?? '';
+	const match = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition);
+	const filename = match ? decodeURIComponent(match[1]) : fallbackName;
+
+	const blob = await res.blob();
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement('a');
+	a.href = url;
+	a.download = filename;
+	document.body.appendChild(a);
+	a.click();
+	a.remove();
+	URL.revokeObjectURL(url);
+}
+
 export const api = {
 	get: <T>(path: string) => request<T>('GET', path),
 	post: <T>(path: string, body?: unknown) => request<T>('POST', path, body),
 	patch: <T>(path: string, body?: unknown) => request<T>('PATCH', path, body),
-	delete: <T>(path: string) => request<T>('DELETE', path)
+	delete: <T>(path: string) => request<T>('DELETE', path),
+	download
 };
 
 export { ApiError };

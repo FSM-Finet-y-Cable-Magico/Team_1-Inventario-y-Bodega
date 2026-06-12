@@ -18,7 +18,9 @@
 	let success = $state('');
 
 	let showChangeState = $state(false);
-	let changeForm = $state({ estado_nuevo: '' as EstadoUnidad | '', diagnostico: '', motivoPayload: '' });
+	// CU-36: observación opcional (máx. 300) en todo cambio de estado;
+	// motivoPayload es la descripción obligatoria del diagnóstico "Otro" (CU-40)
+	let changeForm = $state({ estado_nuevo: '' as EstadoUnidad | '', diagnostico: '', motivoPayload: '', observacion: '' });
 	let changeError = $state('');
 	let changing = $state(false);
 
@@ -43,6 +45,16 @@
 		});
 	}
 
+	// CU-36/CU-37: fecha y hora DD/MM/YYYY HH:MM:SS, zona America/Santiago
+	function fmtFechaHora(fecha: string | null | undefined): string {
+		if (!fecha) return '-';
+		return new Date(fecha).toLocaleString('en-GB', {
+			day: '2-digit', month: '2-digit', year: 'numeric',
+			hour: '2-digit', minute: '2-digit', second: '2-digit',
+			hour12: false, timeZone: 'America/Santiago'
+		}).replace(',', '');
+	}
+
 	const diagnosticos = [
 		'No enciende', 'Se reinicia continuamente', 'Sin señal óptica',
 		'Copla o puerto dañado', 'Falla de configuración', 'Daño físico visible',
@@ -59,6 +71,13 @@
 		'Dado de baja': []
 	};
 
+	// CU-35: se ofrecen todos los estados; el sistema valida la transición y
+	// rechaza las no permitidas con la Excepción 1 del caso de uso
+	const todosLosEstados = [
+		'En bodega', 'Asignado a técnico', 'Instalado en cliente',
+		'En revisión', 'En préstamo externo', 'Dado de baja'
+	];
+
 	async function load() {
 		loading = true;
 		error = '';
@@ -67,10 +86,20 @@
 			const unitData = await getUnit(id);
 			unit = unitData;
 			const [histData, whData] = await Promise.all([
-				unitData.numero_serie ? getUnitHistory(unitData.numero_serie).catch(() => []) : [],
+				unitData.numero_serie ? getUnitHistory(unitData.numero_serie).catch(() => null) : null,
 				getWarehouses({ activa: true })
 			]);
-			history = Array.isArray(histData) ? histData : [];
+			// CU-37: el backend responde { historial_transiciones: [...] }
+			const transiciones_hist = (histData as any)?.historial_transiciones ?? [];
+			history = transiciones_hist.map((h: any) => ({
+				id_historial: h.id_historial,
+				estado_anterior: h.estado_anterior,
+				estado_nuevo: h.estado_nuevo,
+				motivo: h.observacion_motivo,
+				fecha_hora: h.fecha_movimiento,
+				usuario: h.usuario,
+				empresa: h.empresa
+			}));
 			warehouses = whData;
 		} catch (err: unknown) {
 			error = err instanceof Error ? err.message : 'Error al cargar unidad';
@@ -122,20 +151,22 @@
 		changeError = '';
 		changing = true;
 		try {
-			// El backend espera nuevoEstado/diagnostico/observacion (CU-35/CU-40)
+			// El backend espera nuevoEstado/diagnostico/descripcionOtro/observacion (CU-35/CU-36/CU-40)
 			const payload: Record<string, unknown> = {
 				nuevoEstado: changeForm.estado_nuevo
 			};
+			// CU-36: observación opcional registrada en el historial
+			if (changeForm.observacion.trim()) payload.observacion = changeForm.observacion.trim();
 			if (changeForm.estado_nuevo === 'En revisión') {
 				payload.diagnostico = changeForm.diagnostico;
 				if (changeForm.diagnostico === 'Otro') {
-					payload.observacion = changeForm.motivoPayload;
+					payload.descripcionOtro = changeForm.motivoPayload;
 				}
 			}
 			await changeUnitState(unit.id_unidad, payload);
 			showChangeState = false;
 			success = 'Estado actualizado correctamente';
-			changeForm = { estado_nuevo: '', diagnostico: '', motivoPayload: '' };
+			changeForm = { estado_nuevo: '', diagnostico: '', motivoPayload: '', observacion: '' };
 			await load();
 		} catch (err: unknown) {
 			changeError = err instanceof Error ? err.message : 'Error al cambiar estado';
@@ -213,7 +244,12 @@
 						<div>
 							<span class="text-muted">Vencimiento de garantía:</span>
 							<p class="text-foreground">
-								{unit.fecha_venc_garantia ? fmtFecha(unit.fecha_venc_garantia) : 'Sin garantía'}
+								<!-- CU-38 Excepción 1: garantía no calculable -->
+								{#if unit.garantia?.no_calculable}
+									Garantía no calculable
+								{:else}
+									{unit.fecha_venc_garantia ? fmtFecha(unit.fecha_venc_garantia) : 'Sin garantía'}
+								{/if}
 								{#if unit.garantia?.garantia_vigente}
 									<!-- CU-39: indicador visual de garantía vigente -->
 									<span class="inline-flex items-center gap-1 ml-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">⚠ En garantía</span>
@@ -243,15 +279,14 @@
 					</div>
 
 					<div class="mt-6 pt-4 border-t border-border flex items-center gap-3">
-						{#if transiciones[unit.estado]?.length}
-							<Button onclick={() => {
-								changeForm.estado_nuevo = '';
-								showChangeState = true;
-							}}>
-								<RotateCw class="h-4 w-4" />
-								Cambiar estado
-							</Button>
-						{/if}
+						<!-- CU-35: el botón siempre está disponible; el sistema valida la transición -->
+						<Button onclick={() => {
+							changeForm.estado_nuevo = '';
+							showChangeState = true;
+						}}>
+							<RotateCw class="h-4 w-4" />
+							Cambiar estado
+						</Button>
 						<!-- CU-18: edición de los datos de la unidad -->
 						<Button variant="secondary" onclick={abrirEdicion}>
 							<Pencil class="h-4 w-4" />
@@ -280,7 +315,12 @@
 										{#if h.motivo}
 											<p class="text-muted mt-1">{h.motivo}</p>
 										{/if}
-										<p class="text-xs text-muted mt-1">{new Date(h.fecha_hora).toLocaleString('es-CL')}</p>
+										<!-- CU-36/CU-37: fecha DD/MM/YYYY HH:MM:SS, usuario responsable y empresa -->
+										<p class="text-xs text-muted mt-1">
+											{fmtFechaHora(h.fecha_hora)}
+											{#if h.usuario}· {h.usuario}{/if}
+											{#if h.empresa}· {h.empresa}{/if}
+										</p>
 									</div>
 								</div>
 							{/each}
@@ -337,17 +377,18 @@
 				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
 		</FormField>
 
-		<!-- CU-34: ubicación física en bodega (máx. 60, solo en estado En bodega) -->
+		<!-- CU-34: ubicación física en bodega (máx. 60, solo en estado En bodega).
+		     El límite lo valida el sistema para mostrar el error específico (Excepción 1) -->
 		{#if unit?.estado === 'En bodega'}
-			<FormField label="Ubicación física en bodega" name="ed_ubi" helper="Máximo 60 caracteres">
-				<input id="ed_ubi" type="text" bind:value={editForm.ubicacion_fisica} maxlength={60}
+			<FormField label="Ubicación física en bodega" name="ed_ubi" helper="Máximo 60 caracteres ({editForm.ubicacion_fisica.length}/60)">
+				<input id="ed_ubi" type="text" bind:value={editForm.ubicacion_fisica}
 					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
 					placeholder="Ej: Estante B, fila 3" />
 			</FormField>
 		{/if}
 
-		<FormField label="Observaciones" name="ed_obs" helper="Máximo 300 caracteres">
-			<textarea id="ed_obs" bind:value={editForm.observaciones} maxlength={300} rows="2"
+		<FormField label="Observaciones" name="ed_obs" helper="Máximo 300 caracteres ({editForm.observaciones.length}/300)">
+			<textarea id="ed_obs" bind:value={editForm.observaciones} rows="2"
 				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
 		</FormField>
 
@@ -374,11 +415,14 @@
 				</div>
 			{/if}
 
-			<FormField label="Nuevo estado" name="nuevo_est" required>
+			<!-- CU-35: se listan todos los estados; el sistema bloquea las
+			     transiciones no permitidas según el ciclo de vida -->
+			<FormField label="Nuevo estado" name="nuevo_est" required
+				helper={`Transiciones permitidas desde "${unit.estado}": ${(transiciones[unit.estado] || []).join(', ') || 'ninguna (estado terminal)'}`}>
 				<select id="nuevo_est" required bind:value={changeForm.estado_nuevo}
 					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
 					<option value="">Seleccionar...</option>
-					{#each (transiciones[unit.estado] || []) as est}
+					{#each todosLosEstados.filter((e) => e !== unit?.estado) as est}
 						<option value={est}>{est}</option>
 					{/each}
 				</select>
@@ -396,14 +440,22 @@
 				</FormField>
 
 				{#if changeForm.diagnostico === 'Otro'}
+					<!-- CU-40 Excepción 1: la obligatoriedad y el rango (5-200) los valida
+					     el sistema para mostrar el mensaje exacto del caso de uso -->
 					<FormField label="Descripción del diagnóstico" name="otro_diag" required
-						helper="5-200 caracteres">
-						<textarea id="otro_diag" required bind:value={changeForm.motivoPayload}
+						helper="5-200 caracteres ({changeForm.motivoPayload.length}/200)">
+						<textarea id="otro_diag" bind:value={changeForm.motivoPayload}
 							class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-							rows="3" minlength={5} maxlength={200}></textarea>
+							rows="3"></textarea>
 					</FormField>
 				{/if}
 			{/if}
+
+			<!-- CU-36: observación opcional registrada en el historial inmutable -->
+			<FormField label="Observación" name="obs_cambio" helper="Opcional, máximo 300 caracteres ({changeForm.observacion.length}/300)">
+				<textarea id="obs_cambio" bind:value={changeForm.observacion} rows="2"
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
+			</FormField>
 		{/if}
 
 		<div class="flex justify-end gap-3 pt-2">

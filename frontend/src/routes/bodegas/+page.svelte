@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { getWarehouses, createWarehouse, deactivateWarehouse, getUsers } from '$lib/api/index';
+	import { getWarehouses, createWarehouse, deactivateWarehouse, getUsers, getEmpresas } from '$lib/api/index';
 	import type { Bodega, Usuario } from '$lib/types';
 	import { currentUser } from '$lib/stores/auth';
 	import SearchInput from '$lib/components/SearchInput.svelte';
@@ -22,10 +22,14 @@
 	let estadoFilter = $state('');
 
 	let showCreate = $state(false);
-	// CU-41: nombre, empresa (la del actor), descripción de ubicación y responsable
-	let createForm = $state({ nombre: '', direccion: '', id_usuario_responsable: 0 });
+	// CU-41: nombre, empresa propietaria (Finet o Cable Mágico), descripción
+	// de ubicación y responsable. Solo el Superusuario puede elegir la empresa;
+	// para el resto es la suya.
+	let createForm = $state({ nombre: '', direccion: '', id_usuario_responsable: 0, id_empresa: 0 });
 	let createError = $state('');
 	let creating = $state(false);
+	let empresas = $state<{ id: number; nombre: string }[]>([]);
+	const esSuperusuario = $derived(($currentUser?.roles ?? []).some((r) => r.nombre_rol === 'SUPERUSUARIO'));
 
 	let deletingWh = $state<Bodega | null>(null);
 
@@ -48,21 +52,34 @@
 		load();
 		// CU-41: responsable elegido entre los usuarios activos de la empresa
 		try { usuarios = await getUsers({ activo: true }); } catch { /* sin permiso */ }
+		// CU-41: el Superusuario elige la empresa propietaria (Finet o Cable Mágico)
+		try { empresas = await getEmpresas(); } catch { /* sin permiso */ }
 	});
 
 	$effect(() => { search; estadoFilter; load(); });
 
 	async function handleCreate() {
 		createError = '';
-		creating = true;
 		if (!createForm.id_usuario_responsable) {
 			createError = 'Debe seleccionar el responsable de la bodega.';
 			return;
 		}
+		if (esSuperusuario && !createForm.id_empresa) {
+			createError = 'Debe seleccionar la empresa propietaria.';
+			return;
+		}
+		creating = true;
 		try {
-			await createWarehouse(createForm as unknown as Record<string, unknown>);
+			const payload: Record<string, unknown> = {
+				nombre: createForm.nombre,
+				direccion: createForm.direccion,
+				id_usuario_responsable: createForm.id_usuario_responsable
+			};
+			// CU-41: solo el Superusuario indica la empresa; para el resto la fija el backend
+			if (esSuperusuario) payload.id_empresa = createForm.id_empresa;
+			await createWarehouse(payload);
 			showCreate = false;
-			createForm = { nombre: '', direccion: '', id_usuario_responsable: 0 };
+			createForm = { nombre: '', direccion: '', id_usuario_responsable: 0, id_empresa: 0 };
 			await load();
 		} catch (err: unknown) {
 			createError = err instanceof Error ? err.message : 'Error al crear bodega';
@@ -179,11 +196,24 @@
 				placeholder="Ej: Bodega Central" minlength={3} maxlength={60} />
 		</FormField>
 
-		<!-- CU-41/CU-17: la empresa propietaria es la del usuario autenticado -->
-		<FormField label="Empresa propietaria" name="emp">
-			<input id="emp" type="text" disabled value={$currentUser?.empresa?.nombre ?? '—'}
-				class="w-full px-3 py-2 border border-border rounded-md text-sm bg-surface-alt text-muted" />
-		</FormField>
+		<!-- CU-41: empresa propietaria (Finet o Cable Mágico). El Superusuario
+		     la elige; para el resto de roles es la del usuario autenticado (CU-17) -->
+		{#if esSuperusuario}
+			<FormField label="Empresa propietaria" name="emp" required>
+				<select id="emp" required bind:value={createForm.id_empresa}
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+					<option value={0} disabled>Seleccionar empresa...</option>
+					{#each empresas as e}
+						<option value={e.id}>{e.nombre}</option>
+					{/each}
+				</select>
+			</FormField>
+		{:else}
+			<FormField label="Empresa propietaria" name="emp">
+				<input id="emp" type="text" disabled value={$currentUser?.empresa?.nombre ?? '—'}
+					class="w-full px-3 py-2 border border-border rounded-md text-sm bg-surface-alt text-muted" />
+			</FormField>
+		{/if}
 
 		<FormField label="Descripción de ubicación" name="dir" helper="Opcional, máximo 200 caracteres">
 			<input id="dir" type="text" bind:value={createForm.direccion}

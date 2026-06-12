@@ -30,6 +30,8 @@
 	let thresholdForm = $state({ id_tipo_equipo: 0, umbral: 0 });
 	let thresholdError = $state('');
 	let thresholdSaving = $state(false);
+	// CU-46: stock actual y umbral configurado del tipo seleccionado en esta bodega
+	const stockTipoSeleccionado = $derived(stock.find((s) => s.id_tipo_equipo === thresholdForm.id_tipo_equipo) ?? null);
 
 	async function load() {
 		loading = true;
@@ -83,8 +85,12 @@
 		thresholdError = '';
 		thresholdSaving = true;
 		try {
-			await setStockThreshold(Number($page.params.id), thresholdForm);
-			success = 'Umbral configurado';
+			const res = await setStockThreshold(Number($page.params.id), {
+				id_tipo_equipo: thresholdForm.id_tipo_equipo,
+				umbral: Number(thresholdForm.umbral)
+			});
+			// CU-46: si el stock quedó bajo el umbral, se informa la alerta inmediata
+			success = res?.message ?? 'Umbral configurado';
 			showThreshold = false;
 			thresholdForm = { id_tipo_equipo: 0, umbral: 0 };
 			await load();
@@ -182,7 +188,7 @@
 								</td>
 								<td class="px-4 py-3">{item.umbral_minimo ?? 'No configurado'}</td>
 								<td class="px-4 py-3">
-									{#if item.umbral_minimo !== null && item.cantidad_disponible <= item.umbral_minimo}
+									{#if item.umbral_minimo !== null && item.umbral_minimo > 0 && item.cantidad_disponible < item.umbral_minimo}
 										<Badge variant="danger">Stock bajo</Badge>
 									{:else}
 										<Badge variant="success">Normal</Badge>
@@ -239,18 +245,30 @@
 		{#if thresholdError}
 			<div class="bg-red-50 border border-red-200 text-destructive text-sm rounded-md px-3 py-2">{thresholdError}</div>
 		{/if}
+		<!-- CU-46: el umbral aplica a cualquier tipo de equipo (consumible o serializado) -->
 		<FormField label="Tipo de equipo" name="te" required>
 			<select id="te" required bind:value={thresholdForm.id_tipo_equipo}
 				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
 				<option value={0} disabled>Seleccionar...</option>
-				{#each tipos.filter((t) => t.requiereSerialNumber === false) as t}
-					<option value={t.id_tipo_equipo}>{t.nombre}</option>
+				{#each tipos as t}
+					<option value={t.id_tipo_equipo}>
+						{t.nombre} — {t.requiereSerialNumber === false ? 'Consumible' : 'Con N° de serie'}
+					</option>
 				{/each}
 			</select>
 		</FormField>
-		<FormField label="Umbral mínimo" name="umb" required helper="Valor entre 0 y 9999">
+		<!-- CU-46: stock actual del tipo en esta bodega y umbral configurado -->
+		{#if thresholdForm.id_tipo_equipo}
+			<div class="bg-surface-alt border border-border text-sm rounded-md px-3 py-2 text-muted">
+				Stock actual en esta bodega:
+				<span class="font-medium text-foreground">{stockTipoSeleccionado?.cantidad_disponible ?? 0}{stockTipoSeleccionado?.unidad_medida ? ` ${stockTipoSeleccionado.unidad_medida}` : ''}</span>
+				· Umbral actual:
+				<span class="font-medium text-foreground">{stockTipoSeleccionado?.umbral_minimo ?? 'No configurado'}</span>
+			</div>
+		{/if}
+		<!-- CU-46 Excepción 1: el rango (entero 0-9999) lo valida el sistema -->
+		<FormField label="Umbral mínimo" name="umb" required helper="Número entero entre 0 y 9999; 0 significa sin alerta">
 			<input id="umb" type="number" required bind:value={thresholdForm.umbral}
-				min={0} max={9999}
 				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
 		</FormField>
 		<div class="flex justify-end gap-3 pt-2">

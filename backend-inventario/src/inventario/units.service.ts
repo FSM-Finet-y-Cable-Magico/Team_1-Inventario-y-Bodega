@@ -1,9 +1,11 @@
 import { Injectable, BadRequestException, ConflictException, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository, DataSource } from "typeorm";
+import { Repository, DataSource, In } from "typeorm";
 import { UnidadEquipo } from "./entities/unidad-equipo.entity";
 import { TipoEquipo } from "./entities/tipo-equipo.entity";
 import { Bodega } from "../bodegas/entities/bodega.entity";
+import { StockConsumible } from "../bodegas/entities/stock-consumible.entity";
+import { Usuario } from "../usuarios/entities/usuario.entity";
 import { EMPRESAS } from "../companies/companies.service";
 import { CatalogService } from "./catalog.service";
 import { HistorialEstado } from "./entities/historial-estado.entity";
@@ -49,6 +51,8 @@ export class UnitsService {
             proveedor: u.proveedor ?? null,
             fecha_adquisicion: u.fechaAdquisicion,
             fecha_venc_garantia: u.fechaVencGarantia,
+            // CU-38 Excepción 1: sin fecha de adquisición o sin garantía configurada
+            garantia_no_calculable: !u.fechaAdquisicion || u.tipoEquipo?.garantiaDias === null || u.tipoEquipo?.garantiaDias === undefined,
             id_bodega_actual: u.id_bodega_actual,
             tipo_equipo: u.tipoEquipo
                 ? { nombre: u.tipoEquipo.nombre, categoria: u.tipoEquipo.categoria, marca: u.tipoEquipo.marca ?? null, modelo: u.tipoEquipo.modelo ?? null }
@@ -101,12 +105,20 @@ export class UnitsService {
             }
         }
 
-        const fechaAdq = dto.fecha_adquisicion ? new Date(dto.fecha_adquisicion) : new Date();
-        // CU-32: la fecha de adquisición no puede ser futura
-        const hoyFin = new Date();
-        hoyFin.setHours(23, 59, 59, 999);
-        if (fechaAdq > hoyFin) {
-            throw new BadRequestException('La fecha de adquisición no puede ser una fecha futura.');
+        // CU-38 Excepción 1: sin fecha de adquisición la garantía no es calculable
+        // (la ficha mostrará 'Garantía no calculable'), por lo que no se inventa una fecha
+        let fechaAdq: Date | null = null;
+        if (dto.fecha_adquisicion) {
+            fechaAdq = new Date(dto.fecha_adquisicion);
+            if (isNaN(fechaAdq.getTime())) {
+                throw new BadRequestException('La fecha de adquisición no tiene un formato válido (DD/MM/YYYY).');
+            }
+            // CU-32: la fecha de adquisición no puede ser futura
+            const hoyFin = new Date();
+            hoyFin.setHours(23, 59, 59, 999);
+            if (fechaAdq > hoyFin) {
+                throw new BadRequestException('La fecha de adquisición no puede ser una fecha futura.');
+            }
         }
 
         // CU-38: vencimiento de garantía = fecha de adquisición + días del tipo de equipo
@@ -114,7 +126,7 @@ export class UnitsService {
             where: { id_tipo_equipo: dto.id_tipo_equipo },
         });
         let fechaVencGarantia: Date | null = null;
-        if (tipo?.garantiaDias && tipo.garantiaDias > 0) {
+        if (fechaAdq && tipo?.garantiaDias && tipo.garantiaDias > 0) {
             fechaVencGarantia = new Date(fechaAdq);
             fechaVencGarantia.setDate(fechaVencGarantia.getDate() + tipo.garantiaDias);
         }
@@ -126,7 +138,7 @@ export class UnitsService {
             modelo: dto.modelo ? dto.modelo.trim() : undefined,
             estado: 'En bodega',
             id_bodega_actual: dto.id_bodega_actual,
-            fechaAdquisicion: fechaAdq,
+            fechaAdquisicion: fechaAdq ?? undefined,
             fechaVencGarantia: fechaVencGarantia,
             macAddress: macNormalizada ?? null,
             proveedor: dto.proveedor?.trim() || null,
@@ -148,9 +160,75 @@ export class UnitsService {
         };
     }
 
-    async transicionarEstado(unitId: number, nuevoEstado: string, actor: any, motivoPayload?: string, diagnosticoPayload?: string) {
-    
-        const unidad = await this.unitRepository.findOne({ 
+    // CU-28/CU-31: los consumibles (NS=No) se ingresan por cantidad y unidad de medida
+    async ingresarConsumible(
+        dto: { id_tipo_equipo: number; id_bodega: number; cantidad: number },
+        idEmpresaContexto: number,
+    ) {
+        if (!dto.id_tipo_equipo || !dto.id_bodega) {
+            throw new BadRequestException('El tipo de equipo y la bodega de destino son campos obligatorios.');
+        }
+
+        // CU-31 Excepción 1: si el tipo no tiene definido 'Requiere número de
+        // serie individual', determinarNaturalezaEquipo lanza el error de configuración
+        const naturaleza = await this.catalogService.determinarNaturalezaEquipo(dto.id_tipo_equipo, idEmpresaContexto);
+        if (naturaleza.clasificacion !== 'CONSUMIBLE / VOLUMEN') {
+            throw new BadRequestException(
+                `El tipo [${naturaleza.nombre}] requiere número de serie individual. Debe registrarse como unidad de equipo, no por cantidad.`
+            );
+        }
+
+        // CU-28 Excepción 2: la cantidad debe ser un entero positivo mayor a 0
+        const cantidad = Number(dto.cantidad);
+        if (!Number.isInteger(cantidad) || cantidad <= 0) {
+            throw new BadRequestException('La cantidad debe ser un número entero positivo mayor a cero.');
+        }
+
+        const bodega = await this.dataSource.getRepository(Bodega).findOne({
+            where: { id_bodega: dto.id_bodega, id_empresa: idEmpresaContexto },
+        });
+        if (!bodega || !bodega.activa) {
+            throw new BadRequestException('La bodega de destino no existe o no está activa en su empresa.');
+        }
+
+        const tipo = await this.dataSource.getRepository(TipoEquipo).findOne({
+            where: { id_tipo_equipo: dto.id_tipo_equipo },
+        });
+
+        const stockRepo = this.dataSource.getRepository(StockConsumible);
+        let stock = await stockRepo.findOne({
+            where: { id_tipo_equipo: dto.id_tipo_equipo, id_bodega: dto.id_bodega },
+        });
+        if (!stock) {
+            stock = stockRepo.create({
+                id_tipo_equipo: dto.id_tipo_equipo,
+                id_bodega: dto.id_bodega,
+                cantidad_disponible: 0,
+            });
+        }
+        stock.cantidad_disponible = Number(stock.cantidad_disponible) + cantidad;
+        await stockRepo.save(stock);
+
+        return {
+            success: true,
+            id_tipo_equipo: dto.id_tipo_equipo,
+            id_bodega: dto.id_bodega,
+            cantidad_ingresada: cantidad,
+            cantidad_disponible: stock.cantidad_disponible,
+            unidad_medida: tipo?.unidadMedida ?? null,
+            message: `Se ingresaron ${cantidad} ${tipo?.unidadMedida ?? 'unidades'} de [${naturaleza.nombre}] al stock de la bodega [${bodega.nombre}].`,
+        };
+    }
+
+    async transicionarEstado(unitId: number, nuevoEstado: string, actor: any, motivoPayload?: string, diagnosticoPayload?: string, descripcionOtroPayload?: string) {
+
+        // CU-36: la observación es opcional, con máximo 300 caracteres
+        const observacion = motivoPayload?.trim() || undefined;
+        if (observacion && observacion.length > 300) {
+            throw new BadRequestException('La observación no puede superar los 300 caracteres.');
+        }
+
+        const unidad = await this.unitRepository.findOne({
             where: { id_unidad: unitId },
             relations: { tipoEquipo: true }
         });
@@ -168,8 +246,9 @@ export class UnitsService {
             'Dado de baja': [],
         };
 
+        // CU-35 Excepción 1: mensaje exacto del caso de uso
         if (!transicionesPermitidas[estadoOrigen]?.includes(nuevoEstado)) {
-            throw new BadRequestException(`Transición inválida. No se puede pasar de [${estadoOrigen}] a [${nuevoEstado}].`);
+            throw new BadRequestException('Transición de estado no permitida para este equipo.');
         }
 
         if (nuevoEstado === 'En revisión') {
@@ -199,13 +278,12 @@ export class UnitsService {
                 );
             }
 
-            // CU-40 Excepción 1: si selecciona "Otro" debe incluir descripción en motivoPayload
+            // CU-40 Excepción 1: si selecciona "Otro" debe incluir una descripción
+            // obligatoria (entre 5 y 200 caracteres); mensaje exacto del caso de uso
             if (diagnosticoNormalizado === 'Otro') {
-                const descripcion = motivoPayload?.trim() ?? '';
+                const descripcion = (descripcionOtroPayload ?? motivoPayload)?.trim() ?? '';
                 if (descripcion.length < 5 || descripcion.length > 200) {
-                    throw new BadRequestException(
-                        'Debe ingresar una descripción cuando selecciona Otro (entre 5 y 200 caracteres).',
-                    );
+                    throw new BadRequestException('Debe ingresar una descripción cuando selecciona Otro.');
                 }
                 unidad.diagnosticoTecnico = `Otro: ${descripcion}`;
             } else {
@@ -229,13 +307,24 @@ export class UnitsService {
             await queryRunner.manager.save(unidad);
 
             const fechaChile = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Santiago' }));
-            
+
+            // CU-36/CU-40: el historial registra la observación opcional y, al
+            // entrar a revisión, también el diagnóstico técnico
+            let motivoHistorial = observacion ?? 'Cambio de estado ordinario';
+            if (nuevoEstado === 'En revisión') {
+                motivoHistorial = `Ingreso a taller técnico. Diagnóstico: ${unidad.diagnosticoTecnico}`;
+                // si la descripción de "Otro" vino en el campo de observación
+                // (compatibilidad), no se duplica como observación general
+                const obsExtra = (!descripcionOtroPayload && unidad.diagnosticoTecnico?.startsWith('Otro:')) ? undefined : observacion;
+                if (obsExtra) motivoHistorial += `. Observación: ${obsExtra}`;
+            }
+
             const nuevoHistorial = this.historyRepository.create({
                 id_unidad: unidad.id_unidad,
                 id_usuario: actor.id_usuario,
                 estadoAnterior: estadoOrigen,
                 estadoNuevo: nuevoEstado,
-                motivo: nuevoEstado === 'En revisión' ? `Ingreso a taller técnico. Diagnóstico: ${unidad.diagnosticoTecnico}` : (motivoPayload ?? 'Cambio de estado ordinario'),
+                motivo: motivoHistorial,
                 fechaHora: fechaChile
             });
             
@@ -273,11 +362,23 @@ export class UnitsService {
         let alertaGarantia = {
             posee_garantia: false,
             garantia_vigente: false,
+            no_calculable: false,
             dias_restantes: 0,
             mensaje_alerta: 'Este dispositivo fue registrado sin un contrato de garantía comercial asociado.'
         };
 
-        if (unidad.fechaVencGarantia) {
+        // CU-38 Excepción 1: sin fecha de adquisición o sin duración de garantía
+        // configurada en el tipo, la garantía no es calculable
+        const garantiaDiasTipo = unidad.tipoEquipo?.garantiaDias;
+        if (!unidad.fechaAdquisicion || garantiaDiasTipo === null || garantiaDiasTipo === undefined) {
+            alertaGarantia = {
+                posee_garantia: false,
+                garantia_vigente: false,
+                no_calculable: true,
+                dias_restantes: 0,
+                mensaje_alerta: 'Garantía no calculable'
+            };
+        } else if (unidad.fechaVencGarantia) {
 
         const hoy = new Date();
         hoy.setHours(0, 0, 0, 0);
@@ -292,6 +393,7 @@ export class UnitsService {
             alertaGarantia = {
                 posee_garantia: true,
                 garantia_vigente: true,
+                no_calculable: false,
                 dias_restantes: diasCalculados,
                 mensaje_alerta: `¡ALERTA VIGENTE! El dispositivo cuenta con cobertura de soporte técnico de fábrica por ${diasCalculados} días más.`
             };
@@ -299,6 +401,7 @@ export class UnitsService {
                 alertaGarantia = {
                     posee_garantia: true,
                     garantia_vigente: false,
+                    no_calculable: false,
                     dias_restantes: 0, // Ya expiró, el contador de días hábiles restantes cae a cero
                     mensaje_alerta: `COBERTURA EXPIRADA. La garantía comercial de este hardware venció hace ${Math.abs(diasCalculados)} días.`
                 };
@@ -397,6 +500,14 @@ export class UnitsService {
         .orderBy('historial.fecha_hora', 'DESC')
         .getMany();
 
+        // CU-36/CU-37: el historial incluye el nombre del usuario y la empresa
+        const idsUsuarios = [...new Set(historial.map((h) => h.id_usuario).filter(Boolean))];
+        const usuarios = idsUsuarios.length
+            ? await this.dataSource.getRepository(Usuario).findBy({ id_usuario: In(idsUsuarios) as any })
+            : [];
+        const mapaUsuarios = new Map(usuarios.map((u) => [u.id_usuario, u.nombre_completo]));
+        const nombreEmpresa = EMPRESAS.find((e) => e.id === idEmpresaContexto)?.nombre ?? null;
+
         if (!historial || historial.length === 0) {
 
             const existeEquipo = await this.unitRepository.findOne({
@@ -404,9 +515,8 @@ export class UnitsService {
             });
 
             if (!existeEquipo) {
-                throw new NotFoundException(
-                    `Rastreo de Auditoría (CU-37): El número de serie [${serialNormalizado}] no corresponde a ningún dispositivo registrado en su empresa.`
-                );
+                // CU-33/CU-37 Excepción 1: mensaje exacto del caso de uso
+                throw new NotFoundException('Número de serie no encontrado.');
             }
 
 
@@ -429,7 +539,10 @@ export class UnitsService {
                 estado_anterior: item.estadoAnterior,
                 estado_nuevo: item.estadoNuevo,
                 fecha_movimiento: item.fechaHora,
-                observacion_motivo: item.motivo
+                observacion_motivo: item.motivo,
+                // CU-36/CU-37: usuario responsable y empresa del movimiento
+                usuario: mapaUsuarios.get(item.id_usuario) ?? null,
+                empresa: nombreEmpresa
             }))
         };
     }

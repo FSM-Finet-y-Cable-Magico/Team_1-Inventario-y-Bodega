@@ -1,5 +1,9 @@
 <script lang="ts">
-	let { message = 'No hay datos disponibles', action, actionlabel } = $props();
+	let {
+		message = 'No hay datos disponibles',
+		action = undefined,
+		actionlabel = undefined
+	}: { message?: string; action?: (() => void) | undefined; actionlabel?: string | undefined } = $props();
 </script>
 
 <div class="flex flex-col items-center justify-center py-12 text-center">

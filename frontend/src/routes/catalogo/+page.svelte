@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { getCatalog, createCatalogItem, deleteCatalogItem } from '$lib/api/index';
+	import { getCatalog, createCatalogItem, deleteCatalogItem, hardDeleteCatalogItem, downloadFichaTecnica } from '$lib/api/index';
 	import type { TipoEquipo } from '$lib/types';
 	import Button from '$lib/components/Button.svelte';
 	import Modal from '$lib/components/Modal.svelte';
@@ -10,7 +10,7 @@
 	import Badge from '$lib/components/Badge.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
-	import { Plus, RotateCw, Pencil, Trash2, FileText } from '@lucide/svelte';
+	import { Plus, RotateCw, Pencil, Trash2, FileText, Ban } from '@lucide/svelte';
 
 	let items = $state<TipoEquipo[]>([]);
 	let loading = $state(true);
@@ -36,7 +36,9 @@
 	let createError = $state('');
 	let creating = $state(false);
 
+	// CU-27: desactivación lógica vs eliminación física
 	let deletingItem = $state<TipoEquipo | null>(null);
+	let hardDeletingItem = $state<TipoEquipo | null>(null);
 
 	// CU-24: categorías y unidades de medida definidas en el caso de uso
 	const categorias = ['ONT/ONU', 'Decodificador', 'Splitter', 'Herramienta', 'Consumible fibra óptica', 'Consumible conector', 'Consumible otro', 'Otro'];
@@ -86,6 +88,29 @@
 			error = err instanceof Error ? err.message : 'Error al desactivar equipo';
 		} finally {
 			deletingItem = null;
+		}
+	}
+
+	// CU-27 Excepción 1: el backend impide eliminar con unidades registradas
+	async function handleHardDelete() {
+		if (!hardDeletingItem) return;
+		try {
+			await hardDeleteCatalogItem(hardDeletingItem.id_tipo_equipo);
+			await load();
+		} catch (err: unknown) {
+			error = err instanceof Error ? err.message : 'Error al eliminar tipo de equipo';
+		} finally {
+			hardDeletingItem = null;
+		}
+	}
+
+	// CU-30: descarga autenticada de la ficha técnica
+	async function handleDownloadFicha(item: TipoEquipo) {
+		error = '';
+		try {
+			await downloadFichaTecnica(item.id_tipo_equipo, item.fichaTecnicaNombre ?? 'ficha-tecnica.pdf');
+		} catch (err: unknown) {
+			error = err instanceof Error ? err.message : 'Error al descargar ficha técnica';
 		}
 	}
 </script>
@@ -172,11 +197,14 @@
 								<td class="px-4 py-3 text-muted">{item.unidadMedida || '-'}</td>
 								<td class="px-4 py-3 text-muted">{item.garantiaDias ?? 0}</td>
 								<td class="px-4 py-3">
-									{#if item.ficha_tecnica_pdf_url}
-										<a href={item.ficha_tecnica_pdf_url} target="_blank" class="inline-flex items-center gap-1 text-accent hover:text-accent-hover">
+									{#if item.fichaTecnicaPdfUrl}
+										<!-- CU-30: descarga autenticada del PDF -->
+										<button onclick={() => handleDownloadFicha(item)}
+											class="inline-flex items-center gap-1 text-accent hover:text-accent-hover"
+											title={item.fichaTecnicaNombre ?? 'Descargar ficha técnica'}>
 											<FileText class="h-4 w-4" />
-											<span class="text-xs">Ver PDF</span>
-										</a>
+											<span class="text-xs">Descargar PDF</span>
+										</button>
 									{:else}
 										<span class="text-muted text-xs">Sin ficha</span>
 									{/if}
@@ -188,9 +216,18 @@
 											aria-label="Editar">
 											<Pencil class="h-4 w-4" />
 										</button>
-										<button onclick={() => (deletingItem = item)}
+										{#if item.activo}
+											<!-- CU-27: desactivación lógica, solo para tipos activos -->
+											<button onclick={() => (deletingItem = item)}
+												class="p-1.5 rounded-md hover:bg-amber-50 text-muted hover:text-amber-600 transition-colors"
+												aria-label="Desactivar">
+												<Ban class="h-4 w-4" />
+											</button>
+										{/if}
+										<!-- CU-27 Excepción 1: eliminación física -->
+										<button onclick={() => (hardDeletingItem = item)}
 											class="p-1.5 rounded-md hover:bg-red-50 text-muted hover:text-destructive transition-colors"
-											aria-label="Desactivar">
+											aria-label="Eliminar">
 											<Trash2 class="h-4 w-4" />
 										</button>
 									</div>
@@ -288,8 +325,18 @@
 <ConfirmDialog
 	open={deletingItem !== null}
 	title="Desactivar tipo de equipo"
-	message={deletingItem ? `¿Desactivar "${deletingItem.nombre}"? Los equipos existentes no se eliminarán.` : ''}
+	message={deletingItem ? `¿Desactivar "${deletingItem.nombre}"? Dejará de aparecer en las listas de selección; sus registros históricos y unidades existentes se conservan.` : ''}
 	confirmlabel="Desactivar"
 	onconfirm={handleDelete}
 	oncancel={() => (deletingItem = null)}
+/>
+
+<!-- CU-27: la eliminación física solo procede si no hay unidades registradas -->
+<ConfirmDialog
+	open={hardDeletingItem !== null}
+	title="Eliminar tipo de equipo"
+	message={hardDeletingItem ? `¿Eliminar definitivamente "${hardDeletingItem.nombre}" del catálogo? Esta acción no se puede deshacer.` : ''}
+	confirmlabel="Eliminar"
+	onconfirm={handleHardDelete}
+	oncancel={() => (hardDeletingItem = null)}
 />

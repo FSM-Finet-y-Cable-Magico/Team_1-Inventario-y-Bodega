@@ -77,10 +77,20 @@ export function deleteCatalogItem(id: number) {
 	return api.delete<void>(`/catalogo/${id}`);
 }
 
+// CU-27: eliminación física (el backend la rechaza si hay unidades registradas)
+export function hardDeleteCatalogItem(id: number) {
+	return api.delete<any>(`/catalogo/${id}/fisico`);
+}
+
 export function uploadFichaTecnica(id: number, file: File) {
 	const form = new FormData();
 	form.append('file', file);
 	return api.post<any>(`/catalogo/${id}/ficha-tecnica`, form);
+}
+
+// CU-30: descarga autenticada de la ficha técnica PDF
+export function downloadFichaTecnica(id: number, fallbackName = 'ficha-tecnica.pdf') {
+	return api.download(`/catalogo/${id}/ficha-tecnica/archivo`, fallbackName);
 }
 
 export function getUnits(params?: { estado?: string; buscar?: string }) {
@@ -97,6 +107,11 @@ export function getUnit(id: number) {
 
 export function createUnit(data: Record<string, unknown>) {
 	return api.post<any>('/unidades', data);
+}
+
+// CU-28/CU-31: ingreso de consumibles por cantidad y unidad de medida
+export function ingresarConsumible(data: { id_tipo_equipo: number; id_bodega: number; cantidad: number }) {
+	return api.post<any>('/unidades/consumibles', data);
 }
 
 export function updateUnit(id: number, data: Record<string, unknown>) {

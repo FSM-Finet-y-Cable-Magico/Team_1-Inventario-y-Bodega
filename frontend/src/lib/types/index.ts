@@ -70,6 +70,8 @@ export interface TipoEquipo {
 	garantiaDias?: number | null;
 	ficha_tecnica_pdf_url?: string | null;
 	fichaTecnicaPdfUrl?: string | null;
+	// CU-29: nombre original del archivo PDF adjunto
+	fichaTecnicaNombre?: string | null;
 	activo: boolean;
 }
 
@@ -120,9 +122,13 @@ export interface UnidadEquipo {
 	garantia?: {
 		posee_garantia: boolean;
 		garantia_vigente: boolean;
+		// CU-38 Excepción 1: garantía no calculable
+		no_calculable?: boolean;
 		dias_restantes: number;
 		mensaje_alerta: string;
 	};
+	// CU-38 Excepción 1 (listado)
+	garantia_no_calculable?: boolean;
 }
 
 export interface CreateUnidadDto {
@@ -144,12 +150,15 @@ export interface CambioEstadoDto {
 
 export interface HistorialEstado {
 	id_historial: number;
-	id_unidad: number;
-	id_usuario: number | null;
+	id_unidad?: number;
+	id_usuario?: number | null;
 	estado_anterior: string | null;
 	estado_nuevo: string | null;
 	motivo: string | null;
 	fecha_hora: string;
+	// CU-36/CU-37: nombre del usuario responsable y empresa del movimiento
+	usuario?: string | null;
+	empresa?: string | null;
 }
 
 export interface Bodega {

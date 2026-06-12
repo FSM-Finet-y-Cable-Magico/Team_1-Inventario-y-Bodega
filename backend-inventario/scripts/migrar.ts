@@ -16,6 +16,8 @@ const SENTENCIAS = [
   `ALTER TABLE tipo_equipo ADD COLUMN IF NOT EXISTS descripcion_tecnica varchar(500)`,
   `ALTER TABLE tipo_equipo ADD COLUMN IF NOT EXISTS unidad_medida varchar(20)`,
   `ALTER TABLE tipo_equipo ADD COLUMN IF NOT EXISTS garantia_dias integer DEFAULT 0`,
+  // CU-29: nombre original del archivo de ficha técnica adjunto
+  `ALTER TABLE tipo_equipo ADD COLUMN IF NOT EXISTS ficha_tecnica_nombre varchar(255)`,
   // CU-41/CU-42: responsable de bodega
   `ALTER TABLE bodega ADD COLUMN IF NOT EXISTS id_usuario_responsable integer`,
   // CU-32/CU-33/CU-34: proveedor, observaciones y ubicación física de la unidad

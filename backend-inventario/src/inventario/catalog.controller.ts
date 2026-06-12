@@ -1,13 +1,15 @@
-import { Controller, Post, Get, Patch, Delete, Body, Query, Param, UseGuards, UseInterceptors, UploadedFile, BadRequestException } from "@nestjs/common";
+import { Controller, Post, Get, Patch, Delete, Body, Query, Param, UseGuards, UseInterceptors, UploadedFile, BadRequestException, NotFoundException, Res } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import { FileInterceptor } from "@nestjs/platform-express";
+import type { Response } from "express";
 import { CatalogService } from "./catalog.service";
 import { CompanyIsolationGuard } from "src/auth/guards/company-isolation.guard";
 import { RolesGuard } from "src/auth/guards/roles.guard";
 import { Roles } from "src/auth/decorators/roles.decorator";
 import { CurrentUser } from "src/auth/decorators/current-user.decorator";
 import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { extname, resolve } from 'path';
+import { existsSync } from 'fs';
 
 @Controller('catalogo')
 @UseGuards(AuthGuard('jwt'), CompanyIsolationGuard, RolesGuard)
@@ -37,6 +39,25 @@ export class CatalogController {
         return this.catalogService.obtenerFichaPdf(id, actor.id_empresa);
     }
 
+    // CU-30: descarga del archivo PDF de la ficha técnica
+    @Get(':id/ficha-tecnica/archivo')
+    @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
+    async descargarFichaTecnica(
+        @Param('id') id: string,
+        @CurrentUser() actor: any,
+        @Res() res: Response,
+    ) {
+        const ficha = await this.catalogService.obtenerFichaPdf(id, actor.id_empresa);
+        if (!ficha.tieneFicha || !ficha.ficha_tecnica_pdf_url) {
+            throw new NotFoundException('El tipo de equipo no tiene una ficha técnica adjunta.');
+        }
+        const rutaAbsoluta = resolve(ficha.ficha_tecnica_pdf_url);
+        if (!existsSync(rutaAbsoluta)) {
+            throw new NotFoundException('El archivo de la ficha técnica no se encuentra disponible en el servidor.');
+        }
+        return res.download(rutaAbsoluta, ficha.ficha_tecnica_nombre ?? `ficha-tecnica-${id}.pdf`);
+    }
+
     @Patch(':id')
     @Roles('ADMIN', 'SUPERUSUARIO')
     async editarTipoEquipo(@Param('id') id: string, @Body() body: any, @CurrentUser() actor: any) {
@@ -47,6 +68,13 @@ export class CatalogController {
     @Roles('ADMIN', 'SUPERUSUARIO')
     async desactivarTipoEquipo(@Param('id') id: string, @CurrentUser() actor: any) {
         return this.catalogService.desactivarTipo(id, actor.id_empresa);
+    }
+
+    // CU-27 Excepción 1: la eliminación física solo procede sin unidades registradas
+    @Delete(':id/fisico')
+    @Roles('ADMIN', 'SUPERUSUARIO')
+    async eliminarTipoEquipoFisico(@Param('id') id: string, @CurrentUser() actor: any) {
+        return this.catalogService.eliminarTipoFisico(id, actor.id_empresa, actor.id_usuario);
     }
 
     @Post(':id/ficha-tecnica')
@@ -72,6 +100,7 @@ export class CatalogController {
         if (!file) {
             throw new BadRequestException('Archivo PDF no recibido.');
         }
-        return this.catalogService.adjuntarPdfPath(id, file.path);
+        // CU-29: se conserva el nombre original para mostrarlo en la ficha de detalle
+        return this.catalogService.adjuntarPdfPath(id, file.path, file.originalname);
     }
 }

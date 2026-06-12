@@ -299,6 +299,27 @@ export class BodegasService {
 
     for (const c of consumibles) {
       const te = c.tipoEquipo;
+      const umbral = c.umbral_minimo === null || c.umbral_minimo === undefined
+        ? null
+        : Number(c.umbral_minimo);
+
+      // CU-46: para tipos serializados la fila de stock_consumible solo
+      // almacena el umbral; el stock real es el conteo de unidades en bodega
+      if (te.requiereSerialNumber === true) {
+        if (!stockPorTipo[te.id_tipo_equipo]) {
+          stockPorTipo[te.id_tipo_equipo] = {
+            id_tipo_equipo: te.id_tipo_equipo,
+            tipo_equipo: { nombre: te.nombre, categoria: te.categoria },
+            requiere_serie: true,
+            cantidad_disponible: 0,
+            umbral_minimo: null,
+            desglose_estados: { 'En bodega': 0, 'Asignado a técnico': 0, 'En revisión': 0, 'En préstamo externo': 0 },
+          };
+        }
+        stockPorTipo[te.id_tipo_equipo].umbral_minimo = umbral;
+        continue;
+      }
+
       stockPorTipo[te.id_tipo_equipo] = {
         id_tipo_equipo: te.id_tipo_equipo,
         tipo_equipo: { nombre: te.nombre, categoria: te.categoria },
@@ -306,22 +327,22 @@ export class BodegasService {
         // CU-45: los consumibles se expresan en su unidad de medida
         unidad_medida: te.unidadMedida ?? null,
         cantidad_disponible: Number(c.cantidad_disponible),
-        umbral_minimo: c.umbral_minimo === null || c.umbral_minimo === undefined
-          ? null
-          : Number(c.umbral_minimo),
+        umbral_minimo: umbral,
       };
     }
 
     return Object.values(stockPorTipo);
   }
 
+  // CU-46: el umbral aplica a cualquier combinación de tipo de equipo y bodega;
+  // para serializados el stock es el conteo de unidades 'En bodega'
   async configurarUmbral(
     id: number,
     dto: ConfigurarUmbralDto,
     actorId: number,
     userEmpresaId: number,
     isSuperuser: boolean,
-  ): Promise<StockConsumible> {
+  ): Promise<any> {
     const bodega = await this.bodegaRepository.findOne({ where: { id_bodega: id } });
     if (!bodega) throw new NotFoundException('Bodega no encontrada');
     await this.verificarPertenencia(bodega, userEmpresaId, isSuperuser, actorId, 'CONFIGURAR_UMBRAL');
@@ -330,13 +351,6 @@ export class BodegasService {
       where: { id_tipo_equipo: dto.id_tipo_equipo },
     });
     if (!tipoEquipo) throw new NotFoundException('Tipo de equipo no encontrado');
-
-    // Los umbrales solo aplican a consumibles; los serializados se gestionan por unidad
-    if (tipoEquipo.requiereSerialNumber === true) {
-      throw new BadRequestException(
-        `El tipo [${tipoEquipo.nombre}] es un equipo serializado. Los umbrales de stock mínimo solo aplican a tipos consumibles.`,
-      );
-    }
 
     let record = await this.stockConsumibleRepository.findOne({
       where: { id_bodega: id, id_tipo_equipo: dto.id_tipo_equipo },
@@ -368,6 +382,22 @@ export class BodegasService {
       });
     }
 
-    return guardado;
+    // CU-46: si el stock actual está bajo el nuevo umbral, se genera la alerta inmediata
+    const stockActual = tipoEquipo.requiereSerialNumber === true
+      ? await this.unidadEquipoRepository.count({
+          where: { id_bodega_actual: id, id_tipo_equipo: dto.id_tipo_equipo, estado: 'En bodega' },
+        })
+      : Number(guardado.cantidad_disponible);
+    const alertaGenerada = dto.umbral > 0 && stockActual < dto.umbral;
+
+    return {
+      ...guardado,
+      tipo_equipo: tipoEquipo.nombre,
+      stock_actual: stockActual,
+      alerta_generada: alertaGenerada,
+      message: alertaGenerada
+        ? `Umbral configurado. ALERTA: el stock actual (${stockActual}) está por debajo del umbral mínimo (${dto.umbral}).`
+        : 'Umbral de stock mínimo configurado correctamente.',
+    };
   }
 }

@@ -60,15 +60,34 @@ export class CompaniesService {
             .select('SUM(s.cantidad_disponible)', 'total')
             .getRawOne();
 
-        // CU-46: alertas de stock bajo el umbral mínimo configurado
-        const bajoUmbral = await this.stockRepository
+        // CU-46: alertas de stock bajo el umbral mínimo configurado.
+        // Para consumibles el stock es la cantidad disponible; para tipos
+        // serializados es el conteo de unidades en estado 'En bodega'.
+        const umbralesConfigurados = await this.stockRepository
             .createQueryBuilder('s')
             .innerJoinAndSelect('s.bodega', 'b', 'b.id_empresa = :empresa', { empresa: id })
             .innerJoinAndSelect('s.tipoEquipo', 't')
             .where('s.umbral_minimo IS NOT NULL')
             .andWhere('s.umbral_minimo > 0')
-            .andWhere('s.cantidad_disponible < s.umbral_minimo')
             .getMany();
+
+        const alertas: any[] = [];
+        for (const r of umbralesConfigurados) {
+            const stockActual = r.tipoEquipo?.requiereSerialNumber === true
+                ? await this.unidadRepository.count({
+                      where: { id_bodega_actual: r.id_bodega, id_tipo_equipo: r.id_tipo_equipo, estado: 'En bodega' },
+                  })
+                : Number(r.cantidad_disponible);
+            if (stockActual < Number(r.umbral_minimo)) {
+                alertas.push({
+                    bodega: r.bodega?.nombre ?? `Bodega ${r.id_bodega}`,
+                    tipo_equipo: r.tipoEquipo?.nombre ?? `Tipo ${r.id_tipo_equipo}`,
+                    cantidad_disponible: stockActual,
+                    umbral_minimo: Number(r.umbral_minimo),
+                    unidad_medida: r.tipoEquipo?.unidadMedida ?? null,
+                });
+            }
+        }
 
         return {
             empresa: nombre,
@@ -77,12 +96,7 @@ export class CompaniesService {
             unidades_por_estado: estadisticasEstado,
             bodegas_activas: bodegasActivas,
             stock_consumible_total: Number(stockConsumible?.total ?? 0),
-            alertas_stock_minimo: bajoUmbral.map((r: any) => ({
-                bodega: r.bodega?.nombre ?? `Bodega ${r.id_bodega}`,
-                tipo_equipo: r.tipoEquipo?.nombre ?? `Tipo ${r.id_tipo_equipo}`,
-                cantidad_disponible: Number(r.cantidad_disponible),
-                umbral_minimo: Number(r.umbral_minimo),
-            })),
+            alertas_stock_minimo: alertas,
         };
     }
 }

@@ -38,6 +38,11 @@ export class TipoEquipo {
     @Column({ type: 'text', name: 'ficha_tecnica_pdf_url', nullable: true })
     fichaTecnicaPdfUrl?: string;
 
+    // CU-29: nombre original del archivo PDF adjunto.
+    // Requiere la migración: npm run migrar (ALTER TABLE tipo_equipo ...)
+    @Column({ type: 'varchar', length: 255, name: 'ficha_tecnica_nombre', nullable: true })
+    fichaTecnicaNombre?: string | null;
+
     @Column({ type: 'boolean', default: true })
     activo!: boolean;
 
