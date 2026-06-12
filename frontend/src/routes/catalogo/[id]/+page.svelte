@@ -25,7 +25,7 @@
 		modelo: '',
 		descripcionTecnica: '',
 		unidadMedida: '',
-		garantiaDias: 0
+		garantiaDias: 0 as number | null
 	});
 	// CU-26/CU-31: null = campo 'Requiere número de serie individual' sin definir
 	let requiereSerial = $state<boolean | null>(null);
@@ -66,15 +66,15 @@
 		error = '';
 		success = '';
 		try {
-			const payload: Record<string, unknown> = {
-				nombre: editForm.nombre,
-				categoria: editForm.categoria || undefined,
-				marca: editForm.marca,
-				modelo: editForm.modelo,
-				descripcionTecnica: editForm.descripcionTecnica,
-				garantiaDias: Number(editForm.garantiaDias)
-			};
-			if (requiereSerial !== null) payload.requiereSerialNumber = requiereSerial;
+				const payload: Record<string, unknown> = {
+					nombre: editForm.nombre,
+					categoria: editForm.categoria || undefined,
+					marca: editForm.marca,
+					modelo: editForm.modelo,
+					descripcionTecnica: editForm.descripcionTecnica,
+					garantiaDias: editForm.garantiaDias === null ? null : Number(editForm.garantiaDias),
+					requiereSerialNumber: requiereSerial
+				};
 			if (requiereSerial === false) payload.unidadMedida = editForm.unidadMedida;
 			await updateCatalogItem(Number($page.params.id), payload);
 			success = 'Tipo de equipo actualizado';
@@ -149,10 +149,10 @@
 			{/if}
 
 			<form onsubmit={(e: Event) => { e.preventDefault(); handleSave(); }} class="p-6 space-y-4">
-				<FormField label="Nombre" name="nom" required helper="3-80 caracteres">
-					<input id="nom" type="text" required bind:value={editForm.nombre}
-						class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
-				</FormField>
+			<FormField label="Nombre" name="nom" required helper="3-80 caracteres. Si repite nombre+marca+modelo de otro tipo se mostrará el error de duplicado.">
+				<input id="nom" type="text" required minlength={3} maxlength={80} bind:value={editForm.nombre}
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+			</FormField>
 
 				<FormField label="Categoría" name="cat">
 					<select id="cat" bind:value={editForm.categoria}
@@ -167,12 +167,12 @@
 				<!-- CU-26: marca y modelo editables -->
 				<div class="grid grid-cols-2 gap-4">
 					<FormField label="Marca" name="mar" required helper="2-50 caracteres">
-						<input id="mar" type="text" required bind:value={editForm.marca}
+						<input id="mar" type="text" required minlength={2} maxlength={50} bind:value={editForm.marca}
 							class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
 							placeholder="Ej: Huawei" />
 					</FormField>
 					<FormField label="Modelo" name="mod" required helper="1-50 caracteres">
-						<input id="mod" type="text" required bind:value={editForm.modelo}
+						<input id="mod" type="text" required minlength={1} maxlength={50} bind:value={editForm.modelo}
 							class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
 							placeholder="Ej: EG8145V5" />
 					</FormField>
@@ -191,16 +191,20 @@
 							Este tipo de equipo no tiene definido el campo. Seleccione una opción para corregir la configuración.
 						</div>
 					{/if}
-					<div class="flex gap-4">
-						<label class="flex items-center gap-2 text-sm cursor-pointer">
-							<input type="radio" name="requiere_serie" bind:group={requiereSerial} value={true} class="text-accent" />
-							Sí (individualizable, con serie)
-						</label>
-						<label class="flex items-center gap-2 text-sm cursor-pointer">
-							<input type="radio" name="requiere_serie" bind:group={requiereSerial} value={false} class="text-accent" />
-							No (consumible / volumen)
-						</label>
-					</div>
+				<div class="flex gap-4 flex-wrap">
+					<label class="flex items-center gap-2 text-sm cursor-pointer">
+						<input type="radio" name="requiere_serie" bind:group={requiereSerial} value={true} class="text-accent" />
+						Sí (individualizable, con serie)
+					</label>
+					<label class="flex items-center gap-2 text-sm cursor-pointer">
+						<input type="radio" name="requiere_serie" bind:group={requiereSerial} value={false} class="text-accent" />
+						No (consumible / volumen)
+					</label>
+					<label class="flex items-center gap-2 text-sm cursor-pointer">
+						<input type="radio" name="requiere_serie" bind:group={requiereSerial} value={null} class="text-accent" />
+						Sin definir (solo para pruebas de CU-31)
+					</label>
+				</div>
 				</FormField>
 
 				<!-- CU-24/CU-26: la unidad de medida solo aplica (y es obligatoria) si NO requiere serie -->
@@ -216,10 +220,10 @@
 					</FormField>
 				{/if}
 
-				<FormField label="Duración de garantía (días)" name="gar" helper="0 a 3650; 0 significa sin garantía">
-					<input id="gar" type="number" min={0} max={3650} step={1} bind:value={editForm.garantiaDias}
-						class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
-				</FormField>
+			<FormField label="Duración de garantía (días)" name="gar" helper="0 a 3650; 0 = Sin garantía; vacío = Garantía no calculable (CU-38)">
+				<input id="gar" type="number" min={0} max={3650} step={1} bind:value={editForm.garantiaDias}
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+			</FormField>
 
 				<div class="flex justify-end gap-3 pt-2">
 					<Button variant="secondary" onclick={() => goto('/catalogo')} type="button">Cancelar</Button>

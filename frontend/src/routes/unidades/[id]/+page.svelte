@@ -20,7 +20,8 @@
 	let showChangeState = $state(false);
 	// CU-36: observación opcional (máx. 300) en todo cambio de estado;
 	// motivoPayload es la descripción obligatoria del diagnóstico "Otro" (CU-40)
-	let changeForm = $state({ estado_nuevo: '' as EstadoUnidad | '', diagnostico: '', motivoPayload: '', observacion: '' });
+	let changeForm = $state({ estado_nuevo: '' as EstadoUnidad | '', diagnostico: '', motivoPayload: '', observacion: '', simularErrorHistorial: false });
+	const isDev = import.meta.env.DEV;
 	let changeError = $state('');
 	let changing = $state(false);
 
@@ -163,10 +164,13 @@
 					payload.descripcionOtro = changeForm.motivoPayload;
 				}
 			}
+			if (isDev && changeForm.simularErrorHistorial) {
+				payload.simularErrorHistorial = true;
+			}
 			await changeUnitState(unit.id_unidad, payload);
 			showChangeState = false;
 			success = 'Estado actualizado correctamente';
-			changeForm = { estado_nuevo: '', diagnostico: '', motivoPayload: '', observacion: '' };
+			changeForm = { estado_nuevo: '', diagnostico: '', motivoPayload: '', observacion: '', simularErrorHistorial: false };
 			await load();
 		} catch (err: unknown) {
 			changeError = err instanceof Error ? err.message : 'Error al cambiar estado';
@@ -381,7 +385,7 @@
 		     El límite lo valida el sistema para mostrar el error específico (Excepción 1) -->
 		{#if unit?.estado === 'En bodega'}
 			<FormField label="Ubicación física en bodega" name="ed_ubi" helper="Máximo 60 caracteres ({editForm.ubicacion_fisica.length}/60)">
-				<input id="ed_ubi" type="text" bind:value={editForm.ubicacion_fisica}
+				<input id="ed_ubi" type="text" bind:value={editForm.ubicacion_fisica} maxlength={60}
 					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
 					placeholder="Ej: Estante B, fila 3" />
 			</FormField>
@@ -456,6 +460,14 @@
 				<textarea id="obs_cambio" bind:value={changeForm.observacion} rows="2"
 					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
 			</FormField>
+
+			{#if isDev}
+				<!-- Solo visible en desarrollo para facilitar la prueba de CU-36 Excepción 1 -->
+				<label class="flex items-center gap-2 text-sm text-amber-700 cursor-pointer">
+					<input type="checkbox" bind:checked={changeForm.simularErrorHistorial} class="text-accent" />
+					Simular error al guardar historial (QA)
+				</label>
+			{/if}
 		{/if}
 
 		<div class="flex justify-end gap-3 pt-2">

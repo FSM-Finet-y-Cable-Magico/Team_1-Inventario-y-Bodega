@@ -33,7 +33,7 @@ export class TipoEquipo {
     garantiaDias?: number | null;
 
     @Column({ type: 'boolean', name: 'requiere_serie_individual', nullable: true })
-    requiereSerialNumber!: boolean;
+    requiereSerialNumber!: boolean | null;
 
     @Column({ type: 'text', name: 'ficha_tecnica_pdf_url', nullable: true })
     fichaTecnicaPdfUrl?: string;

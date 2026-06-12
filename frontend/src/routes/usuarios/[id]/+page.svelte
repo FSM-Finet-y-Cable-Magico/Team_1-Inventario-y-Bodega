@@ -44,7 +44,7 @@
 				getEmpresas()
 			]);
 			usuario = userData;
-			roles = rolesData;
+			roles = rolesData as Rol[];
 			empresas = empresasData;
 			editForm.nombre_completo = userData.nombre_completo;
 			editForm.id_empresa = userData.id_empresa;

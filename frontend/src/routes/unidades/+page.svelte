@@ -121,7 +121,7 @@
 
 	<div class="flex items-center gap-4 mb-4">
 		<div class="flex-1 max-w-xs">
-			<SearchInput bind:value={search} placeholder="Buscar por serie o modelo..." />
+			<SearchInput bind:value={search} placeholder="Buscar por serie o modelo..." maxlength={30} />
 		</div>
 		<select bind:value={estadoFilter}
 			class="px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
@@ -208,7 +208,7 @@
 				<option value={0} disabled>Seleccionar tipo</option>
 				{#each tipos as t}
 					<option value={t.id_tipo_equipo}>
-						{t.nombre} {t.categoria ? `(${t.categoria})` : ''} — {t.requiereSerialNumber === false ? 'Consumible' : 'Con N° de serie'}
+						{t.nombre} {t.categoria ? `(${t.categoria})` : ''} — {t.requiereSerialNumber === false ? 'Consumible' : t.requiereSerialNumber === true ? 'Con N° de serie' : 'Sin definir'}
 					</option>
 				{/each}
 			</select>
@@ -234,7 +234,7 @@
 			<!-- CU-28/CU-31: consumible → cantidad (entero > 0) y unidad de medida -->
 			<div class="grid grid-cols-2 gap-4">
 				<FormField label="Cantidad" name="cant" required helper="Número entero positivo mayor a cero">
-					<input id="cant" type="number" required bind:value={cantidadConsumible}
+					<input id="cant" type="number" required min={1} bind:value={cantidadConsumible}
 						class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
 				</FormField>
 				<FormField label="Unidad de medida" name="um_cons">
@@ -245,9 +245,12 @@
 		{:else}
 			<!-- CU-28/CU-32: el formato del NS lo valida el sistema
 			     (4-30 caracteres, solo A-Z, 0-9 y guión) -->
+			<!-- CU-28: el NS se asigna y valida al registrar la unidad física -->
 			<FormField label="Número de serie" name="serie" required
-				helper="4-30 caracteres, mayúsculas, números y guiones">
-				<input id="serie" type="text" required bind:value={createForm.numero_serie}
+				helper="4-30 caracteres, solo mayúsculas (A-Z), números (0-9) y guión (-)">
+				<input id="serie" type="text" required
+					minlength={4} maxlength={30} pattern={"[A-Z0-9-]{4,30}"}
+					bind:value={createForm.numero_serie}
 					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary font-mono"
 					placeholder="Ej: ONT-2024-0001" />
 			</FormField>

@@ -4,7 +4,8 @@
 	let {
 		value = $bindable(''),
 		placeholder = 'Buscar...',
-		onsearch = undefined as ((value: string) => void) | undefined
+		onsearch = undefined as ((value: string) => void) | undefined,
+		maxlength = undefined as number | undefined
 	} = $props();
 
 	let timer: ReturnType<typeof setTimeout>;
@@ -22,6 +23,7 @@
 	<input
 		type="text"
 		{placeholder}
+		{maxlength}
 		value={value}
 		oninput={handleInput}
 		class="w-full pl-9 pr-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"

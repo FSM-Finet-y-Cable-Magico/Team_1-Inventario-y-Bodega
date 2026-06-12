@@ -79,8 +79,9 @@ export class CatalogService {
         }
 
         // CU-24 Excepción 3: unicidad de la combinación nombre+marca+modelo
+        // dentro de la empresa (incluye tipos inactivos: siguen en el catálogo)
         const existeDuplicado = await this.catalogRepository.findOne({
-            where: { nombre, marca, modelo, activo: true },
+            where: { nombre, marca, modelo, id_empresa: dto.id_empresa },
         });
         if (existeDuplicado) {
             throw new ConflictException('Ya existe un tipo de equipo con esa combinación de nombre, marca y modelo.');
@@ -139,8 +140,8 @@ export class CatalogService {
             modelo?: string;
             descripcionTecnica?: string;
             unidadMedida?: string;
-            garantiaDias?: number;
-            requiereSerialNumber?: boolean;
+            garantiaDias?: number | null;
+            requiereSerialNumber?: boolean | null;
             id_empresa: number;
         },
         actorId?: number,
@@ -168,7 +169,9 @@ export class CatalogService {
 
         // CU-26 Excepción 1: el campo 'Requiere número de serie individual' no
         // puede cambiar si ya existen unidades registradas para este tipo
-        if (dto.requiereSerialNumber !== undefined && dto.requiereSerialNumber !== tipo.requiereSerialNumber) {
+        const serialActual = tipo.requiereSerialNumber ?? null;
+        const serialNuevo = dto.requiereSerialNumber !== undefined ? dto.requiereSerialNumber : serialActual;
+        if (serialNuevo !== serialActual) {
             const totalUnidadesAsociadas = await this.unitRepository.count({
                 where: { id_tipo_equipo: idNum }
             });
@@ -204,10 +207,10 @@ export class CatalogService {
         if (dto.descripcionTecnica !== undefined && dto.descripcionTecnica.trim().length > 500) {
             errores.push('La descripción técnica no puede superar los 500 caracteres.');
         }
-        if (dto.garantiaDias !== undefined && (!Number.isInteger(dto.garantiaDias) || dto.garantiaDias < 0 || dto.garantiaDias > 3650)) {
-            errores.push('La duración de garantía debe ser un entero entre 0 y 3650 días.');
+        if (dto.garantiaDias !== undefined && dto.garantiaDias !== null && (!Number.isInteger(dto.garantiaDias) || dto.garantiaDias < 0 || dto.garantiaDias > 3650)) {
+            errores.push('La duración de garantía debe ser un entero entre 0 y 3650 días o null para indicar que no está definida.');
         }
-        const requiereFinal = dto.requiereSerialNumber ?? tipo.requiereSerialNumber;
+        const requiereFinal = dto.requiereSerialNumber !== undefined ? dto.requiereSerialNumber : tipo.requiereSerialNumber;
         if (requiereFinal === false) {
             const unidadFinal = dto.unidadMedida ?? tipo.unidadMedida;
             if (!unidadFinal || !CatalogService.UNIDADES_MEDIDA.includes(unidadFinal)) {
@@ -218,12 +221,13 @@ export class CatalogService {
             throw new BadRequestException(errores.join(' '));
         }
 
-        // CU-26 Excepción 2: la nueva combinación nombre+marca+modelo no debe existir
+        // CU-26 Excepción 2: la nueva combinación nombre+marca+modelo no debe
+        // existir en el catálogo de la empresa (incluye tipos inactivos)
         const nombreFinal = dto.nombre?.trim() ?? tipo.nombre;
         const marcaFinal = dto.marca?.trim() ?? tipo.marca ?? '';
         const modeloFinal = dto.modelo?.trim() ?? tipo.modelo ?? '';
         const duplicado = await this.catalogRepository.findOne({
-            where: { nombre: nombreFinal, marca: marcaFinal, modelo: modeloFinal, activo: true }
+            where: { nombre: nombreFinal, marca: marcaFinal, modelo: modeloFinal, id_empresa: dto.id_empresa }
         });
         if (duplicado && duplicado.id_tipo_equipo !== idNum) {
             throw new ConflictException('Ya existe un tipo de equipo con esa combinación de nombre, marca y modelo.');

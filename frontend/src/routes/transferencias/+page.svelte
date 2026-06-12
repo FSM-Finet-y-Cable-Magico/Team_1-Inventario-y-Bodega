@@ -17,7 +17,7 @@
 	let empresas = $state<Empresa[]>([]);
 	let loading = $state(true);
 	let error = $state('');
-	let roles: string[] = [];
+	let roles = $state<string[]>([]);
 	userRoles.subscribe((r) => (roles = r));
 
 	// CU-23: filtros por estado, rango de fechas o empresa

@@ -54,7 +54,7 @@
 				getRoles()
 			]);
 			usuarios = usersData;
-			roles = rolesData;
+			roles = rolesData as Rol[];
 		} catch (err: unknown) {
 			error = err instanceof Error ? err.message : 'Error al cargar usuarios';
 		} finally {

@@ -220,7 +220,7 @@ export class UnitsService {
         };
     }
 
-    async transicionarEstado(unitId: number, nuevoEstado: string, actor: any, motivoPayload?: string, diagnosticoPayload?: string, descripcionOtroPayload?: string) {
+    async transicionarEstado(unitId: number, nuevoEstado: string, actor: any, motivoPayload?: string, diagnosticoPayload?: string, descripcionOtroPayload?: string, simularErrorHistorial?: boolean) {
 
         // CU-36: la observación es opcional, con máximo 300 caracteres
         const observacion = motivoPayload?.trim() || undefined;
@@ -296,53 +296,74 @@ export class UnitsService {
             unidad.numeroPoste = undefined;
         }
 
-        // Apertura del QueryRunner transaccional (ACID)
+        // CU-36: registro transaccional del cambio de estado con reintentos.
+        // Si falla la escritura del historial se reintenta toda la transacción
+        // hasta 3 veces. En modo QA/development se puede forzar el error con
+        // el flag simularErrorHistorial para comprobar la Excepción 1.
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
-        await queryRunner.startTransaction();
+
+        const maxIntentos = 3;
+        let ultimoError: Error | undefined;
 
         try {
+            for (let intento = 0; intento < maxIntentos; intento++) {
+                await queryRunner.startTransaction();
+                try {
+                    unidad.estado = nuevoEstado;
+                    await queryRunner.manager.save(unidad);
 
-            unidad.estado = nuevoEstado;
-            await queryRunner.manager.save(unidad);
+                    const fechaChile = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Santiago' }));
 
-            const fechaChile = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Santiago' }));
+                    // CU-36/CU-40: el historial registra la observación opcional y, al
+                    // entrar a revisión, también el diagnóstico técnico
+                    let motivoHistorial = observacion ?? 'Cambio de estado ordinario';
+                    if (nuevoEstado === 'En revisión') {
+                        motivoHistorial = `Ingreso a taller técnico. Diagnóstico: ${unidad.diagnosticoTecnico}`;
+                        // si la descripción de "Otro" vino en el campo de observación
+                        // (compatibilidad), no se duplica como observación general
+                        const obsExtra = (!descripcionOtroPayload && unidad.diagnosticoTecnico?.startsWith('Otro:')) ? undefined : observacion;
+                        if (obsExtra) motivoHistorial += `. Observación: ${obsExtra}`;
+                    }
 
-            // CU-36/CU-40: el historial registra la observación opcional y, al
-            // entrar a revisión, también el diagnóstico técnico
-            let motivoHistorial = observacion ?? 'Cambio de estado ordinario';
-            if (nuevoEstado === 'En revisión') {
-                motivoHistorial = `Ingreso a taller técnico. Diagnóstico: ${unidad.diagnosticoTecnico}`;
-                // si la descripción de "Otro" vino en el campo de observación
-                // (compatibilidad), no se duplica como observación general
-                const obsExtra = (!descripcionOtroPayload && unidad.diagnosticoTecnico?.startsWith('Otro:')) ? undefined : observacion;
-                if (obsExtra) motivoHistorial += `. Observación: ${obsExtra}`;
+                    const nuevoHistorial = this.historyRepository.create({
+                        id_unidad: unidad.id_unidad,
+                        id_usuario: actor.id_usuario,
+                        estadoAnterior: estadoOrigen,
+                        estadoNuevo: nuevoEstado,
+                        motivo: motivoHistorial,
+                        fechaHora: fechaChile
+                    });
+
+                    if (simularErrorHistorial) {
+                        throw new Error('Simulación de error al registrar el historial de estados.');
+                    }
+
+                    await queryRunner.manager.save(nuevoHistorial);
+                    await queryRunner.commitTransaction();
+
+                    return {
+                        success: true,
+                        estadoActual: unidad.estado,
+                        diagnostico_registrado: unidad.diagnosticoTecnico ?? 'N/A'
+                    };
+                } catch (err) {
+                    ultimoError = err instanceof Error ? err : new Error(String(err));
+                    await queryRunner.rollbackTransaction().catch(() => {
+                        /* la transacción ya puede estar abortada */
+                    });
+                    if (intento < maxIntentos - 1) {
+                        await new Promise((resolve) => setTimeout(resolve, 100 * (intento + 1)));
+                    }
+                }
             }
 
-            const nuevoHistorial = this.historyRepository.create({
-                id_unidad: unidad.id_unidad,
-                id_usuario: actor.id_usuario,
-                estadoAnterior: estadoOrigen,
-                estadoNuevo: nuevoEstado,
-                motivo: motivoHistorial,
-                fechaHora: fechaChile
-            });
-            
-            await queryRunner.manager.save(nuevoHistorial);
-            await queryRunner.commitTransaction();
-            
-            return { 
-                success: true, 
-                estadoActual: unidad.estado,
-                diagnostico_registrado: unidad.diagnosticoTecnico ?? 'N/A'
-            };
-
-        } catch (error) {
-                await queryRunner.rollbackTransaction();
-                throw error;
-            } finally {
-                await queryRunner.release();
-            }
+            throw new BadRequestException(
+                'Error al registrar el cambio en el historial. El sistema reintentó la escritura pero el error persiste.',
+            );
+        } finally {
+            await queryRunner.release();
+        }
     }
 
     async verFichaDetalle(idUnidad: number, idEmpresaContexto: number) {

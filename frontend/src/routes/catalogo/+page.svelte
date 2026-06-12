@@ -197,17 +197,22 @@
 								<td class="px-4 py-3 text-muted">{item.unidadMedida || '-'}</td>
 								<td class="px-4 py-3 text-muted">{item.garantiaDias ?? 0}</td>
 								<td class="px-4 py-3">
-									{#if item.fichaTecnicaPdfUrl}
-										<!-- CU-30: descarga autenticada del PDF -->
-										<button onclick={() => handleDownloadFicha(item)}
-											class="inline-flex items-center gap-1 text-accent hover:text-accent-hover"
-											title={item.fichaTecnicaNombre ?? 'Descargar ficha técnica'}>
-											<FileText class="h-4 w-4" />
-											<span class="text-xs">Descargar PDF</span>
-										</button>
-									{:else}
-										<span class="text-muted text-xs">Sin ficha</span>
-									{/if}
+											{#if item.fichaTecnicaPdfUrl}
+												<!-- CU-29/CU-30: nombre del archivo junto al botón de descarga -->
+												<div class="flex flex-col gap-1">
+													<span class="text-xs text-foreground truncate max-w-[140px]" title={item.fichaTecnicaNombre ?? 'ficha-tecnica.pdf'}>
+														{item.fichaTecnicaNombre ?? 'ficha-tecnica.pdf'}
+													</span>
+													<button onclick={() => handleDownloadFicha(item)}
+														class="inline-flex items-center gap-1 text-accent hover:text-accent-hover"
+														title="Descargar ficha técnica">
+														<FileText class="h-4 w-4" />
+														<span class="text-xs">Descargar ficha técnica</span>
+													</button>
+												</div>
+											{:else}
+												<span class="text-muted text-xs">Sin ficha</span>
+											{/if}
 								</td>
 								<td class="px-4 py-3 text-right">
 									<div class="flex items-center justify-end gap-1">

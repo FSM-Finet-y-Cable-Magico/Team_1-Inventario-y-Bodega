@@ -55,6 +55,7 @@ export class UnitsController {
         @Body('observacion') observacion: string,
         @Body('diagnostico') diagnostico: string,
         @Body('descripcionOtro') descripcionOtro: string,
+        @Body('simularErrorHistorial') simularErrorHistorial: boolean,
         @CurrentUser() actor: any
     ) {
         return this.unitsService.transicionarEstado(
@@ -63,7 +64,8 @@ export class UnitsController {
             actor,
             observacion,
             diagnostico,
-            descripcionOtro
+            descripcionOtro,
+            simularErrorHistorial
         );
     }
 

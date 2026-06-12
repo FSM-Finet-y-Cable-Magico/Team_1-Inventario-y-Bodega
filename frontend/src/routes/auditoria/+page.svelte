@@ -172,7 +172,7 @@
 				</table>
 			</div>
 			<div class="px-4 py-3 border-t border-border">
-				<Pagination {page} {total} {limit} onpagechange={(p) => load(p)} />
+				<Pagination {page} {total} {limit} onpagechange={(p: number) => load(p)} />
 			</div>
 		{/if}
 	</div>
