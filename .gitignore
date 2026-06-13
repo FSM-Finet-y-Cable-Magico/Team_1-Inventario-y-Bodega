@@ -7,3 +7,6 @@ diagramas-secuencia.zip
 
 # OS
 .DS_Store
+
+script-actualizacion-bdd.txt
+.gitignore
