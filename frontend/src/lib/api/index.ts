@@ -114,6 +114,11 @@ export function ingresarConsumible(data: { id_tipo_equipo: number; id_bodega: nu
 	return api.post<any>('/unidades/consumibles', data);
 }
 
+// CU-28/CU-31: edición del stock de un consumible (cantidad y umbral)
+export function updateConsumible(id_stock: number, data: { cantidad_disponible?: number; umbral_minimo?: number }) {
+	return api.patch<any>(`/unidades/consumibles/${id_stock}`, data);
+}
+
 export function updateUnit(id: number, data: Record<string, unknown>) {
 	return api.patch<any>(`/unidades/${id}`, data);
 }

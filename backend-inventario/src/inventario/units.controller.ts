@@ -35,6 +35,17 @@ export class UnitsController {
         return this.unitsService.ingresarConsumible(body, actor.id_empresa);
     }
 
+    // CU-28/CU-31: edición del stock de un consumible (cantidad y umbral)
+    @Patch('consumibles/:id_stock')
+    @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
+    async editarConsumible(
+        @Param('id_stock') idStock: string,
+        @Body() body: any,
+        @CurrentUser() actor: any,
+    ) {
+        return this.unitsService.editarConsumible(parseInt(idStock), body, actor.id_empresa, actor.id_usuario);
+    }
+
     @Get(':id/ficha')
     @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
     async verFichaDeSeguimiento(@Param('id') id: string, @CurrentUser() actor: any) {

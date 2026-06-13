@@ -136,6 +136,7 @@ export interface UnidadEquipo {
 	id_stock_consumible?: number;
 	cantidad_disponible?: number;
 	unidad_medida?: string | null;
+	umbral_minimo?: number | null;
 }
 
 export interface CreateUnidadDto {

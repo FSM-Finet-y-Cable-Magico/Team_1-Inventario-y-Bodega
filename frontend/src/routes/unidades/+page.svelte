@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { getUnits, getCatalog, createUnit, getWarehouses, ingresarConsumible } from '$lib/api/index';
+	import { getUnits, getCatalog, createUnit, getWarehouses, ingresarConsumible, updateConsumible } from '$lib/api/index';
 	import { currentUser, userRoles } from '$lib/stores/auth';
 	import type { UnidadEquipo, TipoEquipo } from '$lib/types';
 	import Button from '$lib/components/Button.svelte';
@@ -21,6 +21,12 @@
 	let estadoFilter = $state('');
 
 	let showCreate = $state(false);
+	// CU-28/CU-31: modal de detalle/edición de consumible
+	let consumableSeleccionado = $state<UnidadEquipo | null>(null);
+	let consumableForm = $state({ cantidad_disponible: 0, umbral_minimo: 0 });
+	let consumableSaving = $state(false);
+	let consumableError = $state('');
+	let consumableSuccess = $state('');
 	// CU-32: NS, MAC, tipo (solo con serie), empresa (automática), bodega,
 	// proveedor, fecha de adquisición (no futura) y observaciones iniciales
 	let createForm = $state({
@@ -35,6 +41,7 @@
 	const esConsumible = $derived(tipoSeleccionado?.requiereSerialNumber === false);
 	const roles = $derived($userRoles);
 	const puedeCrearUnidad = $derived(roles.some((r) => ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'].includes(r)));
+	const puedeEditarConsumible = $derived(roles.some((r) => ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'].includes(r)));
 	let createError = $state('');
 	let creating = $state(false);
 	let createSuccess = $state('');
@@ -102,6 +109,47 @@
 			createError = err instanceof Error ? err.message : 'Error al registrar unidad';
 		} finally {
 			creating = false;
+		}
+	}
+
+	function abrirConsumible(unit: UnidadEquipo) {
+		consumableSeleccionado = unit;
+		consumableForm = {
+			cantidad_disponible: unit.cantidad_disponible ?? 0,
+			umbral_minimo: unit.umbral_minimo ?? 0
+		};
+		consumableError = '';
+		consumableSuccess = '';
+	}
+
+	function cerrarConsumible() {
+		consumableSeleccionado = null;
+		consumableError = '';
+		consumableSuccess = '';
+	}
+
+	function nombreBodega(idBodega: number | null | undefined) {
+		if (!idBodega) return '-';
+		return bodegas.find((b) => b.id_bodega === idBodega)?.nombre || `ID: ${idBodega}`;
+	}
+
+	async function handleSaveConsumible() {
+		if (!consumableSeleccionado?.id_stock_consumible) return;
+		consumableError = '';
+		consumableSuccess = '';
+		consumableSaving = true;
+		try {
+			const res = await updateConsumible(consumableSeleccionado.id_stock_consumible, {
+				cantidad_disponible: Number(consumableForm.cantidad_disponible),
+				umbral_minimo: Number(consumableForm.umbral_minimo)
+			});
+			consumableSuccess = res?.message ?? 'Stock actualizado correctamente';
+			await load();
+			setTimeout(() => { consumableSuccess = ''; }, 3000);
+		} catch (err: unknown) {
+			consumableError = err instanceof Error ? err.message : 'Error al actualizar stock';
+		} finally {
+			consumableSaving = false;
 		}
 	}
 </script>
@@ -192,15 +240,17 @@
 										<span class="text-xs text-muted">Sin garantía</span>
 									{/if}
 								</td>
-								<td class="px-4 py-3 text-right">
-									{#if unit.es_consumible}
-										<span class="text-xs text-muted">Consumible</span>
-									{:else}
-										<Button variant="ghost" size="sm" onclick={() => goto(`/unidades/${unit.id_unidad}`)}>
-											Ver detalle
-										</Button>
-									{/if}
-								</td>
+									<td class="px-4 py-3 text-right">
+										{#if unit.es_consumible}
+											<Button variant="ghost" size="sm" onclick={() => abrirConsumible(unit)}>
+												Ver detalle
+											</Button>
+										{:else}
+											<Button variant="ghost" size="sm" onclick={() => goto(`/unidades/${unit.id_unidad}`)}>
+												Ver detalle
+											</Button>
+										{/if}
+									</td>
 							</tr>
 						{/each}
 					</tbody>
@@ -308,4 +358,59 @@
 			<Button type="submit" loading={creating}>{esConsumible ? 'Ingresar consumible' : 'Registrar unidad'}</Button>
 		</div>
 	</form>
+</Modal>
+
+<!-- CU-28/CU-31: detalle y edición de stock consumible -->
+<Modal
+	title="Detalle de consumible"
+	open={consumableSeleccionado !== null}
+	onclose={cerrarConsumible}>
+	{#if consumableSeleccionado}
+		<form onsubmit={(e: Event) => { e.preventDefault(); handleSaveConsumible(); }} class="space-y-4">
+			{#if consumableError}
+				<div class="bg-red-50 border border-red-200 text-destructive text-sm rounded-md px-3 py-2">{consumableError}</div>
+			{/if}
+			{#if consumableSuccess}
+				<div class="bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-md px-3 py-2">{consumableSuccess}</div>
+			{/if}
+
+			<div class="grid grid-cols-2 gap-4 text-sm">
+				<div>
+					<span class="text-muted">Tipo de equipo</span>
+					<p class="text-foreground font-medium">{consumableSeleccionado.tipo_equipo?.nombre || '-'}</p>
+				</div>
+				<div>
+					<span class="text-muted">Bodega</span>
+					<p class="text-foreground font-medium">{nombreBodega(consumableSeleccionado.id_bodega_actual)}</p>
+				</div>
+			</div>
+
+			<div class="grid grid-cols-2 gap-4">
+				<FormField label="Cantidad disponible" name="cons_cant" required helper="Número mayor o igual a cero">
+					<input id="cons_cant" type="number" required min={0}
+						bind:value={consumableForm.cantidad_disponible}
+						disabled={!puedeEditarConsumible}
+						class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:bg-surface-alt disabled:text-muted" />
+				</FormField>
+				<FormField label="Unidad de medida" name="cons_um">
+					<input id="cons_um" type="text" disabled value={consumableSeleccionado.unidad_medida || '—'}
+						class="w-full px-3 py-2 border border-border rounded-md text-sm bg-surface-alt text-muted" />
+				</FormField>
+			</div>
+
+			<FormField label="Umbral mínimo" name="cons_umbral" helper="0 = sin alerta; máximo 9999">
+				<input id="cons_umbral" type="number" min={0} max={9999}
+					bind:value={consumableForm.umbral_minimo}
+					disabled={!puedeEditarConsumible}
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:bg-surface-alt disabled:text-muted" />
+			</FormField>
+
+			<div class="flex justify-end gap-3 pt-2">
+				<Button variant="secondary" onclick={cerrarConsumible} type="button">Cerrar</Button>
+				{#if puedeEditarConsumible}
+					<Button type="submit" loading={consumableSaving}>Guardar cambios</Button>
+				{/if}
+			</div>
+		</form>
+	{/if}
 </Modal>

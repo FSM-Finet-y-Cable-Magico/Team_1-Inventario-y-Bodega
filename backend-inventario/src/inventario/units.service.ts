@@ -10,6 +10,7 @@ import { EMPRESAS } from "../companies/companies.service";
 import { CatalogService } from "./catalog.service";
 import { HistorialEstado } from "./entities/historial-estado.entity";
 import { EditarDatosUnidadDto } from "./dto/editar-datos-unidad.dto";
+import { AuditoriaService } from "../auditoria/auditoria.service";
 
 const MAC_REGEX = /^([0-9A-Fa-f]{2}[:\-]){5}[0-9A-Fa-f]{2}$/;
 
@@ -22,6 +23,7 @@ export class UnitsService {
         private readonly historyRepository: Repository<HistorialEstado>,
         private readonly catalogService: CatalogService,
         private readonly dataSource: DataSource,
+        private readonly auditoriaService: AuditoriaService,
     ) {}
 
     async listarUnidades(filtros: { estado?: string; buscar?: string }, idEmpresaContexto: number) {
@@ -97,6 +99,7 @@ export class UnitsService {
                     id_stock_consumible: c.id_stock,
                     cantidad_disponible: cantidad,
                     unidad_medida: unidadMedida,
+                    umbral_minimo: c.umbral_minimo === null || c.umbral_minimo === undefined ? null : Number(c.umbral_minimo),
                     tipo_equipo: c.tipoEquipo
                         ? { nombre: c.tipoEquipo.nombre, categoria: c.tipoEquipo.categoria, marca: c.tipoEquipo.marca ?? null, modelo: c.tipoEquipo.modelo ?? null }
                         : null,
@@ -266,6 +269,72 @@ export class UnitsService {
             cantidad_disponible: stock.cantidad_disponible,
             unidad_medida: tipo?.unidadMedida ?? null,
             message: `Se ingresaron ${cantidad} ${tipo?.unidadMedida ?? 'unidades'} de [${naturaleza.nombre}] al stock de la bodega [${bodega.nombre}].`,
+        };
+    }
+
+    // CU-28/CU-31: edición del stock de un consumible desde el listado de unidades.
+    // Permite ajustar cantidad disponible y umbral mínimo.
+    async editarConsumible(
+        idStock: number,
+        dto: { cantidad_disponible?: number; umbral_minimo?: number },
+        idEmpresaContexto: number,
+        actorId: number,
+    ) {
+        if (!idStock || isNaN(idStock)) {
+            throw new BadRequestException('El identificador del stock consumible es inválido.');
+        }
+
+        const stockRepo = this.dataSource.getRepository(StockConsumible);
+        const stock = await stockRepo.findOne({
+            where: { id_stock: idStock },
+            relations: { bodega: true, tipoEquipo: true },
+        });
+        if (!stock || stock.bodega.id_empresa !== idEmpresaContexto) {
+            throw new NotFoundException('Stock consumible no encontrado.');
+        }
+
+        const anterior = { ...stock };
+        let cambioCantidad = false;
+        let cambioUmbral = false;
+
+        if (dto.cantidad_disponible !== undefined) {
+            const cantidad = Number(dto.cantidad_disponible);
+            if (isNaN(cantidad) || cantidad < 0) {
+                throw new BadRequestException('La cantidad disponible debe ser un número mayor o igual a cero.');
+            }
+            cambioCantidad = Number(stock.cantidad_disponible) !== cantidad;
+            stock.cantidad_disponible = cantidad;
+        }
+
+        if (dto.umbral_minimo !== undefined) {
+            const umbral = Number(dto.umbral_minimo);
+            if (isNaN(umbral) || umbral < 0 || umbral > 9999) {
+                throw new BadRequestException('El umbral mínimo debe ser un número entre 0 y 9999.');
+            }
+            cambioUmbral = Number(stock.umbral_minimo) !== umbral;
+            stock.umbral_minimo = umbral;
+        }
+
+        await stockRepo.save(stock);
+
+        if (actorId && (cambioCantidad || cambioUmbral)) {
+            await this.auditoriaService.create({
+                id_usuario: actorId,
+                accion: 'MODIFICAR',
+                entidad_afectada: 'stock_consumible',
+                id_entidad_afectada: stock.id_stock,
+                valor_anterior: anterior,
+                valor_nuevo: stock,
+            });
+        }
+
+        return {
+            success: true,
+            id_stock: stock.id_stock,
+            cantidad_disponible: Number(stock.cantidad_disponible),
+            umbral_minimo: stock.umbral_minimo,
+            unidad_medida: stock.tipoEquipo?.unidadMedida ?? null,
+            message: 'Stock de consumible actualizado correctamente.',
         };
     }
 
