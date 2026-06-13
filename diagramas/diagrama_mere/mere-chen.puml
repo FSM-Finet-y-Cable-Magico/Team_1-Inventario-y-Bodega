@@ -1,0 +1,244 @@
+@startchen
+skinparam nodesep 6
+skinparam ranksep 16
+skinparam defaultFontSize 13
+skinparam shadowing false
+' ============================================================================
+' Modelo Entidad-Relación Extendido (MERE) — Notación de Chen
+' Sistema de Inventario y Bodega — Esquema propio del equipo
+' Fuente: schema-inventario-usado.txt
+' Convenciones Chen:
+'   [] Entidad fuerte   [[]] Entidad débil   <> Relación
+'   () Atributo   (clave) atributo subrayado = identificador
+'   Cardinalidades 1 : N : M
+' ============================================================================
+title Modelo Entidad-Relación Extendido (Chen) — Inventario y Bodega
+
+' ---------------------------------------------------------------------------
+' ENTIDADES
+' ---------------------------------------------------------------------------
+entity EMPRESA {
+  id_empresa <<key>>
+  nombre
+  rut_empresa
+  esquema_db
+}
+
+entity USUARIO {
+  id_usuario <<key>>
+  nombre_completo
+  nombre_usuario
+  email
+  password_hash
+  activo
+  intentos_fallidos
+  bloqueado_hasta
+  debe_cambiar_password
+  fecha_creacion
+}
+
+entity ROL {
+  id_rol <<key>>
+  nombre_rol
+  descripcion
+}
+
+entity BODEGA {
+  id_bodega <<key>>
+  nombre
+  direccion
+  activa
+}
+
+entity TIPO_EQUIPO {
+  id_tipo_equipo <<key>>
+  nombre
+  categoria
+  marca
+  modelo
+  descripcion_tecnica
+  unidad_medida
+  garantia_dias
+  requiere_serie_individual
+  ficha_tecnica_pdf_url
+  ficha_tecnica_nombre
+  activo
+}
+
+entity UNIDAD_EQUIPO {
+  id_unidad <<key>>
+  numero_serie
+  modelo
+  estado
+  fecha_adquisicion
+  fecha_venc_garantia
+  diagnostico_tecnico
+  id_cliente_instalado
+  numero_poste
+  id_caja_nap
+  mac_address
+  proveedor
+  observaciones
+  ubicacion_fisica
+}
+
+' Entidad débil: cada registro depende de la UNIDAD_EQUIPO a la que pertenece
+entity HISTORIAL_ESTADO <<weak>> {
+  id_historial <<key>>
+  estado_anterior
+  estado_nuevo
+  motivo
+  fecha_hora
+}
+
+entity TRANSFERENCIA {
+  id_transferencia <<key>>
+  fecha_transferencia
+  observaciones
+}
+
+entity MOVIMIENTO_INV {
+  id_movimiento <<key>>
+  tipo_movimiento
+  cantidad
+  fecha
+  referencia_id
+}
+
+entity LOG_AUDITORIA {
+  id_log <<key>>
+  accion
+  entidad_afectada
+  id_entidad_afectada
+  valor_anterior
+  valor_nuevo
+  ip_origen
+  fecha_hora
+}
+
+' ---------------------------------------------------------------------------
+' RELACIONES
+' ---------------------------------------------------------------------------
+relationship Emplea {
+}
+relationship Posee {
+}
+relationship Es_responsable {
+}
+relationship Cataloga {
+}
+relationship Registra {
+}
+
+' M:N con atributo propio (usuario_rol)
+relationship Tiene_rol {
+  fecha_asignacion
+}
+
+' Tipificación de cada unidad
+relationship Clasifica {
+}
+relationship Almacena {
+}
+
+' M:N con atributos propios (stock_consumible)
+relationship Stock {
+  cantidad_disponible
+  umbral_minimo
+}
+
+' Relación identificadora de la entidad débil HISTORIAL_ESTADO
+relationship Tiene_historial <<identifying>> {
+}
+relationship Modifica {
+}
+
+' Transferencias entre empresas (roles origen/destino)
+relationship Transf_origen {
+}
+relationship Transf_destino {
+}
+relationship Transf_registra {
+}
+
+' Movimientos de inventario
+relationship Mov_ejecuta {
+}
+relationship Mov_tipo {
+}
+relationship Mov_unidad {
+}
+relationship Mov_bod_origen {
+}
+relationship Mov_bod_destino {
+}
+relationship Mov_emp_origen {
+}
+relationship Mov_emp_destino {
+}
+
+' Auditoría
+relationship Genera {
+}
+
+' ---------------------------------------------------------------------------
+' CONEXIONES (cardinalidades)
+' ---------------------------------------------------------------------------
+EMPRESA -1- Emplea
+Emplea -N- USUARIO
+
+USUARIO -N- Tiene_rol
+Tiene_rol -M- ROL
+
+EMPRESA -1- Posee
+Posee -N- BODEGA
+
+USUARIO -1- Es_responsable
+Es_responsable -N- BODEGA
+
+EMPRESA -1- Cataloga
+Cataloga -N- TIPO_EQUIPO
+
+TIPO_EQUIPO -1- Clasifica
+Clasifica -N- UNIDAD_EQUIPO
+
+EMPRESA -1- Registra
+Registra -N- UNIDAD_EQUIPO
+
+BODEGA -1- Almacena
+Almacena -N- UNIDAD_EQUIPO
+
+TIPO_EQUIPO -N- Stock
+Stock -M- BODEGA
+
+UNIDAD_EQUIPO =1= Tiene_historial
+Tiene_historial -N- HISTORIAL_ESTADO
+
+USUARIO -1- Modifica
+Modifica -N- HISTORIAL_ESTADO
+
+EMPRESA -1- Transf_origen
+Transf_origen -N- TRANSFERENCIA
+EMPRESA -1- Transf_destino
+Transf_destino -N- TRANSFERENCIA
+USUARIO -1- Transf_registra
+Transf_registra -N- TRANSFERENCIA
+
+USUARIO -1- Mov_ejecuta
+Mov_ejecuta -N- MOVIMIENTO_INV
+TIPO_EQUIPO -1- Mov_tipo
+Mov_tipo -N- MOVIMIENTO_INV
+UNIDAD_EQUIPO -1- Mov_unidad
+Mov_unidad -N- MOVIMIENTO_INV
+BODEGA -1- Mov_bod_origen
+Mov_bod_origen -N- MOVIMIENTO_INV
+BODEGA -1- Mov_bod_destino
+Mov_bod_destino -N- MOVIMIENTO_INV
+EMPRESA -1- Mov_emp_origen
+Mov_emp_origen -N- MOVIMIENTO_INV
+EMPRESA -1- Mov_emp_destino
+Mov_emp_destino -N- MOVIMIENTO_INV
+
+USUARIO -1- Genera
+Genera -N- LOG_AUDITORIA
+@endchen
