@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" font-family="'Segoe UI','DejaVu Sans',Helvetica,Arial,sans-serif">
+<rect width="1280" height="720" fill="#FFFFFF"/>
+<rect x="0" y="0" width="1280" height="8" fill="#7A2330"/>
+<text x="720" y="92" font-size="40" font-weight="700" fill="#2B2B2B">Cobertura de Casos de Uso</text>
+<text x="720" y="130" font-size="22" fill="#6B6B6B">Incremento 1 · 47,92% de cobertura · Scrum++</text>
+<circle cx="360" cy="400" r="150" fill="none" stroke="#E7E2E4" stroke-width="66"/>
+<circle cx="360" cy="400" r="150" fill="none" stroke="#7A2330" stroke-width="66"
+        stroke-dasharray="451.60 490.87" stroke-linecap="butt" transform="rotate(-90 360 400)"/>
+<line x1="500.8" y1="445.7" x2="543.6" y2="459.6" stroke="#2B2B2B" stroke-width="4"/>
+<text x="566.4" y="467.1" font-size="17" font-weight="600" fill="#2B2B2B" text-anchor="start" dominant-baseline="middle">30% mín.</text>
+<text x="360" y="398" font-size="80" font-weight="800" fill="#7A2330" text-anchor="middle">48%</text>
+<text x="360" y="440" font-size="23" fill="#6B6B6B" text-anchor="middle">46 de 96 CU</text>
+<text x="120" y="614" font-size="18" font-weight="600" fill="#6B6B6B">Avance vs. mínimo de la rúbrica</text>
+<rect x="120" y="628" width="480" height="28" rx="14" fill="#E7E2E4"/>
+<rect x="120" y="628" width="230.0" height="28" rx="14" fill="#7A2330"/>
+<line x1="264.0" y1="620" x2="264.0" y2="664" stroke="#2B2B2B" stroke-width="3"/>
+<text x="264.0" y="682" font-size="15" fill="#2B2B2B" text-anchor="middle">30%</text>
+<text x="120" y="682" font-size="15" fill="#6B6B6B" text-anchor="start">0%</text>
+<text x="600" y="682" font-size="15" fill="#6B6B6B" text-anchor="end">100%</text>
+<rect x="720" y="190" width="500" height="76" rx="12" fill="#F6F2F3" stroke="#E3D9DB"/>
+<text x="752" y="240" font-size="42" font-weight="800" fill="#7A2330">96</text>
+<text x="852" y="224" font-size="19" fill="#2B2B2B">Casos de uso totales del sistema</text>
+<text x="852" y="247" font-size="17" fill="#6B6B6B">Documento 0 · base funcional</text>
+<rect x="720" y="282" width="500" height="76" rx="12" fill="#F6F2F3" stroke="#E3D9DB"/>
+<text x="752" y="332" font-size="42" font-weight="800" fill="#7A2330">46</text>
+<text x="852" y="316" font-size="19" fill="#2B2B2B">Implementados en el Incremento 1</text>
+<text x="852" y="339" font-size="17" fill="#6B6B6B">CU-01 a CU-46</text>
+<rect x="720" y="374" width="500" height="76" rx="12" fill="#F6F2F3" stroke="#E3D9DB"/>
+<text x="752" y="424" font-size="42" font-weight="800" fill="#7A2330">30%</text>
+<text x="852" y="419" font-size="19" fill="#2B2B2B">Mínimo exigido por la rúbrica</text>
+<rect x="720" y="472" width="500" height="64" rx="12" fill="#2E8B57"/>
+<text x="970" y="512" font-size="23" font-weight="700" fill="#FFFFFF" text-anchor="middle">✓  Supera el 30% mínimo exigido</text>
+</svg>
