@@ -23,7 +23,7 @@ export class CatalogController {
     }
 
     @Get()
-    @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
+    @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
     async buscarCatalogo(@Query() query: any, @CurrentUser() actor: any) {
         return this.catalogService.consultar({
             categoria: query.categoria,

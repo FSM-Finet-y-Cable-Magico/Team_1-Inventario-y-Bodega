@@ -41,7 +41,7 @@ export class UsuariosController {
     if (activo !== undefined) filtros.activo = activo === 'true';
     if (buscar) filtros.buscar = buscar;
     if (rol) filtros.rol = rol;
-    return this.usuariosService.findAll(filtros, req.user.id_empresa);
+    return this.usuariosService.findAll(filtros, req.user.id_empresa, req.user.roles ?? []);
   }
 
   @Get(':id')

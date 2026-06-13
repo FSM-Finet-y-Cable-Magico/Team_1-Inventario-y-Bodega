@@ -53,7 +53,7 @@ export class BodegasController {
   }
 
   @Get()
-  @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
+  @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
   findAll(
     @Query('activa') activa: string,
     @Query('activo') activo: string,
@@ -81,7 +81,7 @@ export class BodegasController {
   }
 
   @Get(':id')
-  @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
+  @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
   findOne(@Param('id') id: string, @Req() req) {
     const userEmpresaId = req.user.id_empresa ?? 1;
     const isSuperuser = req.user.roles?.includes('SUPERUSUARIO');

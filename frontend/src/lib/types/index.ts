@@ -11,6 +11,8 @@ export interface Usuario {
 	fecha_creacion: string;
 	roles?: Rol[];
 	empresa?: Empresa | null;
+	// CU-05: nombre de empresa en el listado consolidado del Superusuario
+	empresa_nombre?: string | null;
 }
 
 export interface CreateUsuarioDto {

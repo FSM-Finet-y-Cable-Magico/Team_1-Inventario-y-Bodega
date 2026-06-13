@@ -13,7 +13,7 @@ export class UnitsController {
     constructor(private readonly unitsService: UnitsService) {}
 
     @Get()
-    @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
+    @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
     async listarUnidades(
         @Query('estado') estado: string,
         @Query('buscar') buscar: string,
@@ -36,13 +36,13 @@ export class UnitsController {
     }
 
     @Get(':id/ficha')
-    @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
+    @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
     async verFichaDeSeguimiento(@Param('id') id: string, @CurrentUser() actor: any) {
         return this.unitsService.verFichaDetalle(parseInt(id), actor.id_empresa);
     }
 
     @Get(':serialNumber/historial')
-    @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
+    @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
     async verHistorialCompleto(@Param('serialNumber') serialNumber: string, @CurrentUser() actor: any) {
         return this.unitsService.verHistorialEstados(serialNumber, actor.id_empresa);
     }

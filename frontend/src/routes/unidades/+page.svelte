@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { getUnits, getCatalog, createUnit, getWarehouses, ingresarConsumible } from '$lib/api/index';
-	import { currentUser } from '$lib/stores/auth';
+	import { currentUser, userRoles } from '$lib/stores/auth';
 	import type { UnidadEquipo, TipoEquipo } from '$lib/types';
 	import Button from '$lib/components/Button.svelte';
 	import Modal from '$lib/components/Modal.svelte';
@@ -33,6 +33,8 @@
 	// CU-31: el tipo seleccionado determina si se pide NS o cantidad
 	const tipoSeleccionado = $derived(tipos.find((t) => t.id_tipo_equipo === createForm.id_tipo_equipo) ?? null);
 	const esConsumible = $derived(tipoSeleccionado?.requiereSerialNumber === false);
+	const roles = $derived($userRoles);
+	const puedeCrearUnidad = $derived(roles.some((r) => ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'].includes(r)));
 	let createError = $state('');
 	let creating = $state(false);
 	let createSuccess = $state('');
@@ -112,10 +114,12 @@
 				<RotateCw class="h-4 w-4" />
 				Actualizar
 			</Button>
-			<Button onclick={() => (showCreate = true)}>
-				<Plus class="h-4 w-4" />
-				Registrar unidad
-			</Button>
+			{#if puedeCrearUnidad}
+				<Button onclick={() => (showCreate = true)}>
+					<Plus class="h-4 w-4" />
+					Registrar unidad
+				</Button>
+			{/if}
 		</div>
 	</div>
 
@@ -146,7 +150,11 @@
 			<!-- CU-33 Excepción 1: la búsqueda no coincide con ningún NS registrado -->
 			<EmptyState message="Número de serie no encontrado." />
 		{:else if units.length === 0}
-			<EmptyState message="No hay unidades registradas" action={() => (showCreate = true)} actionlabel="Registrar unidad" />
+			<EmptyState
+				message="No hay unidades registradas"
+				action={puedeCrearUnidad ? () => (showCreate = true) : undefined}
+				actionlabel={puedeCrearUnidad ? 'Registrar unidad' : undefined}
+			/>
 		{:else}
 			<div class="overflow-x-auto">
 				<table class="w-full text-sm">

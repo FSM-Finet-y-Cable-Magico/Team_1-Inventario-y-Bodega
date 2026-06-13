@@ -155,6 +155,9 @@
 						<tr class="border-b border-border bg-surface/50">
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Nombre completo</th>
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Nombre de usuario</th>
+							{#if esSuperusuario}
+								<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Empresa</th>
+							{/if}
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Rol</th>
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Estado</th>
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Fecha de creación</th>
@@ -166,6 +169,9 @@
 							<tr class="border-b border-border transition-colors hover:bg-surface-alt/50 {i % 2 === 0 ? 'bg-white' : 'bg-surface/30'}">
 								<td class="px-4 py-3 font-medium text-foreground">{user.nombre_completo}</td>
 								<td class="px-4 py-3 text-foreground">{user.nombre_usuario}</td>
+								{#if esSuperusuario}
+									<td class="px-4 py-3 text-foreground">{user.empresa_nombre || '-'}</td>
+								{/if}
 								<td class="px-4 py-3">
 									<div class="flex flex-wrap gap-1">
 										{#each user.roles ?? [] as rol}

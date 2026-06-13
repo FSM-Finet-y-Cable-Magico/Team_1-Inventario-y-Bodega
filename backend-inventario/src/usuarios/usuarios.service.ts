@@ -14,6 +14,7 @@ import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 import * as bcrypt from 'bcrypt';
 import { AuditoriaService } from 'src/auditoria/auditoria.service';
+import { EMPRESAS } from 'src/companies/companies.service';
 
 @Injectable()
 export class UsuariosService {
@@ -28,8 +29,14 @@ export class UsuariosService {
   ) {}
 
   // CU-05: listado con filtros por rol, estado y nombre (completo o de usuario)
-  async findAll(filtros: { rol?: string; activo?: boolean; buscar?: string }, idEmpresaActor: number): Promise<Usuario[]> {
-    const base: any = { id_empresa: idEmpresaActor };
+  // El Superusuario ve usuarios de todas las empresas; el resto solo los de su empresa.
+  async findAll(
+    filtros: { rol?: string; activo?: boolean; buscar?: string },
+    idEmpresaActor: number,
+    actorRoles: string[] = [],
+  ): Promise<Usuario[]> {
+    const esSuperusuario = actorRoles.includes('SUPERUSUARIO');
+    const base: any = esSuperusuario ? {} : { id_empresa: idEmpresaActor };
 
     if (filtros.activo !== undefined) {
       base.activo = filtros.activo;
@@ -57,9 +64,17 @@ export class UsuariosService {
       );
     }
 
+    // Agregamos el nombre de la empresa para que el Superusuario pueda
+    // distinguir usuarios del listado consolidado.
+    const mapaEmpresas = new Map(EMPRESAS.map((e) => [e.id, e.nombre]));
+    resultado = resultado.map((u) => ({
+      ...u,
+      empresa_nombre: mapaEmpresas.get(u.id_empresa ?? -1) ?? null,
+    }));
+
     // CU-05 Excepción 1: sin coincidencias se retorna el listado vacío;
     // el frontend muestra el mensaje correspondiente
-    return resultado;
+    return resultado as any;
   }
 
   async findOne(id: number): Promise<Usuario | null> {

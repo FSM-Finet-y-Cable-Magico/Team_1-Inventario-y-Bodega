@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { getUnit, changeUnitState, getUnitHistory, getWarehouses, updateUnit } from '$lib/api/index';
+	import { userRoles } from '$lib/stores/auth';
 	import type { UnidadEquipo, HistorialEstado, EstadoUnidad, Bodega } from '$lib/types';
 	import Button from '$lib/components/Button.svelte';
 	import Modal from '$lib/components/Modal.svelte';
@@ -22,6 +23,8 @@
 	// motivoPayload es la descripción obligatoria del diagnóstico "Otro" (CU-40)
 	let changeForm = $state({ estado_nuevo: '' as EstadoUnidad | '', diagnostico: '', motivoPayload: '', observacion: '', simularErrorHistorial: false });
 	const isDev = import.meta.env.DEV;
+	const roles = $derived($userRoles);
+	const puedeEditarUnidad = $derived(roles.some((r) => ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'].includes(r)));
 	let changeError = $state('');
 	let changing = $state(false);
 
@@ -291,11 +294,13 @@
 							<RotateCw class="h-4 w-4" />
 							Cambiar estado
 						</Button>
-						<!-- CU-18: edición de los datos de la unidad -->
+					<!-- CU-18: edición de los datos de la unidad -->
+					{#if puedeEditarUnidad}
 						<Button variant="secondary" onclick={abrirEdicion}>
 							<Pencil class="h-4 w-4" />
 							Editar datos
 						</Button>
+					{/if}
 					</div>
 				</div>
 
