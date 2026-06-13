@@ -121,7 +121,7 @@
 
 	<div class="flex items-center gap-4 mb-4">
 		<div class="flex-1 max-w-xs">
-			<SearchInput bind:value={search} placeholder="Buscar por serie o modelo..." maxlength={30} />
+			<SearchInput bind:value={search} placeholder="Buscar por serie, modelo o tipo..." maxlength={30} />
 		</div>
 		<select bind:value={estadoFilter}
 			class="px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
@@ -173,7 +173,10 @@
 								</td>
 								<td class="px-4 py-3">
 									<!-- CU-38: fecha calculada, 'Sin garantía' (duración 0) o no calculable -->
-									{#if unit.garantia_no_calculable}
+									<!-- CU-28/CU-31: los consumibles no tienen garantía individual -->
+									{#if unit.es_consumible}
+										<span class="text-xs text-muted">No aplica</span>
+									{:else if unit.garantia_no_calculable}
 										<span class="text-xs text-amber-700">Garantía no calculable</span>
 									{:else if unit.fecha_venc_garantia}
 										<span class="text-xs text-muted">{unit.fecha_venc_garantia}</span>
@@ -182,9 +185,13 @@
 									{/if}
 								</td>
 								<td class="px-4 py-3 text-right">
-									<Button variant="ghost" size="sm" onclick={() => goto(`/unidades/${unit.id_unidad}`)}>
-										Ver detalle
-									</Button>
+									{#if unit.es_consumible}
+										<span class="text-xs text-muted">Consumible</span>
+									{:else}
+										<Button variant="ghost" size="sm" onclick={() => goto(`/unidades/${unit.id_unidad}`)}>
+											Ver detalle
+										</Button>
+									{/if}
 								</td>
 							</tr>
 						{/each}

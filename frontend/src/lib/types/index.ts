@@ -129,6 +129,11 @@ export interface UnidadEquipo {
 	};
 	// CU-38 Excepción 1 (listado)
 	garantia_no_calculable?: boolean;
+	// CU-28/CU-31: marca para filas de stock consumible mostradas en el listado
+	es_consumible?: boolean;
+	id_stock_consumible?: number;
+	cantidad_disponible?: number;
+	unidad_medida?: string | null;
 }
 
 export interface CreateUnidadDto {

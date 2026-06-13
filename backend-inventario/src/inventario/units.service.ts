@@ -35,14 +35,14 @@ export class UnitsService {
 
         if (filtros.buscar) {
             qb.andWhere(
-                '(unidad.serialNumber ILIKE :buscar OR unidad.modelo ILIKE :buscar)',
+                '(unidad.serialNumber ILIKE :buscar OR unidad.modelo ILIKE :buscar OR tipoEquipo.nombre ILIKE :buscar)',
                 { buscar: `%${filtros.buscar.trim()}%` },
             );
         }
 
         const unidades = await qb.orderBy('unidad.id_unidad', 'DESC').getMany();
 
-        return unidades.map((u) => ({
+        const resultado: any[] = unidades.map((u) => ({
             id_unidad: u.id_unidad,
             numero_serie: u.serialNumber,
             mac_address: u.macAddress ?? null,
@@ -54,10 +54,59 @@ export class UnitsService {
             // CU-38 Excepción 1: sin fecha de adquisición o sin garantía configurada
             garantia_no_calculable: !u.fechaAdquisicion || u.tipoEquipo?.garantiaDias === null || u.tipoEquipo?.garantiaDias === undefined,
             id_bodega_actual: u.id_bodega_actual,
+            es_consumible: false,
             tipo_equipo: u.tipoEquipo
                 ? { nombre: u.tipoEquipo.nombre, categoria: u.tipoEquipo.categoria, marca: u.tipoEquipo.marca ?? null, modelo: u.tipoEquipo.modelo ?? null }
                 : null,
         }));
+
+        // CU-28/CU-31: los consumibles no son unidades individualizadas, pero deben
+        // aparecer en el listado general junto al resto de unidades.
+        // Solo se muestran si no hay filtro de estado o si se filtra por "En bodega"
+        // (el stock consumible siempre está disponible en bodega).
+        if (!filtros.estado || filtros.estado === 'En bodega') {
+            const consumibleQb = this.dataSource.getRepository(StockConsumible)
+                .createQueryBuilder('stock')
+                .innerJoinAndSelect('stock.tipoEquipo', 'tipoEquipo')
+                .innerJoin('stock.bodega', 'bodega')
+                .where('bodega.id_empresa = :idEmpresa', { idEmpresa: idEmpresaContexto })
+                .andWhere('stock.cantidad_disponible > 0');
+
+            if (filtros.buscar) {
+                consumibleQb.andWhere('tipoEquipo.nombre ILIKE :buscar', { buscar: `%${filtros.buscar.trim()}%` });
+            }
+
+            const consumibles = await consumibleQb.orderBy('stock.id_stock', 'DESC').getMany();
+
+            for (const c of consumibles) {
+                const cantidad = Number(c.cantidad_disponible);
+                const unidadMedida = c.tipoEquipo?.unidadMedida ?? 'unidades';
+                resultado.push({
+                    // Usamos id negativo para distinguir del serializado y evitar colisiones visuales
+                    id_unidad: -c.id_stock,
+                    numero_serie: `${cantidad} ${unidadMedida}`,
+                    mac_address: null,
+                    modelo: null,
+                    estado: 'En bodega',
+                    proveedor: null,
+                    fecha_adquisicion: null,
+                    fecha_venc_garantia: null,
+                    garantia_no_calculable: true,
+                    id_bodega_actual: c.id_bodega,
+                    es_consumible: true,
+                    id_stock_consumible: c.id_stock,
+                    cantidad_disponible: cantidad,
+                    unidad_medida: unidadMedida,
+                    tipo_equipo: c.tipoEquipo
+                        ? { nombre: c.tipoEquipo.nombre, categoria: c.tipoEquipo.categoria, marca: c.tipoEquipo.marca ?? null, modelo: c.tipoEquipo.modelo ?? null }
+                        : null,
+                });
+            }
+        }
+
+        // Ordenar por ID descendente (los consumibles con id negativo quedan junto
+        // a los serializados según su id_stock de creación).
+        return resultado.sort((a, b) => Math.abs(b.id_unidad) - Math.abs(a.id_unidad));
     }
 
     async registrarUnidad(dto: { id_tipo_equipo: number; numero_serie: string; modelo?: string; id_bodega_actual: number; fecha_adquisicion?: string; mac_address?: string; proveedor?: string; observaciones?: string }, idEmpresaContexto: number) {
