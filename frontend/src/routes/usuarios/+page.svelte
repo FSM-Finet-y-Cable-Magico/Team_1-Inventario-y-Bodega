@@ -11,7 +11,7 @@
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { currentUser, userRoles } from '$lib/stores/auth';
-	import { Plus, RotateCw, Pencil, Trash2 } from '@lucide/svelte';
+	import { Plus, RotateCw, Pencil, Trash2, X } from '@lucide/svelte';
 
 	let usuarios = $state<Usuario[]>([]);
 	let roles = $state<Rol[]>([]);
@@ -36,6 +36,7 @@
 	let empresas = $state<Empresa[]>([]);
 	// Solo el Superusuario puede asignar otra empresa (CU-04)
 	const esSuperusuario = $derived($userRoles.includes('SUPERUSUARIO'));
+	const hayFiltrosActivos = $derived(Boolean(search || filtroRol || filtroEstado !== ''));
 	let createError = $state('');
 	let creating = $state(false);
 
@@ -101,10 +102,16 @@
 			deletingUser = null;
 		}
 	}
+
+	function limpiarFiltros() {
+		search = '';
+		filtroRol = '';
+		filtroEstado = '';
+	}
 </script>
 
 <div class="max-w-6xl mx-auto">
-	<div class="flex items-center justify-between mb-6">
+	<div class="flex items-center justify-between mb-2">
 		<h1 class="text-xl font-bold text-foreground">Usuarios</h1>
 		<div class="flex items-center gap-3">
 			<Button variant="secondary" onclick={load}>
@@ -117,6 +124,13 @@
 			</Button>
 		</div>
 	</div>
+	<p class="text-sm text-muted mb-6">
+		{#if esSuperusuario}
+			Listado consolidado de usuarios de todas las empresas.
+		{:else}
+			Mostrando usuarios de <span class="font-medium text-foreground">{$currentUser?.empresa?.nombre ?? 'su empresa'}</span>.
+		{/if}
+	</p>
 
 	<!-- CU-05: filtros por rol, estado o nombre (completo o de usuario) -->
 	<div class="flex flex-wrap items-center gap-3 mb-4">
@@ -136,7 +150,31 @@
 			<option value="true">Activo</option>
 			<option value="false">Inactivo</option>
 		</select>
+		{#if hayFiltrosActivos}
+			<button
+				onclick={limpiarFiltros}
+				class="inline-flex items-center gap-1 text-xs text-muted hover:text-foreground transition-colors"
+				type="button">
+				<X class="h-3 w-3" />
+				Limpiar filtros
+			</button>
+		{/if}
 	</div>
+
+	{#if hayFiltrosActivos}
+		<div class="flex flex-wrap items-center gap-2 mb-4">
+			<span class="text-xs text-muted">Filtros activos:</span>
+			{#if search}
+				<Badge variant="default">Búsqueda: {search}</Badge>
+			{/if}
+			{#if filtroRol}
+				<Badge variant="default">Rol: {filtroRol}</Badge>
+			{/if}
+			{#if filtroEstado !== ''}
+				<Badge variant="default">Estado: {filtroEstado === 'true' ? 'Activo' : 'Inactivo'}</Badge>
+			{/if}
+		</div>
+	{/if}
 
 	{#if error}
 		<div class="bg-red-50 border border-red-200 text-destructive rounded-md p-4 text-sm mb-4">{error}</div>
@@ -146,7 +184,11 @@
 		{#if loading}
 			<div class="p-8 text-center text-sm text-muted">Cargando...</div>
 		{:else if usuarios.length === 0}
-			<EmptyState message="No se encontraron usuarios con los filtros seleccionados." action={() => (showCreate = true)} actionlabel="Crear usuario" />
+			<EmptyState
+				message={hayFiltrosActivos ? 'No se encontraron usuarios con los filtros seleccionados.' : 'No hay usuarios registrados en esta empresa.'}
+				action={() => (showCreate = true)}
+				actionlabel="Crear usuario"
+			/>
 		{:else}
 			<div class="overflow-x-auto">
 				<table class="w-full text-sm">
@@ -245,9 +287,11 @@
 			{#if esSuperusuario}
 				<select id="emp" bind:value={createForm.id_empresa}
 					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
-					<option value={0}>Mi empresa ({$currentUser?.empresa?.nombre ?? '—'})</option>
+					<option value={$currentUser?.empresa?.id ?? 0}>Mi empresa ({$currentUser?.empresa?.nombre ?? '—'})</option>
 					{#each empresas as emp}
-						<option value={emp.id}>{emp.nombre}</option>
+						{#if emp.id !== ($currentUser?.empresa?.id ?? 0)}
+							<option value={emp.id}>{emp.nombre}</option>
+						{/if}
 					{/each}
 				</select>
 			{:else}

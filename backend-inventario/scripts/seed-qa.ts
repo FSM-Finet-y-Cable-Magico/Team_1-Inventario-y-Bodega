@@ -5,6 +5,7 @@
  *  - superusuario / Super1234  → rol SUPERUSUARIO, empresa Finet
  *  - admin_cable / Cable1234   → rol ADMIN, empresa Cable Mágico (id 2)
  *  - tecnico_qa / Tecnico1234  → rol TECNICO_TERRENO, empresa Finet
+ *  - tecnico_cable / TecnicoCable1234 → rol TECNICO_TERRENO, empresa Cable Mágico (id 2)
  *
  * Uso: npm run seed:qa
  */
@@ -32,6 +33,13 @@ const USUARIOS_QA = [
     nombre_completo: 'Técnico Terreno QA',
     password: 'Tecnico1234',
     id_empresa: 1,
+    rol: 'TECNICO_TERRENO',
+  },
+  {
+    nombre_usuario: 'tecnico_cable',
+    nombre_completo: 'Técnico Cable Mágico QA',
+    password: 'TecnicoCable1234',
+    id_empresa: 2,
     rol: 'TECNICO_TERRENO',
   },
 ];

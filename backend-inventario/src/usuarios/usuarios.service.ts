@@ -105,13 +105,19 @@ export class UsuariosService {
 
     // El usuario nuevo hereda la empresa del actor; solo un Superusuario puede asignar otra
     let idEmpresa = actor.id_empresa;
-    if (createUsuarioDto.id_empresa !== undefined && createUsuarioDto.id_empresa !== actor.id_empresa) {
+    const idEmpresaExplicita = createUsuarioDto.id_empresa;
+    if (
+      idEmpresaExplicita !== undefined &&
+      idEmpresaExplicita !== null &&
+      idEmpresaExplicita !== 0 &&
+      idEmpresaExplicita !== actor.id_empresa
+    ) {
       if (!esSuperusuario) {
         throw new ForbiddenException(
           'Solo un Superusuario puede crear usuarios en otra empresa.',
         );
       }
-      idEmpresa = createUsuarioDto.id_empresa;
+      idEmpresa = idEmpresaExplicita;
     }
 
     // Validar roles solicitados
@@ -225,9 +231,12 @@ export class UsuariosService {
 
     // password no se actualiza por esta vía; id_empresa solo lo cambia un Superusuario
     const { roles, password, id_empresa, ...cambios } = updateUsuarioDto;
+    const idEmpresaExplicita = id_empresa;
     if (
-      id_empresa !== undefined &&
-      id_empresa !== usuario.id_empresa &&
+      idEmpresaExplicita !== undefined &&
+      idEmpresaExplicita !== null &&
+      idEmpresaExplicita !== 0 &&
+      idEmpresaExplicita !== usuario.id_empresa &&
       !actorRoles.includes('SUPERUSUARIO')
     ) {
       throw new ForbiddenException(
@@ -261,7 +270,9 @@ export class UsuariosService {
     const usuarioActualizado = await this.usuarioRepository.save({
       ...datosUsuario,
       ...cambios,
-      ...(id_empresa !== undefined ? { id_empresa } : {}),
+      ...(idEmpresaExplicita !== undefined && idEmpresaExplicita !== null && idEmpresaExplicita !== 0
+        ? { id_empresa: idEmpresaExplicita }
+        : {}),
     });
 
     if (rolesAsignar !== null) {
