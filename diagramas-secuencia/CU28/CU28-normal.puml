@@ -1,22 +1,62 @@
 @startuml CU28-normal
-title CU-28 — Validar número de serie de equipo (flujo normal)
+title CU-28 — Validar número de serie de equipo (flujo normal — contexto: registro de unidad)
 
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-skinparam ParticipantPadding 70
-skinparam ActorPadding 30
+<style>
+sequenceDiagram {
+  participant {
+    Margin 35
+  }
+  actor {
+    Margin 15
+  }
+}
+</style>
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black
 }
 hide footbox
 
+actor "Usuario" as user
+participant "V_RegistrarUnidad" as view
+participant "C_UnitsController" as ctrl
 participant "C_UnitsService" as units
 participant "C_CatalogService" as catalog
+participant "C_TypeORM" as orm
+participant "tipo_equipo" as tent
+participant "unidad_equipo" as uent
 
-units -> catalog : validarFormatoSerialNumber(numero_serie)
+user -> view : Ingresa numero_serie\ny datos del equipo
+activate view
+
+view -> ctrl : POST /unidades\n{ id_tipo_equipo, numero_serie,\nid_bodega_actual }
+activate ctrl
+
+ctrl -> units : registrarUnidad(body,\nactor.id_empresa)
+activate units
+
+units -> catalog : determinarNaturalezaEquipo(\nid_tipo_equipo, id_empresa)
+activate catalog
+
+catalog -> orm : findOne({ id_tipo_equipo,\nid_empresa })
+activate orm
+
+orm -> tent : SELECT tipo_equipo\nWHERE id_tipo_equipo\nAND id_empresa
+activate tent
+tent --> orm : Registro tipo_equipo\n(requiereSerialNumber = true)
+deactivate tent
+
+orm --> catalog : tipo (TipoEquipo)
+deactivate orm
+
+catalog --> units : { clasificacion: 'INDIVIDUALIZABLE',\nobligaSerialNumber: true }
+deactivate catalog
+
+units -> catalog : validarFormatoSerialNumber(\nnumero_serie.trim())
 activate catalog
 
 catalog -> catalog : Verifica no vacío:\n!serial || serial.trim() === ''
@@ -29,5 +69,25 @@ deactivate catalog
 
 catalog --> units : true (formato válido)
 deactivate catalog
+
+units -> orm : save(nuevaUnidad)
+activate orm
+
+orm -> uent : INSERT unidad_equipo\n(numero_serie validado,\nestado = 'En bodega')
+activate uent
+uent --> orm : Unidad guardada
+deactivate uent
+
+orm --> units : UnidadEquipo guardada
+deactivate orm
+
+units --> ctrl : { success: true, id_unidad,\nnumero_serie, estado }
+deactivate units
+
+ctrl --> view : 201 Created\n{ success: true, numero_serie }
+deactivate ctrl
+
+view --> user : Muestra confirmación\nde registro exitoso
+deactivate view
 
 @enduml

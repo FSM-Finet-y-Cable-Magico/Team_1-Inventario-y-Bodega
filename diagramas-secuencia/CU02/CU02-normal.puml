@@ -5,8 +5,16 @@ skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-skinparam ParticipantPadding 70
-skinparam ActorPadding 30
+<style>
+sequenceDiagram {
+  participant {
+    Margin 35
+  }
+  actor {
+    Margin 15
+  }
+}
+</style>
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black
@@ -17,6 +25,9 @@ actor "Usuario" as user
 participant "V_Usuarios" as view
 participant "C_RolesGuard" as guard
 participant "C_UsuariosController" as ctrl
+participant "C_UsuariosService" as svc
+participant "C_TypeORM" as orm
+participant "usuario" as uent
 
 user -> view : Solicita lista de usuarios
 activate view
@@ -32,9 +43,28 @@ guard -> guard : roles.some(role =>\nuser.roles?.includes(role))\n→ true
 activate guard
 deactivate guard
 
-guard --> ctrl : canActivate() = true\n(acceso autorizado)
+guard --> view : Autorizado\n(canActivate() = true)
 deactivate guard
+
+view -> ctrl : findAll(filtros, req)
 activate ctrl
+
+ctrl -> svc : findAll(filtros,\nreq.user.id_empresa)
+activate svc
+
+svc -> orm : find(usuario con filtros,\nrelations: usuarioRoles.rol)
+activate orm
+
+orm -> uent : SELECT usuario\nJOIN usuario_rol JOIN rol\nWHERE id_empresa
+activate uent
+uent --> orm : Filas usuario + roles
+deactivate uent
+
+orm --> svc : Usuario[]
+deactivate orm
+
+svc --> ctrl : Lista de usuarios
+deactivate svc
 
 ctrl --> view : 200 OK\n[Lista de usuarios]
 deactivate ctrl

@@ -1,12 +1,20 @@
 @startuml CU11-exc-sesion-expirada
-title CU-11 — Cerrando sesión automáticamente por inactividad (excepción: sesión expirada por inactividad)
+title CU-11 — Cerrando sesión automáticamente por inactividad (excepción: sin respuesta al aviso, cierre automático)
 
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-skinparam ParticipantPadding 70
-skinparam ActorPadding 30
+<style>
+sequenceDiagram {
+  participant {
+    Margin 35
+  }
+  actor {
+    Margin 15
+  }
+}
+</style>
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black
@@ -17,38 +25,64 @@ actor "Usuario" as user
 participant "V_Sistema" as view
 participant "C_JwtAuthGuard" as guard
 participant "C_AuthController" as ctrl
-participant "C_JwtStrategy" as strat
+participant "C_AuthService" as svc
+participant "C_AuditoriaService" as aud
+participant "C_TypeORM" as orm
+participant "log_auditoria" as aent
 
 user -> view : Permanece inactivo\n(sin clics, teclado\nni scroll)
 activate view
 
-view -> view : Temporizador alcanza\númbral − 2 minutos:\nmuestra aviso emergente\n'Su sesión se cerrará en\n2 minutos por inactividad'
+view -> view : Temporizador alcanza\númbral − 2 minutos:\nmuestra aviso 'Su sesión se\ncerrará en 2 minutos por\ninactividad. ¿Desea continuar?'
 activate view
 deactivate view
 
-view -> view : Usuario no responde\nal aviso en 2 minutos
+view -> view : El usuario no responde\nal aviso en 2 minutos —\ncierre automático de sesión
 activate view
 deactivate view
 
-view -> view : Cierra sesión automáticamente:\ninvalida token local\ny redirige a login
-activate view
-deactivate view
-
-view -> guard : Petición posterior con\ntoken expirado\nAuthorization: Bearer <token_expirado>
+view -> guard : POST /auth/logout\n{ motivo: 'inactividad' }\nAuthorization: Bearer <token>
 activate guard
 
-guard -> strat : validate(payload)
-activate strat
-
-strat -> strat : Verifica expiración del JWT\n(ignoreExpiration: false) —\ntoken expirado
-activate strat
-deactivate strat
-
-strat --> guard : throw UnauthorizedException\n(token expirado)
-deactivate strat
-
-guard --> view : 401 Unauthorized
+guard -> guard : Verifica firma y\nexpiración del JWT\n(ignoreExpiration: false)\n→ token válido
+activate guard
 deactivate guard
+
+guard --> view : Autorizado\n(usuario adjunto al request)
+deactivate guard
+
+view -> ctrl : logout(req, { motivo })
+activate ctrl
+
+ctrl -> svc : logout(token,\nreq.user.id_usuario, motivo)
+activate svc
+
+svc -> svc : tokenBlacklist.add(token)\n(invalida el token de sesión)
+activate svc
+deactivate svc
+
+svc -> aud : create({ accion: 'LOGOUT',\nentidad_afectada: 'usuario',\nvalor_nuevo: { motivo: 'inactividad' } })
+activate aud
+
+aud -> orm : save(log)
+activate orm
+
+orm -> aent : INSERT log_auditoria
+activate aent
+aent --> orm : Registrado
+deactivate aent
+
+orm --> aud : Log guardado
+deactivate orm
+
+aud --> svc : Auditoría registrada
+deactivate aud
+
+svc --> ctrl : { message: 'Sesión\ncerrada correctamente.' }
+deactivate svc
+
+ctrl --> view : 200 OK
+deactivate ctrl
 
 view --> user : Redirige al formulario\nde inicio de sesión
 deactivate view

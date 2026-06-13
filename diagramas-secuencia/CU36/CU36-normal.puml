@@ -5,23 +5,54 @@ skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-skinparam ParticipantPadding 70
-skinparam ActorPadding 30
+<style>
+sequenceDiagram {
+  participant {
+    Margin 35
+  }
+  actor {
+    Margin 15
+  }
+}
+</style>
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black
 }
 hide footbox
 
+actor "Usuario" as user
+participant "V_GestionEquipos" as view
+participant "C_UnitsController" as ctrl
 participant "C_UnitsService" as svc
 participant "C_TypeORM" as orm
 participant "unidad_equipo" as uent
 participant "historial_estado_equipo" as hent
 
-svc -> orm : save(unidad\n{ estado: nuevoEstado })
+user -> view : Selecciona equipo y\nnuevo estado deseado
+activate view
+
+view -> ctrl : PATCH /unidades/:id/cambiar-estado\n{ nuevoEstado, observacion }
+activate ctrl
+
+ctrl -> svc : transicionarEstado(unitId,\nnuevoEstado, actor, observacion)
+activate svc
+
+svc -> orm : findOne(id_unidad,\nrelations: tipoEquipo)
 activate orm
 
-orm -> uent : UPDATE unidad_equipo\nSET estado = nuevoEstado\nWHERE id_unidad
+orm -> uent : SELECT unidad_equipo\nWHERE id_unidad = :id
+activate uent
+uent --> orm : Datos unidad\n(estado actual)
+deactivate uent
+
+orm --> svc : unidad (existe)
+deactivate orm
+
+svc -> orm : queryRunner.startTransaction()\nqueryRunner.manager.save(unidad\ncon estado = nuevoEstado)
+activate orm
+
+orm -> uent : UPDATE unidad_equipo\nSET estado = nuevoEstado\nWHERE id_unidad = :id
 activate uent
 uent --> orm : Fila actualizada
 deactivate uent
@@ -29,11 +60,11 @@ deactivate uent
 orm --> svc : unidad actualizada
 deactivate orm
 
-svc -> svc : create(HistorialEstado\n{ id_unidad, id_usuario,\nestadoAnterior, estadoNuevo,\nmotivo, fechaHora })
+svc -> svc : historyRepository.create(\n{ id_unidad, id_usuario,\nestadoAnterior, estadoNuevo,\nmotivo, fechaHora })
 activate svc
 deactivate svc
 
-svc -> orm : save(nuevoHistorial)
+svc -> orm : queryRunner.manager.save(\nnuevoHistorial)
 activate orm
 
 orm -> hent : INSERT historial_estado_equipo\n(id_unidad, id_usuario,\nestado_anterior, estado_nuevo,\nmotivo, fecha_hora)
@@ -44,13 +75,18 @@ deactivate hent
 orm --> svc : historial guardado
 deactivate orm
 
-svc -> orm : commitTransaction()
+svc -> orm : queryRunner.commitTransaction()
 activate orm
 orm --> svc : Transacción confirmada
 deactivate orm
 
-svc --> svc : { success: true,\nestadoActual, diagnostico_registrado }
-activate svc
+svc --> ctrl : { success: true, estadoActual,\ndiagnostico_registrado }
 deactivate svc
+
+ctrl --> view : 200 OK\n{ success, estadoActual }
+deactivate ctrl
+
+view --> user : Muestra el nuevo estado\ndel equipo registrado
+deactivate view
 
 @enduml
