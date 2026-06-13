@@ -1,0 +1,74 @@
+@startuml CU18-exc-registro-otra-empresa
+title CU-18 — Editar tipo de equipo con aislamiento de empresa\n(excepción: intento de editar registro de otra empresa)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 70
+skinparam ActorPadding 30
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_EditarTipoEquipo" as view
+participant "C_CompanyIsolationGuard" as cig
+participant "C_RolesGuard" as rg
+participant "C_CatalogController" as ctrl
+participant "C_CatalogService" as svc
+participant "C_TypeORM" as orm
+participant "tipo_equipo" as tent
+
+user -> view : Ingresa cambios y envía\n(id pertenece a otra empresa)
+activate view
+
+view -> cig : PATCH /catalogo/:id\n{ nombre, categoria, requiereSerialNumber }
+activate cig
+
+cig -> cig : Verifica id_empresa\nen token JWT
+activate cig
+deactivate cig
+
+cig -> rg : Pasa al siguiente guard
+deactivate cig
+activate rg
+
+rg -> rg : Verifica rol\nADMIN o SUPERUSUARIO
+activate rg
+deactivate rg
+
+rg -> ctrl : editarTipoEquipo(id, body, actor)
+deactivate rg
+activate ctrl
+
+ctrl -> svc : editarTipo(id,\n{ ...body, id_empresa: actor.id_empresa })
+activate svc
+
+svc -> svc : parseInt(id) — valida\nque sea número
+activate svc
+deactivate svc
+
+svc -> orm : findOne({ id_tipo_equipo: idNum,\nid_empresa: dto.id_empresa })
+activate orm
+
+orm -> tent : SELECT tipo_equipo\nWHERE id_tipo_equipo AND id_empresa
+activate tent
+tent --> orm : null (registro de otra empresa\nno visible bajo este id_empresa)
+deactivate tent
+
+orm --> svc : null
+deactivate orm
+
+svc --> ctrl : throw NotFoundException\n('El tipo de equipo que intenta modificar\nno existe o no pertenece a su empresa.')
+deactivate svc
+
+ctrl --> view : 404 Not Found
+deactivate ctrl
+
+view --> user : Muestra "El tipo de equipo que intenta\nmodificar no existe o no pertenece a su empresa."
+deactivate view
+
+@enduml

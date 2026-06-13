@@ -1,0 +1,75 @@
+@startuml CU23-exc-sin-resultados
+title CU-23 — Consultar transferencias inter-empresa\n(excepción: sin resultados con los filtros seleccionados)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 70
+skinparam ActorPadding 30
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_Transferencias" as view
+participant "C_RolesGuard" as guard
+participant "C_TransferenciasController" as ctrl
+participant "C_TransferenciasService" as svc
+participant "C_TypeORM" as orm
+participant "transferencia_equipo" as tent
+participant "movimiento_inventario" as ment
+
+user -> view : Solicita lista de transferencias\ncon filtro de estado que no coincide
+activate view
+
+view -> guard : GET /transferencias?estado=...
+activate guard
+
+guard --> view : Token JWT válido\n(rol ADMIN o SUPERUSUARIO)
+deactivate guard
+
+view -> ctrl : GET /transferencias?estado=...
+activate ctrl
+
+ctrl -> svc : consultarTransferencias({ estado }, user)
+activate svc
+
+svc -> orm : createQueryBuilder('t')\n.orderBy fecha_transferencia DESC\n[con filtro de empresa si ADMIN]
+activate orm
+
+orm -> tent : SELECT transferencia_equipo\nORDER BY fecha_transferencia DESC
+activate tent
+tent --> orm : transferencias[]
+deactivate tent
+
+orm --> svc : transferencias[]
+deactivate orm
+
+svc -> orm : find({ referencia_id: t.id_transferencia })\npor cada transferencia
+activate orm
+
+orm -> ment : SELECT movimiento_inventario\nWHERE referencia_id = id_transferencia
+activate ment
+ment --> orm : movimientos[]
+deactivate ment
+
+orm --> svc : movimientos[]
+deactivate orm
+
+svc -> svc : Aplica filtro estado en memoria —\nningún registro coincide con el filtro,\nresultado[] queda vacío
+activate svc
+deactivate svc
+
+svc --> ctrl : [] (lista vacía —\n'No se encontraron transferencias\ncon los filtros seleccionados.')
+deactivate svc
+
+ctrl --> view : 200 OK\n[]
+deactivate ctrl
+
+view --> user : Muestra mensaje\n'No se encontraron transferencias\ncon los filtros seleccionados.'
+deactivate view
+
+@enduml

@@ -1,0 +1,36 @@
+@startuml CU12-exc-cancelacion
+title CU-12 — Cerrar sesión del sistema (excepción: usuario cancela confirmación)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 70
+skinparam ActorPadding 30
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_Dashboard" as view
+participant "C_AuthController" as ctrl
+participant "C_AuthService" as svc
+participant "C_AuditoriaService" as aud
+participant "C_TypeORM" as orm
+participant "log_auditoria" as aent
+
+user -> view : Solicita cerrar sesión
+activate view
+
+view --> user : Muestra confirmación\nde cierre de sesión
+deactivate view
+
+user -> view : Cancela la confirmación
+activate view
+
+view --> user : Permanece en el dashboard\ncon sesión activa
+deactivate view
+
+@enduml

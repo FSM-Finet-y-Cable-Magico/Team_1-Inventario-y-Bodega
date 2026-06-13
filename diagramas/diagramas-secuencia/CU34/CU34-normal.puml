@@ -1,0 +1,78 @@
+@startuml CU34-normal
+title CU-34 — Editar datos de unidad de equipo (flujo normal)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 70
+skinparam ActorPadding 30
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_EditarUnidad" as view
+participant "C_RolesGuard" as guard
+participant "C_UnitsController" as ctrl
+participant "C_UnitsService" as svc
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as ent
+
+user -> view : Modifica campos\n(observaciones, id_bodega_actual,\nnumero_poste, modelo)
+activate view
+
+view -> guard : PATCH /unidades/:id\n{ body, JWT }
+activate guard
+
+guard --> view : Acceso permitido\n(ADMIN / SUPERUSUARIO / ADMIN_BODEGA)
+deactivate guard
+
+view -> ctrl : editarDatosUnidad(id, body, actor)
+activate ctrl
+
+ctrl -> svc : editarDatos(idUnidad, dto, actor)
+activate svc
+
+svc -> svc : Valida idUnidad:\n!idUnidad || isNaN(idUnidad)
+activate svc
+deactivate svc
+
+svc -> orm : findOne({ id_unidad, id_empresa })
+activate orm
+
+orm -> ent : SELECT unidad_equipo\nWHERE id_unidad AND id_empresa
+activate ent
+ent --> orm : Unidad encontrada
+deactivate ent
+
+orm --> svc : unidad (objeto)
+deactivate orm
+
+svc -> svc : Aplica cambios sobre\nel objeto unidad
+activate svc
+deactivate svc
+
+svc -> orm : save(unidad)
+activate orm
+
+orm -> ent : UPDATE unidad_equipo\nSET campos modificados\nWHERE id_unidad
+activate ent
+ent --> orm : Unidad actualizada
+deactivate ent
+
+orm --> svc : unidad guardada
+deactivate orm
+
+svc --> ctrl : { success: true, id_unidad,\nmessage }
+deactivate svc
+
+ctrl --> view : 200 OK\n{ success: true, id_unidad, message }
+deactivate ctrl
+
+view --> user : Confirma actualización\nde datos de la unidad
+deactivate view
+
+@enduml

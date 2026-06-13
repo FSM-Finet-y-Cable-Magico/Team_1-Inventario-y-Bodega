@@ -1,0 +1,77 @@
+@startuml CU38-normal
+title CU-38 — Calcular fecha de vencimiento de garantía (flujo normal)\n[Sub-flujo interno de CU-32 — registrarUnidad()]
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 70
+skinparam ActorPadding 30
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_RegistroUnidad" as view
+participant "C_UnitsController" as ctrl
+participant "C_UnitsService" as svc
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as ent
+
+user -> view : Completa formulario de registro:\nnumero_serie, id_tipo_equipo,\nid_bodega_actual, fecha_adquisicion,\nfecha_venc_garantia (enviada por el cliente)
+activate view
+
+view -> ctrl : POST /inventario/units\n{ ..., fecha_adquisicion, fecha_venc_garantia }
+activate ctrl
+
+ctrl -> svc : registrarUnidad(dto, idEmpresaContexto)
+activate svc
+
+svc -> svc : Valida campos obligatorios:\nid_tipo_equipo, numero_serie, id_bodega_actual
+activate svc
+deactivate svc
+
+svc -> svc : Verifica naturaleza del tipo de equipo\n(no CONSUMIBLE / VOLUMEN)
+activate svc
+deactivate svc
+
+svc -> svc : Valida formato numero_serie\ny verifica unicidad en repositorio
+activate svc
+deactivate svc
+
+svc -> svc : Procesa fecha de garantía recibida del cliente:\nfechaVencGarantia = new Date(dto.fecha_venc_garantia)\n[fecha_venc_garantia proviene del body del request,\nNO se calcula en el backend]
+activate svc
+deactivate svc
+
+svc -> svc : Construye datosNuevaUnidad:\n{ ..., fechaAdquisicion, fechaVencGarantia }
+activate svc
+deactivate svc
+
+svc -> orm : unitRepository.create(datosNuevaUnidad)
+activate orm
+orm --> svc : nuevaUnidad (instancia sin persistir)
+deactivate orm
+
+svc -> orm : unitRepository.save(nuevaUnidad)
+activate orm
+
+orm -> ent : INSERT unidad_equipo\n(incluyendo fecha_venc_garantia)
+activate ent
+ent --> orm : Registro persistido
+deactivate ent
+
+orm --> svc : unidadGuardada
+deactivate orm
+
+svc --> ctrl : { success: true, id_unidad,\nnumero_serie, estado, id_empresa,\nmessage }
+deactivate svc
+
+ctrl --> view : 201 Created\n{ success, id_unidad, ... }
+deactivate ctrl
+
+view --> user : Muestra confirmación:\n"La unidad ha sido registrada en el inventario\ne ingresada a la bodega con éxito."
+deactivate view
+
+@enduml
