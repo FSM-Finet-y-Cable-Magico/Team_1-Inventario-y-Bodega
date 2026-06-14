@@ -26,6 +26,6 @@ export class CompaniesController {
     @Get('mi-dashboard')
     @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
     getMiDashboard(@Req() req) {
-        return this.companiesService.getMiDashboard(req.user.id_empresa);
+        return this.companiesService.getMiDashboard(req.user);
     }
 }

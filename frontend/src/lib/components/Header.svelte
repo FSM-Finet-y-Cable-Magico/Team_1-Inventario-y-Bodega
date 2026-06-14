@@ -15,16 +15,29 @@
 		umbral_minimo: number;
 		unidad_medida?: string | null;
 	};
+	// CU-20: transferencias pendientes de aprobación que también se notifican aquí
+	type TransferenciaPendiente = {
+		id_transferencia: number;
+		empresa_origen: string;
+		empresa_destino: string;
+		unidades: number;
+		fecha: string | null;
+	};
 	let alertas = $state<AlertaStock[]>([]);
+	let transferenciasPendientes = $state<TransferenciaPendiente[]>([]);
 	let showNotificaciones = $state(false);
+	// total para el badge: alertas de stock (CU-46) + transferencias pendientes (CU-20)
+	const totalNotificaciones = $derived(alertas.length + transferenciasPendientes.length);
 
 	async function cargarAlertas() {
 		try {
 			const data = await getMyDashboard();
 			alertas = data?.alertas_stock_minimo ?? [];
+			transferenciasPendientes = data?.transferencias_pendientes ?? [];
 		} catch {
 			// sin permiso o sin sesión: la campana queda sin alertas
 			alertas = [];
+			transferenciasPendientes = [];
 		}
 	}
 
@@ -58,9 +71,9 @@
 				class="relative p-1.5 rounded-md hover:bg-surface-alt text-muted hover:text-foreground transition-colors"
 				aria-label="Notificaciones">
 				<Bell class="h-5 w-5" />
-				{#if alertas.length > 0}
+				{#if totalNotificaciones > 0}
 					<span class="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 rounded-full bg-destructive text-white text-[10px] font-semibold flex items-center justify-center">
-						{alertas.length}
+						{totalNotificaciones}
 					</span>
 				{/if}
 			</button>
@@ -73,9 +86,21 @@
 						<h3 class="text-sm font-semibold text-foreground">Notificaciones</h3>
 					</div>
 					<div class="max-h-80 overflow-y-auto">
-						{#if alertas.length === 0}
+						{#if totalNotificaciones === 0}
 							<p class="px-4 py-6 text-sm text-muted text-center">No hay alertas pendientes</p>
 						{:else}
+							<!-- CU-20: transferencias pendientes de aprobación -->
+							{#each transferenciasPendientes as t}
+								<a href="/transferencias" onclick={() => (showNotificaciones = false)}
+									class="block px-4 py-3 border-b border-border last:border-0 text-sm hover:bg-surface-alt transition-colors">
+									<p class="font-medium text-sky-700">🔄 Transferencia pendiente de aprobación</p>
+									<p class="text-foreground mt-0.5">#{t.id_transferencia} · {t.empresa_origen} → {t.empresa_destino}</p>
+									<p class="text-xs text-muted mt-0.5">
+										{t.unidades} {t.unidades === 1 ? 'unidad' : 'unidades'}
+									</p>
+								</a>
+							{/each}
+							<!-- CU-46: alertas de stock bajo el umbral mínimo -->
 							{#each alertas as a}
 								<div class="px-4 py-3 border-b border-border last:border-0 text-sm">
 									<p class="font-medium text-amber-700">⚠ Stock bajo el umbral mínimo</p>
