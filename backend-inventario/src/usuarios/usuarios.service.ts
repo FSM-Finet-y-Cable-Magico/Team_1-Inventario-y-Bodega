@@ -64,6 +64,14 @@ export class UsuariosService {
       );
     }
 
+    // CU-05: los usuarios con rol SUPERUSUARIO solo son visibles para otro Superusuario.
+    // Un Admin de empresa no debe ver ni editar a los Superusuarios del sistema.
+    if (!esSuperusuario) {
+      resultado = resultado.filter((u) =>
+        !u.roles.some((r) => r.nombre_rol === 'SUPERUSUARIO'),
+      );
+    }
+
     // Agregamos el nombre de la empresa para que el Superusuario pueda
     // distinguir usuarios del listado consolidado.
     const mapaEmpresas = new Map(EMPRESAS.map((e) => [e.id, e.nombre]));
