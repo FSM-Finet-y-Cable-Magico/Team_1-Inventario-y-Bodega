@@ -6,6 +6,7 @@
  *  - Bodegas: una por empresa
  *  - Usuarios:
  *    - superusuario / Super1234  → rol SUPERUSUARIO, empresa Finet
+ *    - admin_finet / Finet1234   → rol ADMIN, empresa Finet
  *    - admin_cable / Cable1234   → rol ADMIN, empresa Cable Mágico (id 2)
  *    - tecnico_qa / Tecnico1234  → rol TECNICO_TERRENO, empresa Finet
  *    - tecnico_cable / TecnicoCable1234 → rol TECNICO_TERRENO, empresa Cable Mágico (id 2)
@@ -33,6 +34,13 @@ const USUARIOS_QA = [
     password: 'Super1234',
     id_empresa: 1,
     rol: 'SUPERUSUARIO',
+  },
+  {
+    nombre_usuario: 'admin_finet',
+    nombre_completo: 'Admin Finet QA',
+    password: 'Finet1234',
+    id_empresa: 1,
+    rol: 'ADMIN',
   },
   {
     nombre_usuario: 'admin_cable',
