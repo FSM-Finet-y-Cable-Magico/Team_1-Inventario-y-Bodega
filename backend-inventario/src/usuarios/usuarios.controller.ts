@@ -65,6 +65,6 @@ export class UsuariosController {
   @Delete(':id')
   @Roles('ADMIN', 'SUPERUSUARIO')
   remove(@Param('id') id: string, @Req() req) {
-    return this.usuariosService.remove(+id, req.user.id_usuario);
+    return this.usuariosService.remove(+id, req.user.id_usuario, req.user.roles ?? []);
   }
 }

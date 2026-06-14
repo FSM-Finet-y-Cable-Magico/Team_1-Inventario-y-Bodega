@@ -77,7 +77,7 @@ export class UsuariosService {
     return resultado as any;
   }
 
-  async findOne(id: number): Promise<Usuario | null> {
+  async findOne(id: number): Promise<(Usuario & { roles: Rol[] }) | null> {
     const usuario = await this.usuarioRepository.findOne({
       where: { id_usuario: id },
       relations: { usuarioRoles: { rol: true } },
@@ -192,7 +192,7 @@ export class UsuariosService {
     return usuarioSeguro as Usuario;
   }
 
-  async remove(id: number, actorId: number): Promise<void> {
+  async remove(id: number, actorId: number, actorRoles: string[] = []): Promise<void> {
     // CU-07 Excepción 1: el actor no puede desactivar su propia cuenta
     if (id === actorId) {
       throw new BadRequestException('No es posible desactivar su propia cuenta.');
@@ -200,6 +200,11 @@ export class UsuariosService {
 
     const usuario = await this.findOne(id);
     if (!usuario) throw new NotFoundException('Usuario no encontrado.');
+
+    // CU-07: solo un Superusuario puede desactivar a otro Superusuario
+    if (usuario.roles.some((r) => r.nombre_rol === 'SUPERUSUARIO') && !actorRoles.includes('SUPERUSUARIO')) {
+      throw new ForbiddenException('No tiene permisos para desactivar a un Superusuario.');
+    }
 
     await this.usuarioRepository.update(id, { activo: false });
 
@@ -223,6 +228,11 @@ export class UsuariosService {
   ): Promise<Usuario> {
     const usuario = await this.findOne(id);
     if (!usuario) throw new NotFoundException('Usuario no encontrado.');
+
+    // CU-07: solo un Superusuario puede editar a otro Superusuario
+    if (usuario.roles.some((r) => r.nombre_rol === 'SUPERUSUARIO') && !actorRoles.includes('SUPERUSUARIO')) {
+      throw new ForbiddenException('No tiene permisos para editar a un Superusuario.');
+    }
 
     // CU-07 Excepción 1: tampoco por edición se puede desactivar la cuenta propia
     if (updateUsuarioDto.activo === false && id === actorId) {

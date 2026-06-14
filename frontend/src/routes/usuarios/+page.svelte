@@ -30,6 +30,15 @@
 		});
 	}
 
+	// CU-07: solo un Superusuario puede editar/desactivar a otro Superusuario
+	function esUsuarioSuperusuario(u: Usuario): boolean {
+		return u.roles?.some((r) => r.nombre_rol === 'SUPERUSUARIO') ?? false;
+	}
+
+	function puedeEditarUsuario(u: Usuario): boolean {
+		return esSuperusuario || !esUsuarioSuperusuario(u);
+	}
+
 	let showCreate = $state(false);
 	// CU-04: nombre completo, usuario, contraseña, empresa, rol y estado
 	let createForm = $state({ nombre_usuario: '', nombre_completo: '', password: '', roles: [] as number[], id_empresa: 0, activo: true });
@@ -230,15 +239,18 @@
 								<td class="px-4 py-3 text-muted whitespace-nowrap">{fmtFecha(user.fecha_creacion)}</td>
 								<td class="px-4 py-3 text-right">
 									<div class="flex items-center justify-end gap-1">
-										<button
-											onclick={() => goto(`/usuarios/${user.id_usuario}`)}
-											class="p-1.5 rounded-md hover:bg-surface-alt text-muted hover:text-foreground transition-colors"
-											aria-label="Editar usuario"
-										>
-											<Pencil class="h-4 w-4" />
-										</button>
+										{#if puedeEditarUsuario(user)}
+											<button
+												onclick={() => goto(`/usuarios/${user.id_usuario}`)}
+												class="p-1.5 rounded-md hover:bg-surface-alt text-muted hover:text-foreground transition-colors"
+												aria-label="Editar usuario"
+											>
+												<Pencil class="h-4 w-4" />
+											</button>
+										{/if}
 										<!-- CU-07 Excepción 1: no se puede desactivar la cuenta propia -->
-										{#if user.activo && user.id_usuario !== $currentUser?.id_usuario}
+										<!-- CU-07: solo un Superusuario puede desactivar a otro Superusuario -->
+										{#if user.activo && user.id_usuario !== $currentUser?.id_usuario && puedeEditarUsuario(user)}
 											<button
 												onclick={() => (deletingUser = user)}
 												class="p-1.5 rounded-md hover:bg-red-50 text-muted hover:text-destructive transition-colors"
