@@ -1,0 +1,507 @@
+@startuml diagrama-clases-backend
+title Diagrama de Clases — Backend Inventario y Bodega (NestJS + TypeORM)\n<size:12>Documento vivo Scrum++ — actualizado al cierre del Incremento 2 (12/06/2026)</size>
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+skinparam nodesep 18
+skinparam ranksep 70
+skinparam class {
+  BackgroundColor White
+  ArrowColor #444444
+  BorderColor #444444
+}
+skinparam package {
+  BackgroundColor #FAFAFA
+  BorderColor #999999
+}
+
+' Convención: los servicios marcados <<audita>> inyectan AuditoriaService
+' (las flechas se omiten para mantener legible el diagrama; ver leyenda).
+
+' =====================================================
+' CAPA 1: CONTROLADORES (API REST)
+' =====================================================
+package "Controladores (API REST)" as controladores {
+
+  class RolesController <<Controller: /roles>> {
+    +create(dto: CreateRoleDto)
+    +findAll()
+    +findOne(id)
+    +update(id, dto: UpdateRoleDto)
+    +remove(id)
+  }
+
+  class UsuariosController <<Controller: /usuario>> {
+    +create(dto: CreateUsuarioDto, req)
+    +findAll(filtros, req)
+    +findOne(id)
+    +update(id, dto: UpdateUsuarioDto, req)
+    +remove(id, req)
+  }
+
+  class AuthController <<Controller: /auth>> {
+    +login(dto: LoginDto)
+    +logout(req, body?)
+    +cambiarPassword(dto: CambiarPasswordDto)
+    +restablecerPassword(id, req)
+  }
+
+  class BodegasController <<Controller: /bodegas>> {
+    +create(dto: CreateBodegaDto, req)
+    +update(id, dto: UpdateBodegaDto, req)
+    +deactivate(id, req)
+    +findAll(filtros, req)
+    +findOne(id, req)
+    +getStock(id, req)
+    +configurarUmbral(id, dto, req)
+  }
+
+  class CompaniesController <<Controller: /empresas>> {
+    +findAll()
+    +getDashboard()
+    +getMiDashboard(req)
+  }
+
+  class CatalogController <<Controller: /catalogo>> {
+    +crearTipoEquipo(body, actor)
+    +buscarCatalogo(query, actor)
+    +verFichaTecnica(id, actor)
+    +descargarFichaTecnica(id, actor, res)
+    +editarTipoEquipo(id, body, actor)
+    +desactivarTipoEquipo(id, actor)
+    +eliminarTipoEquipoFisico(id, actor)
+    +subirFichaPdf(id, file)
+  }
+
+  class UnitsController <<Controller: /unidades>> {
+    +listarUnidades(filtros, actor)
+    +registrarNuevaUnidad(body, actor)
+    +ingresarConsumible(body, actor)
+    +verFichaDeSeguimiento(id, actor)
+    +verHistorialCompleto(serial, actor)
+    +transicionarEstadoEquipo(id, body, actor)
+    +editarDatosUnidad(id, dto, actor)
+  }
+
+  class TransferenciasController <<Controller: /transferencias>> {
+    +registrar(dto, req)
+    +aprobar(id, req)
+    +rechazar(id, body, req)
+    +consultarDetalle(id, req)
+    +consultar(filtros, req)
+  }
+
+  class AuditoriaController <<Controller: /auditoria>> {
+    +create(dto: CreateAuditoriaDto)
+    +findAll(filtros: FiltrarAuditoriaDto)
+  }
+
+  class HealthController <<Controller: /health>> {
+    +checkDb()
+    +ping()
+  }
+}
+
+' =====================================================
+' CAPA 2: SERVICIOS (lógica de negocio)
+' =====================================================
+package "Servicios" as servicios {
+
+  class RolesService <<Injectable>> <<audita>> {
+    +create(dto): Promise<Rol>
+    +findAll(): Promise<Rol[]>
+    +findOne(id): Promise<Rol>
+    +update(id, dto): Promise<Rol>
+    +remove(id): Promise<void>
+  }
+
+  class UsuariosService <<Injectable>> <<audita>> {
+    +findAll(filtros, idEmpresaActor)
+    +findOne(id): Promise<Usuario>
+    +create(dto, actor)
+    +update(id, dto, actor)
+    +remove(id, actorId)
+  }
+
+  class AuthService <<Injectable>> <<audita>> {
+    -tokenBlacklist: Set<string>
+    -jwtService: JwtService
+    +login(dto: LoginDto)
+    +logout(token, usuarioId, motivo?)
+    +cambiarPassword(dto)
+    +isTokenBlacklisted(token): boolean
+    +restablecerPassword(targetId, actorId)
+  }
+
+  class BodegasService <<Injectable>> <<audita>> {
+    +create(dto, actorId)
+    +update(id, dto, actor)
+    +deactivate(id, actor)
+    +findAll(filtros, actor)
+    +findOne(id, actor)
+    +getStock(id, actor)
+    +configurarUmbral(id, dto, actor)
+    -verificarPertenencia(bodega, actor)
+  }
+
+  class CompaniesService <<Injectable>> {
+    {static} EMPRESAS: {id, nombre}[]
+    +findAll()
+    +getDashboard()
+    +getMiDashboard(idEmpresa)
+    -getEstadisticasEmpresa(id, nombre)
+  }
+
+  class CatalogService <<Injectable>> <<audita>> {
+    {static} CATEGORIAS: string[]
+    {static} UNIDADES_MEDIDA: string[]
+    +crearTipo(dto)
+    +consultar(filtros)
+    +editarTipo(id, dto, actorId?)
+    +desactivarTipo(id, idEmpresa)
+    +eliminarTipoFisico(id, idEmpresa, actorId?)
+    +validarFormatoSerialNumber(serial)
+    +adjuntarPdfPath(id, path, nombre?)
+    +obtenerFichaPdf(id, idEmpresa)
+    +determinarNaturalezaEquipo(idTipo, idEmpresa)
+  }
+
+  class UnitsService <<Injectable>> {
+    -dataSource: DataSource
+    +listarUnidades(filtros, idEmpresa)
+    +registrarUnidad(dto, idEmpresa)
+    +ingresarConsumible(dto, idEmpresa)
+    +transicionarEstado(id, estado, actor,\n  obs?, diagnostico?, descripcionOtro?)
+    +verFichaDetalle(id, idEmpresa)
+    +editarDatos(id, dto, actor)
+    +verHistorialEstados(serial, idEmpresa)
+  }
+
+  class TransferenciasService <<Injectable>> <<audita>> {
+    -dataSource: DataSource
+    +registrarTransferencia(dto, actor)
+    +aprobarTransferencia(id, actor)
+    +rechazarTransferencia(id, obs, actor)
+    +consultarDetalle(id, actor)
+    +consultarTransferencias(filtros, actor)
+  }
+
+  class AuditoriaService <<Injectable>> {
+    +create(dto: CreateAuditoriaDto)
+    +findAll(filtros?: FiltrarAuditoriaDto)
+  }
+}
+
+' =====================================================
+' CAPA 3: ENTIDADES (TypeORM — PostgreSQL)
+' =====================================================
+package "Entidades (TypeORM)" as entidades {
+
+  class Rol <<Entity: rol>> {
+    +id_rol: number <<PK>>
+    +nombre_rol: string <<unique>>
+    +descripcion: string
+  }
+
+  class UsuarioRol <<Entity: usuario_rol>> {
+    +id_usuario_rol: number <<PK>>
+    +id_usuario: number <<FK>>
+    +id_rol: number <<FK>>
+    +fecha_asignacion: Date
+  }
+
+  class Usuario <<Entity: usuario>> {
+    +id_usuario: number <<PK>>
+    +id_empresa: number
+    +nombre_completo: string
+    +nombre_usuario: string <<unique>>
+    +email: string <<unique>>
+    +password_hash: string
+    +activo: boolean
+    +intentos_fallidos: number
+    +bloqueado_hasta: Date
+    +debe_cambiar_password: boolean
+    +fecha_creacion: Date
+  }
+
+  class Bodega <<Entity: bodega>> {
+    +id_bodega: number <<PK>>
+    +id_empresa: number
+    +nombre: string
+    +direccion: string
+    +id_usuario_responsable: number <<FK>>
+    +activa: boolean
+  }
+
+  class StockConsumible <<Entity: stock_consumible>> {
+    +id_stock: number <<PK>>
+    +id_tipo_equipo: number <<FK>>
+    +id_bodega: number <<FK>>
+    +cantidad_disponible: number
+    +umbral_minimo: number
+  }
+
+  class TipoEquipo <<Entity: tipo_equipo>> {
+    +id_tipo_equipo: number <<PK>>
+    +id_empresa: number
+    +nombre: string
+    +categoria: string
+    +marca: string
+    +modelo: string
+    +descripcionTecnica: string
+    +unidadMedida: string
+    +garantiaDias: number
+    +requiereSerialNumber: boolean
+    +fichaTecnicaPdfUrl: string
+    +fichaTecnicaNombre: string
+    +activo: boolean
+  }
+
+  class UnidadEquipo <<Entity: unidad_equipo>> {
+    +id_unidad: number <<PK>>
+    +id_tipo_equipo: number <<FK>>
+    +id_empresa: number
+    +serialNumber: string <<unique>>
+    +modelo: string
+    +estado: string
+    +fechaAdquisicion: Date
+    +fechaVencGarantia: Date
+    +diagnosticoTecnico: string
+    +id_cliente_instalado: number
+    +id_bodega_actual: number <<FK>>
+    +numeroPoste: string
+    +id_caja_nap: number
+    +macAddress: string <<unique>>
+    +proveedor: string
+    +observaciones: string
+    +ubicacionFisica: string
+  }
+
+  class HistorialEstado <<Entity: historial_estado_equipo>> {
+    +id_historial: number <<PK>>
+    +id_unidad: number <<FK>>
+    +id_usuario: number <<FK>>
+    +estadoAnterior: string
+    +estadoNuevo: string
+    +motivo: string
+    +fechaHora: Date
+  }
+
+  class MovimientoInventario <<Entity: movimiento_inventario>> {
+    +id_movimiento: number <<PK>>
+    +id_tipo_equipo: number <<FK>>
+    +id_unidad: number <<FK>>
+    +id_empresa_origen: number
+    +id_empresa_destino: number
+    +id_bodega_origen: number <<FK>>
+    +id_bodega_destino: number <<FK>>
+    +id_usuario: number <<FK>>
+    +tipo_movimiento: string
+    +cantidad: number
+    +fecha: Date
+    +referencia_id: number
+  }
+
+  class Transferencia <<Entity: transferencia_equipo>> {
+    +id_transferencia: number <<PK>>
+    +id_empresa_origen: number
+    +id_empresa_destino: number
+    +id_usuario_registro: number <<FK>>
+    +fecha_transferencia: Date
+    +observaciones: string
+  }
+
+  class Auditoria <<Entity: log_auditoria>> {
+    +id_log: number <<PK>>
+    +id_usuario: number <<FK>>
+    +accion: string
+    +entidad_afectada: string
+    +id_entidad_afectada: number
+    +valor_anterior: jsonb
+    +valor_nuevo: jsonb
+    +ip_origen: inet
+    +fecha_hora: Date
+  }
+}
+
+' =====================================================
+' CAPAS DE APOYO: SEGURIDAD Y DTOs (sin aristas cruzadas;
+' su uso se describe en la leyenda)
+' =====================================================
+package "Seguridad (guards globales)" as seguridad {
+  interface CanActivate <<NestJS>> {
+    +canActivate(context): boolean
+  }
+  class RolesGuard <<Injectable>> <<audita>> {
+    +canActivate(context): Promise<boolean>
+  }
+  class CompanyIsolationGuard <<Injectable>> <<audita>> {
+    +canActivate(context): Promise<boolean>
+  }
+  class JwtStrategy <<Injectable>> {
+    +validate(payload: JwtPayload)
+  }
+
+  RolesGuard ..|> CanActivate
+  CompanyIsolationGuard ..|> CanActivate
+}
+
+package "DTOs (class-validator)" as dtos {
+  class LoginDto {
+    +nombre_usuario: string
+    +password: string
+  }
+  class CambiarPasswordDto {
+    +nombre_usuario: string
+    +password_actual: string
+    +nueva_password: string
+  }
+  class CreateUsuarioDto {
+    +nombre_usuario: string
+    +nombre_completo: string
+    +email?: string
+    +password: string
+    +id_empresa?: number
+    +roles?: number[]
+    +activo?: boolean
+  }
+  class UpdateUsuarioDto extends CreateUsuarioDto
+  class CreateRoleDto {
+    +nombre_rol: string
+    +descripcion: string
+  }
+  class UpdateRoleDto extends CreateRoleDto
+  class CreateBodegaDto {
+    +nombre: string
+    +id_empresa?: number
+    +id_usuario_responsable?: number
+    +direccion?: string
+  }
+  class UpdateBodegaDto {
+    +nombre?: string
+    +direccion?: string
+    +id_usuario_responsable?: number
+  }
+  class ConfigurarUmbralDto {
+    +id_tipo_equipo: number
+    +umbral: number <<0..9999>>
+  }
+  class CreateTransferenciaDto {
+    +id_empresa_destino: number
+    +id_bodega_origen: number
+    +id_bodega_destino: number
+    +ids_unidades: number[]
+    +observaciones?: string
+  }
+  class EditarDatosUnidadDto {
+    +observaciones?: string
+    +ubicacion_fisica?: string
+    +id_bodega_actual?: number
+    +numero_poste?: string
+    +modelo?: string
+  }
+  class CreateAuditoriaDto {
+    +id_usuario: number
+    +accion: string
+    +entidad_afectada: string
+    +id_entidad_afectada: number
+    +valor_anterior: any
+    +valor_nuevo: any
+    +ip_origen?: string
+  }
+  class FiltrarAuditoriaDto {
+    +fecha_inicio?: Date
+    +fecha_fin?: Date
+    +id_usuario?: number
+    +entidad_afectada?: string
+    +accion?: string
+    +pagina?: number
+    +limite?: number
+  }
+}
+
+' =====================================================
+' RELACIONES
+' =====================================================
+
+' Controlador -> Servicio (alineados en columnas)
+RolesController --> RolesService
+UsuariosController --> UsuariosService
+AuthController --> AuthService
+BodegasController --> BodegasService
+CompaniesController --> CompaniesService
+CatalogController --> CatalogService
+UnitsController --> UnitsService
+TransferenciasController --> TransferenciasService
+AuditoriaController --> AuditoriaService
+
+' Servicio -> Entidades (repositorios inyectados)
+RolesService --> Rol
+UsuariosService --> Rol
+UsuariosService --> UsuarioRol
+UsuariosService --> Usuario
+AuthService --> Usuario
+BodegasService --> Bodega
+BodegasService --> StockConsumible
+BodegasService --> TipoEquipo
+BodegasService --> UnidadEquipo
+BodegasService --> Usuario
+CompaniesService --> Bodega
+CompaniesService --> StockConsumible
+CompaniesService --> UnidadEquipo
+CatalogService --> TipoEquipo
+CatalogService --> UnidadEquipo
+UnitsService --> UnidadEquipo
+UnitsService --> HistorialEstado
+UnitsService --> StockConsumible
+TransferenciasService --> Transferencia
+TransferenciasService --> MovimientoInventario
+TransferenciasService --> UnidadEquipo
+AuditoriaService --> Auditoria
+AuditoriaService --> Usuario
+
+' Dependencia entre servicios
+UnitsService .left.> CatalogService : valida tipo / NS
+
+' Relaciones entre entidades (hints horizontales para que la capa
+' de entidades quede en una fila y no en una columna)
+Rol "1" -right- "0..*" UsuarioRol
+UsuarioRol "0..*" -right- "1" Usuario
+Usuario "0..1" -right- "0..*" Bodega : responsable
+Bodega "1" -right- "0..*" StockConsumible
+StockConsumible "0..*" -right- "1" TipoEquipo
+TipoEquipo "1" -right- "0..*" UnidadEquipo
+UnidadEquipo "1" -right- "0..*" HistorialEstado
+MovimientoInventario .up.> UnidadEquipo
+MovimientoInventario .right.> Transferencia : referencia_id
+Transferencia .up.> Usuario : id_usuario_registro
+Auditoria .up.> Usuario : id_usuario
+
+' Fila inferior de entidades sin relaciones tipadas
+UnidadEquipo -[hidden]down- MovimientoInventario
+HistorialEstado -[hidden]down- Transferencia
+Usuario -[hidden]down- Auditoria
+
+' Posicionamiento de los paquetes de apoyo bajo las entidades
+Auditoria -[hidden]down- RolesGuard
+MovimientoInventario -[hidden]down- CreateUsuarioDto
+seguridad -[hidden]right- dtos
+
+legend right
+  **Notas**
+  * <<audita>> = la clase inyecta **AuditoriaService** y registra sus
+    acciones en el log de auditoría (flechas omitidas por legibilidad)
+  * Cada controlador valida su entrada con los DTOs de su módulo
+    (class-validator); las flechas se omiten por legibilidad
+  * Guards globales: JwtAuthGuard + RolesGuard + CompanyIsolationGuard
+  * "Empresa" no es entidad: constante EMPRESAS en CompaniesService
+    (1 = Finet, 2 = Cable Mágico)
+  * Transferencia y MovimientoInventario usan FKs por id
+    (sin relaciones tipadas de TypeORM)
+  * <<Entity: x>> indica la tabla PostgreSQL mapeada
+  * Documento vivo (Scrum++): se actualiza al cierre de cada incremento
+endlegend
+
+@enduml
