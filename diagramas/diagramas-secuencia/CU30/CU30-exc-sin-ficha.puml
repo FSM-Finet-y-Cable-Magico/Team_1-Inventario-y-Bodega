@@ -1,5 +1,5 @@
 @startuml CU30-exc-sin-ficha
-title CU-30 — Descargar ficha técnica de tipo de equipo (excepción: sin ficha adjunta)
+title CU-30 — Descargando ficha técnica de tipo de equipo (excepción: sin ficha adjunta)
 
 skinparam style strictuml
 skinparam monochrome true

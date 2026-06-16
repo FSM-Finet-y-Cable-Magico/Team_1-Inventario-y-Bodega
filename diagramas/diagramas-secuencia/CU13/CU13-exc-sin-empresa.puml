@@ -1,5 +1,5 @@
 @startuml CU13-exc-sin-empresa
-title CU-13 — Cargar contexto de empresa Finet al iniciar sesión\n(excepción: usuario sin empresa asignada)
+title CU-13 — Cargando contexto de empresa Finet al iniciar sesión\n(excepción: usuario sin empresa asignada)
 
 skinparam style strictuml
 skinparam monochrome true

@@ -1,5 +1,5 @@
 @startuml CU22-exc-motivo-largo
-title CU-22 — Rechazar transferencia inter-empresa (excepción: motivo supera 200 caracteres)
+title CU-22 — Rechazando transferencia inter-empresa (excepción: motivo supera 200 caracteres)
 
 skinparam style strictuml
 skinparam monochrome true

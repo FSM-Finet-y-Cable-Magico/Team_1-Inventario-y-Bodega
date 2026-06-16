@@ -1,5 +1,5 @@
 @startuml CU41-normal
-title CU-41 — Crear bodega (flujo normal)
+title CU-41 — Creando bodega (flujo normal)
 
 skinparam style strictuml
 skinparam monochrome true

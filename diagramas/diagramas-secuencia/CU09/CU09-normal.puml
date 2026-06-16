@@ -1,5 +1,5 @@
 @startuml CU09-normal
-title CU-09 — Consultar log de auditoría (flujo normal)
+title CU-09 — Consultando log de auditoría (flujo normal)
 
 skinparam style strictuml
 skinparam monochrome true

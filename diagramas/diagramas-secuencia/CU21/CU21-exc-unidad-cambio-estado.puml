@@ -1,5 +1,5 @@
 @startuml CU21-exc-unidad-cambio-estado
-title CU-21 — Aprobar transferencia inter-empresa (excepción: unidad cambió de estado)
+title CU-21 — Aprobando transferencia inter-empresa (excepción: unidad cambió de estado)
 
 skinparam style strictuml
 skinparam monochrome true

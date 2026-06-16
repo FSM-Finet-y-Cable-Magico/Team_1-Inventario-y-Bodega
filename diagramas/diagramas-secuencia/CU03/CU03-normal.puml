@@ -1,5 +1,5 @@
 @startuml CU03-normal
-title CU-03 — Bloquear acceso a recursos no autorizados (flujo normal: acceso permitido)
+title CU-03 — Bloqueando acceso a recursos no autorizados (flujo normal: acceso permitido)
 
 skinparam style strictuml
 skinparam monochrome true

@@ -1,5 +1,5 @@
 @startuml CU03-exc-recurso-no-autorizado
-title CU-03 — Bloquear acceso a recursos no autorizados (excepción: recurso no autorizado)
+title CU-03 — Bloqueando acceso a recursos no autorizados (excepción: recurso no autorizado)
 
 skinparam style strictuml
 skinparam monochrome true

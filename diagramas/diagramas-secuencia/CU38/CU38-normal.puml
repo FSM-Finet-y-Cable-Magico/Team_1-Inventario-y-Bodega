@@ -1,5 +1,5 @@
 @startuml CU38-normal
-title CU-38 — Calcular fecha de vencimiento de garantía (flujo normal)\n[Sub-flujo interno de CU-32 — registrarUnidad()]
+title CU-38 — Calculando fecha de vencimiento de garantía (flujo normal)\n[Sub-flujo interno de CU-32 — registrarUnidad()]
 
 skinparam style strictuml
 skinparam monochrome true

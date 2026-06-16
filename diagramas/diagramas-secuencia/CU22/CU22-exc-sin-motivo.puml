@@ -1,5 +1,5 @@
 @startuml CU22-exc-sin-motivo
-title CU-22 — Rechazar transferencia inter-empresa (excepción: sin motivo de rechazo)
+title CU-22 — Rechazando transferencia inter-empresa (excepción: sin motivo de rechazo)
 
 skinparam style strictuml
 skinparam monochrome true

@@ -1,5 +1,5 @@
 @startuml CU37-exc-serie-no-encontrada
-title CU-37 — Consultar historial completo de estados de equipo (excepción: serie no encontrada)
+title CU-37 — Consultando historial completo de estados de equipo (excepción: serie no encontrada)
 
 skinparam style strictuml
 skinparam monochrome true

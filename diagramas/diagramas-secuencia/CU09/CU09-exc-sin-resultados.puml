@@ -1,5 +1,5 @@
 @startuml CU09-exc-sin-resultados
-title CU-09 — Consultar log de auditoría (excepción: sin resultados)
+title CU-09 — Consultando log de auditoría (excepción: sin resultados)
 
 skinparam style strictuml
 skinparam monochrome true

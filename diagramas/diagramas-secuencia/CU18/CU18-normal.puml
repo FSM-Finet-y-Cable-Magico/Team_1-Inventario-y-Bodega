@@ -1,5 +1,5 @@
 @startuml CU18-normal
-title CU-18 — Editar tipo de equipo con aislamiento de empresa (flujo normal)
+title CU-18 — Editando tipo de equipo con aislamiento de empresa (flujo normal)
 
 skinparam style strictuml
 skinparam monochrome true

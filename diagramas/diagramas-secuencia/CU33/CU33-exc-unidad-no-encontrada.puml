@@ -1,5 +1,5 @@
 @startuml CU33-exc-unidad-no-encontrada
-title CU-33 — Consultar ficha de detalle de unidad de equipo (excepción: unidad no encontrada)
+title CU-33 — Consultando ficha de detalle de unidad de equipo (excepción: unidad no encontrada)
 
 skinparam style strictuml
 skinparam monochrome true

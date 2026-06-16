@@ -1,5 +1,5 @@
 @startuml CU01-exc-formato-invalido
-title CU-01 — Iniciar sesión en el sistema (excepción: formato inválido)
+title CU-01 — Iniciando sesión en el sistema (excepción: formato inválido)
 
 skinparam style strictuml
 skinparam monochrome true

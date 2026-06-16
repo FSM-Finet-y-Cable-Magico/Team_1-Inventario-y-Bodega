@@ -1,5 +1,5 @@
 @startuml CU23-exc-sin-resultados
-title CU-23 — Consultar transferencias inter-empresa\n(excepción: sin resultados con los filtros seleccionados)
+title CU-23 — Consultando transferencias inter-empresa\n(excepción: sin resultados con los filtros seleccionados)
 
 skinparam style strictuml
 skinparam monochrome true

@@ -1,5 +1,5 @@
 @startuml CU04-exc-formato-invalido
-title CU-04 — Crear cuenta de usuario (excepción: formato de campos inválido)
+title CU-04 — Creando cuenta de usuario (excepción: formato de campos inválido)
 
 skinparam style strictuml
 skinparam monochrome true

@@ -1,5 +1,5 @@
 @startuml CU02-normal
-title CU-02 — Verificar permisos del rol al acceder a una funcionalidad (flujo normal)
+title CU-02 — Verificando permisos del rol al acceder a una funcionalidad (flujo normal)
 
 skinparam style strictuml
 skinparam monochrome true

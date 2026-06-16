@@ -1,5 +1,5 @@
 @startuml CU19-exc-registro-otra-empresa
-title CU-19 — Desactivar tipo de equipo (excepción: registro pertenece a otra empresa)
+title CU-19 — Desactivando tipo de equipo (excepción: registro pertenece a otra empresa)
 
 skinparam style strictuml
 skinparam monochrome true

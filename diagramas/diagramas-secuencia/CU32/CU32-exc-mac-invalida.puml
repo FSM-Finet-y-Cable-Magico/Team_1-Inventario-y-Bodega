@@ -1,5 +1,5 @@
 @startuml CU32-exc-mac-invalida
-title CU-32 — Registrar unidad de equipo individualizable\n(excepción: dirección MAC inválida o duplicada)
+title CU-32 — Registrando unidad de equipo individualizable\n(excepción: dirección MAC inválida o duplicada)
 
 skinparam style strictuml
 skinparam monochrome true

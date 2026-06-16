@@ -1,5 +1,5 @@
 @startuml CU12-exc-cancelacion
-title CU-12 — Cerrar sesión del sistema (excepción: usuario cancela confirmación)
+title CU-12 — Cerrando sesión del sistema (excepción: usuario cancela confirmación)
 
 skinparam style strictuml
 skinparam monochrome true

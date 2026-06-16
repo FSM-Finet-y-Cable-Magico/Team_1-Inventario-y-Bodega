@@ -1,5 +1,5 @@
 @startuml CU01-exc-cuenta-bloqueada
-title CU-01 — Iniciar sesión en el sistema (excepción: cuenta bloqueada)
+title CU-01 — Iniciando sesión en el sistema (excepción: cuenta bloqueada)
 
 skinparam style strictuml
 skinparam monochrome true

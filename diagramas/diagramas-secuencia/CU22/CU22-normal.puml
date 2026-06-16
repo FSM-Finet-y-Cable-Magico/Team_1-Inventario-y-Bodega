@@ -1,5 +1,5 @@
 @startuml CU22-normal
-title CU-22 — Rechazar transferencia inter-empresa (flujo normal)
+title CU-22 — Rechazando transferencia inter-empresa (flujo normal)
 
 skinparam style strictuml
 skinparam monochrome true

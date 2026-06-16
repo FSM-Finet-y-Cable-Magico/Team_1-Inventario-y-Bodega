@@ -1,5 +1,5 @@
 @startuml CU46-exc-umbral-invalido
-title CU-46 — Configurar umbral de stock mínimo (excepción: umbral inválido)
+title CU-46 — Configurando umbral de stock mínimo (excepción: umbral inválido)
 
 skinparam style strictuml
 skinparam monochrome true

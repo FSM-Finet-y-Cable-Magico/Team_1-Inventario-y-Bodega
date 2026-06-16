@@ -1,5 +1,5 @@
 @startuml CU35-exc-transicion-invalida
-title CU-35 — Gestionar transición de estado de equipo\n(excepción: transición de estado no permitida)
+title CU-35 — Gestionando transición de estado de equipo\n(excepción: transición de estado no permitida)
 
 skinparam style strictuml
 skinparam monochrome true

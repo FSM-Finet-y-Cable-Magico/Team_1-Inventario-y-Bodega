@@ -1,5 +1,5 @@
 @startuml CU34-normal
-title CU-34 — Editar datos de unidad de equipo (flujo normal)
+title CU-34 — Editando datos de unidad de equipo (flujo normal)
 
 skinparam style strictuml
 skinparam monochrome true

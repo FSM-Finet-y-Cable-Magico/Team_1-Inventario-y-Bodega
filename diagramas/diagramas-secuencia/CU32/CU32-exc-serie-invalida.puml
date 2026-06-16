@@ -1,5 +1,5 @@
 @startuml CU32-exc-serie-invalida
-title CU-32 — Registrar unidad de equipo individualizable\n(excepción: número de serie con formato inválido)
+title CU-32 — Registrando unidad de equipo individualizable\n(excepción: número de serie con formato inválido)
 
 skinparam style strictuml
 skinparam monochrome true

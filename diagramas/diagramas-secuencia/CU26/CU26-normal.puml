@@ -1,5 +1,5 @@
 @startuml CU26-normal
-title CU-26 — Editar tipo de equipo existente (flujo normal)
+title CU-26 — Editando tipo de equipo existente (flujo normal)
 
 skinparam style strictuml
 skinparam monochrome true

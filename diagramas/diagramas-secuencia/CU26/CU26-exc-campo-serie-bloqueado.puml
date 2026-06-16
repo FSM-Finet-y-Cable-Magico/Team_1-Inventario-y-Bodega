@@ -1,5 +1,5 @@
 @startuml CU26-exc-campo-serie-bloqueado
-title CU-26 — Editar tipo de equipo existente\n(excepción: cambio de requiereSerialNumber bloqueado por unidades existentes)
+title CU-26 — Editando tipo de equipo existente\n(excepción: cambio de requiereSerialNumber bloqueado por unidades existentes)
 
 skinparam style strictuml
 skinparam monochrome true

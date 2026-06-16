@@ -1,5 +1,5 @@
 @startuml CU31-exc-tipo-sin-configurar
-title CU-31 — Distinguir naturaleza de equipo (excepción: tipo sin requiereSerialNumber configurado)
+title CU-31 — Distinguiendo naturaleza de equipo (excepción: tipo sin requiereSerialNumber configurado)
 
 skinparam style strictuml
 skinparam monochrome true

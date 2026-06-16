@@ -1,5 +1,5 @@
 @startuml CU29-exc-archivo-invalido
-title CU-29 — Adjuntar ficha técnica PDF a tipo de equipo (excepción: archivo inválido)
+title CU-29 — Adjuntando ficha técnica PDF a tipo de equipo (excepción: archivo inválido)
 
 skinparam style strictuml
 skinparam monochrome true

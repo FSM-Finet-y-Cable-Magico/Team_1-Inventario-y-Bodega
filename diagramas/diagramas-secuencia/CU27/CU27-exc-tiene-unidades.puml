@@ -1,5 +1,5 @@
 @startuml CU27-exc-tiene-unidades
-title CU-27 — Desactivar tipo de equipo del catálogo (excepción: tipo no encontrado)
+title CU-27 — Desactivando tipo de equipo del catálogo (excepción: tipo no encontrado)
 
 skinparam style strictuml
 skinparam monochrome true

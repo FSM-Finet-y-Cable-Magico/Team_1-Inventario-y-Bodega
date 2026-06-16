@@ -1,5 +1,5 @@
 @startuml CU38-exc-garantia-no-disponible
-title CU-38 — Calcular fecha de vencimiento de garantía\n(excepción: fecha_venc_garantia no disponible — campo queda null)
+title CU-38 — Calculando fecha de vencimiento de garantía\n(excepción: fecha_venc_garantia no disponible — campo queda null)
 
 skinparam style strictuml
 skinparam monochrome true

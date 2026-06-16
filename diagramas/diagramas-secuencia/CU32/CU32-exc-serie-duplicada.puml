@@ -1,5 +1,5 @@
 @startuml CU32-exc-serie-duplicada
-title CU-32 — Registrar unidad de equipo individualizable\n(excepción: número de serie ya registrado en el sistema)
+title CU-32 — Registrando unidad de equipo individualizable\n(excepción: número de serie ya registrado en el sistema)
 
 skinparam style strictuml
 skinparam monochrome true

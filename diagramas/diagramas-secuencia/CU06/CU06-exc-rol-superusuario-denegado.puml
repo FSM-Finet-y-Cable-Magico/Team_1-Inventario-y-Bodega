@@ -1,5 +1,5 @@
 @startuml CU06-exc-rol-superusuario-denegado
-title CU-06 — Editar cuenta de usuario (excepción: rol Superusuario denegado)
+title CU-06 — Editando cuenta de usuario (excepción: rol Superusuario denegado)
 
 skinparam style strictuml
 skinparam monochrome true

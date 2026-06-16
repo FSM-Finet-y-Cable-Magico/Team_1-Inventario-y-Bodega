@@ -1,5 +1,5 @@
 @startuml CU28-exc-formato-invalido
-title CU-28 — Validar número de serie de equipo (excepción: formato inválido)
+title CU-28 — Validando número de serie de equipo (excepción: formato inválido)
 
 skinparam style strictuml
 skinparam monochrome true

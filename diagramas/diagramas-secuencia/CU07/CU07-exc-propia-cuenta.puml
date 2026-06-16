@@ -1,5 +1,5 @@
 @startuml CU07-exc-propia-cuenta
-title CU-07 — Desactivar cuenta de usuario (excepción: propia cuenta)
+title CU-07 — Desactivando cuenta de usuario (excepción: propia cuenta)
 
 skinparam style strictuml
 skinparam monochrome true

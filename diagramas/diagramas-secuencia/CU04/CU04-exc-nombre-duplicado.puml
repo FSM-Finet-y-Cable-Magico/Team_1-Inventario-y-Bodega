@@ -1,5 +1,5 @@
 @startuml CU04-exc-nombre-duplicado
-title CU-04 — Crear cuenta de usuario (excepción: nombre de usuario duplicado)
+title CU-04 — Creando cuenta de usuario (excepción: nombre de usuario duplicado)
 
 skinparam style strictuml
 skinparam monochrome true
