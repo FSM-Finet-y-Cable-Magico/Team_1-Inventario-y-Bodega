@@ -1,0 +1,72 @@
+# ============================================================
+#  Inventario y Bodega · Docker Compose
+#  Uso:  docker compose up -d --build
+#  App:  http://localhost
+# ============================================================
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: inventario-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-inventario}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-inventario}
+      POSTGRES_DB: ${POSTGRES_DB:-inventario}
+    # Si ya tenés otro PostgreSQL en el puerto 5432, comentá esta línea:
+    #ports:
+    #  - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Crea el esquema automáticamente en el primer arranque (volumen vacío)
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-inventario} -d ${POSTGRES_DB:-inventario}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  backend:
+    build: ./backend-inventario
+    container_name: inventario-backend
+    restart: unless-stopped
+    environment:
+      PORT: 3003
+      DATABASE_URL: postgresql://${POSTGRES_USER:-inventario}:${POSTGRES_PASSWORD:-inventario}@db:5432/${POSTGRES_DB:-inventario}
+      JWT_SECRET: ${JWT_SECRET:-secreto-inventario-cambiar}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      # Fichas técnicas PDF subidas, persistidas entre reinicios
+      - uploads_data:/app/uploads
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3003/api/health/ping').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  frontend:
+    build: ./frontend
+    container_name: inventario-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  nginx:
+    image: nginx:alpine
+    container_name: inventario-nginx
+    restart: unless-stopped
+    ports:
+      # Punto de acceso único de la app. Si el 80 está ocupado, usá "8080:80".
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - frontend
+      - backend
+
+volumes:
+  pgdata:
+  uploads_data:
