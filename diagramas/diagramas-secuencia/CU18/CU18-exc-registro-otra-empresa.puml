@@ -1,12 +1,20 @@
 @startuml CU18-exc-registro-otra-empresa
-title CU-18 — Editar tipo de equipo con aislamiento de empresa\n(excepción: intento de editar registro de otra empresa)
+title CU-18 — Editando tipo de equipo con aislamiento de empresa\n(excepción: intento de editar registro de otra empresa)
 
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-skinparam ParticipantPadding 70
-skinparam ActorPadding 30
+<style>
+sequenceDiagram {
+  participant {
+    Margin 35
+  }
+  actor {
+    Margin 15
+  }
+}
+</style>
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black

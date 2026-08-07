@@ -1,5 +1,5 @@
 @startuml CU08-normal
-title CU-08 — Registrar evento en el log de auditoría (flujo normal — contexto: inicio de sesión)
+title CU-08 — Registrando evento en el log de auditoría (flujo normal — contexto: inicio de sesión)
 
 skinparam style strictuml
 skinparam monochrome true

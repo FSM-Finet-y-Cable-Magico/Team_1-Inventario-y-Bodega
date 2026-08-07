@@ -1,12 +1,20 @@
 @startuml CU07-exc-propia-cuenta
-title CU-07 — Desactivar cuenta de usuario (excepción: propia cuenta)
+title CU-07 — Desactivando cuenta de usuario (excepción: propia cuenta)
 
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-skinparam ParticipantPadding 70
-skinparam ActorPadding 30
+<style>
+sequenceDiagram {
+  participant {
+    Margin 35
+  }
+  actor {
+    Margin 15
+  }
+}
+</style>
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black

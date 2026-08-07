@@ -1,12 +1,20 @@
 @startuml CU13-normal
-title CU-13 — Cargar contexto de empresa Finet al iniciar sesión (flujo normal)
+title CU-13 — Cargando contexto de empresa Finet al iniciar sesión (flujo normal)
 
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-skinparam ParticipantPadding 70
-skinparam ActorPadding 30
+<style>
+sequenceDiagram {
+  participant {
+    Margin 35
+  }
+  actor {
+    Margin 15
+  }
+}
+</style>
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black

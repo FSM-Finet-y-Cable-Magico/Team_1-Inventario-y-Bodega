@@ -1,12 +1,20 @@
 @startuml CU22-normal
-title CU-22 — Rechazar transferencia inter-empresa (flujo normal)
+title CU-22 — Rechazando transferencia inter-empresa (flujo normal)
 
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-skinparam ParticipantPadding 70
-skinparam ActorPadding 30
+<style>
+sequenceDiagram {
+  participant {
+    Margin 35
+  }
+  actor {
+    Margin 15
+  }
+}
+</style>
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black

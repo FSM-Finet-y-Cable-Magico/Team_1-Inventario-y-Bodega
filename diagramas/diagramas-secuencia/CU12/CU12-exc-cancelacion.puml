@@ -1,12 +1,20 @@
 @startuml CU12-exc-cancelacion
-title CU-12 — Cerrar sesión del sistema (excepción: usuario cancela confirmación)
+title CU-12 — Cerrando sesión del sistema (excepción: usuario cancela confirmación)
 
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-skinparam ParticipantPadding 70
-skinparam ActorPadding 30
+<style>
+sequenceDiagram {
+  participant {
+    Margin 35
+  }
+  actor {
+    Margin 15
+  }
+}
+</style>
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black

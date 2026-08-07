@@ -1,12 +1,20 @@
 @startuml CU30-exc-sin-ficha
-title CU-30 — Descargar ficha técnica de tipo de equipo (excepción: sin ficha adjunta)
+title CU-30 — Descargando ficha técnica de tipo de equipo (excepción: sin ficha adjunta)
 
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-skinparam ParticipantPadding 70
-skinparam ActorPadding 30
+<style>
+sequenceDiagram {
+  participant {
+    Margin 35
+  }
+  actor {
+    Margin 15
+  }
+}
+</style>
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black

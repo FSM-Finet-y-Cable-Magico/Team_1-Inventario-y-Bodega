@@ -1,12 +1,20 @@
 @startuml CU27-normal
-title CU-27 — Desactivar tipo de equipo del catálogo (flujo normal)
+title CU-27 — Desactivando tipo de equipo del catálogo (flujo normal)
 
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-skinparam ParticipantPadding 70
-skinparam ActorPadding 30
+<style>
+sequenceDiagram {
+  participant {
+    Margin 35
+  }
+  actor {
+    Margin 15
+  }
+}
+</style>
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black

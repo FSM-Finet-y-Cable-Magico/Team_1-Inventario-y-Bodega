@@ -1,5 +1,5 @@
 @startuml CU45-exc-bodega-sin-equipos
-title CU-45 — Consultar stock de bodega (excepción: bodega no encontrada)
+title CU-45 — Consultando stock de bodega (excepción: bodega no encontrada)
 
 skinparam style strictuml
 skinparam monochrome true

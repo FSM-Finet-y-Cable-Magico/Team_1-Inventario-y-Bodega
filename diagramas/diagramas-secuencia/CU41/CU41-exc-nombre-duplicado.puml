@@ -1,5 +1,5 @@
 @startuml CU41-exc-nombre-duplicado
-title CU-41 — Crear bodega (excepcion: nombre duplicado en la empresa)
+title CU-41 — Creando bodega (excepcion: nombre duplicado en la empresa)
 
 skinparam style strictuml
 skinparam monochrome true

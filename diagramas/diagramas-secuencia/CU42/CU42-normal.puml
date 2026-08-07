@@ -1,5 +1,5 @@
 @startuml CU42-normal
-title CU-42 — Editar bodega (flujo normal)
+title CU-42 — Editando bodega (flujo normal)
 
 skinparam style strictuml
 skinparam monochrome true

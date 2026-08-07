@@ -1,12 +1,20 @@
 @startuml CU04-exc-formato-invalido
-title CU-04 — Crear cuenta de usuario (excepción: formato de campos inválido)
+title CU-04 — Creando cuenta de usuario (excepción: formato de campos inválido)
 
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-skinparam ParticipantPadding 70
-skinparam ActorPadding 30
+<style>
+sequenceDiagram {
+  participant {
+    Margin 35
+  }
+  actor {
+    Margin 15
+  }
+}
+</style>
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black

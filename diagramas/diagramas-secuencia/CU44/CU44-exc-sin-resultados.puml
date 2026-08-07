@@ -1,5 +1,5 @@
 @startuml CU44-exc-sin-resultados
-title CU-44 — Consultar listado de bodegas (excepción: sin resultados)
+title CU-44 — Consultando listado de bodegas (excepción: sin resultados)
 
 skinparam style strictuml
 skinparam monochrome true

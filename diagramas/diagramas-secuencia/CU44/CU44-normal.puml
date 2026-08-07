@@ -1,5 +1,5 @@
 @startuml CU44-normal
-title CU-44 — Consultar listado de bodegas (flujo normal)
+title CU-44 — Consultando listado de bodegas (flujo normal)
 
 skinparam style strictuml
 skinparam monochrome true

@@ -1,5 +1,5 @@
 @startuml CU43-exc-ultima-bodega
-title CU-43 — Desactivar bodega (excepción: última bodega activa)
+title CU-43 — Desactivando bodega (excepción: última bodega activa)
 
 skinparam style strictuml
 skinparam monochrome true

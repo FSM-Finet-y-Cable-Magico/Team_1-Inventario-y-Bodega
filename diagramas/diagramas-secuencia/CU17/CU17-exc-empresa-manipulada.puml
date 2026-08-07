@@ -1,12 +1,20 @@
 @startuml CU17-exc-empresa-manipulada
-title CU-17 — Crear tipo de equipo (excepción: empresa manipulada)
+title CU-17 — Creando tipo de equipo (excepción: empresa manipulada)
 
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-skinparam ParticipantPadding 70
-skinparam ActorPadding 30
+<style>
+sequenceDiagram {
+  participant {
+    Margin 35
+  }
+  actor {
+    Margin 15
+  }
+}
+</style>
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black

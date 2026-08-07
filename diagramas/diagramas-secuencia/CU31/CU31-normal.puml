@@ -1,5 +1,5 @@
 @startuml CU31-normal
-title CU-31 — Distinguir naturaleza de equipo: INDIVIDUALIZABLE o CONSUMIBLE (flujo normal — contexto: registro de unidad)
+title CU-31 — Distinguiendo naturaleza de equipo: INDIVIDUALIZABLE o CONSUMIBLE (flujo normal — contexto: registro de unidad)
 
 skinparam style strictuml
 skinparam monochrome true

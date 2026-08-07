@@ -1,12 +1,20 @@
 @startuml CU37-exc-serie-no-encontrada
-title CU-37 — Consultar historial completo de estados de equipo (excepción: serie no encontrada)
+title CU-37 — Consultando historial completo de estados de equipo (excepción: serie no encontrada)
 
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-skinparam ParticipantPadding 70
-skinparam ActorPadding 30
+<style>
+sequenceDiagram {
+  participant {
+    Margin 35
+  }
+  actor {
+    Margin 15
+  }
+}
+</style>
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black

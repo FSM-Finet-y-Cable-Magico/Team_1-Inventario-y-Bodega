@@ -1,12 +1,20 @@
 @startuml CU23-normal
-title CU-23 — Consultar transferencias inter-empresa (flujo normal)
+title CU-23 — Consultando transferencias inter-empresa (flujo normal)
 
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-skinparam ParticipantPadding 70
-skinparam ActorPadding 30
+<style>
+sequenceDiagram {
+  participant {
+    Margin 35
+  }
+  actor {
+    Margin 15
+  }
+}
+</style>
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black

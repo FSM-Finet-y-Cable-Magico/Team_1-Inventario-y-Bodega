@@ -1,5 +1,5 @@
 @startuml CU28-normal
-title CU-28 — Validar número de serie de equipo (flujo normal — contexto: registro de unidad)
+title CU-28 — Validando número de serie de equipo (flujo normal — contexto: registro de unidad)
 
 skinparam style strictuml
 skinparam monochrome true
