@@ -17,13 +17,15 @@ jobs:
         run: npm install -g @railway/cli
 
       - name: Deploy Backend to Railway
+        working-directory: codigo/backend-inventario
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
-          railway up --service backend --detach codigo/backend-inventario
+          railway up --service backend --detach
 
       - name: Deploy Frontend to Railway
+        working-directory: codigo/frontend
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
-          railway up --service frontend --detach codigo/frontend
+          railway up --service frontend --detach
