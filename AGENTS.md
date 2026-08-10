@@ -102,3 +102,10 @@ Levantar la app: ver `codigo/README.md` (Docker) o modo dev (`02-arquitectura.md
 feat(CU-47): registrar cliente en el sistema
 fix(CU-12): corregir cierre de sesión por inactividad
 ```
+
+## 9. Despliegue en Railway (CI/CD)
+
+- **Workflow:** `.github/workflows/deploy.yml` despliega automáticamente al hacer `push` a `dev` o `main`.
+- **Backend:** `codigo/backend-inventario` escucha en `PORT` y ejecuta `migrar.ts` (con `CREATE TABLE IF NOT EXISTS`) y `seed-qa.ts` en cada inicio.
+- **Frontend:** `codigo/frontend` implementa un proxy interno SvelteKit en `src/routes/api/[...path]/+server.ts` que redirige peticiones de `/api/*` hacia la variable `BACKEND_URL`.
+
