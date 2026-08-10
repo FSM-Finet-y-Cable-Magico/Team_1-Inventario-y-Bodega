@@ -15,16 +15,16 @@ RUN npm run build
 FROM node:22-alpine AS runtime
 
 ENV NODE_ENV=production
-ENV PORT=3000
-ENV HOST=0.0.0.0
 
 WORKDIR /app
 
-# Solo lo necesario para ejecutar el servidor compilado
-COPY --from=build /app/build ./build
-COPY --from=build /app/package.json ./
+# Instalar dependencias de producción requeridas por el build compilado
+COPY package*.json ./
+RUN npm ci --omit=dev --no-audit --no-fund
 
-# adapter-node expone el servidor en el puerto 3000
+# Copiar build compilado
+COPY --from=build /app/build ./build
+
 EXPOSE 3000
 
 CMD ["node", "build/index.js"]
