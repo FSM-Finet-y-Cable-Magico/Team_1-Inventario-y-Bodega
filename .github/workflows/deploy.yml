@@ -20,10 +20,10 @@ jobs:
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
-          railway up --service backend --dir codigo/backend-inventario --detach
+          railway up --service backend --detach codigo/backend-inventario
 
       - name: Deploy Frontend to Railway
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
-          railway up --service frontend --dir codigo/frontend --detach
+          railway up --service frontend --detach codigo/frontend
