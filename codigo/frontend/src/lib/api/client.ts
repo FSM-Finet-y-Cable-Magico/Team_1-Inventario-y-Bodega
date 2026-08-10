@@ -2,7 +2,7 @@ import { goto } from '$app/navigation';
 import { authStore } from '$lib/stores/auth';
 import { get } from 'svelte/store';
 
-const BASE = '/api';
+const BASE = import.meta.env.VITE_PUBLIC_API_URL || '/api';
 
 class ApiError extends Error {
 	status: number;
