@@ -16,8 +16,14 @@ jobs:
       - name: Install Railway CLI
         run: npm install -g @railway/cli
 
-      - name: Deploy to Railway
+      - name: Deploy Backend to Railway
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
-          railway up --detach
+          railway up --service backend --dir codigo/backend-inventario --detach
+
+      - name: Deploy Frontend to Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          railway up --service frontend --dir codigo/frontend --detach
