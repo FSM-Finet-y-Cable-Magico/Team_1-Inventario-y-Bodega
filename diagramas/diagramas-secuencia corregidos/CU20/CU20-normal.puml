@@ -1,0 +1,127 @@
+@startuml CU20-normal
+title CU-20 — Registrando solicitud de transferencia inter-empresa (flujo normal)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 25
+skinparam ActorPadding 20
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_Transferencias" as view
+participant "C_TransferenciasController" as ctrl
+participant "C_TransferenciasService" as svc
+participant "C_AuditoriaService" as aud
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as uent
+participant "transferencia_equipo" as tent
+participant "movimiento_inventario" as ment
+participant "log_auditoria" as aent
+
+user -> view : Completa formulario:\nids_unidades, id_empresa_destino,\nid_bodega_origen, id_bodega_destino,\nobservaciones (opcional)
+activate view
+
+view -> ctrl : POST /transferencias\n{ CreateTransferenciaDto }
+activate ctrl
+
+ctrl -> svc : registrarTransferencia(dto, req.user)
+activate svc
+
+svc -> svc : Verifica empresa origen\n!= empresa destino
+activate svc
+deactivate svc
+
+svc -> svc : Verifica ids_unidades\nno vacío
+activate svc
+deactivate svc
+
+svc -> orm : findBy({ id_unidad: In(dto.ids_unidades) })
+activate orm
+
+orm -> uent : SELECT unidad_equipo\nWHERE id_unidad IN (...)
+activate uent
+uent --> orm : Lista de unidades
+deactivate uent
+
+orm --> svc : unidades[]
+deactivate orm
+
+svc -> svc : forEach(unidad): verifica\nid_empresa == empresa_origen,\nestado == 'En bodega',\nid_bodega_actual == id_bodega_origen
+activate svc
+deactivate svc
+
+svc -> orm : QueryRunner.connect()
+activate orm
+orm --> svc : Conexión lista
+deactivate orm
+
+svc -> orm : QueryRunner.startTransaction()
+activate orm
+orm --> svc : Transacción iniciada
+deactivate orm
+
+svc -> orm : QueryRunner.manager.save(Transferencia)\n{ id_empresa_origen, id_empresa_destino,\nid_usuario_registro, fecha_transferencia, observaciones }
+activate orm
+
+orm -> tent : INSERT transferencia_equipo
+activate tent
+tent --> orm : Transferencia guardada
+deactivate tent
+
+orm --> svc : transferenciaGuardada
+deactivate orm
+
+svc -> orm : forEach(unidad):\nQueryRunner.manager.save(MovimientoInventario)\n{ id_unidad, empresas, bodegas, usuario,\ntipo_movimiento: TRANSFERENCIA_PENDIENTE,\nreferencia_id }
+activate orm
+
+orm -> ment : INSERT movimiento_inventario\n(una fila por unidad)
+activate ment
+ment --> orm : Movimientos guardados
+deactivate ment
+
+orm --> svc : Movimientos creados
+deactivate orm
+
+svc -> orm : QueryRunner.commitTransaction()
+activate orm
+orm --> svc : Commit OK
+deactivate orm
+
+svc -> orm : QueryRunner.release()
+activate orm
+orm --> svc : Conexión liberada
+deactivate orm
+
+svc -> aud : create({ id_usuario, accion: 'SOLICITAR_TRANSFERENCIA',\nentidad_afectada: 'transferencia_equipo',\nid_entidad_afectada, valor_nuevo })
+activate aud
+
+aud -> orm : save(log)
+activate orm
+
+orm -> aent : INSERT log_auditoria
+activate aent
+aent --> orm : Registrado
+deactivate aent
+
+orm --> aud : Log guardado
+deactivate orm
+
+aud --> svc : Auditoría registrada
+deactivate aud
+
+svc --> ctrl : { success: true, id_transferencia,\nestado: TRANSFERENCIA_PENDIENTE,\nunidades_incluidas, message }
+deactivate svc
+
+ctrl --> view : 201 Created\n{ success, id_transferencia,\nestado, unidades_incluidas, message }
+deactivate ctrl
+
+view --> user : Muestra confirmación:\nsolicitud registrada,\npendiente de aprobación
+deactivate view
+
+@enduml

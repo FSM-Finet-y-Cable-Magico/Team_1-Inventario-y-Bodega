@@ -1,0 +1,63 @@
+@startuml CU19-exc-registro-otra-empresa
+title CU-19 — Desactivando tipo de equipo (excepción: registro pertenece a otra empresa)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 25
+skinparam ActorPadding 20
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_Catalogo" as view
+participant "C_RolesGuard" as guard
+participant "C_CatalogController" as ctrl
+participant "C_CatalogService" as svc
+participant "C_TypeORM" as orm
+participant "tipo_equipo" as tent
+
+user -> view : Solicita desactivar\ntipo de equipo (id\nde otra empresa)
+activate view
+
+view -> guard : DELETE /catalogo/:id\n[JWT, id_empresa]
+activate guard
+
+guard --> view : Autorizado\n(ADMIN / SUPERUSUARIO)
+deactivate guard
+
+view -> ctrl : DELETE /catalogo/:id
+activate ctrl
+
+ctrl -> svc : desactivarTipo(id, actor.id_empresa)
+activate svc
+
+svc -> svc : parseInt(id) — valida\nque sea número
+activate svc
+deactivate svc
+
+svc -> orm : findOne({ id_tipo_equipo: idNum,\nid_empresa: idEmpresaContexto })
+activate orm
+
+orm -> tent : SELECT tipo_equipo\nWHERE id_tipo_equipo = idNum\nAND id_empresa = idEmpresaContexto
+activate tent
+tent --> orm : (sin resultados —\nid_empresa no coincide)
+deactivate tent
+
+orm --> svc : null
+deactivate orm
+
+svc --> ctrl : throw NotFoundException\n('El tipo de equipo que intenta\ndesactivar no existe o no\npertenece a su empresa.')
+deactivate svc
+
+ctrl --> view : 404 Not Found
+deactivate ctrl
+
+view --> user : Muestra "No existe o\nno pertenece a su empresa"
+deactivate view
+
+@enduml

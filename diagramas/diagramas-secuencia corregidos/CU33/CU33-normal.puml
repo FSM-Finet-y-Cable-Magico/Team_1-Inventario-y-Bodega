@@ -1,0 +1,69 @@
+@startuml CU33-normal
+title CU-33 — Consultando ficha de detalle de unidad de equipo (flujo normal)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 25
+skinparam ActorPadding 20
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_FichaUnidad" as view
+participant "C_RolesGuard" as guard
+participant "C_UnitsController" as ctrl
+participant "C_UnitsService" as svc
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as uent
+participant "tipo_equipo" as tent
+
+user -> view : Selecciona unidad\nde equipo (id)
+activate view
+
+view -> guard : GET /unidades/:id/ficha\n[JWT válido]
+activate guard
+
+guard --> view : Rol autorizado\n(ADMIN / SUPERUSUARIO\n/ ADMIN_BODEGA)
+deactivate guard
+
+view -> ctrl : GET /unidades/:id/ficha
+activate ctrl
+
+ctrl -> svc : verFichaDetalle(id, id_empresa)
+activate svc
+
+svc -> orm : findOne({ id_unidad, id_empresa },\nrelations: tipoEquipo)
+activate orm
+
+orm -> uent : SELECT unidad_equipo\nWHERE id_unidad AND id_empresa
+activate uent
+uent --> orm : Datos unidad_equipo
+deactivate uent
+
+orm -> tent : SELECT tipo_equipo\nWHERE id_tipo_equipo
+activate tent
+tent --> orm : Datos tipo_equipo
+deactivate tent
+
+orm --> svc : UnidadEquipo (con tipoEquipo)
+deactivate orm
+
+svc -> svc : Calcula alertaGarantia:\nfechaVencGarantia vs hoy\n→ dias_restantes, mensaje_alerta
+activate svc
+deactivate svc
+
+svc --> ctrl : { datos_unidad,\nalerta_visual_garantia,\nespecificaciones_catalogo }
+deactivate svc
+
+ctrl --> view : 200 OK\n{ success, datos_unidad,\nalerta_visual_garantia,\nespecificaciones_catalogo }
+deactivate ctrl
+
+view --> user : Muestra ficha de detalle\ncon alerta de garantía
+deactivate view
+
+@enduml

@@ -1,0 +1,61 @@
+@startuml CU44-exc-sin-resultados
+title CU-44 — Consultando listado de bodegas (excepción: sin resultados)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 25
+skinparam ActorPadding 20
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_ListaBodegas" as view
+participant "C_RolesGuard" as guard
+participant "C_BodegasController" as ctrl
+participant "C_BodegasService" as svc
+participant "C_TypeORM" as orm
+participant "bodega" as bent
+
+user -> view : Solicita listado de bodegas\ncon filtros que no producen resultados
+activate view
+
+view -> guard : GET /bodegas\n?activo=...&nombre=...\n[Authorization: Bearer token]
+activate guard
+
+guard -> guard : Valida JWT y verifica rol\n(ADMIN | SUPERUSUARIO | ADMIN_BODEGA)
+activate guard
+deactivate guard
+
+guard -> ctrl : findAll(activa, nombre, req)
+deactivate guard
+activate ctrl
+
+ctrl -> svc : findAll({ activa, nombre },\nuserEmpresaId, isSuperuser)
+activate svc
+
+svc -> orm : createQueryBuilder('bodega')\n+ filtros WHERE aplicados
+activate orm
+
+orm -> bent : SELECT bodega\nWHERE id_empresa = ? (si no SUPERUSUARIO)\nAND activa = ? (si filtro)\nAND nombre ILIKE ? (si filtro)
+activate bent
+bent --> orm : (sin resultados)
+deactivate bent
+
+orm --> svc : bodegas[] = []
+deactivate orm
+
+svc --> ctrl : [] (lista vacía)
+deactivate svc
+
+ctrl --> view : 200 OK\n[]
+deactivate ctrl
+
+view --> user : Muestra listado vacío\n"No se encontraron bodegas"
+deactivate view
+
+@enduml

@@ -1,0 +1,68 @@
+@startuml CU27-exc-tiene-unidades
+title CU-27 — Desactivando tipo de equipo del catálogo (excepción: tipo con unidades asociadas)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 25
+skinparam ActorPadding 20
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_Catalogo" as view
+participant "C_CatalogController" as ctrl
+participant "C_CatalogService" as svc
+participant "C_TypeORM" as orm
+participant "tipo_equipo" as tent
+participant "unidad_equipo" as uent
+
+user -> view : Selecciona tipo de equipo\ny solicita desactivar
+activate view
+
+view -> ctrl : DELETE /catalogo/:id
+activate ctrl
+
+ctrl -> svc : desactivarTipo(id, id_empresa)
+activate svc
+
+svc -> svc : parseInt(id)
+activate svc
+deactivate svc
+
+svc -> orm : findOne(id_tipo_equipo, id_empresa)
+activate orm
+
+orm -> tent : SELECT tipo_equipo\nWHERE id_tipo_equipo AND id_empresa
+activate tent
+tent --> orm : Registro tipo_equipo
+deactivate tent
+
+orm --> svc : tipo (encontrado)
+deactivate orm
+
+svc -> orm : count(unidad_equipo\nWHERE id_tipo_equipo)
+activate orm
+
+orm -> uent : SELECT COUNT(*) unidad_equipo\nWHERE id_tipo_equipo
+activate uent
+uent --> orm : totalUnidades = 3
+deactivate uent
+
+orm --> svc : 3
+deactivate orm
+
+svc --> ctrl : throw ConflictException\n('No es posible desactivar un tipo\nde equipo que tiene unidades\nregistradas en el catálogo.')
+deactivate svc
+
+ctrl --> view : 409 Conflict
+deactivate ctrl
+
+view --> user : Muestra error: "No es posible\ndesactivar un tipo de equipo\nque tiene unidades registradas."
+deactivate view
+
+@enduml

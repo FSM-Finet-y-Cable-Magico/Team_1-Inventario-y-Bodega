@@ -1,0 +1,46 @@
+@startuml CU07-exc-propia-cuenta
+title CU-07 — Desactivando cuenta de usuario (excepción: propia cuenta)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 25
+skinparam ActorPadding 20
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_GestionUsuarios" as view
+participant "C_RolesGuard" as guard
+participant "C_UsuariosController" as ctrl
+participant "C_UsuariosService" as svc
+
+user -> view : Solicita desactivar\nsu propia cuenta (id)
+activate view
+
+view -> guard : DELETE /usuario/:id\n[JWT token]
+activate guard
+
+guard --> view : Acceso autorizado\n(ADMIN o SUPERUSUARIO)
+deactivate guard
+
+view -> ctrl : DELETE /usuario/:id\n[req.user.sub == id]
+activate ctrl
+
+ctrl -> svc : remove(id, req.user.sub)
+activate svc
+
+svc --> ctrl : throw BadRequestException\n('No es posible desactivar\nsu propia cuenta.')
+deactivate svc
+
+ctrl --> view : 400 Bad Request
+deactivate ctrl
+
+view --> user : Muestra "No es posible\ndesactivar su propia cuenta."
+deactivate view
+
+@enduml

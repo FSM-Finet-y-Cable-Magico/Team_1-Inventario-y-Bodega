@@ -1,0 +1,32 @@
+@startuml CU01-exc-formato-invalido
+title CU-01 — Iniciando sesión en el sistema (excepción: formato inválido)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 25
+skinparam ActorPadding 20
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_Login" as view
+participant "C_AuthController" as ctrl
+
+user -> view : Ingresa nombre_usuario\ny/o password con formato\ninválido (vacíos o tipo incorrecto)
+activate view
+
+view -> ctrl : POST /auth/login\n{ nombre_usuario, password }
+activate ctrl
+
+ctrl --> view : 400 Bad Request\nValidationPipe: errores de formato\n('nombre_usuario y password\nson obligatorios')
+deactivate ctrl
+
+view --> user : Muestra "Los campos ingresados\ntienen un formato inválido."
+deactivate view
+
+@enduml

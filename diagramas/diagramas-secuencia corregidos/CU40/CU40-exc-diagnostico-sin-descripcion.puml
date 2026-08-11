@@ -1,0 +1,71 @@
+@startuml CU40-exc-diagnostico-sin-descripcion
+title CU-40 — Registrando diagnostico tecnico al enviar a revision\n(excepcion: 'Otro' sin descripcion obligatoria)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 25
+skinparam ActorPadding 20
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_CambiarEstado" as view
+participant "C_RolesGuard" as guard
+participant "C_UnitsController" as ctrl
+participant "C_UnitsService" as svc
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as uent
+
+user -> view : Selecciona 'En revision',\ndiagnostico='Otro'\nsin ingresar descripcion
+activate view
+
+view -> guard : PATCH /unidades/:id/cambiar-estado\n{ nuevoEstado: 'En revision',\ndiagnostico: 'Otro',\nobservacion: '' }
+activate guard
+
+guard --> view : Rol autorizado
+deactivate guard
+
+view -> ctrl : transicionarEstadoEquipo(id,\n'En revision', '', 'Otro')
+activate ctrl
+
+ctrl -> svc : transicionarEstado(id,\n'En revision', actor,\nobservacion='', diagnostico='Otro')
+activate svc
+
+svc -> orm : findOne(id_unidad,\nrelations: tipoEquipo)
+activate orm
+
+orm -> uent : SELECT unidad_equipo\nWHERE id_unidad = :id
+activate uent
+uent --> orm : Datos unidad
+deactivate uent
+
+orm --> svc : UnidadEquipo encontrada
+deactivate orm
+
+svc -> svc : Valida transicion permitida
+activate svc
+deactivate svc
+
+svc -> svc : Valida diagnostico en\nDIAGNOSTICOS_PERMITIDOS\n'Otro' es valido
+activate svc
+deactivate svc
+
+svc -> svc : diagnostico === 'Otro':\nverifica descripcion.length\n'' longitud < 5 FALLA
+activate svc
+deactivate svc
+
+svc --> ctrl : throw BadRequestException\n('Debe ingresar una descripcion cuando\nselecciona Otro (entre 5 y 200 caracteres).')
+deactivate svc
+
+ctrl --> view : 400 Bad Request
+deactivate ctrl
+
+view --> user : Muestra "Debe ingresar una descripcion\ncuando selecciona Otro\n(entre 5 y 200 caracteres)."
+deactivate view
+
+@enduml

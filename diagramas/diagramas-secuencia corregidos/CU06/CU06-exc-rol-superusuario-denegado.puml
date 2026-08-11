@@ -1,0 +1,61 @@
+@startuml CU06-exc-rol-superusuario-denegado
+title CU-06 — Editando cuenta de usuario (excepción: rol Superusuario denegado)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 25
+skinparam ActorPadding 20
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador" as user
+participant "V_EditarUsuario" as view
+participant "C_RolesGuard" as guard
+participant "C_UsuariosController" as ctrl
+participant "C_UsuariosService" as svc
+participant "C_TypeORM" as orm
+participant "usuario" as uent
+
+user -> view : Intenta cambiar el rol\ndel usuario a SUPERUSUARIO
+activate view
+
+view -> guard : PATCH /usuario/:id\n{ rol: 'SUPERUSUARIO' }
+activate guard
+
+guard -> guard : Verifica JWT y rol\n(actor es ADMIN)
+activate guard
+deactivate guard
+
+guard -> ctrl : Solicitud autorizada
+deactivate guard
+activate ctrl
+
+ctrl -> svc : update(id, updateUsuarioDto,\nreq.user.sub, req.user.roles)
+activate svc
+
+svc -> orm : findOneBy({ id_usuario: id })
+activate orm
+
+orm -> uent : SELECT usuario\nWHERE id_usuario = :id
+activate uent
+uent --> orm : Datos del usuario
+deactivate uent
+
+orm --> svc : Usuario encontrado
+deactivate orm
+
+svc --> ctrl : throw ForbiddenException\n('Solo un Superusuario puede\nasignar el rol de Superusuario.')
+deactivate svc
+
+ctrl --> view : 403 Forbidden
+deactivate ctrl
+
+view --> user : Muestra "Sin permiso para\nasignar rol de Superusuario"
+deactivate view
+
+@enduml

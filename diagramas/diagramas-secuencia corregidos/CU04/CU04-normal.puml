@@ -1,0 +1,97 @@
+@startuml CU04-normal
+title CU-04 — Creando cuenta de usuario (flujo normal)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 25
+skinparam ActorPadding 20
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador" as user
+participant "V_CrearUsuario" as view
+participant "C_RolesGuard" as guard
+participant "C_UsuariosController" as ctrl
+participant "C_UsuariosService" as svc
+participant "C_AuditoriaService" as aud
+participant "C_TypeORM" as orm
+participant "usuario" as uent
+participant "log_auditoria" as aent
+
+user -> view : Completa formulario\n(nombre_usuario, nombre_completo,\nemail, password, rol)
+activate view
+
+view -> guard : POST /usuario\n{ CreateUsuarioDto }
+activate guard
+
+guard --> view : Acceso permitido\n(rol ADMIN o SUPERUSUARIO)
+deactivate guard
+
+view -> ctrl : POST /usuario\n{ CreateUsuarioDto }
+activate ctrl
+
+ctrl -> svc : create(createUsuarioDto,\nreq.user.sub, req.user.roles)
+activate svc
+
+svc -> orm : findOne(usuario por\nnombre_usuario)
+activate orm
+
+orm -> uent : SELECT usuario\nWHERE nombre_usuario
+activate uent
+uent --> orm : null (no existe)
+deactivate uent
+
+orm --> svc : null
+deactivate orm
+
+svc -> svc : bcrypt.genSalt(12)
+activate svc
+deactivate svc
+
+svc -> svc : bcrypt.hash(password, salt)
+activate svc
+deactivate svc
+
+svc -> orm : save({ ...createUsuarioDto,\npassword_hash })
+activate orm
+
+orm -> uent : INSERT usuario
+activate uent
+uent --> orm : Usuario creado
+deactivate uent
+
+orm --> svc : nuevoUsuario
+deactivate orm
+
+svc -> aud : create({ id_usuario: actorId,\naccion: 'CREAR',\nentidad_afectada: 'usuario',\nid_entidad_afectada, valor_nuevo })
+activate aud
+
+aud -> orm : save(log)
+activate orm
+
+orm -> aent : INSERT log_auditoria
+activate aent
+aent --> orm : Registrado
+deactivate aent
+
+orm --> aud : Log guardado
+deactivate orm
+
+aud --> svc : Auditoría registrada
+deactivate aud
+
+svc --> ctrl : nuevoUsuario
+deactivate svc
+
+ctrl --> view : 201 Created\n{ nuevoUsuario }
+deactivate ctrl
+
+view --> user : Muestra "Usuario creado\nexitosamente"
+deactivate view
+
+@enduml

@@ -1,0 +1,90 @@
+@startuml CU10-normal
+title CU-10 — Restableciendo contraseña de usuario (flujo normal)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 25
+skinparam ActorPadding 20
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador" as user
+participant "V_RestablecerPassword" as view
+participant "C_AuthController" as ctrl
+participant "C_AuthService" as svc
+participant "C_AuditoriaService" as aud
+participant "C_TypeORM" as orm
+participant "usuario" as uent
+participant "log_auditoria" as aent
+
+user -> view : Solicita restablecer\ncontraseña del usuario (id)
+activate view
+
+view -> ctrl : POST /auth/restablecer-password/:id\n(JWT + rol ADMIN o SUPERUSUARIO)
+activate ctrl
+
+ctrl -> svc : restablecerPassword(targetId, actorId)
+activate svc
+
+svc -> orm : findOne(usuario\npor id_usuario)
+activate orm
+
+orm -> uent : SELECT usuario\nWHERE id_usuario = :id
+activate uent
+uent --> orm : Datos usuario (activo)
+deactivate uent
+
+orm --> svc : Usuario (existe y activo)
+deactivate orm
+
+svc -> svc : Genera password temporal\nde 10 caracteres aleatorios
+activate svc
+deactivate svc
+
+svc -> svc : bcrypt.genSalt(12)\nbcrypt.hash(passwordTemporal, salt)
+activate svc
+deactivate svc
+
+svc -> orm : update(targetId,\n{ password_hash, debe_cambiar_password: true })
+activate orm
+
+orm -> uent : UPDATE usuario\nSET password_hash, debe_cambiar_password = true\nWHERE id_usuario = :id
+activate uent
+uent --> orm : Actualizado
+deactivate uent
+
+orm --> svc : OK
+deactivate orm
+
+svc -> aud : create({ accion: 'RESTABLECER_PASSWORD',\nentidad_afectada: 'usuario' })
+activate aud
+
+aud -> orm : save(log)
+activate orm
+
+orm -> aent : INSERT log_auditoria
+activate aent
+aent --> orm : Registrado
+deactivate aent
+
+orm --> aud : Log guardado
+deactivate orm
+
+aud --> svc : Auditoría registrada
+deactivate aud
+
+svc --> ctrl : { password_temporal }
+deactivate svc
+
+ctrl --> view : 200 OK\n{ password_temporal }
+deactivate ctrl
+
+view --> user : Muestra contraseña temporal generada
+deactivate view
+
+@enduml

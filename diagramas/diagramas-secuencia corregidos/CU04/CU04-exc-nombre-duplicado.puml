@@ -1,0 +1,59 @@
+@startuml CU04-exc-nombre-duplicado
+title CU-04 — Creando cuenta de usuario (excepción: nombre de usuario duplicado)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 25
+skinparam ActorPadding 20
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador" as user
+participant "V_CrearUsuario" as view
+participant "C_RolesGuard" as guard
+participant "C_UsuariosController" as ctrl
+participant "C_UsuariosService" as svc
+participant "C_TypeORM" as orm
+participant "usuario" as uent
+
+user -> view : Completa formulario con\nnombre_usuario ya existente
+activate view
+
+view -> guard : POST /usuario\n{ CreateUsuarioDto }
+activate guard
+
+guard --> view : Acceso permitido\n(rol ADMIN o SUPERUSUARIO)
+deactivate guard
+
+view -> ctrl : POST /usuario\n{ CreateUsuarioDto }
+activate ctrl
+
+ctrl -> svc : create(createUsuarioDto,\nreq.user.sub, req.user.roles)
+activate svc
+
+svc -> orm : findOne(usuario por\nnombre_usuario)
+activate orm
+
+orm -> uent : SELECT usuario\nWHERE nombre_usuario
+activate uent
+uent --> orm : Usuario existente
+deactivate uent
+
+orm --> svc : Usuario (existe)
+deactivate orm
+
+svc --> ctrl : throw ConflictException\n('El nombre de usuario no\nestá disponible.')
+deactivate svc
+
+ctrl --> view : 409 Conflict
+deactivate ctrl
+
+view --> user : Muestra "El nombre de usuario\nno está disponible"
+deactivate view
+
+@enduml

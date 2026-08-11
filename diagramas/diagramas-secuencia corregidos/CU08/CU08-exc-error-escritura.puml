@@ -1,0 +1,80 @@
+@startuml CU08-exc-error-escritura
+title CU-08 — Registrando evento en el log de auditoría\n(excepción: error al escribir en log_auditoria — contexto: inicio de sesión)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 25
+skinparam ActorPadding 20
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_Login" as view
+participant "C_AuthController" as ctrl
+participant "C_AuthService" as caller
+participant "C_AuditoriaService" as aud
+participant "C_TypeORM" as orm
+participant "usuario" as uent
+participant "log_auditoria" as aent
+
+user -> view : Ingresa nombre_usuario\ny password
+activate view
+
+view -> ctrl : POST /auth/login\n{ nombre_usuario, password }
+activate ctrl
+
+ctrl -> caller : login(loginDto)
+activate caller
+
+caller -> orm : findOne(usuario por\nnombre_usuario, con roles)
+activate orm
+
+orm -> uent : SELECT usuario\nJOIN usuario_rol JOIN rol\nWHERE nombre_usuario
+activate uent
+uent --> orm : Datos usuario + roles
+deactivate uent
+
+orm --> caller : Usuario (existe y activo)
+deactivate orm
+
+caller -> caller : Valida password y genera token:\nbcrypt.compare(...) +\njwtService.signAsync(payload)
+activate caller
+deactivate caller
+
+caller -> aud : create({ id_usuario, accion: 'LOGIN',\nentidad_afectada: 'usuario',\nid_entidad_afectada, valor_nuevo })
+activate aud
+
+aud -> orm : auditoriaRepository.create(\ncreateAuditoriaDto)
+activate orm
+orm --> aud : Instancia Auditoria\n(en memoria)
+deactivate orm
+
+aud -> orm : auditoriaRepository.save(auditoria)
+activate orm
+
+orm -> aent : INSERT log_auditoria
+activate aent
+aent --> orm : Error — fallo de escritura\n(p. ej. QueryFailedError)
+deactivate aent
+
+orm --> aud : throw QueryFailedError
+deactivate orm
+
+aud --> caller : throw QueryFailedError\n(propagado al llamante)
+deactivate aud
+
+caller --> ctrl : throw QueryFailedError\n(propagado)
+deactivate caller
+
+ctrl --> view : 500 Internal Server Error
+deactivate ctrl
+
+view --> user : Muestra "Error interno\ndel servidor"
+deactivate view
+
+@enduml

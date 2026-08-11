@@ -1,0 +1,69 @@
+@startuml CU42-exc-nombre-duplicado
+title CU-42 — Editando bodega (excepción: nombre duplicado)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 25
+skinparam ActorPadding 20
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_EditarBodega" as view
+participant "C_RolesGuard" as guard
+participant "C_BodegasController" as ctrl
+participant "C_BodegasService" as svc
+participant "C_TypeORM" as orm
+participant "bodega" as bent
+
+user -> view : Ingresa nuevo nombre\n(ya existe en la empresa)
+activate view
+
+view -> guard : PATCH /bodegas/:id\n{ nombre?, direccion? }
+activate guard
+guard --> view : Token JWT válido\n(rol ADMIN o SUPERUSUARIO)
+deactivate guard
+
+view -> ctrl : PATCH /bodegas/:id\n{ nombre?, direccion? }
+activate ctrl
+
+ctrl -> svc : update(id, updateBodegaDto, actorId)
+activate svc
+
+svc -> orm : findOne({ id_bodega: id })
+activate orm
+
+orm -> bent : SELECT bodega\nWHERE id_bodega = :id
+activate bent
+bent --> orm : Datos bodega
+deactivate bent
+
+orm --> svc : bodega (existe)
+deactivate orm
+
+svc -> orm : findOne({ nombre: dto.nombre,\nid_empresa: bodega.id_empresa })
+activate orm
+
+orm -> bent : SELECT bodega\nWHERE nombre = :nombre\nAND id_empresa = :id_empresa
+activate bent
+bent --> orm : Bodega existente (duplicado)
+deactivate bent
+
+orm --> svc : bodega (nombre ya en uso)
+deactivate orm
+
+svc --> ctrl : throw BadRequestException\n('Ya existe una bodega con ese\nnombre en esta empresa.')
+deactivate svc
+
+ctrl --> view : 400 Bad Request
+deactivate ctrl
+
+view --> user : Muestra "Ya existe una bodega\ncon ese nombre en esta empresa."
+deactivate view
+
+@enduml

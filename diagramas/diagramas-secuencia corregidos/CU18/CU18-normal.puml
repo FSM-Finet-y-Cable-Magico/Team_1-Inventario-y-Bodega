@@ -1,0 +1,118 @@
+@startuml CU18-normal
+title CU-18 — Editando tipo de equipo con aislamiento de empresa (flujo normal)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 25
+skinparam ActorPadding 20
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_EditarTipoEquipo" as view
+participant "C_CompanyIsolationGuard" as cig
+participant "C_RolesGuard" as rg
+participant "C_CatalogController" as ctrl
+participant "C_CatalogService" as svc
+participant "C_TypeORM" as orm
+participant "tipo_equipo" as tent
+
+user -> view : Ingresa cambios al\ntipo de equipo y envía
+activate view
+
+view -> cig : PATCH /catalogo/:id\n{ nombre, categoria, requiereSerialNumber }
+activate cig
+
+cig -> cig : Verifica id_empresa\nen token JWT
+activate cig
+deactivate cig
+
+cig -> rg : Pasa al siguiente guard
+deactivate cig
+activate rg
+
+rg -> rg : Verifica rol\nADMIN o SUPERUSUARIO
+activate rg
+deactivate rg
+
+rg -> ctrl : editarTipoEquipo(id, body, actor)
+deactivate rg
+activate ctrl
+
+ctrl -> svc : editarTipo(id,\n{ ...body, id_empresa: actor.id_empresa })
+activate svc
+
+svc -> svc : parseInt(id) — valida\nque sea número
+activate svc
+deactivate svc
+
+svc -> orm : findOne({ id_tipo_equipo: idNum,\nid_empresa: dto.id_empresa })
+activate orm
+
+orm -> tent : SELECT tipo_equipo\nWHERE id_tipo_equipo AND id_empresa
+activate tent
+tent --> orm : Registro tipo_equipo
+deactivate tent
+
+orm --> svc : tipo (encontrado)
+deactivate orm
+
+svc -> orm : count({ id_tipo_equipo: idNum })\nen unidad_equipo — si cambia requiereSerialNumber
+activate orm
+
+orm -> tent : SELECT COUNT unidad_equipo\nWHERE id_tipo_equipo
+activate tent
+tent --> orm : totalUnidadesAsociadas
+deactivate tent
+
+orm --> svc : 0 unidades (cambio permitido)
+deactivate orm
+
+svc -> orm : findOne({ nombre, id_empresa, activo })\n— verifica duplicado de nombre
+activate orm
+
+orm -> tent : SELECT tipo_equipo\nWHERE nombre AND id_empresa AND activo
+activate tent
+tent --> orm : null (sin duplicado)
+deactivate tent
+
+orm --> svc : null
+deactivate orm
+
+svc -> orm : update(idNum, datosActualizar)
+activate orm
+
+orm -> tent : UPDATE tipo_equipo\nSET nombre, categoria,\nrequiereSerialNumber\nWHERE id_tipo_equipo
+activate tent
+tent --> orm : Actualizado
+deactivate tent
+
+orm --> svc : UpdateResult
+deactivate orm
+
+svc -> orm : findOne({ id_tipo_equipo: idNum })
+activate orm
+
+orm -> tent : SELECT tipo_equipo\nWHERE id_tipo_equipo
+activate tent
+tent --> orm : Registro actualizado
+deactivate tent
+
+orm --> svc : TipoEquipo actualizado
+deactivate orm
+
+svc --> ctrl : TipoEquipo actualizado
+deactivate svc
+
+ctrl --> view : 200 OK\n{ TipoEquipo actualizado }
+deactivate ctrl
+
+view --> user : Muestra tipo de equipo\ncon los cambios aplicados
+deactivate view
+
+@enduml

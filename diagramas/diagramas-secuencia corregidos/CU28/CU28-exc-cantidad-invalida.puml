@@ -1,0 +1,63 @@
+@startuml CU28-exc-cantidad-invalida
+title CU-28 — Validando número de serie de equipo (excepción: cantidad inválida — ingreso de consumible)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 25
+skinparam ActorPadding 20
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_RegistrarUnidad" as view
+participant "C_UnitsController" as ctrl
+participant "C_UnitsService" as units
+participant "C_CatalogService" as catalog
+participant "C_TypeORM" as orm
+participant "tipo_equipo" as tent
+
+user -> view : Ingresa cantidad 0 o negativa\npara un consumible (NS = No)
+activate view
+
+view -> ctrl : POST /unidades/consumibles\n{ id_tipo_equipo, id_bodega,\ncantidad }
+activate ctrl
+
+ctrl -> units : ingresarConsumible(body,\nactor.id_empresa)
+activate units
+
+units -> catalog : determinarNaturalezaEquipo(\nid_tipo_equipo, id_empresa)
+activate catalog
+
+catalog -> orm : findOne({ id_tipo_equipo,\nid_empresa })
+activate orm
+
+orm -> tent : SELECT tipo_equipo\nWHERE id_tipo_equipo\nAND id_empresa
+activate tent
+tent --> orm : Registro tipo_equipo\n(requiereSerialNumber = false)
+deactivate tent
+
+orm --> catalog : tipo (TipoEquipo)
+deactivate orm
+
+catalog --> units : { clasificacion:\n'CONSUMIBLE / VOLUMEN' }
+deactivate catalog
+
+units -> units : Valida cantidad:\n!Number.isInteger(cantidad)\n|| cantidad <= 0 → inválida
+activate units
+deactivate units
+
+units --> ctrl : throw BadRequestException\n('La cantidad debe ser un número\nentero positivo mayor a cero.')
+deactivate units
+
+ctrl --> view : 400 Bad Request
+deactivate ctrl
+
+view --> user : Muestra "La cantidad debe ser un\nnúmero entero positivo mayor a cero."
+deactivate view
+
+@enduml

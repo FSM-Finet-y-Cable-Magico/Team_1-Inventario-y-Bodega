@@ -1,0 +1,79 @@
+@startuml CU01-Login-Normal
+title CU-01 — Iniciando sesión en el sistema (flujo normal)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 25
+skinparam ActorPadding 20
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_Login" as view
+participant "C_AuthController" as ctrl
+participant "C_AuthService" as svc
+participant "C_AuditoriaService" as aud
+participant "C_TypeORM" as orm
+participant "usuario" as uent
+participant "log_auditoria" as aent
+
+user -> view : Ingresa nombre_usuario\ny password
+activate view
+
+view -> ctrl : POST /auth/login\n{ nombre_usuario, password }
+activate ctrl
+
+ctrl -> svc : login(loginDto)
+activate svc
+
+svc -> orm : findOne(usuario por\nnombre_usuario, con roles)
+activate orm
+
+orm -> uent : SELECT usuario\nJOIN usuario_rol JOIN rol\nWHERE nombre_usuario
+activate uent
+uent --> orm : Datos usuario + roles
+deactivate uent
+
+orm --> svc : Usuario (existe y activo)
+deactivate orm
+
+svc -> svc : Verifica password:\nbcrypt.compare(password,\npassword_hash)
+activate svc
+deactivate svc
+
+svc -> svc : Genera token:\njwtService.signAsync({ sub,\nnombre_usuario, id_empresa, roles })
+activate svc
+deactivate svc
+
+svc -> aud : create({ accion: 'LOGIN',\nentidad_afectada: 'usuario' })
+activate aud
+
+aud -> orm : save(log)
+activate orm
+
+orm -> aent : INSERT log_auditoria
+activate aent
+aent --> orm : Registrado
+deactivate aent
+
+orm --> aud : Log guardado
+deactivate orm
+
+aud --> svc : Auditoría registrada
+deactivate aud
+
+svc --> ctrl : { access_token }
+deactivate svc
+
+ctrl --> view : 200 OK\n{ access_token }
+deactivate ctrl
+
+view --> user : Redirige al dashboard
+deactivate view
+
+@enduml

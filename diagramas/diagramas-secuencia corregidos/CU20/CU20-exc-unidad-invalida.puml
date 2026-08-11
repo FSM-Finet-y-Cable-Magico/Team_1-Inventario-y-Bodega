@@ -1,0 +1,64 @@
+@startuml CU20-exc-unidad-invalida
+title CU-20 — Registrando solicitud de transferencia inter-empresa\n(excepción: unidad no pertenece a empresa, estado inválido\no no está en bodega de origen indicada)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 25
+skinparam ActorPadding 20
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_Transferencias" as view
+participant "C_TransferenciasController" as ctrl
+participant "C_TransferenciasService" as svc
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as uent
+
+user -> view : Completa formulario con\nunidad que no cumple\ncondiciones de transferencia
+activate view
+
+view -> ctrl : POST /transferencias\n{ CreateTransferenciaDto }
+activate ctrl
+
+ctrl -> svc : registrarTransferencia(dto, req.user)
+activate svc
+
+svc -> svc : Verifica empresa origen\n!= empresa destino: OK
+activate svc
+deactivate svc
+
+svc -> svc : Verifica ids_unidades\nno vacío: OK
+activate svc
+deactivate svc
+
+svc -> orm : findBy({ id_unidad: In(dto.ids_unidades) })
+activate orm
+
+orm -> uent : SELECT unidad_equipo\nWHERE id_unidad IN (...)
+activate uent
+uent --> orm : Lista de unidades
+deactivate uent
+
+orm --> svc : unidades[]
+deactivate orm
+
+svc -> svc : forEach(unidad): verifica condiciones\n— si id_empresa != empresa_origen:\n  throw ForbiddenException('[serial] no pertenece a su empresa')\n— si estado != 'En bodega':\n  throw BadRequestException('[serial] debe estar En bodega')\n— si id_bodega_actual != id_bodega_origen:\n  throw BadRequestException('[serial] no está en bodega de origen')
+activate svc
+deactivate svc
+
+svc --> ctrl : throw ForbiddenException\no BadRequestException\ncon mensaje específico de la unidad
+deactivate svc
+
+ctrl --> view : 403 Forbidden o 400 Bad Request
+deactivate ctrl
+
+view --> user : Muestra error específico\nde la unidad inválida
+deactivate view
+
+@enduml

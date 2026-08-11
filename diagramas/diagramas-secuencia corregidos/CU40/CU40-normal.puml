@@ -1,0 +1,112 @@
+@startuml CU40-normal
+title CU-40 — Registrando diagnóstico técnico al enviar a revisión (flujo normal)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 25
+skinparam ActorPadding 20
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_CambiarEstado" as view
+participant "C_RolesGuard" as guard
+participant "C_UnitsController" as ctrl
+participant "C_UnitsService" as svc
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as uent
+participant "historial_estado_equipo" as hent
+
+user -> view : Selecciona unidad y elige\n'En revision' + diagnostico tecnico
+activate view
+
+view -> guard : PATCH /unidades/:id/cambiar-estado\n{ nuevoEstado: 'En revision',\ndiagnostico: 'No enciende' }
+activate guard
+
+guard --> view : Rol autorizado\n(ADMIN / TECNICO_TERRENO)
+deactivate guard
+
+view -> ctrl : transicionarEstadoEquipo(id,\nnuevoEstado, observacion, diagnostico)
+activate ctrl
+
+ctrl -> svc : transicionarEstado(id,\n'En revision', actor,\nobservacion, 'No enciende')
+activate svc
+
+svc -> orm : findOne(id_unidad,\nrelations: tipoEquipo)
+activate orm
+
+orm -> uent : SELECT unidad_equipo\nWHERE id_unidad = :id
+activate uent
+uent --> orm : Datos unidad\n(estado: 'Asignado a tecnico')
+deactivate uent
+
+orm --> svc : UnidadEquipo encontrada
+deactivate orm
+
+svc -> svc : Valida transicion permitida:\n'Asignado a tecnico' a 'En revision'
+activate svc
+deactivate svc
+
+svc -> svc : Valida diagnostico no vacio\ny en DIAGNOSTICOS_PERMITIDOS
+activate svc
+deactivate svc
+
+svc -> svc : unidad.diagnosticoTecnico\n= 'No enciende'
+activate svc
+deactivate svc
+
+svc -> orm : createQueryRunner()\nconnect() + startTransaction()
+activate orm
+orm --> svc : QueryRunner listo
+deactivate orm
+
+svc -> svc : unidad.estado = 'En revision'
+activate svc
+deactivate svc
+
+svc -> orm : queryRunner.manager.save(unidad)
+activate orm
+
+orm -> uent : UPDATE unidad_equipo SET\nestado='En revision',\ndiagnostico_tecnico='No enciende'\nWHERE id_unidad = :id
+activate uent
+uent --> orm : Unidad actualizada
+deactivate uent
+
+orm --> svc : Unidad guardada
+deactivate orm
+
+svc -> svc : Crea nuevoHistorial:\n{ estadoAnterior, estadoNuevo,\nmotivo: 'Ingreso a taller tecnico.\nDiagnostico: No enciende',\nfechaHora }
+activate svc
+deactivate svc
+
+svc -> orm : queryRunner.manager.save(nuevoHistorial)
+activate orm
+
+orm -> hent : INSERT historial_estado_equipo\n(id_unidad, id_usuario,\nestado_anterior, estado_nuevo,\nmotivo, fecha_hora)
+activate hent
+hent --> orm : Historial insertado
+deactivate hent
+
+orm --> svc : Historial guardado
+deactivate orm
+
+svc -> orm : queryRunner.commitTransaction()\n+ release()
+activate orm
+orm --> svc : Transaccion confirmada
+deactivate orm
+
+svc --> ctrl : { success: true,\nestadoActual: 'En revision',\ndiagnostico_registrado: 'No enciende' }
+deactivate svc
+
+ctrl --> view : 200 OK\n{ success: true,\nestadoActual: 'En revision' }
+deactivate ctrl
+
+view --> user : Muestra estado actualizado\na 'En revision'
+deactivate view
+
+@enduml

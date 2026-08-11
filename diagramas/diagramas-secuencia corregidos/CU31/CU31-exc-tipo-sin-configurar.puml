@@ -1,0 +1,63 @@
+@startuml CU31-exc-tipo-sin-configurar
+title CU-31 — Distinguiendo naturaleza de equipo (excepción: tipo sin requiereSerialNumber configurado)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 25
+skinparam ActorPadding 20
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Usuario" as user
+participant "V_RegistrarUnidad" as view
+participant "C_UnitsController" as ctrl
+participant "C_UnitsService" as units
+participant "C_CatalogService" as catalog
+participant "C_TypeORM" as orm
+participant "tipo_equipo" as tent
+
+user -> view : Selecciona tipo de equipo\ne ingresa datos del registro
+activate view
+
+view -> ctrl : POST /unidades\n{ id_tipo_equipo, numero_serie,\nid_bodega_actual }
+activate ctrl
+
+ctrl -> units : registrarUnidad(body,\nactor.id_empresa)
+activate units
+
+units -> catalog : determinarNaturalezaEquipo(\nidTipoEquipo, idEmpresaContexto)
+activate catalog
+
+catalog -> orm : findOne({ id_tipo_equipo,\nid_empresa })
+activate orm
+
+orm -> tent : SELECT tipo_equipo\nWHERE id_tipo_equipo\nAND id_empresa
+activate tent
+tent --> orm : Registro tipo_equipo\n(requiereSerialNumber = null)
+deactivate tent
+
+orm --> catalog : tipo (requiereSerialNumber = null)
+deactivate orm
+
+catalog -> catalog : Evalúa tipo.requiereSerialNumber\n→ null / undefined detectado
+activate catalog
+deactivate catalog
+
+catalog --> units : throw BadRequestException\n('Error de configuración: el tipo de equipo\n[nombre] no tiene definida la propiedad\nrequiereSerialNumber. Contacte al administrador.')
+deactivate catalog
+
+units --> ctrl : throw BadRequestException\n(propagada)
+deactivate units
+
+ctrl --> view : 400 Bad Request
+deactivate ctrl
+
+view --> user : Muestra "Error de configuración:\nel tipo de equipo no tiene definida\nla propiedad requiereSerialNumber..."
+deactivate view
+
+@enduml
