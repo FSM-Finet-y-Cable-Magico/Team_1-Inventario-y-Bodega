@@ -10,3 +10,7 @@ diagramas-secuencia.zip
 
 script-actualizacion-bdd.txt
 .gitignore
+
+# Diagramas de secuencia (presentación y archivos de trabajo)
+diagramas/diagramas-secuencia presentacion/
+diagramas/diagramas-secuencia/Auditoria_Diagramas_Secuencia.docx

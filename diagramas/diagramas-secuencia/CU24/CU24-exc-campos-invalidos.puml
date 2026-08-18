@@ -5,8 +5,8 @@ skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-skinparam ParticipantPadding 70
-skinparam ActorPadding 30
+skinparam ParticipantPadding 25
+skinparam ActorPadding 20
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black
@@ -17,8 +17,6 @@ actor "Usuario" as user
 participant "V_CrearTipoEquipo" as view
 participant "C_CatalogController" as ctrl
 participant "C_CatalogService" as svc
-participant "C_TypeORM" as orm
-participant "tipo_equipo" as tent
 
 user -> view : Envía formulario con\ncampos obligatorios\nincompletos o inválidos
 activate view

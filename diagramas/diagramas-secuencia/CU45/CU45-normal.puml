@@ -5,6 +5,8 @@ skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 25
+skinparam ActorPadding 20
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black
@@ -20,7 +22,6 @@ participant "C_TypeORM" as orm
 participant "bodega" as bent
 participant "unidad_equipo" as uent
 participant "stock_consumible" as scent
-participant "tipo_equipo" as tent
 
 user -> view : Solicita ver\nstock de bodega (id)
 activate view

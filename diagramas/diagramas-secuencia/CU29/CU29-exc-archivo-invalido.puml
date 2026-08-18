@@ -5,16 +5,8 @@ skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-<style>
-sequenceDiagram {
-  participant {
-    Margin 35
-  }
-  actor {
-    Margin 15
-  }
-}
-</style>
+skinparam ParticipantPadding 25
+skinparam ActorPadding 20
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black
@@ -24,9 +16,6 @@ hide footbox
 actor "Usuario" as user
 participant "V_FichaTecnica" as view
 participant "C_CatalogController" as ctrl
-participant "C_CatalogService" as svc
-participant "C_TypeORM" as orm
-participant "tipo_equipo" as tent
 
 user -> view : Selecciona tipo de equipo\ny adjunta archivo no PDF\no mayor a 5 MB
 activate view

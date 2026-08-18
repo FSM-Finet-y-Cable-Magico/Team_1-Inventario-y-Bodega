@@ -5,6 +5,8 @@ skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 25
+skinparam ActorPadding 20
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black
@@ -18,10 +20,6 @@ participant "C_BodegasController" as ctrl
 participant "C_BodegasService" as svc
 participant "C_TypeORM" as orm
 participant "bodega" as bent
-participant "log_auditoria" as aent
-participant "usuario" as uent
-participant "stock_consumible" as scent
-participant "unidad_equipo" as ueent
 
 user -> view : Solicita listado de bodegas\ncon filtros que no producen resultados
 activate view

@@ -5,16 +5,8 @@ skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-<style>
-sequenceDiagram {
-  participant {
-    Margin 35
-  }
-  actor {
-    Margin 15
-  }
-}
-</style>
+skinparam ParticipantPadding 25
+skinparam ActorPadding 20
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black
@@ -26,10 +18,8 @@ participant "V_EditarUsuario" as view
 participant "C_RolesGuard" as guard
 participant "C_UsuariosController" as ctrl
 participant "C_UsuariosService" as svc
-participant "C_AuditoriaService" as aud
 participant "C_TypeORM" as orm
 participant "usuario" as uent
-participant "log_auditoria" as aent
 
 user -> view : Intenta cambiar el rol\ndel usuario a SUPERUSUARIO
 activate view
