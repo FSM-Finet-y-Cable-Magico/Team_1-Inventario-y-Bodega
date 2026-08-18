@@ -89,6 +89,7 @@ npm run build
 ## Fase 5 — Documentación y diagramas (a la par)
 
 - Agrega fila en `docs/06-casos-de-uso-implementados.md`.
+- Actualiza el estado del CU en `docs/08-roadmap.md` (pendiente → implementado).
 - Actualiza el doc del módulo tocado en `docs/05-backend/` o `docs/04-frontend/`.
 - Crea los diagramas de secuencia en `diagramas/diagramas-secuencia/CUXX/`
   (`CUXX-normal.puml` + `CUXX-exc-*.puml`, formato de `01-flujo-de-trabajo.md` §5).

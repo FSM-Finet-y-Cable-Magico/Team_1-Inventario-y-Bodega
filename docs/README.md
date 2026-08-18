@@ -6,7 +6,7 @@
 
 **Proyecto:** Sistema de inventario y bodega para ISP (Finet / Cable Mágico)
 **Stack:** Frontend SvelteKit (Svelte 5) · Backend NestJS (TypeORM) · Base de datos PostgreSQL
-**Avance:** ~46 de ~94 casos de uso implementados (Incremento 1: CU-01 a CU-46).
+**Avance:** ~46 de 96 casos de uso implementados (Incremento 1: CU-01 a CU-46).
 
 ---
 
@@ -21,6 +21,7 @@
 | 5 | [05-backend/README.md](./05-backend/README.md) | Convenciones del backend, módulos existentes, endpoints y reglas de negocio. |
 | 6 | [06-casos-de-uso-implementados.md](./06-casos-de-uso-implementados.md) | Estado actual: qué CU ya están hechos y dónde vive cada uno. |
 | 7 | [07-guia-implementacion-cu.md](./07-guia-implementacion-cu.md) | **Checklist paso a paso** para implementar un caso de uso nuevo (front + back). |
+| 8 | [08-roadmap.md](./08-roadmap.md) | **Estado de los 96 casos de uso** (implementado / en progreso / pendiente). **Se actualiza en cada avance.** |
 
 > **Regla de oro:** antes de tocar código para un caso de uso, lee al menos
 > `01-flujo-de-trabajo.md` y el módulo del backend/frontend que toca el CU.
@@ -33,7 +34,7 @@
 
 ```
 Team_1-Inventario-y-Bodega/
-├── docs/                        ← ESTA documentación
+├── docs/                        ← ESTA documentación (+ casos-de-uso.json y 08-roadmap.md)
 ├── codigo/                      ← EL SISTEMA (fullstack)
 │   ├── docker-compose.yml       ← Orquestación: db + backend + frontend + nginx
 │   ├── database/init.sql        ← Esquema SQL inicial (se ejecuta al primer arranque)
@@ -78,6 +79,8 @@ Team_1-Inventario-y-Bodega/
 7. **Los diagramas y archivos de documentación se actualizan a la par del código**:
    se crean/actualizan mientras se programa el CU (no al final).
 8. **Un caso de uso se trabaja junto con sus restricciones/excepciones** (CU + CU restricción).
+9. **El roadmap (`docs/08-roadmap.md`) se actualiza en cada avance.** Al terminar (o empezar) un
+   CU, cada desarrollador marca su estado ahí (pendiente → en progreso → implementado).
 
 ---
 

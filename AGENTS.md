@@ -6,7 +6,7 @@
 ## 1. Qué es este proyecto
 
 Sistema fullstack de **inventario y bodega** para un ISP (empresas **Finet** y **Cable Mágico**).
-~46 de ~94 casos de uso ya están implementados (CU-01 a CU-46).
+46 de 96 casos de uso ya están implementados (CU-01 a CU-46); el resto (CU-47..96) está pendiente.
 
 | Capa | Tecnología |
 |------|-----------|
@@ -29,6 +29,7 @@ Casos de uso/CU-XX/              ← evidencia visual (capturas) por CU
 diagramas/                       ← diagramas del proyecto (secuencia por CU en diagramas-secuencia/CUXX/)
 archivos-incremento-1/           ← artefactos del Incremento 1
 docs/casos-de-uso.json           ← fuente de información de los casos de uso (lo coloca el jefe de grupo)
+docs/08-roadmap.md               ← estado de los 96 CUs (implementado/en progreso/pendiente); se actualiza en cada avance
 ```
 
 ## 3. Reglas de trabajo (NO NEGOCIABLES)
@@ -43,6 +44,8 @@ docs/casos-de-uso.json           ← fuente de información de los casos de uso 
 5. **El diseño UI está cerrado.** Pantallas nuevas = mismos patrones; NO rediseñar.
 6. **Los diagramas y documentación se actualizan a la par del código** del CU.
 7. **CU + sus restricciones/excepciones se implementan juntos.**
+8. **El roadmap (`docs/08-roadmap.md`) se actualiza en cada avance.** Al empezar o terminar un
+   CU, marca su estado ahí (pendiente → en progreso → implementado).
 
 ## 4. Documentación (leer según la tarea)
 
@@ -56,6 +59,7 @@ docs/casos-de-uso.json           ← fuente de información de los casos de uso 
 | `docs/04-frontend/` (diseno, componentes, api, rutas) | Para cualquier cambio de frontend. |
 | `docs/05-backend/` (por módulo) | Para cualquier cambio de backend. |
 | `docs/06-casos-de-uso-implementados.md` | Estado CU-01..46 y mapa CU→módulos/rutas. |
+| `docs/08-roadmap.md` | Estado de los 96 CUs (implementado/en progreso/pendiente). **Actualizar en cada avance.** |
 
 Regla: **antes de tocar código para un CU**, lee `docs/01-flujo-de-trabajo.md` y el módulo
 backend/frontend que interviene.
