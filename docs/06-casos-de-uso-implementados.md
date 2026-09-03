@@ -1,12 +1,12 @@
 # Casos de uso — Estado de implementación (CU-01 a CU-46)
 
-> **Contexto:** el proyecto tiene ~94 casos de uso totales. En el **Incremento 1** se implementaron
-> **46** (CU-01 a CU-46), superando el 30% mínimo exigido por la rúbrica. Los restantes (~48) se
+> **Contexto:** el proyecto tiene **96 casos de uso totales**. En el **Incremento 1** se implementaron
+> **46** (CU-01 a CU-46), superando el 30% mínimo exigido por la rúbrica. Los restantes (50) se
 > implementarán en incrementos siguientes siguiendo el flujo de `01-flujo-de-trabajo.md`.
 >
-> **La fuente de información para los CUs pendientes** es el archivo JSON de casos de uso que
-> entregará el jefe de grupo (aún no está en el repo). Cada CU se trabaja con sus
-> restricciones/excepciones.
+> **La fuente de información de los CUs** es el archivo `docs/casos-de-uso.json` (solo lectura).
+> Cada CU se trabaja con sus restricciones/excepciones. El estado de avance de los 96 CUs se
+> sigue en `docs/08-roadmap.md`.
 
 ## 1. Dónde vive la evidencia de cada CU implementado
 
@@ -36,9 +36,9 @@
 | 14 | Empresa sin asignación (restricción) | `auth` (login), `CompanyIsolationGuard` | — |
 | 15 | Dashboard consolidado (superusuario) | `companies` | `/dashboard` |
 | 16 | Mi dashboard por empresa | `companies` | `/dashboard` |
-| 17 | Crear bodega | `bodegas` | `/bodegas` |
-| 18 | Editar bodega | `bodegas` | `/bodegas/[id]` |
-| 19 | Desactivar bodega (última activa) | `bodegas` | `/bodegas` |
+| 17 | Crear registro con aislamiento de empresa | `inventario` (`CompanyIsolationGuard`) | `/catalogo` |
+| 18 | Editar registro con aislamiento de empresa | `inventario` (`CompanyIsolationGuard`) | `/catalogo/[id]` |
+| 19 | Eliminar/desactivar registro con aislamiento | `inventario` (`CompanyIsolationGuard`) | `/catalogo` |
 | 20 | Solicitar transferencia + notificación | `transferencias`, `companies`, `bodegas` | `/transferencias`, `Header` (campana) |
 | 21 | Aprobar transferencia + detalle | `transferencias` | `/transferencias` |
 | 22 | Rechazar transferencia (motivo obligatorio) | `transferencias` | `/transferencias` |
@@ -60,17 +60,12 @@
 | 38 | Garantía (fecha de vencimiento) | `inventario/units` | `/unidades/[id]` |
 | 39 | Alerta de garantía | `inventario/units` | `/unidades/[id]` |
 | 40 | Diagnóstico técnico (En revisión) | `inventario/units` | `/unidades/[id]` |
-| 41 | Responsable de bodega (crear) | `bodegas` | `/bodegas` |
-| 42 | Editar responsable de bodega | `bodegas` | `/bodegas/[id]` |
-| 43 | *(ver nota)* | — | — |
+| 41 | Crear bodega | `bodegas` | `/bodegas` |
+| 42 | Editar bodega | `bodegas` | `/bodegas/[id]` |
+| 43 | Desactivar bodega (última activa) | `bodegas` | `/bodegas` |
 | 44 | Listado de bodegas con stock | `bodegas` | `/bodegas` |
 | 45 | Stock por tipo/estado/unidad de medida | `bodegas` | `/bodegas/[id]` |
 | 46 | Umbral mínimo de stock + alertas | `bodegas`, `companies` | `/bodegas/[id]`, `/dashboard`, `Header` |
-
-> **Nota CU-43:** existen capturas en `Casos de uso/CU-43/` y diagramas en
-> `diagramas/diagramas-secuencia/CU43/`, pero no se detectó un endpoint/página dedicada con nombre
-> propio distinto a CU-41/42 en el análisis (el responsable de bodega aparece en CU-41/42/44).
-> Al validar con el JSON de casos de uso, confirmar qué cubre exactamente CU-43.
 
 ## 3. Diagramas disponibles (referencia para CUs pendientes)
 

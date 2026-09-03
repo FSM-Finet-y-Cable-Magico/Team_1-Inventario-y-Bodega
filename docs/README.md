@@ -6,7 +6,7 @@
 
 **Proyecto:** Sistema de inventario y bodega para ISP (Finet / Cable Mágico)
 **Stack:** Frontend SvelteKit (Svelte 5) · Backend NestJS (TypeORM) · Base de datos PostgreSQL
-**Avance:** ~46 de ~94 casos de uso implementados (Incremento 1: CU-01 a CU-46).
+**Avance:** ~46 de 96 casos de uso implementados (Incremento 1: CU-01 a CU-46).
 
 ---
 
@@ -21,6 +21,7 @@
 | 5 | [05-backend/README.md](./05-backend/README.md) | Convenciones del backend, módulos existentes, endpoints y reglas de negocio. |
 | 6 | [06-casos-de-uso-implementados.md](./06-casos-de-uso-implementados.md) | Estado actual: qué CU ya están hechos y dónde vive cada uno. |
 | 7 | [07-guia-implementacion-cu.md](./07-guia-implementacion-cu.md) | **Checklist paso a paso** para implementar un caso de uso nuevo (front + back). |
+| 8 | [08-roadmap.md](./08-roadmap.md) | **Estado de los 96 casos de uso** (implementado / en progreso / pendiente). **Se actualiza en cada avance.** |
 
 > **Regla de oro:** antes de tocar código para un caso de uso, lee al menos
 > `01-flujo-de-trabajo.md` y el módulo del backend/frontend que toca el CU.
@@ -29,11 +30,29 @@
 
 ---
 
+## Documentación de integración con los otros grupos (Incremento 2)
+
+> Contexto del proyecto integral: compartimos el cliente con **G2** (Portal Web), **G3**
+> (Terreno/FSM) y **G8** (CRM). Leer estos documentos al trabajar cualquier CU que consuma o
+> exponga endpoints de otro grupo, y antes de la reunión de acuerdos de integración.
+
+| Documento | Qué contiene |
+|-----------|--------------|
+| [09-cus-integracion-otros-equipos.md](./09-cus-integracion-otros-equipos.md) | Qué CUs restantes tocan dominios de otros equipos (clasificación por dominio de datos) y qué entidades nuevas introducen. |
+| [10-trazabilidad-entre-equipos.md](./10-trazabilidad-entre-equipos.md) | Matriz de entidades compartidas y conflictos entre los 4 grupos (qué es exclusivo nuestro y qué se cruza). |
+| [11-cus-tomados-por-otros-grupos.md](./11-cus-tomados-por-otros-grupos.md) | CUs de nuestra cola que NO implementamos (los tomó G3); nuestro alcance es consumir sus endpoints. |
+| [12-solicitud-endpoints-otros-grupos.md](./12-solicitud-endpoints-otros-grupos.md) | Endpoints que pedimos a G3/G8, equivalencias de estados (máquina es nuestra) y regla de descuento único de stock. |
+| [13-guia-global-endpoints-4-grupos.md](./13-guia-global-endpoints-4-grupos.md) | Instructivo global: qué endpoint debe crear/modificar/habilitar cada grupo + acuerdos pendientes. |
+| [anexos/](./anexos/README.md) | Copia de los JSON de casos de uso de G2/G3/G8 (solo lectura, material de referencia). |
+
+---
+
 ## Contenido del repositorio (mapa)
 
 ```
 Team_1-Inventario-y-Bodega/
-├── docs/                        ← ESTA documentación
+├── docs/                        ← ESTA documentación (+ casos-de-uso.json, 08-roadmap.md,
+│                                   09..13 integración con otros grupos y anexos/)
 ├── codigo/                      ← EL SISTEMA (fullstack)
 │   ├── docker-compose.yml       ← Orquestación: db + backend + frontend + nginx
 │   ├── database/init.sql        ← Esquema SQL inicial (se ejecuta al primer arranque)
@@ -78,6 +97,8 @@ Team_1-Inventario-y-Bodega/
 7. **Los diagramas y archivos de documentación se actualizan a la par del código**:
    se crean/actualizan mientras se programa el CU (no al final).
 8. **Un caso de uso se trabaja junto con sus restricciones/excepciones** (CU + CU restricción).
+9. **El roadmap (`docs/08-roadmap.md`) se actualiza en cada avance.** Al terminar (o empezar) un
+   CU, cada desarrollador marca su estado ahí (pendiente → en progreso → implementado).
 
 ---
 

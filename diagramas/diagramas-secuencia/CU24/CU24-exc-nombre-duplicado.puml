@@ -5,8 +5,8 @@ skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-skinparam ParticipantPadding 70
-skinparam ActorPadding 30
+skinparam ParticipantPadding 25
+skinparam ActorPadding 20
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black

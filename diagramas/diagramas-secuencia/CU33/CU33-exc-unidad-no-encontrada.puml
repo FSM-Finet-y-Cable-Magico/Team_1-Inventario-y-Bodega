@@ -5,16 +5,8 @@ skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-<style>
-sequenceDiagram {
-  participant {
-    Margin 35
-  }
-  actor {
-    Margin 15
-  }
-}
-</style>
+skinparam ParticipantPadding 25
+skinparam ActorPadding 20
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black
@@ -28,7 +20,6 @@ participant "C_UnitsController" as ctrl
 participant "C_UnitsService" as svc
 participant "C_TypeORM" as orm
 participant "unidad_equipo" as uent
-participant "tipo_equipo" as tent
 
 user -> view : Selecciona unidad\nde equipo (id inexistente)
 activate view

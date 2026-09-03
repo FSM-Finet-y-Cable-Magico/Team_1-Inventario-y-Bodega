@@ -55,15 +55,12 @@ gh pr create --base dev --head feat/CU-47-registrar-cliente \
 ## 2. El archivo JSON de casos de uso (fuente de información)
 
 La **fuente base de información** de lo que hay que implementar es un **archivo JSON con todos
-los casos de uso** del proyecto (se entrega por separado; aún no está en el repositorio).
+los casos de uso** del proyecto, ubicado en **`docs/casos-de-uso.json`** (lo coloca el jefe de grupo).
 
-Cuando el jefe de grupo lo entregue:
-
-1. Colócalo en una ubicación conocida y estable del repo (recomendado:
-   `docs/casos-de-uso.json` o la raíz del proyecto) para que todos los agentes lo encuentren.
-2. **No modifiques el JSON.** Es de solo lectura; es la especificación.
-3. Cada tarea de un desarrollador = **un caso de uso** (normalmente se trabaja el CU **junto con
+1. **No modifiques el JSON.** Es de solo lectura; es la especificación.
+2. Cada tarea de un desarrollador = **un caso de uso** (normalmente se trabaja el CU **junto con
    sus restricciones/excepciones**).
+3. El estado de avance de cada CU se refleja en **`docs/08-roadmap.md`** (ver sección 5).
 
 Formato esperado (referencial, puede variar): una lista de objetos con al menos los campos
 `codigo` (ej. `CU-47`), `nombre`, `descripcion`/`flujo_principal`, y `restricciones`/`excepciones`.
@@ -125,6 +122,8 @@ Los diagramas y archivos de documentación **no se hacen "después"**: se crean/
 **mientras se está programando** el CU. Esto mantiene al día:
 
 - `docs/06-casos-de-uso-implementados.md` — agregar el CU nuevo a la lista de implementados.
+- `docs/08-roadmap.md` — **actualizar el estado del CU** (pendiente → en progreso → implementado,
+  con rama/PR). Esta actualización es obligatoria en cada avance, no solo al final.
 - `docs/` módulos tocados (endpoints, entidades, páginas) si el CU agrega algo nuevo.
 - `diagramas/diagramas-secuencia/CUXX/` — agregar `CUXX-normal.puml` y `CUXX-exc-*.puml`
   (mismo formato de los existentes, ver `06-casos-de-uso-implementados.md` → formato PlantUML).
