@@ -338,12 +338,18 @@ export class UnitsService {
         };
     }
 
-    async transicionarEstado(unitId: number, nuevoEstado: string, actor: any, motivoPayload?: string, diagnosticoPayload?: string, descripcionOtroPayload?: string, simularErrorHistorial?: boolean) {
+    async transicionarEstado(unitId: number, nuevoEstado: string, actor: any, motivoPayload?: string, diagnosticoPayload?: string, descripcionOtroPayload?: string, simularErrorHistorial?: boolean, ubicacionFisicaPayload?: string) {
 
         // CU-36: la observación es opcional, con máximo 300 caracteres
         const observacion = motivoPayload?.trim() || undefined;
         if (observacion && observacion.length > 300) {
             throw new BadRequestException('La observación no puede superar los 300 caracteres.');
+        }
+
+        // CU-47: la ubicación física es texto libre opcional, con máximo 60 caracteres
+        const ubicacionFisica = ubicacionFisicaPayload?.trim() || null;
+        if (ubicacionFisica && ubicacionFisica.length > 60) {
+            throw new BadRequestException('La ubicación física no puede superar los 60 caracteres.');
         }
 
         const unidad = await this.unitRepository.findOne({
@@ -409,9 +415,20 @@ export class UnitsService {
             }
         }
 
+        // CU-47: ubicación física actual antes de la transición (para auditoría)
+        const ubicacionOrigen = unidad.ubicacionFisica ?? null;
+
+        // CU-47: al ingresar/reingresar a bodega se registra la ubicación física
+        // indicada por el actor (puede quedar vacía según la excepción del caso de uso)
+        if (nuevoEstado === 'En bodega') {
+            unidad.ubicacionFisica = ubicacionFisica;
+        }
+
         if (estadoOrigen === 'En bodega' && nuevoEstado !== 'En bodega') {
             unidad.id_bodega_actual = undefined;
             unidad.numeroPoste = undefined;
+            // CU-47: al salir de la bodega el sistema vacía automáticamente la ubicación física
+            unidad.ubicacionFisica = null;
         }
 
         // CU-36: registro transaccional del cambio de estado con reintentos.
@@ -436,6 +453,10 @@ export class UnitsService {
                     // CU-36/CU-40: el historial registra la observación opcional y, al
                     // entrar a revisión, también el diagnóstico técnico
                     let motivoHistorial = observacion ?? 'Cambio de estado ordinario';
+                    // CU-47: la ubicación física queda registrada junto al cambio de estado
+                    if (nuevoEstado === 'En bodega' && ubicacionFisica) {
+                        motivoHistorial += `. Ubicación física: ${ubicacionFisica}`;
+                    }
                     if (nuevoEstado === 'En revisión') {
                         motivoHistorial = `Ingreso a taller técnico. Diagnóstico: ${unidad.diagnosticoTecnico}`;
                         // si la descripción de "Otro" vino en el campo de observación
@@ -460,10 +481,21 @@ export class UnitsService {
                     await queryRunner.manager.save(nuevoHistorial);
                     await queryRunner.commitTransaction();
 
+                    // CU-47: auditoría de la transición; valor_nuevo incluye la ubicación física
+                    await this.auditoriaService.create({
+                        id_usuario: actor.id_usuario,
+                        accion: 'CAMBIAR_ESTADO',
+                        entidad_afectada: 'unidad_equipo',
+                        id_entidad_afectada: unidad.id_unidad,
+                        valor_anterior: { estado: estadoOrigen, ubicacion_fisica: ubicacionOrigen },
+                        valor_nuevo: { estado: nuevoEstado, ubicacion_fisica: unidad.ubicacionFisica ?? null },
+                    });
+
                     return {
                         success: true,
                         estadoActual: unidad.estado,
-                        diagnostico_registrado: unidad.diagnosticoTecnico ?? 'N/A'
+                        diagnostico_registrado: unidad.diagnosticoTecnico ?? 'N/A',
+                        ubicacion_fisica: unidad.ubicacionFisica ?? null
                     };
                 } catch (err) {
                     ultimoError = err instanceof Error ? err : new Error(String(err));

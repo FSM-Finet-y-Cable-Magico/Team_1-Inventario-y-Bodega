@@ -67,6 +67,7 @@ export class UnitsController {
         @Body('diagnostico') diagnostico: string,
         @Body('descripcionOtro') descripcionOtro: string,
         @Body('simularErrorHistorial') simularErrorHistorial: boolean,
+        @Body('ubicacion_fisica') ubicacionFisica: string,
         @CurrentUser() actor: any
     ) {
         return this.unitsService.transicionarEstado(
@@ -76,7 +77,8 @@ export class UnitsController {
             observacion,
             diagnostico,
             descripcionOtro,
-            simularErrorHistorial
+            simularErrorHistorial,
+            ubicacionFisica
         );
     }
 
