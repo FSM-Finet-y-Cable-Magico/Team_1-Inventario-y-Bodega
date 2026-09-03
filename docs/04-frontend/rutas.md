@@ -76,10 +76,14 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
 
 ### `/unidades/[id]`
 - **CUs:** CU-33 (ficha), CU-34 (editar datos), CU-35 (cambio de estado), CU-36 (historial + observaciones),
-  CU-37 (historial con usuario/empresa), CU-38/39 (garantía), CU-40 (diagnóstico en revisión).
+  CU-37 (historial con usuario/empresa), CU-38/39 (garantía), CU-40 (diagnóstico en revisión),
+  CU-47 (ubicación física al ingresar/reingresar a bodega).
 - **Endpoints:** `getUnit(id)`, `getUnitHistory(serialNumber)`, `getWarehouses()`, `updateUnit()`,
   `changeUnitState()`.
 - Máquina de transiciones replicada en el front (ver `03-base-de-datos.md`).
+- **CU-47:** en el modal de cambio de estado, si el destino es `'En bodega'` aparece el campo
+  opcional "Ubicación física en bodega" (≤60); si se deja vacío se muestra el aviso de trazabilidad
+  sin bloquear el envío. La ficha muestra la ubicación actual cuando la unidad está en bodega.
 
 ### `/bodegas`
 - **CUs:** CU-41 (crear con responsable), CU-42 (desactivar), CU-44 (listado con stock).
