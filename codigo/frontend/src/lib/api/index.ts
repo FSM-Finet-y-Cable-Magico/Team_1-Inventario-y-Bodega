@@ -168,6 +168,16 @@ export function setStockThreshold(id: number, data: { id_tipo_equipo: number; um
 	return api.post<any>(`/bodegas/${id}/umbral`, data);
 }
 
+// CU-85: reporte de stock actual con filtros opcionales por empresa, bodega y tipo
+export function getStockReport(params?: { id_empresa?: string; id_bodega?: string; id_tipo_equipo?: string }) {
+	const qs = new URLSearchParams();
+	if (params?.id_empresa) qs.set('id_empresa', params.id_empresa);
+	if (params?.id_bodega) qs.set('id_bodega', params.id_bodega);
+	if (params?.id_tipo_equipo) qs.set('id_tipo_equipo', params.id_tipo_equipo);
+	const query = qs.toString();
+	return api.get<import('$lib/types').ReporteStockFila[]>(`/reportes/stock${query ? '?' + query : ''}`);
+}
+
 // CU-23: filtros por estado, rango de fechas o empresa
 export function getTransfers(params?: { estado?: string; id_empresa?: string; fecha_inicio?: string; fecha_fin?: string }) {
 	const qs = new URLSearchParams();

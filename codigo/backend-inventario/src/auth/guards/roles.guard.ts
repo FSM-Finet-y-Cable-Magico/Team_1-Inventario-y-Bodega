@@ -1,4 +1,9 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuditoriaService } from 'src/auditoria/auditoria.service';
 
@@ -32,6 +37,8 @@ export class RolesGuard implements CanActivate {
       },
     });
 
-    throw new ForbiddenException('No tiene permisos para acceder a esta sección.');
+    throw new ForbiddenException(
+      'No tiene permisos para acceder a esta sección.',
+    );
   }
 }

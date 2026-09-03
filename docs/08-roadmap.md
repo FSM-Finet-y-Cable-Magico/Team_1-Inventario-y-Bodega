@@ -174,7 +174,7 @@ no esté reflejado aquí.
 
 | CU | Nombre | Estado | Notas |
 |----|--------|--------|-------|
-| CU-85 | Generando reporte de stock actual | [ ] Pendiente | |
+| CU-85 | Generando reporte de stock actual | [x] Implementado | Backend + frontend con filtros y alerta visual de bajo umbral |
 | CU-86 | Generando reporte de movimientos de inventario | [ ] Pendiente | |
 | CU-87 | Generando reporte de equipos instalados por cliente | [ ] Pendiente | |
 | CU-88 | Generando reporte de garantías | [ ] Pendiente | |

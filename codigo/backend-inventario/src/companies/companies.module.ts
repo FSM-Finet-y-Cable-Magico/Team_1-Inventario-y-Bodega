@@ -9,16 +9,16 @@ import { Transferencia } from '../transferencias/entities/transferencia.entity';
 import { MovimientoInventario } from '../transferencias/entities/movimiento-inventario.entity';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([
-            UnidadEquipo,
-            Bodega,
-            StockConsumible,
-            Transferencia,
-            MovimientoInventario,
-        ]),
-    ],
-    controllers: [CompaniesController],
-    providers: [CompaniesService],
+  imports: [
+    TypeOrmModule.forFeature([
+      UnidadEquipo,
+      Bodega,
+      StockConsumible,
+      Transferencia,
+      MovimientoInventario,
+    ]),
+  ],
+  controllers: [CompaniesController],
+  providers: [CompaniesService],
 })
 export class CompaniesModule {}

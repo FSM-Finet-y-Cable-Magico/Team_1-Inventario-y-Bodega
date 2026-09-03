@@ -1,4 +1,10 @@
-import { IsNotEmpty, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 // CU-01 Excepción 1: ante formato inválido el sistema responde el mensaje
 // genérico, sin especificar cuál de los dos campos falló.

@@ -61,7 +61,8 @@ export class AuditoriaService {
     const where: FindOptionsWhere<Auditoria> = {};
     if (filtros?.id_usuario) where.id_usuario = filtros.id_usuario;
     if (filtros?.accion) where.accion = filtros.accion;
-    if (filtros?.entidad_afectada) where.entidad_afectada = filtros.entidad_afectada;
+    if (filtros?.entidad_afectada)
+      where.entidad_afectada = filtros.entidad_afectada;
     if (filtros?.fecha_inicio && filtros?.fecha_fin) {
       where.fecha_hora = Between(filtros.fecha_inicio, filtros.fecha_fin);
     }
@@ -70,7 +71,8 @@ export class AuditoriaService {
     // Se resuelven los ids de usuario que cumplen y se filtra el log por ellos.
     if (filtros?.usuario || filtros?.id_empresa) {
       const whereUsuario: FindOptionsWhere<Usuario> = {};
-      if (filtros.usuario) whereUsuario.nombre_usuario = ILike(`%${filtros.usuario}%`);
+      if (filtros.usuario)
+        whereUsuario.nombre_usuario = ILike(`%${filtros.usuario}%`);
       if (filtros.id_empresa) whereUsuario.id_empresa = filtros.id_empresa;
       const coincidentes = await this.usuarioRepository.find({
         where: whereUsuario,
@@ -93,9 +95,19 @@ export class AuditoriaService {
     const usuarios = idsUsuarios.length
       ? await this.usuarioRepository.findBy({ id_usuario: In(idsUsuarios) })
       : [];
-    const mapaNombres = new Map(usuarios.map((u) => [u.id_usuario, u.nombre_usuario ?? u.nombre_completo]));
+    const mapaNombres = new Map(
+      usuarios.map((u) => [
+        u.id_usuario,
+        u.nombre_usuario ?? u.nombre_completo,
+      ]),
+    );
     const mapaEmpresas = new Map(EMPRESAS.map((e) => [e.id, e.nombre]));
-    const mapaEmpresaUsuario = new Map(usuarios.map((u) => [u.id_usuario, mapaEmpresas.get(u.id_empresa) ?? null]));
+    const mapaEmpresaUsuario = new Map(
+      usuarios.map((u) => [
+        u.id_usuario,
+        mapaEmpresas.get(u.id_empresa) ?? null,
+      ]),
+    );
 
     // CU-08: cada entrada incluye empresa en la que operaba y descripción breve
     return logs.map((l) => ({
