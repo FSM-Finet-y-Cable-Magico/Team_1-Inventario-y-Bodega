@@ -13,8 +13,8 @@ no esté reflejado aquí.
 ## Resumen
 
 - **Total de casos de uso:** 96
-- **Implementados (Incremento 1):** 46 (CU-01 a CU-46)
-- **Pendientes:** 49 (CU-47 a CU-96, excepto CU-85)
+- **Implementados:** 48 (CU-01 a CU-46, CU-85, CU-86)
+- **Pendientes:** 48 (CU-47 a CU-84, CU-87 a CU-96)
 
 ## Leyenda
 
@@ -175,7 +175,7 @@ no esté reflejado aquí.
 | CU | Nombre | Estado | Notas |
 |----|--------|--------|-------|
 | CU-85 | Generando reporte de stock actual | [x] Implementado | Grupo 5 · RF-60 · `/reportes/stock` · filtros, estados, umbral y auditoría |
-| CU-86 | Generando reporte de movimientos de inventario | [ ] Pendiente | |
+| CU-86 | Generando reporte de movimientos de inventario | [x] Implementado | Grupo 5 · RF-61 · `/reportes` · filtros, rango máximo 365 días, aislamiento y auditoría |
 | CU-87 | Generando reporte de equipos instalados por cliente | [ ] Pendiente | |
 | CU-88 | Generando reporte de garantías | [ ] Pendiente | |
 | CU-89 | Generando reporte de inventario actual de técnicos | [ ] Pendiente | |

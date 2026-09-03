@@ -225,3 +225,25 @@ export function getAuditLog(filters?: Record<string, string | number | undefined
 	const query = qs.toString();
 	return api.get<any>(`/auditoria${query ? '?' + query : ''}`);
 }
+
+// CU-86: reporte de movimientos con filtros por período y responsable
+export function generarReporteMovimientos(params?: {
+	id_empresa?: string;
+	id_bodega?: string;
+	id_tipo_equipo?: string;
+	fecha_desde?: string;
+	fecha_hasta?: string;
+	tipo_movimiento?: string;
+	id_usuario?: string;
+}) {
+	const qs = new URLSearchParams();
+	if (params?.id_empresa) qs.set('id_empresa', params.id_empresa);
+	if (params?.id_bodega) qs.set('id_bodega', params.id_bodega);
+	if (params?.id_tipo_equipo) qs.set('id_tipo_equipo', params.id_tipo_equipo);
+	if (params?.fecha_desde) qs.set('fecha_desde', params.fecha_desde);
+	if (params?.fecha_hasta) qs.set('fecha_hasta', params.fecha_hasta);
+	if (params?.tipo_movimiento) qs.set('tipo_movimiento', params.tipo_movimiento);
+	if (params?.id_usuario) qs.set('id_usuario', params.id_usuario);
+	const query = qs.toString();
+	return api.get<import('$lib/types').ReporteMovimientoFila[]>(`/reportes/movimientos${query ? '?' + query : ''}`);
+}

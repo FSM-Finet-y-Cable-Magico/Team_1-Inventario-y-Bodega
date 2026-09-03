@@ -11,11 +11,22 @@ import { Bodega } from '../bodegas/entities/bodega.entity';
 import { StockConsumible } from '../bodegas/entities/stock-consumible.entity';
 import { TipoEquipo } from '../inventario/entities/tipo-equipo.entity';
 import { UnidadEquipo } from '../inventario/entities/unidad-equipo.entity';
+import { MovimientoInventario } from '../transferencias/entities/movimiento-inventario.entity';
 
 type FiltrosStock = {
   id_empresa?: number;
   id_bodega?: number;
   id_tipo_equipo?: number;
+};
+
+type FiltrosMovimientos = {
+  id_empresa?: number;
+  id_bodega?: number;
+  id_tipo_equipo?: number;
+  fecha_desde?: string;
+  fecha_hasta?: string;
+  tipo_movimiento?: string;
+  id_usuario?: number;
 };
 
 type Actor = {
@@ -43,6 +54,8 @@ export class ReportesService {
     private readonly tipoEquipoRepository: Repository<TipoEquipo>,
     @InjectRepository(UnidadEquipo)
     private readonly unidadRepository: Repository<UnidadEquipo>,
+    @InjectRepository(MovimientoInventario)
+    private readonly movimientoRepository: Repository<MovimientoInventario>,
     private readonly auditoriaService: AuditoriaService,
   ) {}
 
@@ -186,17 +199,94 @@ export class ReportesService {
     return resultado;
   }
 
+  async getMovementsReport(filtros: FiltrosMovimientos, actor: Actor): Promise<any[]> {
+    this.validateDateRange(filtros.fecha_desde, filtros.fecha_hasta);
+    const esSuperusuario = actor.roles?.includes('SUPERUSUARIO') ?? false;
+    if (!esSuperusuario && filtros.id_empresa !== undefined && filtros.id_empresa !== actor.id_empresa) {
+      throw new ForbiddenException('No tiene permisos para consultar esta empresa.');
+    }
+    const idEmpresa = esSuperusuario ? filtros.id_empresa : actor.id_empresa;
+    if (!esSuperusuario && !idEmpresa) throw new BadRequestException('El usuario no tiene una empresa asignada.');
+
+    const query = this.movimientoRepository
+      .createQueryBuilder('m')
+      .leftJoin('tipo_equipo', 't', 't.id_tipo_equipo = m.id_tipo_equipo')
+      .leftJoin('unidad_equipo', 'u', 'u.id_unidad = m.id_unidad')
+      .leftJoin('bodega', 'bo', 'bo.id_bodega = m.id_bodega_origen')
+      .leftJoin('bodega', 'bd', 'bd.id_bodega = m.id_bodega_destino')
+      .leftJoin('usuario', 'usr', 'usr.id_usuario = m.id_usuario')
+      .select([
+        'm.id_movimiento AS id_movimiento', 'm.fecha AS fecha',
+        'm.tipo_movimiento AS tipo_movimiento', 'm.cantidad AS cantidad',
+        'm.referencia_id AS referencia_id', 'm.id_tipo_equipo AS id_tipo_equipo',
+        'm.id_unidad AS id_unidad', 'm.id_usuario AS id_usuario',
+        'COALESCE(u.numero_serie, t.nombre) AS item', 't.nombre AS tipo_equipo',
+        'COALESCE(bd.id_bodega, bo.id_bodega) AS id_bodega',
+        'COALESCE(bd.nombre, bo.nombre) AS bodega',
+        'COALESCE(m.id_empresa_destino, m.id_empresa_origen) AS id_empresa',
+        'usr.nombre_completo AS usuario',
+      ])
+      .orderBy('m.fecha', 'DESC').addOrderBy('m.id_movimiento', 'DESC');
+
+    if (idEmpresa !== undefined) query.andWhere('(m.id_empresa_origen = :idEmpresa OR m.id_empresa_destino = :idEmpresa)', { idEmpresa });
+    if (filtros.id_bodega !== undefined) query.andWhere('(m.id_bodega_origen = :idBodega OR m.id_bodega_destino = :idBodega)', { idBodega: filtros.id_bodega });
+    if (filtros.id_tipo_equipo !== undefined) query.andWhere('m.id_tipo_equipo = :idTipoEquipo', { idTipoEquipo: filtros.id_tipo_equipo });
+    if (filtros.fecha_desde) query.andWhere('m.fecha >= :fechaDesde::date', { fechaDesde: filtros.fecha_desde });
+    if (filtros.fecha_hasta) query.andWhere("m.fecha < (:fechaHasta::date + INTERVAL '1 day')", { fechaHasta: filtros.fecha_hasta });
+    if (filtros.tipo_movimiento) query.andWhere('m.tipo_movimiento = :tipoMovimiento', { tipoMovimiento: filtros.tipo_movimiento });
+    if (filtros.id_usuario !== undefined) query.andWhere('m.id_usuario = :idUsuario', { idUsuario: filtros.id_usuario });
+
+    const movimientos = await query.getRawMany();
+    const resultado = movimientos.map((movimiento) => ({
+      ...movimiento,
+      cantidad: Number(movimiento.cantidad),
+      empresa: this.nombreEmpresa(movimiento.id_empresa),
+      referencia_tipo: movimiento.referencia_id ? this.referenciaTipo(movimiento.tipo_movimiento) : null,
+    }));
+    await this.auditReport(actor, filtros, resultado.length, 'reporte_movimientos');
+    return resultado;
+  }
+
+  private validateDateRange(fechaDesde?: string, fechaHasta?: string) {
+    if (!fechaDesde && !fechaHasta) return;
+    if (!fechaDesde || !fechaHasta || !/^\d{4}-\d{2}-\d{2}$/.test(fechaDesde) || !/^\d{4}-\d{2}-\d{2}$/.test(fechaHasta)) {
+      throw new BadRequestException('Las fechas del reporte no son válidas.');
+    }
+    const inicio = new Date(`${fechaDesde}T00:00:00Z`);
+    const fin = new Date(`${fechaHasta}T00:00:00Z`);
+    if (Number.isNaN(inicio.getTime()) || Number.isNaN(fin.getTime()) || inicio > fin) {
+      throw new BadRequestException('La fecha de inicio debe ser anterior o igual a la fecha de fin.');
+    }
+    if ((fin.getTime() - inicio.getTime()) / 86_400_000 > 365) {
+      throw new BadRequestException('El rango de fechas no puede superar los 365 días.');
+    }
+  }
+
+  private nombreEmpresa(idEmpresa: number | null): string | null {
+    if (idEmpresa === 1) return 'Finet';
+    if (idEmpresa === 2) return 'Cable Mágico';
+    return null;
+  }
+
+  private referenciaTipo(tipoMovimiento: string): string {
+    if (tipoMovimiento.startsWith('TRANSFERENCIA')) return 'transferencia';
+    if (tipoMovimiento.startsWith('INGRESO')) return 'orden_ingreso';
+    if (tipoMovimiento.startsWith('PRESTAMO')) return 'prestamo';
+    return 'documento';
+  }
+
   private async auditReport(
     actor: Actor,
-    filtros: FiltrosStock,
+    filtros: FiltrosStock | FiltrosMovimientos,
     filas: number,
+    entidad = 'reporte_stock',
   ) {
     const actorId = actor.id_usuario ?? actor.sub;
     if (!actorId) return;
     await this.auditoriaService.create({
       id_usuario: actorId,
       accion: 'GENERAR_REPORTE',
-      entidad_afectada: 'reporte_stock',
+      entidad_afectada: entidad,
       id_entidad_afectada: 0,
       valor_anterior: null,
       valor_nuevo: { filtros, filas },

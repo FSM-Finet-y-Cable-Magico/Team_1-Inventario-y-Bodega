@@ -225,6 +225,22 @@ export interface ReporteStockFila {
 	bajo_umbral: boolean;
 }
 
+export interface ReporteMovimientoFila {
+	id_movimiento: number;
+	fecha: string | null;
+	tipo_movimiento: string;
+	item: string | null;
+	cantidad: number;
+	tipo_equipo: string | null;
+	id_empresa: number | null;
+	empresa: string | null;
+	id_bodega: number | null;
+	bodega: string | null;
+	usuario: string | null;
+	referencia_id: number | null;
+	referencia_tipo: string | null;
+}
+
 // Respuesta de GET /transferencias (CU-23)
 export interface Transferencia {
 	id_transferencia: number;

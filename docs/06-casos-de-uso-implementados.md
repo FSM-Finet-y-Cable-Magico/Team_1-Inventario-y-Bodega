@@ -67,6 +67,7 @@
 | 45 | Stock por tipo/estado/unidad de medida | `bodegas` | `/bodegas/[id]` |
 | 46 | Umbral mínimo de stock + alertas | `bodegas`, `companies` | `/bodegas/[id]`, `/dashboard`, `Header` |
 | 85 | Reporte de stock actual | `reportes`, `bodegas`, `inventario`, `auditoria` | `/reportes/stock` |
+| 86 | Reporte de movimientos de inventario | `reportes`, `transferencias` | `/reportes` |
 
 ## 3. Diagramas disponibles (referencia para CUs pendientes)
 

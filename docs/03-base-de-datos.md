@@ -69,7 +69,7 @@ FK → `unidad_equipo` con `ON DELETE CASCADE`.
 `id_movimiento` PK · `id_tipo_equipo` · `id_unidad` · `id_empresa_origen` · `id_empresa_destino` ·
 `id_bodega_origen` · `id_bodega_destino` · `id_usuario` · `tipo_movimiento` varchar(30) ·
 `cantidad` numeric(10,2) default 1 · `fecha` · `referencia_id` (→ `transferencia_equipo.id_transferencia`)
-Valores de `tipo_movimiento`: `TRANSFERENCIA_PENDIENTE`, `TRANSFERENCIA_APROBADA`, `TRANSFERENCIA_RECHAZADA`.
+Valores de `tipo_movimiento` vigentes para reportes: `INGRESO`, `ASIGNACION`, `SALIDA_A_TECNICO`, `DEVOLUCION`, `BAJA`, `TRANSFERENCIA`, `PRESTAMO`, `TRANSFERENCIA_PENDIENTE`, `TRANSFERENCIA_APROBADA`, `TRANSFERENCIA_RECHAZADA`. Los tres últimos son los estados de transferencia implementados actualmente; los demás quedan disponibles para los módulos de Incremento 2 que registren esos movimientos.
 
 ### `stock_consumible` — stock por cantidad de consumibles
 `id_stock` PK · `id_tipo_equipo` NOT NULL · `id_bodega` NOT NULL · `cantidad_disponible` numeric(10,2) default 0 ·

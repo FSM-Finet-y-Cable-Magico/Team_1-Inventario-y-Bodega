@@ -112,6 +112,12 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
 - Filtros opcionales por empresa (solo SUPERUSUARIO), bodega y tipo de equipo.
 - Tabla por tipo y bodega con estados, total activo, umbral y alerta visual bajo umbral.
 
+### `/reportes`
+- **CU:** CU-86 (reporte de movimientos de inventario).
+- **Endpoint:** `generarReporteMovimientos()` → `GET /reportes/movimientos`.
+- Filtros por empresa, bodega, tipo, fechas, tipo de movimiento y usuario; el rango máximo de 365 días se valida en vivo.
+- Tabla con fecha/hora, movimiento, NS o consumible, cantidad, empresa, bodega, usuario y referencia.
+
 ---
 
 ## Notas / deudas técnicas conocidas (para no repetirlas al implementar CUs)

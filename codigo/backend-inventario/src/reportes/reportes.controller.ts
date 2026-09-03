@@ -34,6 +34,32 @@ export class ReportesController {
     );
   }
 
+  @Get('movimientos')
+  @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
+  getMovimientos(
+    @Query('id_empresa') idEmpresa: string | undefined,
+    @Query('id_bodega') idBodega: string | undefined,
+    @Query('id_tipo_equipo') idTipoEquipo: string | undefined,
+    @Query('fecha_desde') fechaDesde: string | undefined,
+    @Query('fecha_hasta') fechaHasta: string | undefined,
+    @Query('tipo_movimiento') tipoMovimiento: string | undefined,
+    @Query('id_usuario') idUsuario: string | undefined,
+    @Req() req,
+  ) {
+    return this.reportesService.getMovementsReport(
+      {
+        id_empresa: this.parseOptionalId(idEmpresa, 'empresa'),
+        id_bodega: this.parseOptionalId(idBodega, 'bodega'),
+        id_tipo_equipo: this.parseOptionalId(idTipoEquipo, 'tipo de equipo'),
+        fecha_desde: fechaDesde,
+        fecha_hasta: fechaHasta,
+        tipo_movimiento: tipoMovimiento,
+        id_usuario: this.parseOptionalId(idUsuario, 'usuario'),
+      },
+      req.user,
+    );
+  }
+
   private parseOptionalId(
     value: string | undefined,
     label: string,
