@@ -12,6 +12,7 @@ Todas en `codigo/frontend/src/routes/`. Sin loaders SSR; carga client-side con `
 | Unidades | `/unidades` | todos |
 | Bodegas | `/bodegas` | SUPERUSUARIO, ADMIN, ADMIN_BODEGA |
 | Transferencias | `/transferencias` | SUPERUSUARIO, ADMIN |
+| Reportes | `/reportes/stock` | SUPERUSUARIO, ADMIN, ADMIN_BODEGA |
 | Auditoría | `/auditoria` | SUPERUSUARIO, ADMIN |
 
 > La protección real está en el backend. El menú solo oculta ítems por rol.
@@ -104,6 +105,12 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
 - **CUs:** CU-08 (visualizar log), CU-09 (filtrar).
 - **Endpoints:** `getAuditLog()` (paginado), `getEmpresas()`.
 - Listas fijas de acciones y entidades (ver código). `limit = 30`.
+
+### `/reportes/stock`
+- **CU:** CU-85 (reporte de stock actual).
+- **Endpoint:** `generarReporteStock()` → `GET /reportes/stock`.
+- Filtros opcionales por empresa (solo SUPERUSUARIO), bodega y tipo de equipo.
+- Tabla por tipo y bodega con estados, total activo, umbral y alerta visual bajo umbral.
 
 ---
 

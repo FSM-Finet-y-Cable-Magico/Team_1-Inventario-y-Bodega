@@ -221,7 +221,7 @@ export interface ReporteStockFila {
 	en_revision: number;
 	en_prestamo_externo: number;
 	total_activo: number;
-	umbral_minimo: number | null;
+	umbral_minimo: number;
 	bajo_umbral: boolean;
 }
 

@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -47,6 +48,17 @@ export class ReportesService {
 
   async getStockReport(filtros: FiltrosStock, actor: Actor): Promise<any[]> {
     const esSuperusuario = actor.roles?.includes('SUPERUSUARIO') ?? false;
+
+    if (
+      !esSuperusuario &&
+      filtros.id_empresa !== undefined &&
+      filtros.id_empresa !== actor.id_empresa
+    ) {
+      throw new ForbiddenException(
+        'No tiene permisos para consultar esta empresa.',
+      );
+    }
+
     const idEmpresa = esSuperusuario ? filtros.id_empresa : actor.id_empresa;
 
     if (!esSuperusuario && !idEmpresa) {
@@ -132,12 +144,18 @@ export class ReportesService {
           en_revision: 0,
           en_prestamo_externo: 0,
           total_activo: 0,
-          umbral_minimo: null,
+          umbral_minimo: 0,
           bajo_umbral: false,
         });
       }
       return filas.get(key);
     };
+
+    for (const bodega of bodegas) {
+      for (const tipo of tipos) {
+        crearFila(bodega.id_bodega, tipo.id_tipo_equipo);
+      }
+    }
 
     for (const unidad of unidades) {
       const fila = crearFila(unidad.id_bodega_actual!, unidad.id_tipo_equipo);
@@ -153,7 +171,7 @@ export class ReportesService {
       const fila = crearFila(stock.id_bodega, stock.id_tipo_equipo);
       if (!fila) continue;
       fila.umbral_minimo =
-        stock.umbral_minimo == null ? null : Number(stock.umbral_minimo);
+        stock.umbral_minimo == null ? 0 : Number(stock.umbral_minimo);
       if (stock.tipoEquipo?.requiereSerialNumber !== true) {
         fila.en_bodega = Number(stock.cantidad_disponible);
         fila.total_activo = fila.en_bodega;
@@ -161,8 +179,7 @@ export class ReportesService {
     }
 
     const resultado = [...filas.values()].map((fila) => {
-      fila.bajo_umbral =
-        fila.umbral_minimo !== null && fila.total_activo < fila.umbral_minimo;
+      fila.bajo_umbral = fila.total_activo < fila.umbral_minimo;
       return fila;
     });
     await this.auditReport(actor, filtros, resultado.length);
@@ -178,7 +195,7 @@ export class ReportesService {
     if (!actorId) return;
     await this.auditoriaService.create({
       id_usuario: actorId,
-      accion: 'GENERAR_REPORTE_STOCK',
+      accion: 'GENERAR_REPORTE',
       entidad_afectada: 'reporte_stock',
       id_entidad_afectada: 0,
       valor_anterior: null,

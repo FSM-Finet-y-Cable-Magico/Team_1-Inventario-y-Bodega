@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { getEmpresas, getStockReport, getWarehouses, getCatalog } from '$lib/api/index';
+	import { getEmpresas, generarReporteStock, getWarehouses, getCatalog } from '$lib/api/index';
 	import type { Bodega, Empresa, ReporteStockFila, TipoEquipo } from '$lib/types';
 	import Button from '$lib/components/Button.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
+	import { userRoles, currentUser } from '$lib/stores/auth';
 	import { RotateCw, Filter } from '@lucide/svelte';
 
 	let filas = $state<ReporteStockFila[]>([]);
@@ -14,17 +15,21 @@
 	let loading = $state(false);
 	let error = $state('');
 	let filters = $state({ id_empresa: '', id_bodega: '', id_tipo_equipo: '' });
+	const esSuperusuario = $derived($userRoles.includes('SUPERUSUARIO'));
+	const empresaActual = $derived($currentUser?.id_empresa);
 
 	const filteredBodegas = $derived(
-		filters.id_empresa
-			? bodegas.filter((bodega) => String(bodega.id_empresa) === String(filters.id_empresa))
-			: bodegas,
+		bodegas.filter((bodega) => {
+			const empresaFiltro = esSuperusuario ? filters.id_empresa : String(empresaActual ?? '');
+			return !empresaFiltro || String(bodega.id_empresa) === empresaFiltro;
+		}),
 	);
 
 	const filteredTipos = $derived(
-		filters.id_empresa
-			? tipos.filter((tipo) => String(tipo.id_empresa) === String(filters.id_empresa))
-			: tipos,
+		tipos.filter((tipo) => {
+			const empresaFiltro = esSuperusuario ? filters.id_empresa : String(empresaActual ?? '');
+			return !empresaFiltro || String(tipo.id_empresa) === empresaFiltro;
+		}),
 	);
 
 	function resetFilters() {
@@ -33,7 +38,7 @@
 
 	async function loadFilters() {
 		try {
-			empresas = await getEmpresas();
+			empresas = esSuperusuario ? await getEmpresas() : [];
 		} catch {
 			empresas = [];
 		}
@@ -53,7 +58,7 @@
 		loading = true;
 		error = '';
 		try {
-			filas = await getStockReport({
+			filas = await generarReporteStock({
 				id_empresa: filters.id_empresa || undefined,
 				id_bodega: filters.id_bodega || undefined,
 				id_tipo_equipo: filters.id_tipo_equipo || undefined,
@@ -82,6 +87,10 @@
 			filters.id_tipo_equipo = '';
 		}
 	}
+
+	$effect(() => {
+		if (!esSuperusuario && filters.id_empresa) filters.id_empresa = '';
+	});
 </script>
 
 <div class="max-w-7xl mx-auto">
@@ -100,6 +109,7 @@
 
 	<div class="bg-white border border-border rounded-lg p-4 mb-6">
 		<div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+			{#if esSuperusuario}
 			<div>
 				<label for="empresa-filter" class="block text-xs font-medium text-muted mb-1">Empresa</label>
 				<select id="empresa-filter" bind:value={filters.id_empresa} onchange={onEmpresaChange}
@@ -110,6 +120,7 @@
 					{/each}
 				</select>
 			</div>
+			{/if}
 
 			<div>
 				<label for="bodega-filter" class="block text-xs font-medium text-muted mb-1">Bodega</label>
@@ -178,7 +189,11 @@
 					</thead>
 					<tbody>
 						{#each filas as fila}
-							<tr class="border-t border-border hover:bg-surface-alt/50">
+							<tr
+								class="border-t border-border hover:bg-surface-alt/50"
+								class:bg-red-50={fila.bajo_umbral}
+								class:text-red-900={fila.bajo_umbral}
+							>
 								<td class="px-4 py-3">
 									<div class="font-medium text-foreground">{fila.tipo_equipo}</div>
 									{#if fila.unidad_medida}
@@ -191,7 +206,7 @@
 								<td class="px-4 py-3">{fila.en_revision}</td>
 								<td class="px-4 py-3">{fila.en_prestamo_externo}</td>
 								<td class="px-4 py-3 font-medium text-foreground">{fila.total_activo}</td>
-								<td class="px-4 py-3">{fila.umbral_minimo ?? '—'}</td>
+									<td class="px-4 py-3">{fila.umbral_minimo}</td>
 								<td class="px-4 py-3">
 									<Badge variant={fila.bajo_umbral ? 'danger' : 'success'}>
 										{fila.bajo_umbral ? 'Bajo umbral' : 'Normal'}
