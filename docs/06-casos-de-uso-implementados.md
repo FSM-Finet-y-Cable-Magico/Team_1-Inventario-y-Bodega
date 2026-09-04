@@ -69,6 +69,7 @@
 | 47 | Ubicación física al ingresar/reingresar a bodega | `inventario/units` | `/unidades/[id]` |
 | 49 | Crear proveedor (CU-49) | `proveedores` | `/proveedores` |
 | 50 | Editar proveedor (CU-50) | `proveedores` | `/proveedores` |
+| 51 | Consultar listado de proveedores (CU-51) | `proveedores` | `/proveedores` |
 
 ## 3. Diagramas disponibles (referencia para CUs pendientes)
 

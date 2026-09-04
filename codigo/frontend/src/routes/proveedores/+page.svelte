@@ -46,6 +46,9 @@
 	const rutPattern = '^\\d{7,8}-[\\dKk]$';
 	const telPattern = '^\\d{8,15}$';
 
+	// CU-51: ADMIN_BODEGA puede ver el listado pero no crear ni editar
+	const puedeCrearEditar = $derived($userRoles.some((r) => ['SUPERUSUARIO', 'ADMIN'].includes(r)));
+
 	async function load() {
 		loading = true;
 		error = '';
@@ -162,10 +165,13 @@
 				<RotateCw class="h-4 w-4" />
 				Actualizar
 			</Button>
-			<Button onclick={() => (showCreate = true)}>
-				<Plus class="h-4 w-4" />
-				Nuevo proveedor
-			</Button>
+			<!-- CU-51: botón "Nuevo proveedor" oculto para ADMIN_BODEGA -->
+			{#if puedeCrearEditar}
+				<Button onclick={() => (showCreate = true)}>
+					<Plus class="h-4 w-4" />
+					Nuevo proveedor
+				</Button>
+			{/if}
 		</div>
 	</div>
 
@@ -183,10 +189,11 @@
 		{#if loading}
 			<div class="p-8 text-center text-sm text-muted">Cargando...</div>
 		{:else if proveedores.length === 0}
+			<!-- CU-51: mensaje exacto de la excepción; acción solo para roles con permiso de crear -->
 			<EmptyState
-				message="No se encontraron proveedores."
-				action={() => (showCreate = true)}
-				actionlabel="Nuevo proveedor"
+				message={search ? 'No se encontraron proveedores con ese criterio.' : 'No se encontraron proveedores.'}
+				action={puedeCrearEditar ? () => (showCreate = true) : undefined}
+				actionlabel={puedeCrearEditar ? 'Nuevo proveedor' : undefined}
 			/>
 		{:else}
 			<div class="overflow-x-auto">
@@ -198,7 +205,9 @@
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Contacto</th>
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Tipos de equipo</th>
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Estado</th>
-								<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Acciones</th>
+								{#if puedeCrearEditar}
+									<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Acciones</th>
+								{/if}
 						</tr>
 					</thead>
 					<tbody>
@@ -231,9 +240,9 @@
 										{p.activa ? 'Activo' : 'Inactivo'}
 									</Badge>
 								</td>
-								<!-- CU-50: botón editar visible para ADMIN/SUPERUSUARIO -->
-								<td class="px-4 py-3">
-									{#if $userRoles.some((r) => ['SUPERUSUARIO', 'ADMIN'].includes(r))}
+								<!-- CU-50/CU-51: columna acciones visible solo para ADMIN/SUPERUSUARIO -->
+								{#if puedeCrearEditar}
+									<td class="px-4 py-3">
 										<button
 											onclick={() => openEdit(p)}
 											class="text-primary hover:text-primary/80 transition-colors"
@@ -241,8 +250,8 @@
 										>
 											<Pencil class="h-4 w-4" />
 										</button>
-									{/if}
-								</td>
+									</td>
+								{/if}
 							</tr>
 						{/each}
 					</tbody>

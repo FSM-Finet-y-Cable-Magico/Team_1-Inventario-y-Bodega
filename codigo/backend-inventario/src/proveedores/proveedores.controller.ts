@@ -36,9 +36,9 @@ export class ProveedoresController {
     return this.proveedoresService.update(parseInt(id, 10), body, actorId);
   }
 
-  // CU-49: listado de proveedores
+  // CU-51: listado de proveedores (ADMIN_BODEGA también puede consultar)
   @Get()
-  @Roles('ADMIN', 'SUPERUSUARIO')
+  @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   findAll(@Query('buscar') buscar?: string, @Query('activa') activa?: string) {
     const activaFlag =
       activa === 'true' ? true : activa === 'false' ? false : undefined;
