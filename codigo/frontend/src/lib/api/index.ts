@@ -1,5 +1,6 @@
 import { api } from './client';
 import type { LoginDto, LoginResponse, Usuario } from '$lib/types';
+import type { ReporteStock } from '$lib/types';
 
 export async function login(dto: LoginDto): Promise<LoginResponse> {
 	return api.post<LoginResponse>('/auth/login', dto);
@@ -214,4 +215,17 @@ export function getAuditLog(filters?: Record<string, string | number | undefined
 	}
 	const query = qs.toString();
 	return api.get<any>(`/auditoria${query ? '?' + query : ''}`);
+}
+
+export function generarReporteStock(params?: {
+	id_empresa?: number;
+	id_bodega?: number;
+	id_tipo_equipo?: number;
+}): Promise<ReporteStock[]> {
+	const qs = new URLSearchParams();
+	if (params?.id_empresa !== undefined) qs.set('id_empresa', String(params.id_empresa));
+	if (params?.id_bodega !== undefined) qs.set('id_bodega', String(params.id_bodega));
+	if (params?.id_tipo_equipo !== undefined) qs.set('id_tipo_equipo', String(params.id_tipo_equipo));
+	const query = qs.toString();
+	return api.get<ReporteStock[]>(`/reportes/stock${query ? '?' + query : ''}`);
 }

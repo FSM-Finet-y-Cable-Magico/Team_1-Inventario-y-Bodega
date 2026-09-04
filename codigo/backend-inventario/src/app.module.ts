@@ -14,6 +14,7 @@ import { BodegasModule } from './bodegas/bodegas.module';
 import { InventarioModule } from './inventario/inventario.module';
 import { TransferenciasModule } from './transferencias/transferencias.module';
 import { CompaniesModule } from './companies/companies.module';
+import { ReportesModule } from './reportes/reportes.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { CompaniesModule } from './companies/companies.module';
     InventarioModule,
     TransferenciasModule,
     CompaniesModule,
+    ReportesModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],
