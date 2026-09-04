@@ -76,6 +76,16 @@ Valores de `tipo_movimiento`: `TRANSFERENCIA_PENDIENTE`, `TRANSFERENCIA_APROBADA
 `umbral_minimo` numeric(10,2)
 FKs → `bodega`, `tipo_equipo`. Fila única por `(id_bodega, id_tipo_equipo)`.
 
+### `proveedor` — proveedores (CU-49)
+`id_proveedor` PK · `nombre_comercial` VARCHAR(100) NOT NULL · `rut` VARCHAR(12) UNIQUE NOT NULL ·
+`nombre_contacto` VARCHAR(80) · `telefono` VARCHAR(15) · `email` VARCHAR(150) ·
+`activa` BOOLEAN DEFAULT TRUE · `fecha_creacion` TIMESTAMPTZ
+> Sin `id_empresa`: el proveedor es global (compartido entre ambas empresas).
+
+### `proveedor_tipo_equipo` — relación N:M proveedor ↔ tipo_equipo (CU-49)
+`id` PK · `id_proveedor` FK → `proveedor` (ON DELETE CASCADE) · `id_tipo_equipo` FK → `tipo_equipo` (ON DELETE CASCADE)
+UNIQUE en `(id_proveedor, id_tipo_equipo)`.
+
 ---
 
 ## 2. Conceptos críticos para no romper el modelo

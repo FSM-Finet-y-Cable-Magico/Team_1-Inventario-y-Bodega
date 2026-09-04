@@ -10,7 +10,8 @@
 		LogOut,
 		PanelLeftClose,
 		PanelLeft,
-		Building2
+		Building2,
+		Truck
 	} from '@lucide/svelte';
 	import { authStore, userRoles } from '$lib/stores/auth';
 	import { goto } from '$app/navigation';
@@ -33,6 +34,7 @@
 		{ label: 'Unidades', icon: Wrench, path: '/unidades', roles: ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA', 'TECNICO_TERRENO'] },
 		{ label: 'Bodegas', icon: Warehouse, path: '/bodegas', roles: ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'] },
 		{ label: 'Transferencias', icon: ArrowLeftRight, path: '/transferencias', roles: ['SUPERUSUARIO', 'ADMIN'] },
+		{ label: 'Proveedores', icon: Truck, path: '/proveedores', roles: ['SUPERUSUARIO', 'ADMIN'] },
 		{ label: 'Auditoría', icon: ScrollText, path: '/auditoria', roles: ['SUPERUSUARIO', 'ADMIN'] }
 	];
 

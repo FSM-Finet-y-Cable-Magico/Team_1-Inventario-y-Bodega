@@ -215,3 +215,16 @@ export function getAuditLog(filters?: Record<string, string | number | undefined
 	const query = qs.toString();
 	return api.get<any>(`/auditoria${query ? '?' + query : ''}`);
 }
+
+// CU-49: proveedores
+export function getProveedores(params?: { buscar?: string; activa?: boolean }) {
+	const qs = new URLSearchParams();
+	if (params?.buscar) qs.set('buscar', params.buscar);
+	if (params?.activa !== undefined) qs.set('activa', String(params.activa));
+	const query = qs.toString();
+	return api.get<any[]>(`/proveedores${query ? '?' + query : ''}`);
+}
+
+export function createProveedor(data: Record<string, unknown>) {
+	return api.post<any>('/proveedores', data);
+}

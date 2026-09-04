@@ -143,6 +143,28 @@ CREATE TABLE IF NOT EXISTS movimiento_inventario (
     referencia_id         INTEGER
 );
 
+-- Proveedores (CU-49) — globales, sin id_empresa (compartidos entre ambas empresas)
+CREATE TABLE IF NOT EXISTS proveedor (
+    id_proveedor     SERIAL PRIMARY KEY,
+    nombre_comercial VARCHAR(100) NOT NULL,
+    rut              VARCHAR(12) NOT NULL UNIQUE,
+    nombre_contacto  VARCHAR(80),
+    telefono         VARCHAR(15),
+    email            VARCHAR(150),
+    activa           BOOLEAN DEFAULT TRUE,
+    fecha_creacion   TIMESTAMPTZ DEFAULT now()
+);
+
+-- Tabla puente N:M proveedor ↔ tipo_equipo (CU-49)
+CREATE TABLE IF NOT EXISTS proveedor_tipo_equipo (
+    id               SERIAL PRIMARY KEY,
+    id_proveedor     INTEGER NOT NULL,
+    id_tipo_equipo   INTEGER NOT NULL,
+    CONSTRAINT fk_pte_proveedor   FOREIGN KEY (id_proveedor)   REFERENCES proveedor (id_proveedor) ON DELETE CASCADE,
+    CONSTRAINT fk_pte_tipo_equipo FOREIGN KEY (id_tipo_equipo) REFERENCES tipo_equipo (id_tipo_equipo) ON DELETE CASCADE,
+    CONSTRAINT uq_pte             UNIQUE (id_proveedor, id_tipo_equipo)
+);
+
 -- Stock de consumibles por bodega
 CREATE TABLE IF NOT EXISTS stock_consumible (
     id_stock             SERIAL PRIMARY KEY,

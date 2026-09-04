@@ -15,7 +15,8 @@ import { EMPRESAS } from 'src/companies/companies.service';
 const MAX_INTENTOS = 5;
 const MINUTOS_BLOQUEO = 15;
 const MSG_GENERICO = 'Usuario o contraseña incorrectos.';
-const MSG_BLOQUEADO = 'Cuenta bloqueada temporalmente. Intente nuevamente en 15 minutos.';
+const MSG_BLOQUEADO =
+  'Cuenta bloqueada temporalmente. Intente nuevamente en 15 minutos.';
 
 @Injectable()
 export class AuthService {
@@ -43,17 +44,26 @@ export class AuthService {
     }
 
     if (!usuario.activo)
-      throw new UnauthorizedException('Cuenta desactivada. Contacte al administrador.');
+      throw new UnauthorizedException(
+        'Cuenta desactivada. Contacte al administrador.',
+      );
 
-    const match = await bcrypt.compare(loginDto.password, usuario.password_hash);
+    const match = await bcrypt.compare(
+      loginDto.password,
+      usuario.password_hash,
+    );
 
     if (!match) {
       const nuevosIntentos = (usuario.intentos_fallidos ?? 0) + 1;
-      const actualizacion: Partial<Usuario> = { intentos_fallidos: nuevosIntentos };
+      const actualizacion: Partial<Usuario> = {
+        intentos_fallidos: nuevosIntentos,
+      };
 
       if (nuevosIntentos >= MAX_INTENTOS) {
         const bloqueadoHasta = new Date();
-        bloqueadoHasta.setMinutes(bloqueadoHasta.getMinutes() + MINUTOS_BLOQUEO);
+        bloqueadoHasta.setMinutes(
+          bloqueadoHasta.getMinutes() + MINUTOS_BLOQUEO,
+        );
         actualizacion.bloqueado_hasta = bloqueadoHasta;
         actualizacion.intentos_fallidos = 0;
         await this.usuarioRepository.update(usuario.id_usuario, actualizacion);
@@ -78,7 +88,9 @@ export class AuthService {
 
     // CU-13/CU-14 Excepción 1: usuario sin empresa asignada
     if (usuario.id_empresa === null || usuario.id_empresa === undefined) {
-      throw new UnauthorizedException('Su cuenta no tiene empresa asignada. Contacte al administrador.');
+      throw new UnauthorizedException(
+        'Su cuenta no tiene empresa asignada. Contacte al administrador.',
+      );
     }
 
     const roles = usuario.usuarioRoles?.map((ur) => ur.rol.nombre_rol) ?? [];
@@ -121,23 +133,33 @@ export class AuthService {
       entidad_afectada: 'usuario',
       id_entidad_afectada: usuarioId,
       valor_anterior: null,
-      valor_nuevo: { motivo: motivo === 'inactividad' ? 'inactividad' : 'manual' },
+      valor_nuevo: {
+        motivo: motivo === 'inactividad' ? 'inactividad' : 'manual',
+      },
     });
     return { message: 'Sesión cerrada correctamente.' };
   }
 
   // CU-10: el usuario establece su nueva contraseña tras un restablecimiento
-  async cambiarPassword(dto: { nombre_usuario: string; password_actual: string; nueva_password: string }) {
+  async cambiarPassword(dto: {
+    nombre_usuario: string;
+    password_actual: string;
+    nueva_password: string;
+  }) {
     const usuario = await this.usuarioRepository.findOne({
       where: { nombre_usuario: dto.nombre_usuario },
     });
-    if (!usuario || !usuario.activo) throw new UnauthorizedException(MSG_GENERICO);
+    if (!usuario || !usuario.activo)
+      throw new UnauthorizedException(MSG_GENERICO);
 
     if (usuario.bloqueado_hasta && usuario.bloqueado_hasta > new Date()) {
       throw new UnauthorizedException(MSG_BLOQUEADO);
     }
 
-    const match = await bcrypt.compare(dto.password_actual, usuario.password_hash);
+    const match = await bcrypt.compare(
+      dto.password_actual,
+      usuario.password_hash,
+    );
     if (!match) throw new UnauthorizedException(MSG_GENERICO);
 
     const salt = await bcrypt.genSalt(12);
@@ -156,14 +178,20 @@ export class AuthService {
       valor_nuevo: { nombre_usuario: usuario.nombre_usuario },
     });
 
-    return { message: 'Contraseña actualizada correctamente. Inicie sesión con su nueva contraseña.' };
+    return {
+      message:
+        'Contraseña actualizada correctamente. Inicie sesión con su nueva contraseña.',
+    };
   }
 
   isTokenBlacklisted(token: string): boolean {
     return this.tokenBlacklist.has(token);
   }
 
-  async restablecerPassword(targetId: number, actorId: number): Promise<{ password_temporal: string }> {
+  async restablecerPassword(
+    targetId: number,
+    actorId: number,
+  ): Promise<{ password_temporal: string }> {
     const usuario = await this.usuarioRepository.findOne({
       where: { id_usuario: targetId },
     });
@@ -175,10 +203,13 @@ export class AuthService {
       );
     }
 
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const chars =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let passwordTemporal = '';
     for (let i = 0; i < 10; i++) {
-      passwordTemporal += chars.charAt(Math.floor(Math.random() * chars.length));
+      passwordTemporal += chars.charAt(
+        Math.floor(Math.random() * chars.length),
+      );
     }
 
     const salt = await bcrypt.genSalt(12);

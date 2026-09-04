@@ -9,7 +9,7 @@
 - `ValidationPipe` global (class-validator sobre los DTOs).
 - `synchronize: false` → los cambios de esquema van por **migraciones** (`scripts/migrar.ts`).
 - Módulos feature: `auth`, `usuarios`, `roles`, `auditoria`, `companies`, `bodegas`,
-  `inventario` (catálogo + unidades), `transferencias`, `health`.
+  `inventario` (catálogo + unidades), `transferencias`, `proveedores`, `health`.
 
 ## 2. Seguridad transversal (obligatorio en todo endpoint)
 
@@ -83,6 +83,7 @@ Mensajes **en español**, específicos por validación. Excepción: login usa me
 | [bodegas.md](./bodegas.md) | `bodegas` (bodegas + stock + umbral) |
 | [inventario.md](./inventario.md) | `inventario` (catálogo + unidades + historial) |
 | [transferencias.md](./transferencias.md) | `transferencias` |
+| [proveedores.md](./proveedores.md) | `proveedores` (CU-49) |
 
 > Para cada módulo se listan: endpoints, lógica de negocio, entidades, y qué CU cubre.
 

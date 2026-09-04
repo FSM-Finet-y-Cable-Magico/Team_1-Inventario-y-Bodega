@@ -137,6 +137,27 @@ CREATE TABLE IF NOT EXISTS stock_consumible (
 );
 `;
 
+const TABLAS_CU49_SQL = `
+CREATE TABLE IF NOT EXISTS proveedor (
+    id_proveedor     SERIAL PRIMARY KEY,
+    nombre_comercial VARCHAR(100) NOT NULL,
+    rut              VARCHAR(12) NOT NULL UNIQUE,
+    nombre_contacto  VARCHAR(80),
+    telefono         VARCHAR(15),
+    email            VARCHAR(150),
+    activa           BOOLEAN DEFAULT TRUE,
+    fecha_creacion   TIMESTAMPTZ DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS proveedor_tipo_equipo (
+    id               SERIAL PRIMARY KEY,
+    id_proveedor     INTEGER NOT NULL,
+    id_tipo_equipo   INTEGER NOT NULL,
+    CONSTRAINT fk_pte_proveedor   FOREIGN KEY (id_proveedor)   REFERENCES proveedor (id_proveedor) ON DELETE CASCADE,
+    CONSTRAINT fk_pte_tipo_equipo FOREIGN KEY (id_tipo_equipo) REFERENCES tipo_equipo (id_tipo_equipo) ON DELETE CASCADE,
+    CONSTRAINT uq_pte             UNIQUE (id_proveedor, id_tipo_equipo)
+);
+`;
+
 const SENTENCIAS = [
   // CU-24
   `ALTER TABLE tipo_equipo ADD COLUMN IF NOT EXISTS marca varchar(50)`,
@@ -161,6 +182,10 @@ async function main() {
   // Asegurar que las tablas base existan independientemente del entorno (Railway / Docker local)
   await ds.query(TABLAS_BASE_SQL);
   console.log('✓ Tablas base inicializadas / comprobadas.');
+
+  // CU-49: tablas de proveedores
+  await ds.query(TABLAS_CU49_SQL);
+  console.log('✓ Tablas proveedor / proveedor_tipo_equipo inicializadas / comprobadas.');
 
   for (const sql of SENTENCIAS) {
     await ds.query(sql);

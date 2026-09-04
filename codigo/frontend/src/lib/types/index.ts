@@ -257,6 +257,28 @@ export interface MovimientoInventario {
 	referencia_id: number | null;
 }
 
+// CU-49: proveedores
+export interface Proveedor {
+	id_proveedor: number;
+	nombre_comercial: string;
+	rut: string;
+	nombre_contacto: string | null;
+	telefono: string | null;
+	email: string | null;
+	activa: boolean;
+	fecha_creacion: string;
+	tipos_equipo: { id_tipo_equipo: number; nombre: string }[];
+}
+
+export interface CreateProveedorDto {
+	nombre_comercial: string;
+	rut: string;
+	nombre_contacto?: string;
+	telefono?: string;
+	email?: string;
+	ids_tipos_equipo?: number[];
+}
+
 export interface LogAuditoria {
 	id_log: number;
 	id_usuario: number;

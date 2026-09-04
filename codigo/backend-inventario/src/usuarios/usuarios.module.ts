@@ -8,7 +8,10 @@ import { Rol } from '../roles/entities/rol.entity';
 import { AuditoriaModule } from 'src/auditoria/auditoria.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Usuario, UsuarioRol, Rol]), AuditoriaModule],
+  imports: [
+    TypeOrmModule.forFeature([Usuario, UsuarioRol, Rol]),
+    AuditoriaModule,
+  ],
   controllers: [UsuariosController],
   providers: [UsuariosService],
 })

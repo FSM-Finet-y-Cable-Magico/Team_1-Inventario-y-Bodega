@@ -8,11 +8,15 @@ import { UnidadEquipo } from '../inventario/entities/unidad-equipo.entity';
 import { AuditoriaModule } from '../auditoria/auditoria.module';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([Transferencia, MovimientoInventario, UnidadEquipo]),
-        AuditoriaModule,
-    ],
-    controllers: [TransferenciasController],
-    providers: [TransferenciasService],
+  imports: [
+    TypeOrmModule.forFeature([
+      Transferencia,
+      MovimientoInventario,
+      UnidadEquipo,
+    ]),
+    AuditoriaModule,
+  ],
+  controllers: [TransferenciasController],
+  providers: [TransferenciasService],
 })
 export class TransferenciasModule {}
