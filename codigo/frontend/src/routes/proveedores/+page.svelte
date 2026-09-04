@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { getProveedores, createProveedor, getCatalog } from '$lib/api/index';
+	import { getProveedores, createProveedor, editProveedor, getCatalog } from '$lib/api/index';
 	import type { Proveedor, TipoEquipo } from '$lib/types';
 	import { userRoles } from '$lib/stores/auth';
 	import SearchInput from '$lib/components/SearchInput.svelte';
@@ -9,7 +9,7 @@
 	import FormField from '$lib/components/FormField.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
-	import { Plus, RotateCw } from '@lucide/svelte';
+	import { Plus, RotateCw, Pencil } from '@lucide/svelte';
 
 	let proveedores = $state<Proveedor[]>([]);
 	let tiposEquipo = $state<TipoEquipo[]>([]);
@@ -28,6 +28,20 @@
 	});
 	let createError = $state('');
 	let creating = $state(false);
+
+	// CU-50: estado del modal de edición
+	let showEdit = $state(false);
+	let editingId = $state<number | null>(null);
+	let editForm = $state({
+		nombre_comercial: '',
+		rut: '',
+		nombre_contacto: '',
+		telefono: '',
+		email: '',
+		ids_tipos_equipo: [] as number[]
+	});
+	let editError = $state('');
+	let editing = $state(false);
 
 	const rutPattern = '^\\d{7,8}-[\\dKk]$';
 	const telPattern = '^\\d{8,15}$';
@@ -58,6 +72,53 @@
 			createForm.ids_tipos_equipo = createForm.ids_tipos_equipo.filter((x) => x !== id);
 		} else {
 			createForm.ids_tipos_equipo = [...createForm.ids_tipos_equipo, id];
+		}
+	}
+
+	// CU-50: abrir modal de edición con datos actuales del proveedor
+	function openEdit(p: Proveedor) {
+		editingId = p.id_proveedor;
+		editForm = {
+			nombre_comercial: p.nombre_comercial,
+			rut: p.rut,
+			nombre_contacto: p.nombre_contacto ?? '',
+			telefono: p.telefono ?? '',
+			email: p.email ?? '',
+			ids_tipos_equipo: p.tipos_equipo.map((te) => te.id_tipo_equipo)
+		};
+		editError = '';
+		showEdit = true;
+	}
+
+	// CU-50: toggle tipos de equipo en formulario de edición
+	function toggleTipoEquipoEdit(id: number) {
+		if (editForm.ids_tipos_equipo.includes(id)) {
+			editForm.ids_tipos_equipo = editForm.ids_tipos_equipo.filter((x) => x !== id);
+		} else {
+			editForm.ids_tipos_equipo = [...editForm.ids_tipos_equipo, id];
+		}
+	}
+
+	// CU-50: enviar edición
+	async function handleEdit() {
+		editError = '';
+		editing = true;
+		try {
+			const payload: Record<string, unknown> = {
+				nombre_comercial: editForm.nombre_comercial,
+				rut: editForm.rut,
+				nombre_contacto: editForm.nombre_contacto || null,
+				telefono: editForm.telefono || null,
+				email: editForm.email || null,
+				ids_tipos_equipo: editForm.ids_tipos_equipo
+			};
+			await editProveedor(editingId!, payload);
+			showEdit = false;
+			await load();
+		} catch (err: unknown) {
+			editError = err instanceof Error ? err.message : 'Error al editar proveedor';
+		} finally {
+			editing = false;
 		}
 	}
 
@@ -137,6 +198,7 @@
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Contacto</th>
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Tipos de equipo</th>
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Estado</th>
+								<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Acciones</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -168,6 +230,18 @@
 									<Badge variant={p.activa ? 'success' : 'danger'}>
 										{p.activa ? 'Activo' : 'Inactivo'}
 									</Badge>
+								</td>
+								<!-- CU-50: botón editar visible para ADMIN/SUPERUSUARIO -->
+								<td class="px-4 py-3">
+									{#if $userRoles.some((r) => ['SUPERUSUARIO', 'ADMIN'].includes(r))}
+										<button
+											onclick={() => openEdit(p)}
+											class="text-primary hover:text-primary/80 transition-colors"
+											title="Editar proveedor"
+										>
+											<Pencil class="h-4 w-4" />
+										</button>
+									{/if}
 								</td>
 							</tr>
 						{/each}
@@ -258,6 +332,85 @@
 		<div class="flex justify-end gap-3 pt-2">
 			<Button variant="secondary" onclick={() => (showCreate = false)} type="button">Cancelar</Button>
 			<Button type="submit" loading={creating}>Crear proveedor</Button>
+		</div>
+	</form>
+</Modal>
+
+<!-- CU-50: modal editar proveedor -->
+<Modal title="Editar proveedor" open={showEdit} onclose={() => (showEdit = false)}>
+	<form onsubmit={(e: Event) => { e.preventDefault(); handleEdit(); }} class="space-y-4">
+		{#if editError}
+			<div class="bg-red-50 border border-red-200 text-destructive text-sm rounded-md px-3 py-2">
+				{editError}
+			</div>
+		{/if}
+
+		<FormField label="Nombre comercial" name="nc_edit" required helper="3–100 caracteres">
+			<input
+				id="nc_edit" type="text" required
+				bind:value={editForm.nombre_comercial}
+				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+				minlength={3} maxlength={100}
+			/>
+		</FormField>
+
+		<FormField label="RUT" name="rut_edit" required helper="Formato: XXXXXXXX-X (con dígito verificador)">
+			<input
+				id="rut_edit" type="text" required
+				bind:value={editForm.rut}
+				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary font-mono"
+				pattern={rutPattern}
+			/>
+		</FormField>
+
+		<FormField label="Nombre de contacto" name="ncontacto_edit" helper="Opcional, 2–80 caracteres">
+			<input
+				id="ncontacto_edit" type="text"
+				bind:value={editForm.nombre_contacto}
+				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+				minlength={2} maxlength={80}
+			/>
+		</FormField>
+
+		<FormField label="Teléfono" name="tel_edit" helper="Opcional, 8–15 dígitos">
+			<input
+				id="tel_edit" type="tel"
+				bind:value={editForm.telefono}
+				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+				pattern={telPattern}
+			/>
+		</FormField>
+
+		<FormField label="Correo electrónico" name="email_edit" helper="Opcional">
+			<input
+				id="email_edit" type="email"
+				bind:value={editForm.email}
+				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+			/>
+		</FormField>
+
+		<!-- CU-50: tipos de equipo suministrados (selección múltiple del catálogo, opcional) -->
+		{#if tiposEquipo.length > 0}
+			<FormField label="Tipos de equipo suministrados" name="tipos_edit" helper="Opcional — selección múltiple">
+				<div class="border border-border rounded-md p-3 max-h-40 overflow-y-auto space-y-1">
+					{#each tiposEquipo as te}
+						<label class="flex items-center gap-2 cursor-pointer text-sm hover:bg-surface-alt/50 rounded px-1 py-0.5">
+							<input
+								type="checkbox"
+								checked={editForm.ids_tipos_equipo.includes(te.id_tipo_equipo)}
+								onchange={() => toggleTipoEquipoEdit(te.id_tipo_equipo)}
+								class="rounded border-border"
+							/>
+							<span>{te.nombre}</span>
+						</label>
+					{/each}
+				</div>
+			</FormField>
+		{/if}
+
+		<div class="flex justify-end gap-3 pt-2">
+			<Button variant="secondary" onclick={() => (showEdit = false)} type="button">Cancelar</Button>
+			<Button type="submit" loading={editing}>Guardar cambios</Button>
 		</div>
 	</form>
 </Modal>

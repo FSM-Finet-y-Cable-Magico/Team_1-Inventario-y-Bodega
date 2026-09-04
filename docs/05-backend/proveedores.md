@@ -32,6 +32,7 @@ Restricción UNIQUE en `(id_proveedor, id_tipo_equipo)`.
 | Método | Ruta | Roles | Descripción |
 |--------|------|-------|-------------|
 | `POST` | `/api/proveedores` | ADMIN, SUPERUSUARIO | CU-49: crear proveedor |
+| `PATCH` | `/api/proveedores/:id` | ADMIN, SUPERUSUARIO | CU-50: editar proveedor |
 | `GET` | `/api/proveedores` | ADMIN, SUPERUSUARIO | Listado (filtros: `buscar`, `activa`) |
 
 ## Validación de RUT (módulo 11)
@@ -46,9 +47,11 @@ para CU-75, CU-78, CU-80, CU-81. El helper:
 ## Auditoría
 
 - `CREAR` al registrar un proveedor nuevo.
+- `EDITAR` al modificar un proveedor existente (`valor_anterior` / `valor_nuevo` en jsonb).
 
 ## CUs cubiertos
 
 | CU | Descripción |
 |----|-------------|
 | CU-49 | Crear proveedor con validación de RUT y tipos de equipo opcionales |
+| CU-50 | Editar proveedor (datos + tipos de equipo), validación de RUT y unicidad excluyendo el propio |

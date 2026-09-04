@@ -228,3 +228,8 @@ export function getProveedores(params?: { buscar?: string; activa?: boolean }) {
 export function createProveedor(data: Record<string, unknown>) {
 	return api.post<any>('/proveedores', data);
 }
+
+// CU-50: editar proveedor
+export function editProveedor(id: number, data: Record<string, unknown>) {
+	return api.patch<any>(`/proveedores/${id}`, data);
+}

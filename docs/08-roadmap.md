@@ -14,8 +14,8 @@ no esté reflejado aquí.
 
 - **Total de casos de uso:** 96
 - **Implementados (Incremento 1):** 46 (CU-01 a CU-46)
-- **Implementados (Incremento 2):** 1 (CU-49)
-- **Pendientes:** 49 (CU-47, CU-48, CU-50 a CU-96)
+- **Implementados (Incremento 2):** 2 (CU-49, CU-50)
+- **Pendientes:** 48 (CU-47, CU-48, CU-51 a CU-96)
 
 ## Leyenda
 
@@ -105,7 +105,7 @@ no esté reflejado aquí.
 | CU | Nombre | Estado | Notas |
 |----|--------|--------|-------|
 | CU-49 | Creando proveedor | [x] Implementado | Módulo `proveedores` (back + front + BDD) |
-| CU-50 | Editando proveedor | [ ] Pendiente | |
+| CU-50 | Editando proveedor | [x] Implementado | Módulo `proveedores` (PATCH + modal edición) |
 | CU-51 | Consultando listado de proveedores | [ ] Pendiente | |
 | CU-52 | Registrando orden de ingreso desde proveedor | [ ] Pendiente | |
 | CU-53 | Consultando órdenes de ingreso | [ ] Pendiente | |

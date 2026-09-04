@@ -2,7 +2,9 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Body,
+  Param,
   UseGuards,
   Req,
   Query,
@@ -24,6 +26,14 @@ export class ProveedoresController {
   create(@Body() dto: CreateProveedorDto, @Req() req) {
     const actorId = req.user.id_usuario ?? req.user.sub;
     return this.proveedoresService.create(dto, actorId);
+  }
+
+  // CU-50: editar proveedor
+  @Patch(':id')
+  @Roles('ADMIN', 'SUPERUSUARIO')
+  update(@Param('id') id: string, @Body() body: any, @Req() req) {
+    const actorId = req.user.id_usuario ?? req.user.sub;
+    return this.proveedoresService.update(parseInt(id, 10), body, actorId);
   }
 
   // CU-49: listado de proveedores

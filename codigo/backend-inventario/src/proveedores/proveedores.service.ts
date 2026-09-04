@@ -2,6 +2,7 @@ import {
   Injectable,
   BadRequestException,
   ConflictException,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -103,6 +104,93 @@ export class ProveedoresService {
     }
 
     return this.findOneConTipos(nuevo.id_proveedor);
+  }
+
+  // CU-50: editar proveedor
+  async update(
+    id: number,
+    dto: Partial<CreateProveedorDto>,
+    actorId: number,
+  ): Promise<any> {
+    const proveedor = await this.proveedorRepository.findOne({
+      where: { id_proveedor: id },
+    });
+    if (!proveedor) {
+      throw new NotFoundException('Proveedor no encontrado.');
+    }
+
+    // CU-50: snapshot del valor anterior para auditoría
+    const valorAnterior = {
+      nombre_comercial: proveedor.nombre_comercial,
+      rut: proveedor.rut,
+      nombre_contacto: proveedor.nombre_contacto,
+      telefono: proveedor.telefono,
+      email: proveedor.email,
+    };
+
+    // CU-50: si se envía un RUT nuevo, validar DV y unicidad excluyendo el propio registro
+    if (dto.rut !== undefined) {
+      if (!this.validarRut(dto.rut)) {
+        throw new BadRequestException(
+          'El dígito verificador del RUT no es válido.',
+        );
+      }
+      const rutNormalizado = dto.rut.replace(/-[kK]$/, '-K');
+      const duplicado = await this.proveedorRepository.findOne({
+        where: { rut: rutNormalizado },
+      });
+      if (duplicado && duplicado.id_proveedor !== id) {
+        throw new ConflictException('Ya existe un proveedor con ese RUT.');
+      }
+      proveedor.rut = rutNormalizado;
+    }
+
+    // CU-50: actualizar solo los campos enviados
+    if (dto.nombre_comercial !== undefined)
+      proveedor.nombre_comercial = dto.nombre_comercial;
+    if (dto.nombre_contacto !== undefined)
+      proveedor.nombre_contacto = dto.nombre_contacto ?? null;
+    if (dto.telefono !== undefined)
+      proveedor.telefono = dto.telefono ?? null;
+    if (dto.email !== undefined)
+      proveedor.email = dto.email ?? null;
+
+    await this.proveedorRepository.save(proveedor);
+
+    // CU-50: reemplazar los tipos de equipo asociados si se envían
+    if (dto.ids_tipos_equipo !== undefined) {
+      await this.proveedorTipoEquipoRepository.delete({ id_proveedor: id });
+      if (dto.ids_tipos_equipo.length > 0) {
+        const pivots = dto.ids_tipos_equipo.map((id_tipo_equipo) =>
+          this.proveedorTipoEquipoRepository.create({
+            id_proveedor: id,
+            id_tipo_equipo,
+          }),
+        );
+        await this.proveedorTipoEquipoRepository.save(pivots);
+      }
+    }
+
+    // CU-50: obtener los tipos actualizados para auditoría
+    const actualizado = await this.findOneConTipos(id);
+
+    // CU-50: auditoría con valor_anterior y valor_nuevo
+    await this.auditoriaService.create({
+      id_usuario: actorId,
+      accion: 'EDITAR',
+      entidad_afectada: 'proveedor',
+      id_entidad_afectada: id,
+      valor_anterior: valorAnterior,
+      valor_nuevo: {
+        nombre_comercial: proveedor.nombre_comercial,
+        rut: proveedor.rut,
+        nombre_contacto: proveedor.nombre_contacto,
+        telefono: proveedor.telefono,
+        email: proveedor.email,
+      },
+    });
+
+    return actualizado;
   }
 
   async findAll(filtros?: {

@@ -66,11 +66,9 @@
 | 44 | Listado de bodegas con stock | `bodegas` | `/bodegas` |
 | 45 | Stock por tipo/estado/unidad de medida | `bodegas` | `/bodegas/[id]` |
 | 46 | Umbral mínimo de stock + alertas | `bodegas`, `companies` | `/bodegas/[id]`, `/dashboard`, `Header` |
-<<<<<<< Updated upstream
 | 47 | Ubicación física al ingresar/reingresar a bodega | `inventario/units` | `/unidades/[id]` |
-=======
 | 49 | Crear proveedor (CU-49) | `proveedores` | `/proveedores` |
->>>>>>> Stashed changes
+| 50 | Editar proveedor (CU-50) | `proveedores` | `/proveedores` |
 
 ## 3. Diagramas disponibles (referencia para CUs pendientes)
 
