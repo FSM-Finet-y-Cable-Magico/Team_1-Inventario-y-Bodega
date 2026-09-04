@@ -241,6 +241,22 @@ export interface ReporteMovimientoFila {
 	referencia_tipo: string | null;
 }
 
+export interface ReporteGarantiaFila {
+	numero_serie: string;
+	tipo_equipo: string;
+	marca: string | null;
+	modelo: string | null;
+	proveedor: string | null;
+	fecha_adquisicion: string | null;
+	duracion_garantia_dias: number;
+	fecha_vencimiento: string | null;
+	dias: number | null;
+	dias_restantes: number | null;
+	dias_vencidos: number | null;
+	estado: string;
+	empresa: string | null;
+}
+
 // Respuesta de GET /transferencias (CU-23)
 export interface Transferencia {
 	id_transferencia: number;

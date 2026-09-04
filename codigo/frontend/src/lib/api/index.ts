@@ -178,6 +178,16 @@ export function generarReporteStock(params?: { id_empresa?: string; id_bodega?: 
 	return api.get<import('$lib/types').ReporteStockFila[]>(`/reportes/stock${query ? '?' + query : ''}`);
 }
 
+// CU-88: reporte de garantías por empresa, tipo y período
+export function generarReporteGarantias(params?: { id_empresa?: string; id_tipo_equipo?: string; periodo?: 'VENCIDAS' | '30' | '60' | '90' | 'TODAS' }) {
+	const qs = new URLSearchParams();
+	if (params?.id_empresa) qs.set('id_empresa', params.id_empresa);
+	if (params?.id_tipo_equipo) qs.set('id_tipo_equipo', params.id_tipo_equipo);
+	if (params?.periodo) qs.set('periodo', params.periodo);
+	const query = qs.toString();
+	return api.get<import('$lib/types').ReporteGarantiaFila[]>(`/reportes/garantias${query ? '?' + query : ''}`);
+}
+
 // CU-23: filtros por estado, rango de fechas o empresa
 export function getTransfers(params?: { estado?: string; id_empresa?: string; fecha_inicio?: string; fecha_fin?: string }) {
 	const qs = new URLSearchParams();

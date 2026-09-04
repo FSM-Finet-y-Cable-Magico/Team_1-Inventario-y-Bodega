@@ -60,6 +60,24 @@ export class ReportesController {
     );
   }
 
+  @Get('garantias')
+  @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
+  getGarantias(
+    @Query('id_empresa') idEmpresa: string | undefined,
+    @Query('id_tipo_equipo') idTipoEquipo: string | undefined,
+    @Query('periodo') periodo: string | undefined,
+    @Req() req,
+  ) {
+    return this.reportesService.getGarantiasReport(
+      {
+        id_empresa: this.parseOptionalId(idEmpresa, 'empresa'),
+        id_tipo_equipo: this.parseOptionalId(idTipoEquipo, 'tipo de equipo'),
+        periodo: periodo,
+      },
+      req.user,
+    );
+  }
+
   private parseOptionalId(
     value: string | undefined,
     label: string,

@@ -29,6 +29,12 @@ type FiltrosMovimientos = {
   id_usuario?: number;
 };
 
+type FiltrosGarantias = {
+  id_empresa?: number;
+  id_tipo_equipo?: number;
+  periodo?: string;
+};
+
 type Actor = {
   id_usuario?: number;
   sub?: number;
@@ -199,14 +205,26 @@ export class ReportesService {
     return resultado;
   }
 
-  async getMovementsReport(filtros: FiltrosMovimientos, actor: Actor): Promise<any[]> {
+  async getMovementsReport(
+    filtros: FiltrosMovimientos,
+    actor: Actor,
+  ): Promise<any[]> {
     this.validateDateRange(filtros.fecha_desde, filtros.fecha_hasta);
     const esSuperusuario = actor.roles?.includes('SUPERUSUARIO') ?? false;
-    if (!esSuperusuario && filtros.id_empresa !== undefined && filtros.id_empresa !== actor.id_empresa) {
-      throw new ForbiddenException('No tiene permisos para consultar esta empresa.');
+    if (
+      !esSuperusuario &&
+      filtros.id_empresa !== undefined &&
+      filtros.id_empresa !== actor.id_empresa
+    ) {
+      throw new ForbiddenException(
+        'No tiene permisos para consultar esta empresa.',
+      );
     }
     const idEmpresa = esSuperusuario ? filtros.id_empresa : actor.id_empresa;
-    if (!esSuperusuario && !idEmpresa) throw new BadRequestException('El usuario no tiene una empresa asignada.');
+    if (!esSuperusuario && !idEmpresa)
+      throw new BadRequestException(
+        'El usuario no tiene una empresa asignada.',
+      );
 
     const query = this.movimientoRepository
       .createQueryBuilder('m')
@@ -216,49 +234,251 @@ export class ReportesService {
       .leftJoin('bodega', 'bd', 'bd.id_bodega = m.id_bodega_destino')
       .leftJoin('usuario', 'usr', 'usr.id_usuario = m.id_usuario')
       .select([
-        'm.id_movimiento AS id_movimiento', 'm.fecha AS fecha',
-        'm.tipo_movimiento AS tipo_movimiento', 'm.cantidad AS cantidad',
-        'm.referencia_id AS referencia_id', 'm.id_tipo_equipo AS id_tipo_equipo',
-        'm.id_unidad AS id_unidad', 'm.id_usuario AS id_usuario',
-        'COALESCE(u.numero_serie, t.nombre) AS item', 't.nombre AS tipo_equipo',
+        'm.id_movimiento AS id_movimiento',
+        'm.fecha AS fecha',
+        'm.tipo_movimiento AS tipo_movimiento',
+        'm.cantidad AS cantidad',
+        'm.referencia_id AS referencia_id',
+        'm.id_tipo_equipo AS id_tipo_equipo',
+        'm.id_unidad AS id_unidad',
+        'm.id_usuario AS id_usuario',
+        'COALESCE(u.numero_serie, t.nombre) AS item',
+        't.nombre AS tipo_equipo',
         'COALESCE(bd.id_bodega, bo.id_bodega) AS id_bodega',
         'COALESCE(bd.nombre, bo.nombre) AS bodega',
         'COALESCE(m.id_empresa_destino, m.id_empresa_origen) AS id_empresa',
         'usr.nombre_completo AS usuario',
       ])
-      .orderBy('m.fecha', 'DESC').addOrderBy('m.id_movimiento', 'DESC');
+      .orderBy('m.fecha', 'DESC')
+      .addOrderBy('m.id_movimiento', 'DESC');
 
-    if (idEmpresa !== undefined) query.andWhere('(m.id_empresa_origen = :idEmpresa OR m.id_empresa_destino = :idEmpresa)', { idEmpresa });
-    if (filtros.id_bodega !== undefined) query.andWhere('(m.id_bodega_origen = :idBodega OR m.id_bodega_destino = :idBodega)', { idBodega: filtros.id_bodega });
-    if (filtros.id_tipo_equipo !== undefined) query.andWhere('m.id_tipo_equipo = :idTipoEquipo', { idTipoEquipo: filtros.id_tipo_equipo });
-    if (filtros.fecha_desde) query.andWhere('m.fecha >= :fechaDesde::date', { fechaDesde: filtros.fecha_desde });
-    if (filtros.fecha_hasta) query.andWhere("m.fecha < (:fechaHasta::date + INTERVAL '1 day')", { fechaHasta: filtros.fecha_hasta });
-    if (filtros.tipo_movimiento) query.andWhere('m.tipo_movimiento = :tipoMovimiento', { tipoMovimiento: filtros.tipo_movimiento });
-    if (filtros.id_usuario !== undefined) query.andWhere('m.id_usuario = :idUsuario', { idUsuario: filtros.id_usuario });
+    if (idEmpresa !== undefined)
+      query.andWhere(
+        '(m.id_empresa_origen = :idEmpresa OR m.id_empresa_destino = :idEmpresa)',
+        { idEmpresa },
+      );
+    if (filtros.id_bodega !== undefined)
+      query.andWhere(
+        '(m.id_bodega_origen = :idBodega OR m.id_bodega_destino = :idBodega)',
+        { idBodega: filtros.id_bodega },
+      );
+    if (filtros.id_tipo_equipo !== undefined)
+      query.andWhere('m.id_tipo_equipo = :idTipoEquipo', {
+        idTipoEquipo: filtros.id_tipo_equipo,
+      });
+    if (filtros.fecha_desde)
+      query.andWhere('m.fecha >= :fechaDesde::date', {
+        fechaDesde: filtros.fecha_desde,
+      });
+    if (filtros.fecha_hasta)
+      query.andWhere("m.fecha < (:fechaHasta::date + INTERVAL '1 day')", {
+        fechaHasta: filtros.fecha_hasta,
+      });
+    if (filtros.tipo_movimiento)
+      query.andWhere('m.tipo_movimiento = :tipoMovimiento', {
+        tipoMovimiento: filtros.tipo_movimiento,
+      });
+    if (filtros.id_usuario !== undefined)
+      query.andWhere('m.id_usuario = :idUsuario', {
+        idUsuario: filtros.id_usuario,
+      });
 
     const movimientos = await query.getRawMany();
     const resultado = movimientos.map((movimiento) => ({
       ...movimiento,
       cantidad: Number(movimiento.cantidad),
       empresa: this.nombreEmpresa(movimiento.id_empresa),
-      referencia_tipo: movimiento.referencia_id ? this.referenciaTipo(movimiento.tipo_movimiento) : null,
+      referencia_tipo: movimiento.referencia_id
+        ? this.referenciaTipo(movimiento.tipo_movimiento)
+        : null,
     }));
-    await this.auditReport(actor, filtros, resultado.length, 'reporte_movimientos');
+    await this.auditReport(
+      actor,
+      filtros,
+      resultado.length,
+      'reporte_movimientos',
+    );
     return resultado;
+  }
+
+  async getGarantiasReport(
+    filtros: FiltrosGarantias,
+    actor: Actor,
+  ): Promise<any[]> {
+    const esSuperusuario = actor.roles?.includes('SUPERUSUARIO') ?? false;
+    if (
+      !esSuperusuario &&
+      filtros.id_empresa !== undefined &&
+      filtros.id_empresa !== actor.id_empresa
+    ) {
+      throw new ForbiddenException(
+        'No tiene permisos para consultar esta empresa.',
+      );
+    }
+
+    const idEmpresa = esSuperusuario ? filtros.id_empresa : actor.id_empresa;
+    if (!esSuperusuario && !idEmpresa) {
+      throw new BadRequestException(
+        'El usuario no tiene una empresa asignada.',
+      );
+    }
+
+    const periodo = this.normalizePeriodo(filtros.periodo ?? 'TODAS');
+    const query = this.unidadRepository
+      .createQueryBuilder('u')
+      .leftJoin('tipo_equipo', 't', 't.id_tipo_equipo = u.id_tipo_equipo')
+      .select([
+        'u.numero_serie AS numero_serie',
+        'u.estado AS estado',
+        'u.id_empresa AS id_empresa',
+        't.nombre AS tipo_equipo',
+        't.marca AS marca',
+        'u.modelo AS modelo',
+        'u.proveedor AS proveedor',
+        'u.fecha_adquisicion AS fecha_adquisicion',
+        'COALESCE(t.garantia_dias, 0) AS duracion_garantia_dias',
+        "CASE WHEN u.fecha_adquisicion IS NOT NULL AND t.garantia_dias IS NOT NULL AND t.garantia_dias > 0 THEN (u.fecha_adquisicion + (t.garantia_dias * INTERVAL '1 day'))::date ELSE NULL END AS fecha_vencimiento",
+      ])
+      .where('u.fecha_adquisicion IS NOT NULL')
+      .andWhere('t.garantia_dias IS NOT NULL')
+      .andWhere('t.garantia_dias > 0');
+
+    if (idEmpresa !== undefined) {
+      query.andWhere('u.id_empresa = :idEmpresa', { idEmpresa });
+    }
+    if (filtros.id_tipo_equipo !== undefined) {
+      query.andWhere('u.id_tipo_equipo = :idTipoEquipo', {
+        idTipoEquipo: filtros.id_tipo_equipo,
+      });
+    }
+
+    const fechaVencimientoExpr =
+      "(u.fecha_adquisicion + (t.garantia_dias * INTERVAL '1 day'))::date";
+    switch (periodo) {
+      case 'VENCIDAS':
+        query.andWhere(`${fechaVencimientoExpr} < CURRENT_DATE`);
+        break;
+      case '30':
+        query.andWhere(`${fechaVencimientoExpr} >= CURRENT_DATE`);
+        query.andWhere(
+          `${fechaVencimientoExpr} <= CURRENT_DATE + INTERVAL '30 days'`,
+        );
+        break;
+      case '60':
+        query.andWhere(
+          `${fechaVencimientoExpr} > CURRENT_DATE + INTERVAL '30 days'`,
+        );
+        query.andWhere(
+          `${fechaVencimientoExpr} <= CURRENT_DATE + INTERVAL '60 days'`,
+        );
+        break;
+      case '90':
+        query.andWhere(
+          `${fechaVencimientoExpr} > CURRENT_DATE + INTERVAL '60 days'`,
+        );
+        query.andWhere(
+          `${fechaVencimientoExpr} <= CURRENT_DATE + INTERVAL '90 days'`,
+        );
+        break;
+      case 'TODAS':
+      default:
+        break;
+    }
+
+    const filas = await query
+      .orderBy('fecha_vencimiento', 'ASC')
+      .addOrderBy('u.numero_serie', 'ASC')
+      .getRawMany();
+    const resultado = filas.map((fila) => {
+      const fechaVencimiento = fila.fecha_vencimiento
+        ? new Date(`${fila.fecha_vencimiento}T00:00:00Z`)
+        : null;
+      const dias = fechaVencimiento
+        ? Math.round(
+            (fechaVencimiento.getTime() -
+              new Date(
+                `${new Date().toISOString().slice(0, 10)}T00:00:00Z`,
+              ).getTime()) /
+              86_400_000,
+          )
+        : null;
+      return {
+        numero_serie: fila.numero_serie,
+        tipo_equipo: fila.tipo_equipo,
+        marca: fila.marca ?? null,
+        modelo: fila.modelo ?? null,
+        proveedor: fila.proveedor ?? null,
+        fecha_adquisicion: fila.fecha_adquisicion
+          ? new Date(`${fila.fecha_adquisicion}T00:00:00Z`)
+              .toISOString()
+              .slice(0, 10)
+          : null,
+        duracion_garantia_dias: Number(fila.duracion_garantia_dias ?? 0),
+        fecha_vencimiento: fila.fecha_vencimiento
+          ? new Date(`${fila.fecha_vencimiento}T00:00:00Z`)
+              .toISOString()
+              .slice(0, 10)
+          : null,
+        dias,
+        dias_restantes: dias !== null && dias >= 0 ? dias : null,
+        dias_vencidos: dias !== null && dias < 0 ? Math.abs(dias) : null,
+        estado: fila.estado,
+        empresa: this.nombreEmpresa(fila.id_empresa),
+      };
+    });
+
+    await this.auditReport(
+      actor,
+      filtros,
+      resultado.length,
+      'reporte_garantias',
+    );
+    return resultado;
+  }
+
+  private normalizePeriodo(
+    periodo?: string,
+  ): 'VENCIDAS' | '30' | '60' | '90' | 'TODAS' {
+    const valor = (periodo ?? 'TODAS').trim().toUpperCase();
+    if (
+      valor === 'VENCIDAS' ||
+      valor === '30' ||
+      valor === '60' ||
+      valor === '90' ||
+      valor === 'TODAS'
+    ) {
+      return valor;
+    }
+    throw new BadRequestException(
+      'El período del reporte de garantías no es válido.',
+    );
   }
 
   private validateDateRange(fechaDesde?: string, fechaHasta?: string) {
     if (!fechaDesde && !fechaHasta) return;
-    if (!fechaDesde || !fechaHasta || !/^\d{4}-\d{2}-\d{2}$/.test(fechaDesde) || !/^\d{4}-\d{2}-\d{2}$/.test(fechaHasta)) {
+    if (
+      !fechaDesde ||
+      !fechaHasta ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(fechaDesde) ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(fechaHasta)
+    ) {
       throw new BadRequestException('Las fechas del reporte no son válidas.');
     }
     const inicio = new Date(`${fechaDesde}T00:00:00Z`);
     const fin = new Date(`${fechaHasta}T00:00:00Z`);
-    if (Number.isNaN(inicio.getTime()) || Number.isNaN(fin.getTime()) || inicio > fin) {
-      throw new BadRequestException('La fecha de inicio debe ser anterior o igual a la fecha de fin.');
+    if (
+      Number.isNaN(inicio.getTime()) ||
+      Number.isNaN(fin.getTime()) ||
+      inicio > fin
+    ) {
+      throw new BadRequestException(
+        'La fecha de inicio debe ser anterior o igual a la fecha de fin.',
+      );
     }
     if ((fin.getTime() - inicio.getTime()) / 86_400_000 > 365) {
-      throw new BadRequestException('El rango de fechas no puede superar los 365 días.');
+      throw new BadRequestException(
+        'El rango de fechas no puede superar los 365 días.',
+      );
     }
   }
 
@@ -277,7 +497,7 @@ export class ReportesService {
 
   private async auditReport(
     actor: Actor,
-    filtros: FiltrosStock | FiltrosMovimientos,
+    filtros: FiltrosStock | FiltrosMovimientos | FiltrosGarantias,
     filas: number,
     entidad = 'reporte_stock',
   ) {
