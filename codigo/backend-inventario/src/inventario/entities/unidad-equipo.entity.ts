@@ -35,13 +35,17 @@ export class UnidadEquipo {
     id_cliente_instalado?: number;
 
     @Column({ type: 'integer', name: 'id_bodega_actual', nullable: true })
-    id_bodega_actual?: number;
+    id_bodega_actual?: number | null;
 
     @Column({ type: 'varchar', length: 30, name: 'numero_poste', nullable: true })
     numeroPoste?: string;
 
     @Column({ type: 'integer', name: 'id_caja_nap', nullable: true })
     id_caja_nap?: number;
+
+    // CU-57: técnico que tiene la unidad asignada (estado 'Asignado a técnico')
+    @Column({ type: 'integer', name: 'id_tecnico_asignado', nullable: true })
+    idTecnicoAsignado?: number | null;
 
     @Column({ type: 'varchar', length: 17, name: 'mac_address', nullable: true, unique: true })
     macAddress?: string | null;

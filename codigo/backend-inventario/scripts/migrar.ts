@@ -152,6 +152,47 @@ const SENTENCIAS = [
   `ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS proveedor varchar(80)`,
   `ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS observaciones varchar(300)`,
   `ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS ubicacion_fisica varchar(60)`,
+  // sc-113 (integración G3): cierres de OT recibidos por webhook, con idempotencia
+  `CREATE TABLE IF NOT EXISTS integracion_cierre (
+    id_cierre           SERIAL PRIMARY KEY,
+    clave_idempotencia  VARCHAR(120) NOT NULL UNIQUE,
+    id_ot               INTEGER NOT NULL,
+    id_empresa          INTEGER NOT NULL,
+    tipo_ot             VARCHAR(30),
+    payload             JSONB NOT NULL,
+    estado_proceso      VARCHAR(40) NOT NULL DEFAULT 'PROCESADO',
+    discrepancias       JSONB,
+    acciones_aplicadas  JSONB,
+    fecha_proceso       TIMESTAMPTZ DEFAULT now()
+  )`,
+  // CU-57: técnico asignado a la unidad (estado 'Asignado a técnico')
+  `ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS id_tecnico_asignado integer`,
+  // CU-57: salidas de bodega a técnico (cabecera + detalle)
+  `CREATE TABLE IF NOT EXISTS salida_bodega (
+    id_salida           SERIAL PRIMARY KEY,
+    id_tecnico          INTEGER NOT NULL,
+    id_bodega_origen    INTEGER NOT NULL,
+    fecha_hora          TIMESTAMPTZ DEFAULT now(),
+    id_empresa          INTEGER,
+    id_usuario_registro INTEGER
+  )`,
+  `CREATE TABLE IF NOT EXISTS salida_detalle (
+    id_detalle      SERIAL PRIMARY KEY,
+    id_salida       INTEGER NOT NULL,
+    id_tipo_equipo  INTEGER,
+    id_unidad       INTEGER,
+    cantidad        NUMERIC(10,2),
+    CONSTRAINT fk_salida_detalle_salida FOREIGN KEY (id_salida) REFERENCES salida_bodega (id_salida) ON DELETE CASCADE
+  )`,
+  // CU-58: inventario personal del técnico (solo consumibles, por saldo)
+  `CREATE TABLE IF NOT EXISTS inventario_personal_tecnico (
+    id_inventario      SERIAL PRIMARY KEY,
+    id_tecnico         INTEGER NOT NULL,
+    id_tipo_equipo     INTEGER NOT NULL,
+    cantidad           NUMERIC(10,2) DEFAULT 0,
+    fecha_actualizacion TIMESTAMPTZ DEFAULT now(),
+    CONSTRAINT uq_inventario_tecnico_tipo UNIQUE (id_tecnico, id_tipo_equipo)
+  )`,
 ];
 
 async function main() {
