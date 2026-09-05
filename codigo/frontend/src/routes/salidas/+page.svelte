@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
-	import { getUsers, getWarehouses, getCatalog, getUnits, getWarehouseStock, verificarSerie, crearSalida, listarSalidas, getInventarioTecnico } from '$lib/api/index';
+	import { getUsers, getWarehouses, getCatalog, getUnits, getWarehouseStock, crearSalida, listarSalidas, getInventarioTecnico } from '$lib/api/index';
 	import { userRoles } from '$lib/stores/auth';
 	import type { Usuario, Bodega, TipoEquipo, SalidaResumen, InventarioTecnico, VerificacionSerie, ItemSalida } from '$lib/types';
 	import Button from '$lib/components/Button.svelte';
@@ -28,23 +28,26 @@
 
 	// CU-57: formulario de salida (mixta: equipos NS + consumibles)
 	let form = $state({ id_tecnico: 0, id_bodega_origen: 0 });
-	// CU-59: cada NS se valida en vivo contra el backend; inválido → no se puede confirmar
+	// CU-59: cada NS sale del listado de unidades disponibles de la bodega elegida;
+	// solo se pueden agregar equipos que están 'En bodega' en esa bodega
 	let seriesItems = $state<{ serie: string; verificacion: VerificacionSerie }[]>([]);
-	let serieInput = $state('');
-	let serieVerificando = $state(false);
+	let serieSeleccion = $state('');
 	// CU-60: consumibles (tipo + cantidad con hasta 2 decimales)
 	let consumiblesItems = $state<{ id_tipo_equipo: number; cantidad: number }[]>([]);
 	let consumibleTipo = $state(0);
 	let consumibleCantidad = $state<number | ''>('');
 
 	const consumiblesCatalogo = $derived(catalogo.filter((t) => t.requiereSerialNumber === false));
-	// CU-59: solo las unidades realmente disponibles en la bodega elegida se sugieren
+	// CU-59: el dropdown solo ofrece unidades 'En bodega' en la bodega elegida
+	// que aún no estén agregadas a la salida
 	const seriesDisponibles = $derived(
-		unidadesEnBodega.filter((u) => u.id_bodega_actual === form.id_bodega_origen).map((u) => u.numero_serie)
+		unidadesEnBodega
+			.filter((u) => u.id_bodega_actual === form.id_bodega_origen)
+			.map((u) => u.numero_serie)
+			.filter((serie) => !seriesItems.some((s) => s.serie.toLowerCase() === serie.toLowerCase()))
 	);
 	const itemsVacios = $derived(seriesItems.length === 0 && consumiblesItems.length === 0);
-	const haySeriesInvalidas = $derived(seriesItems.some((s) => !s.verificacion.disponible));
-	const puedeConfirmar = $derived(puedeRegistrar && form.id_tecnico > 0 && form.id_bodega_origen > 0 && !itemsVacios && !haySeriesInvalidas && !enviando);
+	const puedeConfirmar = $derived(puedeRegistrar && form.id_tecnico > 0 && form.id_bodega_origen > 0 && !itemsVacios && !enviando);
 
 	// CU-58/CU-33: formato de fecha DD/MM/YYYY HH:MM
 	function fmtFechaHora(fecha: string | null | undefined): string {
@@ -81,26 +84,22 @@
 
 	onMount(load);
 
-	// CU-59: validación en vivo al agregar un NS (la validación de verdad la
-	// re-ejecuta el backend dentro de la transacción de la salida)
-	async function agregarSerie() {
-		const serie = serieInput.trim();
+	// CU-59: el NS se elige del dropdown de disponibles de la bodega (sin tipear);
+	// la validación de verdad la re-ejecuta el backend en la transacción de la salida
+	function agregarSerie() {
+		const serie = serieSeleccion.trim();
 		error = '';
 		if (!serie) return;
 		if (seriesItems.some((s) => s.serie.toLowerCase() === serie.toLowerCase())) {
 			error = `El equipo [${serie}] está repetido en la salida.`;
+			serieSeleccion = '';
 			return;
 		}
-		serieVerificando = true;
-		try {
-			const verificacion = await verificarSerie(serie, form.id_bodega_origen || undefined);
-			seriesItems = [...seriesItems, { serie, verificacion }];
-			serieInput = '';
-		} catch (err: unknown) {
-			error = err instanceof Error ? err.message : 'Error al validar el número de serie';
-		} finally {
-			serieVerificando = false;
-		}
+		seriesItems = [...seriesItems, {
+			serie,
+			verificacion: { existe: true, numero_serie: serie, estado: 'En bodega', id_bodega_actual: form.id_bodega_origen, disponible: true }
+		}];
+		serieSeleccion = '';
 	}
 
 	// CU-59: si cambia la bodega de origen, las validaciones en vivo pierden vigencia
@@ -240,32 +239,27 @@
 						</FormField>
 					</div>
 
-					<!-- CU-59: equipos por número de serie con sugerencias de la bodega
-					     (datalist) + validación en vivo -->
+					<!-- CU-59: los equipos se eligen del dropdown de unidades disponibles
+					     en la bodega elegida (nada de tipear el NS a mano) -->
 					<div class="mb-6">
 						<p class="text-sm font-medium text-foreground mb-2">Equipos (número de serie)</p>
 						{#if !form.id_bodega_origen}
 							<p class="text-xs text-muted mb-2">Seleccione primero la bodega de origen.</p>
 						{:else}
-							<p class="text-xs text-muted mb-2">
-								{seriesDisponibles.length} equipo(s) disponible(s) en esta bodega — escriba para filtrar o elija de la lista.
-							</p>
+							<p class="text-xs text-muted mb-2">{seriesDisponibles.length} equipo(s) disponible(s) en esta bodega.</p>
 						{/if}
-						<div class="flex gap-2 mb-2">
-							<input type="text" bind:value={serieInput} maxlength={80} disabled={!form.id_bodega_origen}
-								list="series-sugeridas"
-								placeholder="Escriba para filtrar o elija una serie…"
-								onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); agregarSerie(); } }}
-								class="flex-1 px-3 py-2 border border-border rounded-md text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary" />
-							<datalist id="series-sugeridas">
+						<FormField label="Equipo disponible" name="sal_serie">
+							<select id="sal_serie" bind:value={serieSeleccion} onchange={agregarSerie}
+								disabled={!form.id_bodega_origen}
+								class="w-full px-3 py-2 border border-border rounded-md text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+								<option value="" disabled>
+									{form.id_bodega_origen ? (seriesDisponibles.length ? 'Seleccionar equipo...' : 'No hay equipos disponibles en esta bodega') : 'Seleccione bodega...'}
+								</option>
 								{#each seriesDisponibles as serie}
-									<option value={serie}></option>
+									<option value={serie}>{serie}</option>
 								{/each}
-							</datalist>
-							<Button variant="secondary" onclick={agregarSerie} disabled={!form.id_bodega_origen || serieVerificando}>
-								Agregar
-							</Button>
-						</div>
+							</select>
+						</FormField>
 						{#if seriesItems.length > 0}
 							<ul class="space-y-1">
 								{#each seriesItems as s, i}
@@ -333,9 +327,6 @@
 						<Button onclick={confirmarSalida} disabled={!puedeConfirmar} loading={enviando}>
 							Confirmar salida
 						</Button>
-						{#if haySeriesInvalidas}
-							<p class="text-xs text-destructive">Hay números de serie inválidos; corríjalos o quítelos para confirmar.</p>
-						{/if}
 					</div>
 				</div>
 
