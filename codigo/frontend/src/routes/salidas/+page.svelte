@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
-	import { getUsers, getWarehouses, getCatalog, verificarSerie, crearSalida, listarSalidas, getInventarioTecnico } from '$lib/api/index';
+	import { getUsers, getWarehouses, getCatalog, getUnits, getWarehouseStock, verificarSerie, crearSalida, listarSalidas, getInventarioTecnico } from '$lib/api/index';
 	import { userRoles } from '$lib/stores/auth';
 	import type { Usuario, Bodega, TipoEquipo, SalidaResumen, InventarioTecnico, VerificacionSerie, ItemSalida } from '$lib/types';
 	import Button from '$lib/components/Button.svelte';
@@ -17,6 +17,10 @@
 	let catalogo = $state<TipoEquipo[]>([]);
 	let salidas = $state<SalidaResumen[]>([]);
 	let inventario = $state<InventarioTecnico | null>(null);
+	// Unidades 'En bodega' y saldos de stock de la bodega elegida (para sugerir NS
+	// en vez de teclearlos a mano, y mostrar el saldo en vivo del consumible)
+	let unidadesEnBodega = $state<{ numero_serie: string; id_bodega_actual: number | null }[]>([]);
+	let saldosBodega = $state<Record<number, { saldo: number; unidad: string | null }>>({});
 	let loading = $state(true);
 	let error = $state('');
 	let success = $state('');
@@ -34,6 +38,10 @@
 	let consumibleCantidad = $state<number | ''>('');
 
 	const consumiblesCatalogo = $derived(catalogo.filter((t) => t.requiereSerialNumber === false));
+	// CU-59: solo las unidades realmente disponibles en la bodega elegida se sugieren
+	const seriesDisponibles = $derived(
+		unidadesEnBodega.filter((u) => u.id_bodega_actual === form.id_bodega_origen).map((u) => u.numero_serie)
+	);
 	const itemsVacios = $derived(seriesItems.length === 0 && consumiblesItems.length === 0);
 	const haySeriesInvalidas = $derived(seriesItems.some((s) => !s.verificacion.disponible));
 	const puedeConfirmar = $derived(puedeRegistrar && form.id_tecnico > 0 && form.id_bodega_origen > 0 && !itemsVacios && !haySeriesInvalidas && !enviando);
@@ -50,16 +58,20 @@
 		loading = true;
 		error = '';
 		try {
-			const [tecData, whData, catData, salData] = await Promise.all([
+			const [tecData, whData, catData, salData, unitsData] = await Promise.all([
 				getUsers({ activo: true, rol: 'TECNICO_TERRENO' }),
 				getWarehouses({ activa: true }),
 				getCatalog({ activo: true }),
-				listarSalidas().catch(() => [])
+				listarSalidas().catch(() => []),
+				getUnits({ estado: 'En bodega' })
 			]);
 			tecnicos = tecData;
 			warehouses = whData;
 			catalogo = catData;
 			salidas = salData;
+			// Solo equipos individualizables (los consumibles van por cantidad)
+			unidadesEnBodega = unitsData.filter((u: any) => !u.es_consumible)
+				.map((u: any) => ({ numero_serie: u.numero_serie, id_bodega_actual: u.id_bodega_actual }));
 		} catch (err: unknown) {
 			error = err instanceof Error ? err.message : 'Error al cargar datos';
 		} finally {
@@ -92,8 +104,25 @@
 	}
 
 	// CU-59: si cambia la bodega de origen, las validaciones en vivo pierden vigencia
-	function cambiarBodega() {
+	// y se recargan las sugerencias/saldos de la nueva bodega
+	async function cambiarBodega() {
 		seriesItems = [];
+		saldosBodega = {};
+		if (form.id_bodega_origen) {
+			try {
+				const stock = await getWarehouseStock(form.id_bodega_origen);
+				const mapa: Record<number, { saldo: number; unidad: string | null }> = {};
+				for (const s of stock as any[]) {
+					mapa[s.id_tipo_equipo] = {
+						saldo: Number(s.cantidad_disponible ?? 0),
+						unidad: s.unidad_medida ?? null
+					};
+				}
+				saldosBodega = mapa;
+			} catch {
+				saldosBodega = {};
+			}
+		}
 	}
 
 	function agregarConsumible() {
@@ -211,16 +240,28 @@
 						</FormField>
 					</div>
 
-					<!-- CU-59: equipos por número de serie con validación en vivo -->
+					<!-- CU-59: equipos por número de serie con sugerencias de la bodega
+					     (datalist) + validación en vivo -->
 					<div class="mb-6">
 						<p class="text-sm font-medium text-foreground mb-2">Equipos (número de serie)</p>
 						{#if !form.id_bodega_origen}
 							<p class="text-xs text-muted mb-2">Seleccione primero la bodega de origen.</p>
+						{:else}
+							<p class="text-xs text-muted mb-2">
+								{seriesDisponibles.length} equipo(s) disponible(s) en esta bodega — escriba para filtrar o elija de la lista.
+							</p>
 						{/if}
 						<div class="flex gap-2 mb-2">
 							<input type="text" bind:value={serieInput} maxlength={80} disabled={!form.id_bodega_origen}
-								placeholder="Ej: ONT-A1B2C3" onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); agregarSerie(); } }}
+								list="series-sugeridas"
+								placeholder="Escriba para filtrar o elija una serie…"
+								onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); agregarSerie(); } }}
 								class="flex-1 px-3 py-2 border border-border rounded-md text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary" />
+							<datalist id="series-sugeridas">
+								{#each seriesDisponibles as serie}
+									<option value={serie}></option>
+								{/each}
+							</datalist>
 							<Button variant="secondary" onclick={agregarSerie} disabled={!form.id_bodega_origen || serieVerificando}>
 								Agregar
 							</Button>
@@ -250,11 +291,14 @@
 						{/if}
 					</div>
 
-					<!-- CU-60: consumibles por tipo y cantidad -->
+					<!-- CU-60: consumibles por tipo y cantidad (con saldo en vivo de la bodega) -->
 					<div class="mb-6">
 						<p class="text-sm font-medium text-foreground mb-2">Consumibles</p>
 						<div class="grid grid-cols-1 sm:grid-cols-3 gap-2 items-end mb-2">
-							<FormField label="Tipo de consumible" name="sal_cons">
+							<FormField label="Tipo de consumible" name="sal_cons"
+								helper={consumibleTipo && saldosBodega[consumibleTipo]
+									? `Disponible en bodega: ${saldosBodega[consumibleTipo].saldo} ${saldosBodega[consumibleTipo].unidad ?? ''}`
+									: undefined}>
 								<select id="sal_cons" bind:value={consumibleTipo}
 									class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
 									<option value={0} disabled>Seleccionar...</option>

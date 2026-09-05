@@ -90,9 +90,12 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
   sección de consulta), CU-59 (validación en vivo de NS), CU-60 (consumibles con 2 decimales),
   CU-62 (stock insuficiente como banner).
 - **Endpoints:** `getUsers({rol:'TECNICO_TERRENO'})`, `getWarehouses({activa:true})`,
-  `getCatalog({activo:true})`, `verificarSerie(ns, id_bodega)`, `crearSalida()`,
-  `listarSalidas()`, `getInventarioTecnico(id)`.
-- Confirmar deshabilitado mientras haya NS inválidos o sin ítems. Ítem "Salidas" agregado al
+  `getCatalog({activo:true})`, `getUnits({estado:'En bodega'})`, `getWarehouseStock(id)`,
+  `verificarSerie(ns, id_bodega)`, `crearSalida()`, `listarSalidas()`, `getInventarioTecnico(id)`.
+- Los NS se eligen de un **datalist** con las unidades disponibles de la bodega elegida
+  (escribir para filtrar); igual pasa por la validación en vivo (CU-59). Junto al consumible
+  se muestra el saldo en vivo de la bodega (CU-62, pre-validación). Confirmar deshabilitado
+  mientras haya NS inválidos o sin ítems. Ítem "Salidas" agregado al
   Sidebar (roles `SUPERUSUARIO`, `ADMIN`, `ADMIN_BODEGA`, `TECNICO_TERRENO` — el técnico solo
   consulta su inventario; el backend lo valida igual).
 
