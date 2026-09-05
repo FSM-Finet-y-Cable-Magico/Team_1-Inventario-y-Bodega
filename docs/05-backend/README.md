@@ -10,7 +10,8 @@
 - `synchronize: false` → los cambios de esquema van por **migraciones** (`scripts/migrar.ts`).
 - Módulos feature: `auth`, `usuarios`, `roles`, `auditoria`, `companies`, `bodegas`,
   `inventario` (catálogo + unidades), `transferencias`, `health`,
-  `integraciones` (server-to-server con G3, `docs/05-backend/integraciones.md`).
+  `integraciones` (server-to-server con G3, `docs/05-backend/integraciones.md`),
+  `salidas` (salidas a técnico, `docs/05-backend/salidas.md`).
 
 ## 2. Seguridad transversal (obligatorio en todo endpoint)
 

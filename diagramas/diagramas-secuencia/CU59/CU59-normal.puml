@@ -1,0 +1,45 @@
+@startuml CU59-normal
+title CU-59 — Validando número de serie en salida de bodega (flujo normal)
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 30 } actor { Margin 12 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega" as user
+participant "V_Salidas" as view
+participant "C_UnitsController" as uctrl
+participant "C_UnitsService" as usvc
+participant "C_SalidasService" as svc
+database "postgres" as db
+
+user -> view : Agrega NS 'ONT-A1B2C3' (bodega ya elegida)
+activate view
+view -> uctrl : GET /api/unidades/serie/{ns}?id_bodega=N
+activate uctrl
+uctrl -> usvc : verificarSerie(ns, id_empresa, id_bodega)
+activate usvc
+usvc -> db : SELECT unidad_equipo WHERE numero_serie AND id_empresa
+db --> usvc : unidad (estado 'En bodega', id_bodega_actual = N)
+usvc --> uctrl : 200 { existe: true, estado: 'En bodega',\nid_bodega_actual: N, disponible: true }
+deactivate usvc
+uctrl --> view : 200
+deactivate uctrl
+view --> user : NS marcado 'Disponible' (badge verde)
+
+user -> view : Confirma la salida
+view -> svc : POST /api/salidas (re-validación de verdad)
+activate svc
+svc -> db : SELECT unidad (transacción) → estado y bodega OK ✓
+db --> svc : unidad
+svc -> db : UPDATE unidad → 'Asignado a técnico' + id_tecnico_asignado
+svc --> view : 200 { success, id_salida }
+deactivate svc
+view --> user : Salida confirmada
+deactivate view
+@enduml
