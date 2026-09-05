@@ -156,6 +156,18 @@ export interface CambioEstadoDto {
 	motivoPayload?: string;
 }
 
+export interface ResultadoRevisionDto {
+	resultado: 'OPERATIVO' | 'REPARACION_EXTERNA' | 'BAJA';
+	id_bodega_actual?: number;
+	ubicacion_fisica?: string;
+	nombre_receptor?: string;
+	fecha_retorno_estimada?: string;
+	descripcion_falla?: string;
+	motivo?: string;
+	confirmar_garantia?: boolean;
+}
+
+
 export interface HistorialEstado {
 	id_historial: number;
 	id_unidad?: number;

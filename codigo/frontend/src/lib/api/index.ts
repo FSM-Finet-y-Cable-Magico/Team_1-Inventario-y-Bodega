@@ -127,6 +127,11 @@ export function changeUnitState(id: number, data: Record<string, unknown>) {
 	return api.patch<any>(`/unidades/${id}/cambiar-estado`, data);
 }
 
+export function registrarResultadoRevision(id: number, data: Record<string, unknown>) {
+	return api.post<any>(`/unidades/${id}/resultado-revision`, data);
+}
+
+
 export function getUnitHistory(serialNumber: string) {
 	return api.get<any[]>(`/unidades/${serialNumber}/historial`);
 }

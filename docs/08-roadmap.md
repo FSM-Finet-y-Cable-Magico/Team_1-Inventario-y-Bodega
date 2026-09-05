@@ -141,7 +141,7 @@ no esté reflejado aquí.
 | CU | Nombre | Estado | Notas |
 |----|--------|--------|-------|
 | CU-71 | Registrando devolución de equipo desde cliente | [ ] Pendiente | |
-| CU-72 | Registrando resultado de revisión de equipo | [ ] Pendiente | |
+| CU-72 | Registrando resultado de revisión de equipo | [x] Implementado | |
 | CU-73 | Mostrando información de equipo en devolución | [ ] Pendiente | |
 
 ### Reacondicionamiento y equipos defectuosos
