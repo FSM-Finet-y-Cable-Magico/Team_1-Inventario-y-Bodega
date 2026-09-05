@@ -46,6 +46,18 @@ export class UnitsController {
         return this.unitsService.editarConsumible(parseInt(idStock), body, actor.id_empresa, actor.id_usuario);
     }
 
+    @Get('serie/:numeroSerie')
+    @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
+    async verificarSerieParaSalida(
+        @Param('numeroSerie') numeroSerie: string,
+        @Query('id_bodega') idBodega: string,
+        @CurrentUser() actor: any,
+    ) {
+        // CU-59: validación en vivo para el formulario de salida de bodega.
+        // La validación de verdad la re-ejecuta SalidasService en la transacción.
+        return this.unitsService.verificarSerie(numeroSerie, actor.id_empresa, idBodega ? parseInt(idBodega, 10) : undefined);
+    }
+
     @Get(':id/ficha')
     @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
     async verFichaDeSeguimiento(@Param('id') id: string, @CurrentUser() actor: any) {

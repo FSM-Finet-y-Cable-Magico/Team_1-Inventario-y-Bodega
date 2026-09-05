@@ -15,6 +15,7 @@ import { InventarioModule } from './inventario/inventario.module';
 import { TransferenciasModule } from './transferencias/transferencias.module';
 import { CompaniesModule } from './companies/companies.module';
 import { IntegracionesModule } from './integraciones/integraciones.module';
+import { SalidasModule } from './salidas/salidas.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { IntegracionesModule } from './integraciones/integraciones.module';
     TransferenciasModule,
     CompaniesModule,
     IntegracionesModule,
+    SalidasModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],

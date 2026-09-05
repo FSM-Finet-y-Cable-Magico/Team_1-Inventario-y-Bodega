@@ -168,3 +168,36 @@ CREATE TABLE IF NOT EXISTS integracion_cierre (
     acciones_aplicadas  JSONB,
     fecha_proceso       TIMESTAMPTZ DEFAULT now()
 );
+
+-- Salidas de bodega a técnico (CU-57/59/60/62)
+CREATE TABLE IF NOT EXISTS salida_bodega (
+    id_salida           SERIAL PRIMARY KEY,
+    id_tecnico          INTEGER NOT NULL,
+    id_bodega_origen    INTEGER NOT NULL,
+    fecha_hora          TIMESTAMPTZ DEFAULT now(),
+    id_empresa          INTEGER,
+    id_usuario_registro INTEGER
+);
+
+-- Detalle de la salida: o id_unidad (equipo individualizable) o id_tipo_equipo + cantidad (consumible)
+CREATE TABLE IF NOT EXISTS salida_detalle (
+    id_detalle      SERIAL PRIMARY KEY,
+    id_salida       INTEGER NOT NULL,
+    id_tipo_equipo  INTEGER,
+    id_unidad       INTEGER,
+    cantidad        NUMERIC(10,2),
+    CONSTRAINT fk_salida_detalle_salida FOREIGN KEY (id_salida) REFERENCES salida_bodega (id_salida) ON DELETE CASCADE
+);
+
+-- Inventario personal del técnico (CU-58): saldo de consumibles por tipo
+CREATE TABLE IF NOT EXISTS inventario_personal_tecnico (
+    id_inventario       SERIAL PRIMARY KEY,
+    id_tecnico          INTEGER NOT NULL,
+    id_tipo_equipo      INTEGER NOT NULL,
+    cantidad            NUMERIC(10,2) DEFAULT 0,
+    fecha_actualizacion TIMESTAMPTZ DEFAULT now(),
+    CONSTRAINT uq_inventario_tecnico_tipo UNIQUE (id_tecnico, id_tipo_equipo)
+);
+
+-- CU-57: técnico que tiene asignada la unidad
+ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS id_tecnico_asignado INTEGER;
