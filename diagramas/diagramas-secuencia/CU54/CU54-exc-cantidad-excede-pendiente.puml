@@ -1,0 +1,62 @@
+@startuml CU54-RecepcionOrdenIngreso-Exc-CantidadExcedePendiente
+title CU-54 — Registrando recepción (excepción: la cantidad supera el pendiente del ítem)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+skinparam sequence { MessageAlign center  LifeLineBorderColor black }
+hide footbox
+
+actor "Admin/AdminBodega/\nSuperusuario" as user
+participant "V_OrdenIngresoDetalle" as view
+participant "C_OrdenesIngresoController" as ctrl
+participant "C_OrdenesIngresoService" as svc
+database "postgres" as db
+
+user -> view : Ingresa una cantidad mayor\nal pendiente del ítem\n(p. ej. 99 sobre un pendiente de 3)
+activate view
+
+view -> view : Validación en cliente (guardarRecepcion):\ncantidad > (esperada - recibida)
+
+note right of view
+  El formulario usa `novalidate`: con la
+  validación nativa activa el navegador
+  bloquearía el submit por el `max` y
+  mostraría SU tooltip, tapando el
+  mensaje exacto del caso de uso
+end note
+
+view --> user : "La cantidad no puede superar\nla cantidad pendiente del ítem."\nNo se envía la petición
+
+user -> view : Reintenta (o llamada directa a la API\nsin pasar por la interfaz)
+
+view -> ctrl : POST /api/ordenes-ingreso/{id}/recepcion\n{ items: [ { id_detalle, cantidad_recibida: 99 } ] }
+activate ctrl
+
+ctrl -> svc : registrarRecepcion(id, dto, actor)
+activate svc
+
+svc -> db : SELECT * FROM orden_ingreso_detalle\nWHERE id_orden = ?
+db --> svc : detalles[] (esperada 4, recibida 1)
+
+svc -> svc : 99 > (4 - 1) → Excepción 1
+
+note right of svc
+  La validación ocurre ANTES de abrir la
+  transacción: aunque la recepción incluya
+  otros ítems válidos, no se escribe ninguna
+  cantidad ("no permite continuar")
+end note
+
+svc --> ctrl : throw BadRequestException
+deactivate svc
+
+ctrl --> view : 400 Bad Request\n{ message: "La cantidad no puede superar\nla cantidad pendiente del ítem." }
+deactivate ctrl
+
+view --> user : Banner de error en el modal.\nLa orden conserva su estado\ny sus cantidades
+deactivate view
+
+@enduml

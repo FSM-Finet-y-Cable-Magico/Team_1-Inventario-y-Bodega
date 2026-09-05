@@ -264,3 +264,11 @@ export function getOrdenIngreso(id: number) {
 export function createOrdenIngreso(data: Record<string, unknown>) {
 	return api.post<any>('/ordenes-ingreso', data);
 }
+
+// CU-54: registrar la recepción total o parcial de una orden de ingreso
+export function registrarRecepcionOrden(
+	id: number,
+	items: { id_detalle: number; cantidad_recibida: number }[]
+) {
+	return api.post<any>(`/ordenes-ingreso/${id}/recepcion`, { items });
+}

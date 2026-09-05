@@ -129,14 +129,22 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
   el `ValidationPipe` del backend la repite como red de seguridad.
 
 ### `/ordenes-ingreso/[id]`
-- **CUs:** CU-53 (ficha de detalle de una orden de ingreso).
-- **Endpoints:** `getOrdenIngreso(id)`.
+- **CUs:** CU-53 (ficha de detalle de una orden de ingreso), CU-54 (registrar recepción).
+- **Endpoints:** `getOrdenIngreso(id)`, `registrarRecepcionOrden(id, items)`.
 - Cabecera con correlativo, badge de estado, proveedor, N.º documento, fecha (DD/MM/YYYY),
   empresa destinataria, bodega de destino y total de ítems. Tabla de ítems con cantidad
   esperada, recibida, pendiente (esperada − recibida) y garantía, más una fila de totales.
-- El botón **"Registrar recepción"** está presente pero **deshabilitado**: lo implementa CU-54.
 - Si la orden no existe o es de otra empresa, el backend responde el mismo 404 y la página
   muestra `Orden de ingreso no encontrada`.
+- **CU-54:** el botón "Registrar recepción" abre un modal con un input por ítem (`0..pendiente`),
+  acotado a lo que falta y deshabilitado en los ítems ya completos. Tras guardar, la ficha se
+  actualiza en el sitio con las cantidades y el estado nuevos, y muestra un banner con el
+  estado resultante. El botón queda **deshabilitado** cuando la orden está `Completada`.
+- **CU-54 Excepción 1:** el formulario del modal lleva `novalidate` a propósito. Con la
+  validación nativa activa, el navegador bloquea el submit por el `max` del input y muestra su
+  propio tooltip, tapando el mensaje exacto del CU
+  (`La cantidad no puede superar la cantidad pendiente del ítem.`). El `max` se conserva para
+  acotar las flechas del spinner.
 
 ### `/auditoria`
 - **CUs:** CU-08 (visualizar log), CU-09 (filtrar).

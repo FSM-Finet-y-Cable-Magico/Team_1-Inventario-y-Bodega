@@ -13,6 +13,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { OrdenesIngresoService } from './ordenes-ingreso.service';
 import { CreateOrdenIngresoDto } from './dto/create-orden-ingreso.dto';
+import { RegistrarRecepcionDto } from './dto/registrar-recepcion.dto';
 
 // CU-53: convierte un query param a id numérico; descarta lo que no sea un entero > 0
 function aIdOpcional(valor?: string): number | undefined {
@@ -85,5 +86,25 @@ export class OrdenesIngresoController {
       esSuperusuario: (req.user.roles ?? []).includes('SUPERUSUARIO'),
     };
     return this.ordenesIngresoService.findOne(Number(id), actor);
+  }
+
+  // CU-54: registrar la recepción total o parcial de una orden de ingreso
+  @Post(':id/recepcion')
+  @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
+  registrarRecepcion(
+    @Param('id') id: string,
+    @Body() dto: RegistrarRecepcionDto,
+    @Req() req,
+  ) {
+    const actor = {
+      id_usuario: req.user.id_usuario ?? req.user.sub,
+      id_empresa: req.user.id_empresa,
+      esSuperusuario: (req.user.roles ?? []).includes('SUPERUSUARIO'),
+    };
+    return this.ordenesIngresoService.registrarRecepcion(
+      Number(id),
+      dto,
+      actor,
+    );
   }
 }

@@ -12,12 +12,19 @@ import { Bodega } from '../bodegas/entities/bodega.entity';
 import { TipoEquipo } from '../inventario/entities/tipo-equipo.entity';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { CreateOrdenIngresoDto } from './dto/create-orden-ingreso.dto';
+import { RegistrarRecepcionDto } from './dto/registrar-recepcion.dto';
 import { EMPRESAS } from '../companies/companies.service';
 
 // CU-52: clave del advisory lock que serializa la generación del correlativo OI-%04d.
 // El prefijo OI- está reservado para G1 (docs/13, §1 "Correlativos"): ningún otro
 // módulo debe emitirlo ni reutilizar esta clave.
 const CORRELATIVO_LOCK_KEY = 52;
+
+// CU-52/CU-54: estados de orden_ingreso. Literales exactos (con tildes), deben
+// coincidir con el frontend y con lo declarado en la BD.
+const ESTADO_PENDIENTE = 'Pendiente de recepción';
+const ESTADO_PARCIAL = 'Recepción parcial';
+const ESTADO_COMPLETADA = 'Completada';
 
 @Injectable()
 export class OrdenesIngresoService {
@@ -143,7 +150,7 @@ export class OrdenesIngresoService {
         fecha_documento: dto.fecha_documento,
         id_empresa_destino: idEmpresa,
         id_bodega_destino: dto.id_bodega_destino,
-        estado: 'Pendiente de recepción',
+        estado: ESTADO_PENDIENTE,
         id_usuario_registro: actor.id_usuario,
       });
       const ordenGuardada = await queryRunner.manager.save(orden);
@@ -276,6 +283,16 @@ export class OrdenesIngresoService {
       );
     }
 
+    await this.verificarPertenencia(idOrden, actor);
+    return this.findOneConDetalles(idOrden);
+  }
+
+  // CU-53/CU-54: devuelve la orden solo si el actor puede verla. Si no existe o es de otra
+  // empresa lanza el MISMO 404, para no revelar la existencia de órdenes ajenas.
+  private async verificarPertenencia(
+    idOrden: number,
+    actor: { id_empresa: number; esSuperusuario: boolean },
+  ): Promise<OrdenIngreso> {
     const orden = await this.ordenRepository.findOne({
       where: { id_orden: idOrden },
     });
@@ -288,6 +305,122 @@ export class OrdenesIngresoService {
     ) {
       throw new NotFoundException('Orden de ingreso no encontrada');
     }
+    return orden;
+  }
+
+  // CU-54: registrar la recepción total o parcial de una orden de ingreso
+  async registrarRecepcion(
+    idOrden: number,
+    dto: RegistrarRecepcionDto,
+    actor: { id_usuario: number; id_empresa: number; esSuperusuario: boolean },
+  ): Promise<any> {
+    // Mismo saneo del id que en el detalle: evita que un NaN llegue a la consulta
+    if (!Number.isInteger(idOrden) || idOrden < 1) {
+      throw new BadRequestException(
+        'El identificador de la orden de ingreso proporcionado es inválido.',
+      );
+    }
+
+    const orden = await this.verificarPertenencia(idOrden, actor);
+
+    // CU-54 precondición: solo se recibe sobre 'Pendiente de recepción' o 'Recepción parcial'
+    if (orden.estado === ESTADO_COMPLETADA) {
+      throw new BadRequestException(
+        'La orden de ingreso ya está completada y no admite nuevas recepciones.',
+      );
+    }
+
+    const detalles = await this.detalleRepository.find({
+      where: { id_orden: idOrden },
+    });
+    const porId = new Map(detalles.map((d) => [d.id_detalle, d]));
+
+    // Se valida TODO antes de abrir la transacción: la Excepción 1 dice "no permite
+    // continuar", así que ninguna cantidad debe escribirse si alguna es inválida.
+    const recibidoPorDetalle = new Map<number, number>();
+    for (const item of dto.items) {
+      if (recibidoPorDetalle.has(item.id_detalle)) {
+        throw new BadRequestException(
+          'La recepción no puede incluir el mismo ítem dos veces.',
+        );
+      }
+      const detalle = porId.get(item.id_detalle);
+      if (!detalle) {
+        throw new BadRequestException(
+          'El ítem indicado no pertenece a esta orden de ingreso.',
+        );
+      }
+      const pendiente = detalle.cantidad_esperada - detalle.cantidad_recibida;
+      // CU-54 Excepción 1
+      if (item.cantidad_recibida > pendiente) {
+        throw new BadRequestException(
+          'La cantidad no puede superar la cantidad pendiente del ítem.',
+        );
+      }
+      recibidoPorDetalle.set(item.id_detalle, item.cantidad_recibida);
+    }
+
+    // Estado resultante: si algún ítem queda con pendiente → 'Recepción parcial';
+    // si todos alcanzan lo esperado → 'Completada'. Si no se recibió nada en total,
+    // la orden sigue 'Pendiente de recepción' (no hubo recepción que registrar).
+    const totales = detalles.map((d) => ({
+      id_detalle: d.id_detalle,
+      esperada: d.cantidad_esperada,
+      recibida:
+        d.cantidad_recibida + (recibidoPorDetalle.get(d.id_detalle) ?? 0),
+    }));
+    const todosCompletos = totales.every((t) => t.recibida >= t.esperada);
+    const algoRecibido = totales.some((t) => t.recibida > 0);
+    const nuevoEstado = todosCompletos
+      ? ESTADO_COMPLETADA
+      : algoRecibido
+        ? ESTADO_PARCIAL
+        : ESTADO_PENDIENTE;
+
+    const estadoAnterior = orden.estado;
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      for (const [idDetalle, cantidad] of recibidoPorDetalle) {
+        if (cantidad === 0) continue;
+        await queryRunner.manager.increment(
+          OrdenIngresoDetalle,
+          { id_detalle: idDetalle },
+          'cantidad_recibida',
+          cantidad,
+        );
+      }
+
+      if (nuevoEstado !== estadoAnterior) {
+        await queryRunner.manager.update(
+          OrdenIngreso,
+          { id_orden: idOrden },
+          { estado: nuevoEstado },
+        );
+      }
+
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+
+    // Auditoría de la recepción con lo recibido en ESTA instancia y el cambio de estado
+    await this.auditoriaService.create({
+      id_usuario: actor.id_usuario,
+      accion: 'RECEPCION',
+      entidad_afectada: 'orden_ingreso',
+      id_entidad_afectada: idOrden,
+      valor_anterior: { estado: estadoAnterior },
+      valor_nuevo: {
+        estado: nuevoEstado,
+        items: dto.items,
+      },
+    });
 
     return this.findOneConDetalles(idOrden);
   }

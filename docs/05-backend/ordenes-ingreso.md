@@ -1,4 +1,4 @@
-# Módulo `ordenes-ingreso` — CU-52, CU-53
+# Módulo `ordenes-ingreso` — CU-52, CU-53, CU-54
 
 **Carpeta:** `codigo/backend-inventario/src/ordenes-ingreso/`
 
@@ -52,6 +52,7 @@ Ambas tablas se crean con `CREATE TABLE IF NOT EXISTS` en `scripts/migrar.ts` y 
 | `POST` | `/api/ordenes-ingreso` | ADMIN_BODEGA, ADMIN, SUPERUSUARIO | CU-52: registrar orden de ingreso |
 | `GET` | `/api/ordenes-ingreso` | ADMIN_BODEGA, ADMIN, SUPERUSUARIO | CU-53: listado con filtros |
 | `GET` | `/api/ordenes-ingreso/:id` | ADMIN_BODEGA, ADMIN, SUPERUSUARIO | CU-53: detalle con ítems |
+| `POST` | `/api/ordenes-ingreso/:id/recepcion` | ADMIN_BODEGA, ADMIN, SUPERUSUARIO | CU-54: registrar recepción total o parcial |
 
 ### Filtros del listado (CU-53)
 
@@ -129,6 +130,40 @@ En el service, con `BadRequestException` / `NotFoundException`:
 - La fecha del documento no es futura.
 - Cada tipo de equipo existe y está activo.
 
+## Recepción de la orden (CU-54)
+
+`POST /api/ordenes-ingreso/:id/recepcion` con body
+`{ items: [{ id_detalle, cantidad_recibida }] }`, donde `cantidad_recibida` es lo recibido
+**en esta instancia**, no el acumulado.
+
+**Se valida todo ANTES de abrir la transacción.** La Excepción 1 dice "no permite continuar",
+así que si un solo ítem es inválido no debe escribirse ninguna cantidad. Comprobaciones:
+
+| Situación | Respuesta |
+|-----------|-----------|
+| Orden en estado `Completada` | 400 · *"La orden de ingreso ya está completada y no admite nuevas recepciones."* |
+| `cantidad_recibida` > `cantidad_esperada − cantidad_recibida` | 400 · *"La cantidad no puede superar la cantidad pendiente del ítem."* (**Excepción 1**) |
+| `id_detalle` de otra orden | 400 · *"El ítem indicado no pertenece a esta orden de ingreso."* |
+| El mismo `id_detalle` dos veces | 400 · *"La recepción no puede incluir el mismo ítem dos veces."* |
+| Cantidad negativa o decimal | 400 desde el DTO |
+
+Superadas las validaciones, la transacción con `QueryRunner` hace `increment` sobre
+`cantidad_recibida` de cada ítem y, si cambia, actualiza el estado de la orden.
+
+**Cálculo del estado resultante:**
+
+- Todos los ítems alcanzan su cantidad esperada → `Completada`.
+- Alguno queda con pendiente y hay algo recibido en total → `Recepción parcial`.
+- No se ha recibido nada en total (todas las cantidades en 0) → sigue `Pendiente de recepción`.
+
+> El tercer caso no está en el texto del CU. Leído al pie de la letra, "si la cantidad recibida
+> es menor a la esperada para algún ítem → Recepción parcial" dejaría una orden en la que no se
+> recibió nada marcada como parcial. Se conserva `Pendiente de recepción` porque no hubo
+> recepción alguna que registrar.
+
+Los tres literales viven en las constantes `ESTADO_PENDIENTE` / `ESTADO_PARCIAL` /
+`ESTADO_COMPLETADA` del service.
+
 ## Aislamiento por empresa
 
 Manual en el service con el flag `esSuperusuario` (patrón de `usuarios`/`bodegas`, **no**
@@ -151,13 +186,21 @@ Manual en el service con el flag `esSuperusuario` (patrón de `usuarios`/`bodega
 
 ## Lectura sin auditoría
 
-CU-53 es solo consulta: ni el listado ni el detalle escriben en `log_auditoria`. La única
-entrada del módulo la genera el `POST` de CU-52.
+CU-53 es solo consulta: ni el listado ni el detalle escriben en `log_auditoria`. Las únicas
+entradas del módulo las generan los `POST` de CU-52 y CU-54.
 
 ## Auditoría
 
-- `CREAR` sobre la entidad `orden_ingreso` al registrar la orden. `valor_nuevo` guarda
+- `CREAR` sobre la entidad `orden_ingreso` al registrar la orden (CU-52). `valor_nuevo` guarda
   correlativo, proveedor, documento, fecha, empresa, bodega e ítems.
+- `RECEPCION` sobre `orden_ingreso` al registrar una recepción (CU-54). `valor_anterior` lleva
+  el estado previo y `valor_nuevo` los ítems recibidos en esa instancia más el estado resultante.
+
+> `RECEPCION` **no está en el mapa `VERBOS`** de `auditoria.service.ts` (CU-08) ni en la lista
+> de acciones del filtro de `/auditoria` (CU-09). El evento se registra y se ve en la tabla,
+> pero su descripción sale como `"RECEPCION orden ingreso #19"` en vez de una frase, y no
+> aparece en el desplegable de filtros. Ambas son una línea en archivos de CU-08/CU-09, fuera
+> del alcance de CU-54.
 
 ## CUs cubiertos
 
@@ -165,3 +208,4 @@ entrada del módulo la genera el `POST` de CU-52.
 |----|-------------|
 | CU-52 | Registrar orden de ingreso desde proveedor (correlativo automático, estado `Pendiente de recepción`) |
 | CU-53 | Consultar órdenes de ingreso: listado con filtros (estado, proveedor, rango de fechas, empresa) y detalle con ítems esperados vs recibidos |
+| CU-54 | Registrar recepción total o parcial, con recálculo del estado de la orden |
