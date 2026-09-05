@@ -70,6 +70,7 @@
 | 49 | Crear proveedor (CU-49) | `proveedores` | `/proveedores` |
 | 50 | Editar proveedor (CU-50) | `proveedores` | `/proveedores` |
 | 51 | Consultar listado de proveedores (CU-51) | `proveedores` | `/proveedores` |
+| 52 | Registrar orden de ingreso desde proveedor (CU-52) | `ordenes-ingreso` | `/ordenes-ingreso` |
 
 ## 3. Diagramas disponibles (referencia para CUs pendientes)
 

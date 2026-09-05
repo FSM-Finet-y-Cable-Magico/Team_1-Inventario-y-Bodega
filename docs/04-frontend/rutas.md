@@ -12,6 +12,7 @@ Todas en `codigo/frontend/src/routes/`. Sin loaders SSR; carga client-side con `
 | Unidades | `/unidades` | todos |
 | Bodegas | `/bodegas` | SUPERUSUARIO, ADMIN, ADMIN_BODEGA |
 | Transferencias | `/transferencias` | SUPERUSUARIO, ADMIN |
+| Órdenes de ingreso | `/ordenes-ingreso` | SUPERUSUARIO, ADMIN, ADMIN_BODEGA |
 | Auditoría | `/auditoria` | SUPERUSUARIO, ADMIN |
 
 > La protección real está en el backend. El menú solo oculta ítems por rol.
@@ -103,6 +104,21 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
   `rejectTransfer()`.
 - Aprobar/rechazar: botones solo para `SUPERUSUARIO`. Empresa origen = empresa del usuario (inmutable).
 - Estados backend `TRANSFERENCIA_PENDIENTE | _APROBADA | _RECHAZADA` → labels Pendiente/Aprobada/Rechazada.
+
+### `/ordenes-ingreso`
+- **CUs:** CU-52 (registrar orden de ingreso desde proveedor).
+- **Endpoints:** `getOrdenesIngreso()`, `createOrdenIngreso()`, `getProveedores()`, `getCatalog()`,
+  `getWarehouses()`, `getEmpresas()`.
+- **CU-52:** el modal "Nueva orden de ingreso" arma la cabecera (proveedor, N.º documento
+  alfanumérico ≤30, fecha no futura vía `max` del `input[type=date]`, bodega activa) más un
+  sub-formulario dinámico de ítems (agregar/quitar filas: tipo de equipo + cantidad esperada +
+  garantía en días, precargada con la `garantiaDias` del tipo elegido). Tras crear muestra un
+  banner con el correlativo asignado (`OI-XXXX`).
+- La **empresa destinataria** solo la elige el `SUPERUSUARIO`; para el resto de roles se
+  preselecciona la propia y no se envía en el payload (la fija el backend), igual que en CU-41.
+- **CU-52 Excepción 1:** validación en cliente antes de enviar (proveedor, documento, fecha,
+  bodega, ≥1 ítem y cada ítem completo) que indica el error específico y no envía la petición;
+  el `ValidationPipe` del backend la repite como red de seguridad.
 
 ### `/auditoria`
 - **CUs:** CU-08 (visualizar log), CU-09 (filtrar).

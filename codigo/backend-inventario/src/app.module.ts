@@ -15,6 +15,7 @@ import { InventarioModule } from './inventario/inventario.module';
 import { TransferenciasModule } from './transferencias/transferencias.module';
 import { CompaniesModule } from './companies/companies.module';
 import { ProveedoresModule } from './proveedores/proveedores.module';
+import { OrdenesIngresoModule } from './ordenes-ingreso/ordenes-ingreso.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { ProveedoresModule } from './proveedores/proveedores.module';
     TransferenciasModule,
     CompaniesModule,
     ProveedoresModule,
+    OrdenesIngresoModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],

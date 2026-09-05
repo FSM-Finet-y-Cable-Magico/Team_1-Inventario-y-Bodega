@@ -233,3 +233,16 @@ export function createProveedor(data: Record<string, unknown>) {
 export function editProveedor(id: number, data: Record<string, unknown>) {
 	return api.patch<any>(`/proveedores/${id}`, data);
 }
+
+// CU-52: órdenes de ingreso desde proveedor
+export function getOrdenesIngreso(params?: { buscar?: string; estado?: string }) {
+	const qs = new URLSearchParams();
+	if (params?.buscar) qs.set('buscar', params.buscar);
+	if (params?.estado) qs.set('estado', params.estado);
+	const query = qs.toString();
+	return api.get<any[]>(`/ordenes-ingreso${query ? '?' + query : ''}`);
+}
+
+export function createOrdenIngreso(data: Record<string, unknown>) {
+	return api.post<any>('/ordenes-ingreso', data);
+}

@@ -14,8 +14,8 @@ no esté reflejado aquí.
 
 - **Total de casos de uso:** 96
 - **Implementados (Incremento 1):** 46 (CU-01 a CU-46)
-- **Implementados (Incremento 2):** 3 (CU-49, CU-50, CU-51)
-- **Pendientes:** 47 (CU-47, CU-48, CU-52 a CU-96)
+- **Implementados (Incremento 2):** 4 (CU-49, CU-50, CU-51, CU-52)
+- **Pendientes:** 46 (CU-47, CU-48, CU-53 a CU-96)
 
 ## Leyenda
 
@@ -107,7 +107,7 @@ no esté reflejado aquí.
 | CU-49 | Creando proveedor | [x] Implementado | Módulo `proveedores` (back + front + BDD) |
 | CU-50 | Editando proveedor | [x] Implementado | Módulo `proveedores` (PATCH + modal edición) |
 | CU-51 | Consultando listado de proveedores | [x] Implementado | GET con ADMIN_BODEGA + búsqueda + EmptyState |
-| CU-52 | Registrando orden de ingreso desde proveedor | [ ] Pendiente | |
+| CU-52 | Registrando orden de ingreso desde proveedor | [x] Implementado | Módulo `ordenes-ingreso` (back + front + BDD + docs + diagramas). Rama `feat/CU-49-crear-proveedor` (Javier) — pendiente render PNG de los `.puml` y capturas en `Casos de uso/CU-52/` |
 | CU-53 | Consultando órdenes de ingreso | [ ] Pendiente | |
 | CU-54 | Registrando recepción total o parcial de orden de ingreso | [ ] Pendiente | |
 | CU-55 | Ingresando números de serie en recepción de equipos | [ ] Pendiente | |

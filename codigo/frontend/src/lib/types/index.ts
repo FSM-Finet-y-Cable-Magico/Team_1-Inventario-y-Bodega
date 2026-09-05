@@ -279,6 +279,49 @@ export interface CreateProveedorDto {
 	ids_tipos_equipo?: number[];
 }
 
+// CU-52: órdenes de ingreso desde proveedor
+export interface OrdenIngresoDetalle {
+	id_detalle: number;
+	id_orden: number;
+	id_tipo_equipo: number;
+	cantidad_esperada: number;
+	garantia_dias: number;
+	cantidad_recibida: number;
+	nombre_tipo_equipo: string | null;
+}
+
+export interface OrdenIngreso {
+	id_orden: number;
+	correlativo: string;
+	id_proveedor: number;
+	numero_documento: string;
+	fecha_documento: string;
+	id_empresa_destino: number;
+	id_bodega_destino: number;
+	estado: string;
+	id_usuario_registro: number;
+	fecha_creacion: string;
+	nombre_proveedor: string | null;
+	nombre_bodega: string | null;
+	nombre_empresa: string | null;
+	detalles: OrdenIngresoDetalle[];
+}
+
+export interface ItemOrdenIngresoDto {
+	id_tipo_equipo: number;
+	cantidad_esperada: number;
+	garantia_dias: number;
+}
+
+export interface CreateOrdenIngresoDto {
+	id_proveedor: number;
+	numero_documento: string;
+	fecha_documento: string;
+	id_empresa_destino: number;
+	id_bodega_destino: number;
+	items: ItemOrdenIngresoDto[];
+}
+
 export interface LogAuditoria {
 	id_log: number;
 	id_usuario: number;

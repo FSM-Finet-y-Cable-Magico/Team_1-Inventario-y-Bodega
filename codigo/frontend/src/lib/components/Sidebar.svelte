@@ -11,7 +11,8 @@
 		PanelLeftClose,
 		PanelLeft,
 		Building2,
-		Truck
+		Truck,
+		ClipboardList
 	} from '@lucide/svelte';
 	import { authStore, userRoles } from '$lib/stores/auth';
 	import { goto } from '$app/navigation';
@@ -35,6 +36,7 @@
 		{ label: 'Bodegas', icon: Warehouse, path: '/bodegas', roles: ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'] },
 		{ label: 'Transferencias', icon: ArrowLeftRight, path: '/transferencias', roles: ['SUPERUSUARIO', 'ADMIN'] },
 		{ label: 'Proveedores', icon: Truck, path: '/proveedores', roles: ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'] },
+		{ label: 'Órdenes de ingreso', icon: ClipboardList, path: '/ordenes-ingreso', roles: ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'] },
 		{ label: 'Auditoría', icon: ScrollText, path: '/auditoria', roles: ['SUPERUSUARIO', 'ADMIN'] }
 	];
 

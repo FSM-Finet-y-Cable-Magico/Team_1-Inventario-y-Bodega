@@ -9,7 +9,8 @@
 - `ValidationPipe` global (class-validator sobre los DTOs).
 - `synchronize: false` → los cambios de esquema van por **migraciones** (`scripts/migrar.ts`).
 - Módulos feature: `auth`, `usuarios`, `roles`, `auditoria`, `companies`, `bodegas`,
-  `inventario` (catálogo + unidades), `transferencias`, `proveedores`, `health`.
+  `inventario` (catálogo + unidades), `transferencias`, `proveedores`, `ordenes-ingreso`,
+  `health`.
 
 ## 2. Seguridad transversal (obligatorio en todo endpoint)
 
@@ -32,7 +33,7 @@ Cualquier endpoint que acceda a datos protegidos usa:
 | Módulo | Patrón |
 |--------|--------|
 | `inventario` (`catalogo`, `unidades`) | Guard dedicado `CompanyIsolationGuard` (exige `id_empresa` no nulo, inyecta `req.companyContextId`; audita y lanza `ForbiddenException` si la cuenta no tiene empresa). |
-| `usuarios`, `bodegas`, `transferencias`, `companies` | Aislamiento **manual en el service** con flag `esSuperusuario`: los no-superusuario solo ven/editan su empresa. En `bodegas` hay `verificarPertenencia` que devuelve **404 genérico** ("Bodega no encontrada") para no revelar existencia. |
+| `usuarios`, `bodegas`, `transferencias`, `companies`, `ordenes-ingreso` | Aislamiento **manual en el service** con flag `esSuperusuario`: los no-superusuario solo ven/editan su empresa. En `bodegas` hay `verificarPertenencia` que devuelve **404 genérico** ("Bodega no encontrada") para no revelar existencia. En `ordenes-ingreso` el no-superusuario no puede elegir empresa: se le fuerza la suya. |
 | `transferencias` | Manual: un Admin solo ve transferencias donde su empresa es origen o destino (`NotFoundException('Transferencia no encontrada')` si no). |
 
 **No agregues `CompanyIsolationGuard` a un módulo que no lo usa sin justificación**, y
@@ -84,6 +85,7 @@ Mensajes **en español**, específicos por validación. Excepción: login usa me
 | [inventario.md](./inventario.md) | `inventario` (catálogo + unidades + historial) |
 | [transferencias.md](./transferencias.md) | `transferencias` |
 | [proveedores.md](./proveedores.md) | `proveedores` (CU-49) |
+| [ordenes-ingreso.md](./ordenes-ingreso.md) | `ordenes-ingreso` (CU-52) |
 
 > Para cada módulo se listan: endpoints, lógica de negocio, entidades, y qué CU cubre.
 

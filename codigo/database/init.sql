@@ -165,6 +165,34 @@ CREATE TABLE IF NOT EXISTS proveedor_tipo_equipo (
     CONSTRAINT uq_pte             UNIQUE (id_proveedor, id_tipo_equipo)
 );
 
+-- Órdenes de ingreso desde proveedor (CU-52)
+CREATE TABLE IF NOT EXISTS orden_ingreso (
+    id_orden             SERIAL PRIMARY KEY,
+    correlativo          VARCHAR(10) NOT NULL UNIQUE,
+    id_proveedor         INTEGER NOT NULL,
+    numero_documento     VARCHAR(30) NOT NULL,
+    fecha_documento      DATE NOT NULL,
+    id_empresa_destino   INTEGER NOT NULL,
+    id_bodega_destino    INTEGER NOT NULL,
+    estado               VARCHAR(30) NOT NULL DEFAULT 'Pendiente de recepción',
+    id_usuario_registro  INTEGER NOT NULL,
+    fecha_creacion       TIMESTAMPTZ DEFAULT now(),
+    CONSTRAINT fk_oi_proveedor FOREIGN KEY (id_proveedor) REFERENCES proveedor (id_proveedor),
+    CONSTRAINT fk_oi_bodega    FOREIGN KEY (id_bodega_destino) REFERENCES bodega (id_bodega)
+);
+
+-- Detalle de ítems de una orden de ingreso (CU-52)
+CREATE TABLE IF NOT EXISTS orden_ingreso_detalle (
+    id_detalle           SERIAL PRIMARY KEY,
+    id_orden             INTEGER NOT NULL,
+    id_tipo_equipo       INTEGER NOT NULL,
+    cantidad_esperada    INTEGER NOT NULL CHECK (cantidad_esperada > 0),
+    garantia_dias        INTEGER NOT NULL DEFAULT 0 CHECK (garantia_dias >= 0 AND garantia_dias <= 3650),
+    cantidad_recibida    INTEGER NOT NULL DEFAULT 0,
+    CONSTRAINT fk_oid_orden       FOREIGN KEY (id_orden)       REFERENCES orden_ingreso (id_orden) ON DELETE CASCADE,
+    CONSTRAINT fk_oid_tipo_equipo FOREIGN KEY (id_tipo_equipo) REFERENCES tipo_equipo (id_tipo_equipo)
+);
+
 -- Stock de consumibles por bodega
 CREATE TABLE IF NOT EXISTS stock_consumible (
     id_stock             SERIAL PRIMARY KEY,
