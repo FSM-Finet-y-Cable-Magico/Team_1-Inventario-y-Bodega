@@ -68,6 +68,7 @@
 | 46 | Umbral mínimo de stock + alertas | `bodegas`, `companies` | `/bodegas/[id]`, `/dashboard`, `Header` |
 | 47 | Ubicación física al ingresar/reingresar a bodega | `inventario/units` | `/unidades/[id]` |
 | 72 | Registrando resultado de revisión (Operativo/Reparación externa/Baja) | `inventario/units` | `/unidades/[id]` |
+| 74 | Reacondicionando equipo operativo desde revisión a bodega | `inventario/units` | `/unidades/[id]` |
 
 
 ## 3. Diagramas disponibles (referencia para CUs pendientes)

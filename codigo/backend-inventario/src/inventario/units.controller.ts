@@ -123,6 +123,17 @@ export class UnitsController {
     );
   }
 
+  // CU-74: reacondicionar equipo "En revisión" directo a "En bodega" (Operativo)
+  @Post(':id/reacondicionar')
+  @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
+  async reacondicionarEquipo(
+    @Param('id') id: string,
+    @Body() body: any,
+    @CurrentUser() actor: any,
+  ) {
+    return this.unitsService.reacondicionarEquipo(parseInt(id), body, actor);
+  }
+
   @Patch(':id')
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
   async editarDatosUnidad(

@@ -2,14 +2,14 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { getUnit, changeUnitState, getUnitHistory, getWarehouses, updateUnit, registrarResultadoRevision } from '$lib/api/index';
+	import { getUnit, changeUnitState, getUnitHistory, getWarehouses, updateUnit, registrarResultadoRevision, reacondicionarUnidad } from '$lib/api/index';
 	import { userRoles } from '$lib/stores/auth';
 	import type { UnidadEquipo, HistorialEstado, EstadoUnidad, Bodega } from '$lib/types';
 	import Button from '$lib/components/Button.svelte';
 	import Modal from '$lib/components/Modal.svelte';
 	import FormField from '$lib/components/FormField.svelte';
 	import Badge from '$lib/components/Badge.svelte';
-	import { ArrowLeft, RotateCw, Pencil, ClipboardCheck } from '@lucide/svelte';
+	import { ArrowLeft, RotateCw, Pencil, ClipboardCheck, PackageCheck } from '@lucide/svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	
 
@@ -46,6 +46,12 @@
 	let resultadoGuardando = $state(false);
 	// E1: aviso de garantía vigente al intentar dar de baja
 	let showConfirmGarantia = $state(false);
+
+	// CU-74: reacondicionar equipo "En revisión" directo a "En bodega" (atajo del resultado Operativo de CU-72)
+	let showReacondicionar = $state(false);
+	let reacondicionarForm = $state({ id_bodega_destino: 0, ubicacion_fisica: '', observacion: '' });
+	let reacondicionarError = $state('');
+	let reacondicionando = $state(false);
 
 
 	// CU-18: edición de los datos de la unidad
@@ -246,6 +252,34 @@ function handleSubmitResultado() {
 	enviarResultadoRevision(false);
 }
 
+// CU-74: reacondicionar equipo operativo desde revisión a bodega
+async function handleReacondicionar() {
+	if (!unit) return;
+	// E1: mismo mensaje exacto que el backend, para no dejar avanzar sin bodega
+	if (!reacondicionarForm.id_bodega_destino) {
+		reacondicionarError = 'Debe seleccionar una bodega de destino para continuar.';
+		return;
+	}
+	reacondicionarError = '';
+	reacondicionando = true;
+	try {
+		const payload: Record<string, unknown> = {
+			id_bodega_destino: reacondicionarForm.id_bodega_destino
+		};
+		if (reacondicionarForm.ubicacion_fisica.trim()) payload.ubicacion_fisica = reacondicionarForm.ubicacion_fisica.trim();
+		if (reacondicionarForm.observacion.trim()) payload.observacion = reacondicionarForm.observacion.trim();
+		await reacondicionarUnidad(unit.id_unidad, payload);
+		showReacondicionar = false;
+		success = 'Equipo reacondicionado y enviado a bodega correctamente';
+		reacondicionarForm = { id_bodega_destino: 0, ubicacion_fisica: '', observacion: '' };
+		await load();
+	} catch (err: unknown) {
+		reacondicionarError = err instanceof Error ? err.message : 'Error al reacondicionar el equipo';
+	} finally {
+		reacondicionando = false;
+	}
+}
+
 </script>
 
 <div class="max-w-4xl mx-auto">
@@ -368,6 +402,15 @@ function handleSubmitResultado() {
 							}}>
 								<ClipboardCheck class="h-4 w-4" />
 								Registrar resultado
+							</Button>
+							<!-- CU-74: atajo directo para el caso Operativo (misma transición que CU-72) -->
+							<Button variant="secondary" onclick={() => {
+								reacondicionarForm = { id_bodega_destino: 0, ubicacion_fisica: '', observacion: '' };
+								reacondicionarError = '';
+								showReacondicionar = true;
+							}}>
+								<PackageCheck class="h-4 w-4" />
+								Operativo - enviar a bodega
 							</Button>
 						{/if}
 					<!-- CU-18: edición de los datos de la unidad -->
@@ -647,6 +690,52 @@ function handleSubmitResultado() {
 		<div class="flex justify-end gap-3 pt-2">
 			<Button variant="secondary" onclick={() => (showResultado = false)} type="button">Cancelar</Button>
 			<Button type="submit" loading={resultadoGuardando} disabled={!resultadoForm.resultado}>Confirmar</Button>
+		</div>
+	</form>
+</Modal>
+
+<!-- CU-74: reacondicionar equipo operativo desde revisión a bodega -->
+<Modal title="Operativo - enviar a bodega" open={showReacondicionar} onclose={() => (showReacondicionar = false)}>
+	<form onsubmit={(e: Event) => { e.preventDefault(); handleReacondicionar(); }} class="space-y-4">
+		{#if reacondicionarError}
+			<div class="bg-red-50 border border-red-200 text-destructive text-sm rounded-md px-3 py-2">{reacondicionarError}</div>
+		{/if}
+		{#if unit}
+			<p class="text-sm text-muted">
+				El equipo pasará de <strong>{unit.estado}</strong> a <strong>En bodega</strong>.
+			</p>
+
+			<!-- E1: bodega de destino activa y obligatoria; sin "required" nativo para que
+			     el envío llegue a handleReacondicionar() y muestre el mensaje exacto del CU -->
+			<FormField label="Bodega de destino" name="reac_bod" required>
+				<select id="reac_bod" bind:value={reacondicionarForm.id_bodega_destino}
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+					<option value={0} disabled>Seleccionar...</option>
+					{#each warehouses as wh}
+						<option value={wh.id_bodega}>{wh.nombre}</option>
+					{/each}
+				</select>
+			</FormField>
+
+			<FormField label="Ubicación física en bodega" name="reac_ubi"
+				helper="Opcional, máximo 60 caracteres ({reacondicionarForm.ubicacion_fisica.length}/60)">
+				<input id="reac_ubi" type="text" bind:value={reacondicionarForm.ubicacion_fisica} maxlength={60}
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+					placeholder="Ej: Estante B, Fila 3" />
+			</FormField>
+
+			<FormField label="Observación" name="reac_obs"
+				helper="Opcional, máximo 300 caracteres ({reacondicionarForm.observacion.length}/300)">
+				<textarea id="reac_obs" bind:value={reacondicionarForm.observacion} maxlength={300} rows="2"
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
+			</FormField>
+		{/if}
+
+		<div class="flex justify-end gap-3 pt-2">
+			<Button variant="secondary" onclick={() => (showReacondicionar = false)} type="button">Cancelar</Button>
+			<!-- E1: no se deshabilita por falta de bodega, para que el clic dispare el
+			     mensaje exacto en handleReacondicionar() en vez de bloquear el botón -->
+			<Button type="submit" loading={reacondicionando} disabled={reacondicionando}>Confirmar</Button>
 		</div>
 	</form>
 </Modal>

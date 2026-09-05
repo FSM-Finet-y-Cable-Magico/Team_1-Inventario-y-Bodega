@@ -632,6 +632,144 @@ export class UnitsService {
     }
   }
 
+  // CU-72/CU-74: valida la bodega de destino (activa, de la empresa) y el
+  // formato de la ubicación física opcional (≤60) para el resultado "Operativo".
+  private async validarDestinoOperativo(
+    idBodegaDestino: number | undefined,
+    ubicacionFisicaInput: string | undefined,
+    idEmpresaContexto: number,
+  ): Promise<{ bodega: Bodega; ubicacionFisica: string | null }> {
+    // CU-74 Excepción 1: mensaje exacto del caso de uso
+    if (!idBodegaDestino) {
+      throw new BadRequestException(
+        'Debe seleccionar una bodega de destino para continuar.',
+      );
+    }
+    const bodega = await this.dataSource.getRepository(Bodega).findOne({
+      where: { id_bodega: idBodegaDestino, id_empresa: idEmpresaContexto },
+    });
+    if (!bodega || !bodega.activa) {
+      throw new BadRequestException(
+        'La bodega de destino no existe o no está activa en su empresa.',
+      );
+    }
+    const ubicacionFisica = ubicacionFisicaInput?.trim() || null;
+    if (ubicacionFisica && ubicacionFisica.length > 60) {
+      throw new BadRequestException(
+        'La ubicación física no puede superar los 60 caracteres.',
+      );
+    }
+    return { bodega, ubicacionFisica };
+  }
+
+  // CU-74: reacondicionamiento directo de un equipo "En revisión" a "En bodega"
+  // (atajo del resultado "Operativo" de CU-72, con observación propia opcional).
+  async reacondicionarEquipo(
+    idUnidad: number,
+    dto: {
+      id_bodega_destino?: number;
+      ubicacion_fisica?: string;
+      observacion?: string;
+    },
+    actor: any,
+  ) {
+    if (!idUnidad || isNaN(idUnidad)) {
+      throw new BadRequestException('El ID de la unidad es inválido.');
+    }
+
+    const unidad = await this.unitRepository.findOne({
+      where: { id_unidad: idUnidad, id_empresa: actor.id_empresa },
+    });
+    if (!unidad) throw new NotFoundException('El equipo solicitado no existe.');
+
+    // Precondición del CU-74: solo se puede reacondicionar desde 'En revisión'
+    if (unidad.estado !== 'En revisión') {
+      throw new BadRequestException(
+        'Transición de estado no permitida para este equipo.',
+      );
+    }
+
+    const { bodega, ubicacionFisica } = await this.validarDestinoOperativo(
+      dto.id_bodega_destino,
+      dto.ubicacion_fisica,
+      actor.id_empresa,
+    );
+
+    // Observación opcional (≤300); si no se indica, el historial usa un texto por defecto
+    const observacion = dto.observacion?.trim() || undefined;
+    if (observacion && observacion.length > 300) {
+      throw new BadRequestException(
+        'La observación no puede superar los 300 caracteres.',
+      );
+    }
+
+    const estadoOrigen = unidad.estado;
+    const ubicacionOrigen = unidad.ubicacionFisica ?? null;
+
+    let motivoHistorial =
+      observacion ?? 'Reacondicionamiento: equipo operativo enviado a bodega';
+    if (ubicacionFisica) {
+      motivoHistorial += `. Ubicación física: ${ubicacionFisica}`;
+    }
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      unidad.estado = 'En bodega';
+      unidad.id_bodega_actual = bodega.id_bodega;
+      unidad.ubicacionFisica = ubicacionFisica;
+      await queryRunner.manager.save(unidad);
+
+      const fechaChile = new Date(
+        new Date().toLocaleString('en-US', { timeZone: 'America/Santiago' }),
+      );
+      const nuevoHistorial = this.historyRepository.create({
+        id_unidad: unidad.id_unidad,
+        id_usuario: actor.id_usuario,
+        estadoAnterior: estadoOrigen,
+        estadoNuevo: 'En bodega',
+        motivo: motivoHistorial,
+        fechaHora: fechaChile,
+      });
+      await queryRunner.manager.save(nuevoHistorial);
+
+      await queryRunner.commitTransaction();
+    } catch {
+      await queryRunner.rollbackTransaction();
+      throw new BadRequestException(
+        'Error al registrar el reacondicionamiento del equipo. Intente nuevamente.',
+      );
+    } finally {
+      await queryRunner.release();
+    }
+
+    await this.auditoriaService.create({
+      id_usuario: actor.id_usuario,
+      accion: 'CAMBIAR_ESTADO',
+      entidad_afectada: 'unidad_equipo',
+      id_entidad_afectada: unidad.id_unidad,
+      valor_anterior: {
+        estado: estadoOrigen,
+        ubicacion_fisica: ubicacionOrigen,
+      },
+      valor_nuevo: {
+        estado: 'En bodega',
+        ubicacion_fisica: unidad.ubicacionFisica ?? null,
+        id_bodega_actual: unidad.id_bodega_actual,
+      },
+    });
+
+    return {
+      success: true,
+      estadoActual: unidad.estado,
+      id_bodega_actual: unidad.id_bodega_actual,
+      ubicacion_fisica: unidad.ubicacionFisica ?? null,
+      message:
+        'El equipo fue reacondicionado y enviado a bodega correctamente.',
+    };
+  }
+
   async registrarResultadoRevision(
     unitId: number,
     dto: {
@@ -675,30 +813,16 @@ export class UnitsService {
     let prestamoData: Partial<PrestamoExterno> | null = null;
 
     if (dto.resultado === 'OPERATIVO') {
-      if (!dto.id_bodega_actual) {
-        throw new BadRequestException(
-          'Debe seleccionar una bodega de destino para continuar.',
+      // CU-74: misma validación de bodega destino + ubicación física que usa
+      // el reacondicionamiento directo, para no duplicar las reglas.
+      const { bodega, ubicacionFisica: ubicacion } =
+        await this.validarDestinoOperativo(
+          dto.id_bodega_actual,
+          dto.ubicacion_fisica,
+          actor.id_empresa,
         );
-      }
-      const bodega = await this.dataSource.getRepository(Bodega).findOne({
-        where: {
-          id_bodega: dto.id_bodega_actual,
-          id_empresa: actor.id_empresa,
-        },
-      });
-      if (!bodega || !bodega.activa) {
-        throw new BadRequestException(
-          'La bodega de destino no existe o no está activa en su empresa.',
-        );
-      }
-      const ubicacion = dto.ubicacion_fisica?.trim() || null;
-      if (ubicacion && ubicacion.length > 60) {
-        throw new BadRequestException(
-          'La ubicación física no puede superar los 60 caracteres.',
-        );
-      }
       nuevoEstado = 'En bodega';
-      unidad.id_bodega_actual = dto.id_bodega_actual;
+      unidad.id_bodega_actual = bodega.id_bodega;
       unidad.ubicacionFisica = ubicacion;
       motivoHistorial = `Resultado de revisión: Operativo. Ubicación física: ${ubicacion ?? 'no registrada'}.`;
     } else if (dto.resultado === 'REPARACION_EXTERNA') {

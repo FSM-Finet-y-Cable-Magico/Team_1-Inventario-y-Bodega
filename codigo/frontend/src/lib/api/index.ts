@@ -131,6 +131,11 @@ export function registrarResultadoRevision(id: number, data: Record<string, unkn
 	return api.post<any>(`/unidades/${id}/resultado-revision`, data);
 }
 
+// CU-74: reacondicionar equipo "En revisión" directo a "En bodega" (Operativo)
+export function reacondicionarUnidad(id: number, data: Record<string, unknown>) {
+	return api.post<any>(`/unidades/${id}/reacondicionar`, data);
+}
+
 
 export function getUnitHistory(serialNumber: string) {
 	return api.get<any[]>(`/unidades/${serialNumber}/historial`);
