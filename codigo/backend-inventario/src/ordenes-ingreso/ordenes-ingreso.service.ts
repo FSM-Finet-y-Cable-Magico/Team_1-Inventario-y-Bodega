@@ -437,10 +437,23 @@ export class OrdenesIngresoService {
 
     const estadoAnterior = orden.estado;
 
-    // CU-55: fecha de adquisición de las unidades creadas. CU-56 permitirá indicar la
-    // fecha de recepción real; hasta entonces se usa la fecha de hoy.
-    const fechaRecepcion = new Date();
-    fechaRecepcion.setHours(0, 0, 0, 0);
+    // CU-56: la fecha de recepción efectiva la indica el actor y es la que queda como
+    // fecha_adquisicion de cada unidad. La fecha del documento del proveedor sigue viva
+    // en orden_ingreso.fecha_documento y NO se sobreescribe: ambas quedan registradas.
+    const fechaRecepcion = new Date(`${dto.fecha_recepcion}T00:00:00`);
+    if (isNaN(fechaRecepcion.getTime())) {
+      throw new BadRequestException(
+        'La fecha de recepción debe tener formato válido (YYYY-MM-DD).',
+      );
+    }
+    // CU-56 Excepción 2: se compara contra la fecha del servidor
+    const hoyServidor = new Date();
+    hoyServidor.setHours(23, 59, 59, 999);
+    if (fechaRecepcion > hoyServidor) {
+      throw new BadRequestException(
+        'La fecha de recepción no puede ser futura.',
+      );
+    }
     // CU-55: el proveedor de la orden queda en la unidad (alimenta el reporte de CU-88)
     const proveedorOrden = await this.proveedorRepository.findOne({
       where: { id_proveedor: orden.id_proveedor },
@@ -450,6 +463,7 @@ export class OrdenesIngresoService {
       id_unidad: number;
       numero_serie: string;
       id_tipo_equipo: number;
+      fecha_venc_garantia: string | null;
     }[] = [];
 
     const queryRunner = this.dataSource.createQueryRunner();
@@ -472,7 +486,8 @@ export class OrdenesIngresoService {
       for (const [idDetalle, series] of seriesPorDetalle) {
         if (series.length === 0) continue;
         const detalle = porId.get(idDetalle)!;
-        // CU-38: vencimiento = fecha de adquisición + garantía del ítem de la orden
+        // CU-38/CU-56: vencimiento = fecha de recepción efectiva + garantía del ítem,
+        // de modo que el aviso de CU-39 y el reporte de CU-88 usen la fecha real
         const fechaVenc = new Date(fechaRecepcion);
         fechaVenc.setDate(fechaVenc.getDate() + (detalle.garantia_dias ?? 0));
 
@@ -492,6 +507,10 @@ export class OrdenesIngresoService {
             id_unidad: guardada.id_unidad,
             numero_serie: serie,
             id_tipo_equipo: detalle.id_tipo_equipo,
+            fecha_venc_garantia:
+              detalle.garantia_dias > 0
+                ? fechaVenc.toISOString().slice(0, 10)
+                : null,
           });
         }
       }
@@ -521,6 +540,10 @@ export class OrdenesIngresoService {
       valor_anterior: { estado: estadoAnterior },
       valor_nuevo: {
         estado: nuevoEstado,
+        // CU-56: queda registrada la fecha de recepción efectiva, distinta de la
+        // fecha del documento que conserva la orden
+        fecha_recepcion: dto.fecha_recepcion,
+        fecha_documento_orden: orden.fecha_documento,
         items: dto.items,
       },
     });
@@ -539,6 +562,9 @@ export class OrdenesIngresoService {
           estado: 'En bodega',
           id_empresa: orden.id_empresa_destino,
           id_bodega_actual: orden.id_bodega_destino,
+          // CU-56: fecha de adquisición real de la unidad y garantía calculada sobre ella
+          fecha_adquisicion: dto.fecha_recepcion,
+          fecha_venc_garantia: u.fecha_venc_garantia,
           origen: `Recepción de la orden de ingreso ${orden.correlativo}`,
         },
       });

@@ -8,6 +8,7 @@
 	import Button from '$lib/components/Button.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import Modal from '$lib/components/Modal.svelte';
+	import FormField from '$lib/components/FormField.svelte';
 	import { ArrowLeft, PackageCheck, Plus, Trash2 } from '@lucide/svelte';
 
 	let orden = $state<OrdenIngreso | null>(null);
@@ -25,6 +26,19 @@
 	let series = $state<Record<number, string[]>>({});
 	let serieBorrador = $state<Record<number, string>>({});
 	let serieError = $state<Record<number, string>>({});
+
+	// CU-56: fecha de recepción efectiva, obligatoria y no futura
+	let fechaRecepcion = $state('');
+	const hoyISO = new Date().toISOString().slice(0, 10);
+	// CU-56 Excepción 1: sin fecha no se puede confirmar. Excepción 2: no puede ser futura.
+	const fechaRecepcionValida = $derived(!!fechaRecepcion && fechaRecepcion <= hoyISO);
+	const avisoFecha = $derived(
+		!fechaRecepcion
+			? 'Debe indicar la fecha de recepción efectiva.'
+			: fechaRecepcion > hoyISO
+				? 'La fecha de recepción no puede ser futura.'
+				: ''
+	);
 
 	// CU-54: los tres actores del CU pueden registrar la recepción, y solo se admite
 	// sobre órdenes en 'Pendiente de recepción' o 'Recepción parcial'
@@ -89,6 +103,8 @@
 			series[d.id_detalle] = [];
 			serieBorrador[d.id_detalle] = '';
 		}
+		// CU-56: por defecto la fecha de hoy, pero el actor puede corregirla
+		fechaRecepcion = hoyISO;
 		recepcionError = '';
 		success = '';
 		showRecepcion = true;
@@ -171,10 +187,20 @@
 			recepcionError = avisoSeries;
 			return;
 		}
+		// CU-56 Excepciones 1 y 2: fecha obligatoria y no futura (el backend la revalida
+		// contra su propio reloj, que es la referencia real)
+		if (!fechaRecepcionValida) {
+			recepcionError = avisoFecha;
+			return;
+		}
 
 		guardando = true;
 		try {
-			const actualizada = await registrarRecepcionOrden(Number($page.params.id), items);
+			const actualizada = await registrarRecepcionOrden(
+				Number($page.params.id),
+				fechaRecepcion,
+				items
+			);
 			orden = actualizada;
 			showRecepcion = false;
 			// CU-54 poscondición: la orden queda con las cantidades recibidas y su nuevo estado
@@ -318,6 +344,25 @@
 			El máximo es la cantidad pendiente.
 		</p>
 
+		<!-- CU-56: fecha de recepción efectiva. Es la que queda como fecha de adquisición de
+		     las unidades y la base del cálculo de garantía; la fecha del documento del
+		     proveedor se conserva aparte en la orden. -->
+		<FormField label="Fecha de recepción efectiva" name="fecharec" required
+			helper="No puede ser futura. Es la base del cálculo de garantía de cada unidad."
+			error={fechaRecepcion && !fechaRecepcionValida ? avisoFecha : ''}>
+			<input id="fecharec" type="date" bind:value={fechaRecepcion} max={hoyISO}
+				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+		</FormField>
+
+		{#if orden && fechaRecepcion && fechaRecepcion !== orden.fecha_documento.slice(0, 10)}
+			<!-- CU-56: si difiere de la fecha del documento, ambas quedan registradas -->
+			<div class="bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-md px-3 py-2">
+				La fecha de recepción difiere de la del documento del proveedor
+				({fmtFecha(orden.fecha_documento)}). Ambas quedan registradas: la del documento en la
+				orden y esta en cada unidad recibida.
+			</div>
+		{/if}
+
 		<div class="space-y-3">
 			{#each orden?.detalles ?? [] as d}
 				<div class="border border-border rounded-md p-3 bg-surface/30 space-y-2">
@@ -392,8 +437,9 @@
 		<div class="flex justify-end gap-3 pt-2">
 			<Button variant="secondary" onclick={() => (showRecepcion = false)} type="button">Cancelar</Button>
 			<!-- CU-55 Excepción 3: no se puede confirmar mientras falten NS por ingresar -->
-			<Button type="submit" loading={guardando} disabled={!seriesCompletas}
-				title={seriesCompletas ? 'Guardar recepción' : avisoSeries}>
+			<!-- CU-55 Exc. 3 y CU-56 Exc. 1: no se confirma sin todos los NS ni sin fecha -->
+			<Button type="submit" loading={guardando} disabled={!seriesCompletas || !fechaRecepcionValida}
+				title={seriesCompletas ? (fechaRecepcionValida ? 'Guardar recepción' : avisoFecha) : avisoSeries}>
 				Guardar recepción
 			</Button>
 		</div>

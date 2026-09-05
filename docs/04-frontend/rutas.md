@@ -130,7 +130,7 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
 
 ### `/ordenes-ingreso/[id]`
 - **CUs:** CU-53 (ficha de detalle de una orden de ingreso), CU-54 (registrar recepción),
-  CU-55 (números de serie en la recepción).
+  CU-55 (números de serie en la recepción), CU-56 (fecha de recepción efectiva).
 - **Endpoints:** `getOrdenIngreso(id)`, `registrarRecepcionOrden(id, items)`.
 - Cabecera con correlativo, badge de estado, proveedor, N.º documento, fecha (DD/MM/YYYY),
   empresa destinataria, bodega de destino y total de ítems. Tabla de ítems con cantidad
@@ -153,6 +153,13 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
 - **CU-55 Excepción 3:** "Guardar recepción" queda **deshabilitado** mientras algún ítem
   serializado tenga menos NS que su cantidad recibida; `guardarRecepcion` lo revalida antes de
   enviar por si el estado quedara inconsistente.
+- **CU-56:** campo "Fecha de recepción efectiva" (`input[type=date]`, obligatorio, `max` = hoy),
+  precargado con la fecha del día. Si difiere de la fecha del documento de la orden, se muestra
+  un aviso ámbar recordando que ambas quedan registradas.
+- **CU-56 Excepciones 1 y 2:** sin fecha el botón queda deshabilitado
+  (*"Debe indicar la fecha de recepción efectiva."*); con fecha futura el campo muestra
+  *"La fecha de recepción no puede ser futura."* El backend revalida contra su propio reloj,
+  que es la referencia real.
 
 ### `/auditoria`
 - **CUs:** CU-08 (visualizar log), CU-09 (filtrar).

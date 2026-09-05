@@ -1,4 +1,4 @@
-# Módulo `ordenes-ingreso` — CU-52, CU-53, CU-54, CU-55
+# Módulo `ordenes-ingreso` — CU-52 a CU-56
 
 **Carpeta:** `codigo/backend-inventario/src/ordenes-ingreso/`
 
@@ -198,18 +198,43 @@ Todo se valida **antes** de la transacción. Dentro de ella, por cada NS se crea
 | `id_tipo_equipo` | el del ítem de la orden |
 | `id_empresa` | `orden.id_empresa_destino` |
 | `id_bodega_actual` | `orden.id_bodega_destino` |
-| `fecha_adquisicion` | fecha de la recepción |
-| `fecha_venc_garantia` | `fecha_adquisicion + garantia_dias` **del ítem** (regla CU-38) |
+| `fecha_adquisicion` | `fecha_recepcion` indicada por el actor (CU-56) |
+| `fecha_venc_garantia` | `fecha_recepcion + garantia_dias` **del ítem** (regla CU-38) |
 | `proveedor` | nombre comercial del proveedor de la orden (alimenta CU-88) |
 
 > La garantía se toma de `orden_ingreso_detalle.garantia_dias`, no de `tipo_equipo.garantiaDias`:
 > la línea de la orden puede pactar una garantía distinta a la del catálogo.
 
-> `fecha_adquisicion` usa la fecha del día. **CU-56** permitirá indicar la fecha de recepción
-> real; cuando se implemente, es el único punto a cambiar.
-
 Como todo ocurre en la misma transacción que la recepción, un NS inválido o duplicado deja la
 orden y las unidades intactas: no se crea ninguna unidad ni se acumula ninguna cantidad.
+
+## Fecha de recepción efectiva (CU-56)
+
+El body de la recepción incluye `fecha_recepcion` (`YYYY-MM-DD`), **obligatoria**:
+
+| Situación | Respuesta |
+|-----------|-----------|
+| Falta o viene vacía | 400 desde el DTO · *"La fecha de recepción es obligatoria"* (**Excepción 1**) |
+| Posterior a la fecha del servidor | 400 · *"La fecha de recepción no puede ser futura."* (**Excepción 2**) |
+
+La comparación de "no futura" se hace **contra el reloj del servidor**, no contra un valor
+enviado por el cliente.
+
+**Las dos fechas conviven y ninguna pisa a la otra:**
+
+| Fecha | Dónde vive | Qué significa |
+|-------|-----------|---------------|
+| `orden_ingreso.fecha_documento` | La orden | La del documento del proveedor (CU-52) |
+| `unidad_equipo.fecha_adquisicion` | Cada unidad | La recepción física real (CU-56) |
+
+La garantía de cada unidad se calcula sobre la **fecha de recepción**, no sobre la del
+documento: `fecha_venc_garantia = fecha_recepcion + garantia_dias` del ítem. Así el aviso de
+CU-39 y el reporte de CU-88 trabajan con la fecha real. La ficha de unidad
+(`verFichaDetalle`, CU-33/38/39) la refleja sin cambios: al recibir con fecha 25/08 y garantía
+de 90 días, la unidad muestra vencimiento 23/11 y la alerta de cobertura vigente.
+
+La auditoría de la recepción guarda `fecha_recepcion` y `fecha_documento_orden` juntas, y cada
+unidad creada registra su `fecha_adquisicion` y su `fecha_venc_garantia`.
 
 ## Aislamiento por empresa
 
@@ -259,3 +284,4 @@ entradas del módulo las generan los `POST` de CU-52 y CU-54.
 | CU-53 | Consultar órdenes de ingreso: listado con filtros (estado, proveedor, rango de fechas, empresa) y detalle con ítems esperados vs recibidos |
 | CU-54 | Registrar recepción total o parcial, con recálculo del estado de la orden |
 | CU-55 | Ingresar números de serie al recibir equipos individualizables: valida formato y unicidad y crea una `unidad_equipo` 'En bodega' por NS |
+| CU-56 | Registrar la fecha de recepción efectiva como `fecha_adquisicion` de cada unidad y base del cálculo de garantía |

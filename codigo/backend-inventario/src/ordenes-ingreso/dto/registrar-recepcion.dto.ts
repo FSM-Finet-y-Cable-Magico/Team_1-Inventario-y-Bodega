@@ -4,6 +4,9 @@ import {
   IsArray,
   IsString,
   IsOptional,
+  IsNotEmpty,
+  IsDateString,
+  Matches,
   ValidateNested,
   ArrayMinSize,
   Min,
@@ -29,6 +32,18 @@ export class ItemRecepcionDto {
 }
 
 export class RegistrarRecepcionDto {
+  // CU-56 Excepción 1: sin fecha de recepción no se puede confirmar la recepción.
+  // La validación de "no futura" (Excepción 2) va en el service, contra la fecha del servidor.
+  @IsDateString(
+    {},
+    { message: 'La fecha de recepción debe tener formato válido (YYYY-MM-DD)' },
+  )
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, {
+    message: 'La fecha de recepción debe tener formato válido (YYYY-MM-DD)',
+  })
+  @IsNotEmpty({ message: 'La fecha de recepción es obligatoria' })
+  fecha_recepcion: string;
+
   @IsArray({ message: 'Debe incluir un listado de ítems' })
   @ArrayMinSize(1, {
     message: 'Debe indicar al menos un ítem para registrar la recepción',
