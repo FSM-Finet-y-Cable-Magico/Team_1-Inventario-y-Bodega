@@ -20,8 +20,9 @@
 
 	let showChangeState = $state(false);
 	// CU-36: observación opcional (máx. 300) en todo cambio de estado;
-	// motivoPayload es la descripción obligatoria del diagnóstico "Otro" (CU-40)
-	let changeForm = $state({ estado_nuevo: '' as EstadoUnidad | '', diagnostico: '', motivoPayload: '', observacion: '', simularErrorHistorial: false });
+	// motivoPayload es la descripción obligatoria del diagnóstico "Otro" (CU-40);
+	// ubicacion_fisica es la ubicación opcional al ingresar/reingresar a bodega (CU-47)
+	let changeForm = $state({ estado_nuevo: '' as EstadoUnidad | '', diagnostico: '', motivoPayload: '', observacion: '', ubicacion_fisica: '', simularErrorHistorial: false });
 	const isDev = import.meta.env.DEV;
 	const roles = $derived($userRoles);
 	const puedeEditarUnidad = $derived(roles.some((r) => ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'].includes(r)));
@@ -161,6 +162,10 @@
 			};
 			// CU-36: observación opcional registrada en el historial
 			if (changeForm.observacion.trim()) payload.observacion = changeForm.observacion.trim();
+			// CU-47: ubicación física opcional al ingresar/reingresar a bodega
+			if (changeForm.estado_nuevo === 'En bodega') {
+				payload.ubicacion_fisica = changeForm.ubicacion_fisica.trim();
+			}
 			if (changeForm.estado_nuevo === 'En revisión') {
 				payload.diagnostico = changeForm.diagnostico;
 				if (changeForm.diagnostico === 'Otro') {
@@ -173,7 +178,7 @@
 			await changeUnitState(unit.id_unidad, payload);
 			showChangeState = false;
 			success = 'Estado actualizado correctamente';
-			changeForm = { estado_nuevo: '', diagnostico: '', motivoPayload: '', observacion: '', simularErrorHistorial: false };
+			changeForm = { estado_nuevo: '', diagnostico: '', motivoPayload: '', observacion: '', ubicacion_fisica: '', simularErrorHistorial: false };
 			await load();
 		} catch (err: unknown) {
 			changeError = err instanceof Error ? err.message : 'Error al cambiar estado';
@@ -436,6 +441,23 @@
 					{/each}
 				</select>
 			</FormField>
+
+			<!-- CU-47: ubicación física opcional al ingresar/reingresar la unidad a bodega -->
+			{#if changeForm.estado_nuevo === 'En bodega'}
+				<FormField label="Ubicación física en bodega" name="ubi_cambio"
+					helper="Opcional, máximo 60 caracteres ({changeForm.ubicacion_fisica.length}/60)">
+					<input id="ubi_cambio" type="text" bind:value={changeForm.ubicacion_fisica} maxlength={60}
+						class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+						placeholder="Ej: Estante B, Fila 3" />
+				</FormField>
+				{#if !changeForm.ubicacion_fisica.trim()}
+					<!-- CU-47 Excepción 1: el sistema permite continuar sin ubicación,
+					     pero muestra el aviso de trazabilidad sin bloquear -->
+					<div class="bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-md px-3 py-2">
+						Se recomienda registrar la ubicación física para facilitar la trazabilidad del equipo.
+					</div>
+				{/if}
+			{/if}
 
 			{#if changeForm.estado_nuevo === 'En revisión'}
 				<FormField label="Diagnóstico" name="diag" required>

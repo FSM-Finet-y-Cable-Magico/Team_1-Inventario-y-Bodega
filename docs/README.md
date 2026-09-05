@@ -81,8 +81,9 @@ Team_1-Inventario-y-Bodega/
 
 ## Reglas generales del equipo (no negociables)
 
-1. **Siempre se trabaja sobre `dev`.** Cada desarrollador crea su propia rama desde `dev`
-   (el nombre de la rama es libre, p. ej. `feat/CU-47-registrar-cliente`).
+1. **Siempre se trabaja sobre `dev`.** Cada desarrollador mantiene **UNA sola rama de trabajo
+   propia** desde `dev` donde acumula sus CUs (p. ej. `feat/javier-cus`); NO se crea una rama
+   por ticket/CU. El merge a `dev` se hace al cierre del lote, vía PR.
 2. **Nunca se hace commit/push directo a `dev`.** La integración se hace siempre vía
    **Pull Request** hacia `dev`, revisada y aprobada por el jefe de grupo.
 3. **El jefe de grupo administra las PR** y valida que la implementación sea correcta.
@@ -95,7 +96,8 @@ Team_1-Inventario-y-Bodega/
 6. **El diseño UI está cerrado.** No hay que cambiar cómo se ve el sistema. Cualquier
    pantalla nueva debe seguir las guidelines actuales (ver `04-frontend/diseno.md`).
 7. **Los diagramas y archivos de documentación se actualizan a la par del código**:
-   se crean/actualizan mientras se programa el CU (no al final).
+   se crean/actualizan mientras se programa el CU (no al final). Todo `.puml` se **renderiza
+   a PNG** (`plantuml -tpng`) y se commitean juntos (.puml + .png).
 8. **Un caso de uso se trabaja junto con sus restricciones/excepciones** (CU + CU restricción).
 9. **El roadmap (`docs/08-roadmap.md`) se actualiza en cada avance.** Al terminar (o empezar) un
    CU, cada desarrollador marca su estado ahí (pendiente → en progreso → implementado).

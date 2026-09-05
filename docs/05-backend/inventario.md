@@ -85,7 +85,7 @@ Ambos usan `@UseGuards(AuthGuard('jwt'), CompanyIsolationGuard, RolesGuard)`.
 | PATCH | `/api/unidades/consumibles/:id_stock` | idem | CU-28/CU-31 editar consumible |
 | GET | `/api/unidades/:id/ficha` | 4 roles | CU-33 ver ficha detalle |
 | GET | `/api/unidades/:serialNumber/historial` | 4 roles | CU-36/CU-37 ver historial |
-| PATCH | `/api/unidades/:id/cambiar-estado` | 4 roles | CU-35/36/40 cambio de estado |
+| PATCH | `/api/unidades/:id/cambiar-estado` | 4 roles | CU-35/36/40/47 cambio de estado |
 | PATCH | `/api/unidades/:id` | `ADMIN`, `SUPERUSUARIO`, `ADMIN_BODEGA` | CU-34 editar datos |
 
 ### 2. Lógica (`units.service.ts`)
@@ -125,6 +125,13 @@ Constante: `MAC_REGEX = /^([0-9A-Fa-f]{2}[:\\-]){5}[0-9A-Fa-f]{2}$/`.
     (`DIAGNOSTICOS_PERMITIDOS`); si es `'Otro'`, descripción obligatoria 5–200
     (`'Debe ingresar una descripción cuando selecciona Otro.'`).
   - Al salir de `'En bodega'` limpia `id_bodega_actual` y `numeroPoste`.
+  - **CU-47:** acepta `ubicacion_fisica` opcional (texto libre, ≤60 →
+    `BadRequestException('La ubicación física no puede superar los 60 caracteres.')`). Al pasar a
+    `'En bodega'` la persiste junto a la transición (misma transacción del historial) y la incluye
+    en el `motivo` del historial (`... . Ubicación física: ...`); al **salir** de `'En bodega'`
+    (`Asignado a técnico` / `En préstamo externo` / `Dado de baja`) la vacía automáticamente
+    (`null`). Audita `CAMBIAR_ESTADO` en `log_auditoria` con `ubicacion_fisica` en
+    `valor_anterior`/`valor_nuevo` y la devuelve en la respuesta.
   - **CU-36:** transacción con **reintentos (3, backoff 100ms×intento)**; fecha en timezone
     `America/Santiago`; `motivo` = `'Cambio de estado ordinario'` o
     `'Ingreso a taller técnico. Diagnóstico: ...'`. Si falla → `BadRequestException('Error al

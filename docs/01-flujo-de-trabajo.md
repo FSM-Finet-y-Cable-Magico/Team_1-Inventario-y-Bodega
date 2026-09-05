@@ -8,43 +8,50 @@ seguir estos pasos exactamente para incorporar un caso de uso al sistema.
 ## 1. El modelo de trabajo
 
 - **Rama de integración:** `dev` (siempre).
-- **Cada desarrollador** crea su propia rama de trabajo desde `dev`. El nombre es libre,
-  pero se recomienda `feat/CU-XX-descripcion` (p. ej. `feat/CU-47-registrar-cliente`).
+- **Cada desarrollador trabaja en UNA SOLA rama propia** creada desde `dev` (p. ej.
+  `feat/javier-cus`). Todos los casos de uso que le toquen se acumulan como commits
+  consecutivos en esa misma rama — **NO se crea una rama por ticket/CU**.
+- **El merge a `dev` se hace al cierre del lote de trabajo** (uno o varios CUs terminados),
+  siempre vía **Pull Request** revisada y aprobada por el jefe de grupo. No es necesario
+  abrir una PR por cada CU.
 - **Nunca se trabaja directo sobre `dev`.** Nadie hace push a `dev` desde su máquina.
-- **Todo cambio llega a `dev` vía Pull Request (PR).**
 - **El jefe de grupo** revisa y aprueba las PR, y valida que la implementación sea correcta.
   Es quien resuelve conflictos de merge que él considere.
 - No existe una rama `main` de desarrollo activo: el trabajo diario es sobre `dev`.
 
 ```
 dev  ──────────────────────────────────────────────────────────►
-      ▲              ▲              ▲
-      │ PR #3        │ PR #2        │ PR #1        (revisadas por el jefe)
-      │              │              │
-   rama propia    rama propia    rama propia   (cada desarrollador)
-   (CU-50)        (CU-49)        (CU-48)
+      ▲                        ▲                        ▲
+      │ PR (merge al cierre)   │ PR (merge al cierre)   │ PR
+      │                        │                        │
+   rama propia               rama propia              rama propia
+   de Javier                 de Kevin                 de Tomás
+   (CU-47 → CU-52 → ...)     (varios CUs acumulados)  (varios CUs acumulados)
 ```
 
 ### Comandos base
 
 ```bash
-# 1. Actualizar dev y crear rama propia
+# 1. Actualizar dev y crear (o reutilizar) la rama propia
 git checkout dev
 git pull origin dev
-git checkout -b feat/CU-47-registrar-cliente
+git checkout -b feat/<nombre>-cus        # solo la primera vez
 
-# 2. Implementar (front + back + BDD si aplica)
-#    ...trabajo...
+# 2. Implementar cada CU completo (front + back + BDD si aplica)
+#    ...trabajo... (un commit por CU: feat(CU-XX): ...)
 
 # 3. Commit y push de la rama
 git add .
 git commit -m "feat(CU-47): registrar cliente en el sistema"
-git push origin feat/CU-47-registrar-cliente
+git push origin feat/<nombre>-cus
 
-# 4. Abrir la PR hacia dev (con gh o desde GitHub)
-gh pr create --base dev --head feat/CU-47-registrar-cliente \
-  --title "feat(CU-47): registrar cliente" \
-  --body "Implementa CU-47 + restricciones. Detalle: ..."
+# 4. Integrar lo último de dev en la rama antes de pedir el merge
+git fetch origin && git merge origin/dev
+
+# 5. Al cierre del lote: abrir la PR hacia dev (con gh o desde GitHub)
+gh pr create --base dev --head feat/<nombre>-cus \
+  --title "feat: CUs XX-YY (<nombre>)" \
+  --body "Implementa CU-XX, CU-YY + restricciones. Detalle: ..."
 ```
 
 > Si un commit es rechazado por hooks, se corrige y se hace **un commit nuevo**; no se
@@ -169,6 +176,17 @@ deactivate SVC
 Cada mensaje debe incluir el detalle técnico real: endpoint HTTP, método del servicio, SQL
 aproximado y código de estado HTTP. Ver ejemplos ya renderizados en
 `diagramas/diagramas-secuencia/CU01/CU01-normal.puml` y `CU24-exc-nombre-duplicado.puml`.
+
+**Regla de renderizado:** todo diagrama `.puml` se **renderiza siempre a imagen** y ambos
+archivos (`CUXX-normal.puml` + `CUXX-normal.png`) se commitean juntos:
+
+```bash
+plantuml -tpng diagramas/diagramas-secuencia/CUXX/CUXX-normal.puml
+plantuml -tpng diagramas/diagramas-secuencia/CUXX/CUXX-exc-*.puml
+```
+
+> Nota: no usar `skinparam ParticipantPadding/ActorPadding` (deprecados: dejan un banner de
+> advertencia en el PNG). Usar el bloque `<style>` incluido en la plantilla de arriba.
 
 ---
 

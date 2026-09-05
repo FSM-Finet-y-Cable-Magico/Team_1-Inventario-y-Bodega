@@ -96,7 +96,7 @@ no esté reflejado aquí.
 | CU-44 | Consultando listado de bodegas | [x] Implementado | |
 | CU-45 | Consultando stock de bodega | [x] Implementado | |
 | CU-46 | Configurando umbral de stock mínimo | [x] Implementado | |
-| CU-47 | Registrando ubicación física de equipo en bodega | [ ] Pendiente | |
+| CU-47 | Registrando ubicación física de equipo en bodega | [~] En progreso | Rama `feat/CU-47-ubicacion-fisica` (Javier) — implementación completa, pendiente de PR/revisión |
 | CU-48 | Consultando ubicación externa de equipo fuera de bodega | [ ] Pendiente | |
 
 ### Recepción de equipos desde proveedor
