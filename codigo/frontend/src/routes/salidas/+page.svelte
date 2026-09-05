@@ -17,10 +17,13 @@
 	let catalogo = $state<TipoEquipo[]>([]);
 	let salidas = $state<SalidaResumen[]>([]);
 	let inventario = $state<InventarioTecnico | null>(null);
-	// Unidades 'En bodega' y saldos de stock de la bodega elegida (para sugerir NS
-	// en vez de teclearlos a mano, y mostrar el saldo en vivo del consumible)
-	let unidadesEnBodega = $state<{ numero_serie: string; id_bodega_actual: number | null }[]>([]);
+	// Unidades 'En bodega' y saldos de stock de la bodega elegida (para el dropdown
+	// de equipos y el saldo en vivo del consumible)
+	let unidadesEnBodega = $state<{ numero_serie: string; id_bodega_actual: number | null; tipo: string | null }[]>([]);
 	let saldosBodega = $state<Record<number, { saldo: number; unidad: string | null }>>({});
+	// Filtros del dropdown de equipos (bodegas con cientos de unidades)
+	let busquedaSerie = $state('');
+	let filtroTipo = $state('');
 	let loading = $state(true);
 	let error = $state('');
 	let success = $state('');
@@ -38,13 +41,23 @@
 	let consumibleCantidad = $state<number | ''>('');
 
 	const consumiblesCatalogo = $derived(catalogo.filter((t) => t.requiereSerialNumber === false));
-	// CU-59: el dropdown solo ofrece unidades 'En bodega' en la bodega elegida
-	// que aún no estén agregadas a la salida
+	// CU-59: el dropdown solo ofrece unidades 'En bodega' en la bodega elegida que
+	// aún no estén agregadas, con búsqueda por serie y filtro por tipo de equipo
+	const equiposEnBodegaElegida = $derived(
+		unidadesEnBodega.filter((u) => u.id_bodega_actual === form.id_bodega_origen)
+	);
+	const tiposDisponibles = $derived(
+		[...new Set(equiposEnBodegaElegida.map((u) => u.tipo).filter(Boolean) as string[])].sort()
+	);
 	const seriesDisponibles = $derived(
-		unidadesEnBodega
-			.filter((u) => u.id_bodega_actual === form.id_bodega_origen)
+		equiposEnBodegaElegida
+			.filter((u) => !seriesItems.some((s) => s.serie.toLowerCase() === u.numero_serie.toLowerCase()))
+			.filter((u) => filtroTipo === '' || u.tipo === filtroTipo)
+			.filter((u) => {
+				const q = busquedaSerie.trim().toLowerCase();
+				return q === '' || u.numero_serie.toLowerCase().includes(q);
+			})
 			.map((u) => u.numero_serie)
-			.filter((serie) => !seriesItems.some((s) => s.serie.toLowerCase() === serie.toLowerCase()))
 	);
 	const itemsVacios = $derived(seriesItems.length === 0 && consumiblesItems.length === 0);
 	const puedeConfirmar = $derived(puedeRegistrar && form.id_tecnico > 0 && form.id_bodega_origen > 0 && !itemsVacios && !enviando);
@@ -74,7 +87,11 @@
 			salidas = salData;
 			// Solo equipos individualizables (los consumibles van por cantidad)
 			unidadesEnBodega = unitsData.filter((u: any) => !u.es_consumible)
-				.map((u: any) => ({ numero_serie: u.numero_serie, id_bodega_actual: u.id_bodega_actual }));
+				.map((u: any) => ({
+					numero_serie: u.numero_serie,
+					id_bodega_actual: u.id_bodega_actual,
+					tipo: u.tipo_equipo?.nombre ?? null
+				}));
 		} catch (err: unknown) {
 			error = err instanceof Error ? err.message : 'Error al cargar datos';
 		} finally {
@@ -240,20 +257,42 @@
 					</div>
 
 					<!-- CU-59: los equipos se eligen del dropdown de unidades disponibles
-					     en la bodega elegida (nada de tipear el NS a mano) -->
+					     en la bodega elegida, con búsqueda por serie y filtro por tipo -->
 					<div class="mb-6">
 						<p class="text-sm font-medium text-foreground mb-2">Equipos (número de serie)</p>
 						{#if !form.id_bodega_origen}
 							<p class="text-xs text-muted mb-2">Seleccione primero la bodega de origen.</p>
 						{:else}
-							<p class="text-xs text-muted mb-2">{seriesDisponibles.length} equipo(s) disponible(s) en esta bodega.</p>
+							<p class="text-xs text-muted mb-2">
+								{seriesDisponibles.length} de {equiposEnBodegaElegida.length} equipo(s) disponible(s) en esta bodega.
+							</p>
+						{/if}
+						{#if form.id_bodega_origen && equiposEnBodegaElegida.length > 0}
+							<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+								<FormField label="Buscar por serie" name="sal_buscar">
+									<input id="sal_buscar" type="text" bind:value={busquedaSerie} maxlength={80}
+										placeholder="Ej: ONT, SAL-TEST…"
+										class="w-full px-3 py-2 border border-border rounded-md text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary" />
+								</FormField>
+								<FormField label="Filtrar por tipo" name="sal_filtro">
+									<select id="sal_filtro" bind:value={filtroTipo}
+										class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+										<option value="">Todos los tipos</option>
+										{#each tiposDisponibles as t}
+											<option value={t}>{t}</option>
+										{/each}
+									</select>
+								</FormField>
+							</div>
 						{/if}
 						<FormField label="Equipo disponible" name="sal_serie">
 							<select id="sal_serie" bind:value={serieSeleccion} onchange={agregarSerie}
 								disabled={!form.id_bodega_origen}
 								class="w-full px-3 py-2 border border-border rounded-md text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary bg-white">
 								<option value="" disabled>
-									{form.id_bodega_origen ? (seriesDisponibles.length ? 'Seleccionar equipo...' : 'No hay equipos disponibles en esta bodega') : 'Seleccione bodega...'}
+									{form.id_bodega_origen
+										? (seriesDisponibles.length ? `Seleccionar equipo (${seriesDisponibles.length} con filtro actual)...` : (equiposEnBodegaElegida.length ? 'Sin resultados para el filtro actual' : 'No hay equipos disponibles en esta bodega'))
+										: 'Seleccione bodega...'}
 								</option>
 								{#each seriesDisponibles as serie}
 									<option value={serie}>{serie}</option>
@@ -285,14 +324,15 @@
 						{/if}
 					</div>
 
-					<!-- CU-60: consumibles por tipo y cantidad (con saldo en vivo de la bodega) -->
+					<!-- CU-60: consumibles por tipo y cantidad (saldo en vivo de la bodega).
+					     Helpers estáticos en ambas celdas para mantener el grid alineado -->
 					<div class="mb-6">
 						<p class="text-sm font-medium text-foreground mb-2">Consumibles</p>
-						<div class="grid grid-cols-1 sm:grid-cols-3 gap-2 items-end mb-2">
+						<div class="grid grid-cols-1 sm:grid-cols-[1fr_8rem_auto] gap-2 items-end">
 							<FormField label="Tipo de consumible" name="sal_cons"
 								helper={consumibleTipo && saldosBodega[consumibleTipo]
 									? `Disponible en bodega: ${saldosBodega[consumibleTipo].saldo} ${saldosBodega[consumibleTipo].unidad ?? ''}`
-									: undefined}>
+									: 'Saldo según bodega seleccionada'}>
 								<select id="sal_cons" bind:value={consumibleTipo}
 									class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
 									<option value={0} disabled>Seleccionar...</option>
@@ -305,7 +345,9 @@
 								<input id="sal_cant" type="number" min="0.01" step="0.01" bind:value={consumibleCantidad}
 									class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
 							</FormField>
-							<Button variant="secondary" onclick={agregarConsumible} disabled={!consumibleTipo}>Agregar</Button>
+							<div class="sm:pb-5">
+								<Button variant="secondary" onclick={agregarConsumible} disabled={!consumibleTipo}>Agregar</Button>
+							</div>
 						</div>
 						{#if consumiblesItems.length > 0}
 							<ul class="space-y-1">
