@@ -288,6 +288,8 @@ export interface OrdenIngresoDetalle {
 	garantia_dias: number;
 	cantidad_recibida: number;
 	nombre_tipo_equipo: string | null;
+	// CU-55: los ítems individualizables piden un número de serie por unidad recibida
+	requiere_serie_individual: boolean;
 }
 
 export interface OrdenIngreso {

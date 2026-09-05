@@ -7,7 +7,9 @@ import { OrdenIngresoDetalle } from './entities/orden-ingreso-detalle.entity';
 import { Proveedor } from '../proveedores/entities/proveedor.entity';
 import { Bodega } from '../bodegas/entities/bodega.entity';
 import { TipoEquipo } from '../inventario/entities/tipo-equipo.entity';
+import { UnidadEquipo } from '../inventario/entities/unidad-equipo.entity';
 import { AuditoriaModule } from '../auditoria/auditoria.module';
+import { InventarioModule } from '../inventario/inventario.module';
 
 @Module({
   imports: [
@@ -17,8 +19,12 @@ import { AuditoriaModule } from '../auditoria/auditoria.module';
       Proveedor,
       Bodega,
       TipoEquipo,
+      // CU-55: se crean unidades al recibir equipos individualizables
+      UnidadEquipo,
     ]),
     AuditoriaModule,
+    // CU-55: aporta CatalogService (validarFormatoSerialNumber de CU-28)
+    InventarioModule,
   ],
   controllers: [OrdenesIngresoController],
   providers: [OrdenesIngresoService],

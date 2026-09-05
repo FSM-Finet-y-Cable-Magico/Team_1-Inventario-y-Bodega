@@ -265,10 +265,11 @@ export function createOrdenIngreso(data: Record<string, unknown>) {
 	return api.post<any>('/ordenes-ingreso', data);
 }
 
-// CU-54: registrar la recepción total o parcial de una orden de ingreso
+// CU-54/CU-55: registrar la recepción total o parcial de una orden de ingreso.
+// `numeros_serie` solo viaja en los ítems individualizables (CU-55).
 export function registrarRecepcionOrden(
 	id: number,
-	items: { id_detalle: number; cantidad_recibida: number }[]
+	items: { id_detalle: number; cantidad_recibida: number; numeros_serie?: string[] }[]
 ) {
 	return api.post<any>(`/ordenes-ingreso/${id}/recepcion`, { items });
 }

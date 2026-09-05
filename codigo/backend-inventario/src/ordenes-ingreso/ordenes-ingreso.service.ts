@@ -1,6 +1,7 @@
 import {
   Injectable,
   BadRequestException,
+  ConflictException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -10,6 +11,8 @@ import { OrdenIngresoDetalle } from './entities/orden-ingreso-detalle.entity';
 import { Proveedor } from '../proveedores/entities/proveedor.entity';
 import { Bodega } from '../bodegas/entities/bodega.entity';
 import { TipoEquipo } from '../inventario/entities/tipo-equipo.entity';
+import { UnidadEquipo } from '../inventario/entities/unidad-equipo.entity';
+import { CatalogService } from '../inventario/catalog.service';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { CreateOrdenIngresoDto } from './dto/create-orden-ingreso.dto';
 import { RegistrarRecepcionDto } from './dto/registrar-recepcion.dto';
@@ -39,6 +42,11 @@ export class OrdenesIngresoService {
     private readonly bodegaRepository: Repository<Bodega>,
     @InjectRepository(TipoEquipo)
     private readonly tipoEquipoRepository: Repository<TipoEquipo>,
+    // CU-55: unidades creadas al recibir equipos individualizables
+    @InjectRepository(UnidadEquipo)
+    private readonly unidadRepository: Repository<UnidadEquipo>,
+    // CU-55: se reutiliza validarFormatoSerialNumber de CU-28 en vez de duplicar la regex
+    private readonly catalogService: CatalogService,
     private readonly auditoriaService: AuditoriaService,
     private readonly dataSource: DataSource,
   ) {}
@@ -338,6 +346,9 @@ export class OrdenesIngresoService {
     // Se valida TODO antes de abrir la transacción: la Excepción 1 dice "no permite
     // continuar", así que ninguna cantidad debe escribirse si alguna es inválida.
     const recibidoPorDetalle = new Map<number, number>();
+    // CU-55: NS por ítem, y el acumulado del envío para detectar repetidos entre ítems
+    const seriesPorDetalle = new Map<number, string[]>();
+    const seriesDelEnvio = new Set<string>();
     for (const item of dto.items) {
       if (recibidoPorDetalle.has(item.id_detalle)) {
         throw new BadRequestException(
@@ -358,6 +369,53 @@ export class OrdenesIngresoService {
         );
       }
       recibidoPorDetalle.set(item.id_detalle, item.cantidad_recibida);
+
+      // CU-55: los ítems individualizables exigen un NS por unidad recibida
+      const tipo = await this.tipoEquipoRepository.findOne({
+        where: { id_tipo_equipo: detalle.id_tipo_equipo },
+      });
+      const series = (item.numeros_serie ?? []).map((s) => s.trim());
+
+      if (!tipo?.requiereSerialNumber) {
+        // Nota del CU: un consumible no pide NS, solo aumenta la cantidad (CU-54)
+        if (series.length > 0) {
+          throw new BadRequestException(
+            `El tipo de equipo "${tipo?.nombre ?? detalle.id_tipo_equipo}" no es individualizable y no admite números de serie.`,
+          );
+        }
+        continue;
+      }
+
+      // CU-55 Excepción 3: no se confirma mientras falten NS por ingresar
+      if (series.length !== item.cantidad_recibida) {
+        throw new BadRequestException(
+          `Debe ingresar ${item.cantidad_recibida} número(s) de serie para el ítem "${tipo.nombre}". Ingresados: ${series.length}.`,
+        );
+      }
+
+      for (const serie of series) {
+        // CU-55 Excepción 1: se reutiliza la validación de formato de CU-28
+        this.catalogService.validarFormatoSerialNumber(serie);
+
+        // Duplicado dentro del mismo envío (aún no está en la BD)
+        if (seriesDelEnvio.has(serie)) {
+          throw new ConflictException(
+            `El número de serie [${serie}] ya se encuentra registrado en el sistema.`,
+          );
+        }
+        seriesDelEnvio.add(serie);
+
+        // CU-55 Excepción 2: unicidad global contra unidad_equipo
+        const existente = await this.unidadRepository.findOne({
+          where: { serialNumber: serie },
+        });
+        if (existente) {
+          throw new ConflictException(
+            `El número de serie [${serie}] ya se encuentra registrado en el sistema.`,
+          );
+        }
+      }
+      seriesPorDetalle.set(item.id_detalle, series);
     }
 
     // Estado resultante: si algún ítem queda con pendiente → 'Recepción parcial';
@@ -378,6 +436,22 @@ export class OrdenesIngresoService {
         : ESTADO_PENDIENTE;
 
     const estadoAnterior = orden.estado;
+
+    // CU-55: fecha de adquisición de las unidades creadas. CU-56 permitirá indicar la
+    // fecha de recepción real; hasta entonces se usa la fecha de hoy.
+    const fechaRecepcion = new Date();
+    fechaRecepcion.setHours(0, 0, 0, 0);
+    // CU-55: el proveedor de la orden queda en la unidad (alimenta el reporte de CU-88)
+    const proveedorOrden = await this.proveedorRepository.findOne({
+      where: { id_proveedor: orden.id_proveedor },
+    });
+    const nombreProveedor = proveedorOrden?.nombre_comercial ?? null;
+    const unidadesCreadas: {
+      id_unidad: number;
+      numero_serie: string;
+      id_tipo_equipo: number;
+    }[] = [];
+
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -391,6 +465,35 @@ export class OrdenesIngresoService {
           'cantidad_recibida',
           cantidad,
         );
+      }
+
+      // CU-55: cada NS se registra como una unidad nueva 'En bodega', en la MISMA
+      // transacción que la recepción: o entran todas o no entra ninguna.
+      for (const [idDetalle, series] of seriesPorDetalle) {
+        if (series.length === 0) continue;
+        const detalle = porId.get(idDetalle)!;
+        // CU-38: vencimiento = fecha de adquisición + garantía del ítem de la orden
+        const fechaVenc = new Date(fechaRecepcion);
+        fechaVenc.setDate(fechaVenc.getDate() + (detalle.garantia_dias ?? 0));
+
+        for (const serie of series) {
+          const unidad = queryRunner.manager.create(UnidadEquipo, {
+            id_tipo_equipo: detalle.id_tipo_equipo,
+            id_empresa: orden.id_empresa_destino,
+            serialNumber: serie,
+            estado: 'En bodega',
+            id_bodega_actual: orden.id_bodega_destino,
+            fechaAdquisicion: fechaRecepcion,
+            fechaVencGarantia: detalle.garantia_dias > 0 ? fechaVenc : null,
+            proveedor: nombreProveedor,
+          });
+          const guardada = await queryRunner.manager.save(unidad);
+          unidadesCreadas.push({
+            id_unidad: guardada.id_unidad,
+            numero_serie: serie,
+            id_tipo_equipo: detalle.id_tipo_equipo,
+          });
+        }
       }
 
       if (nuevoEstado !== estadoAnterior) {
@@ -421,6 +524,25 @@ export class OrdenesIngresoService {
         items: dto.items,
       },
     });
+
+    // CU-55: además, una entrada CREAR por cada unidad registrada
+    for (const u of unidadesCreadas) {
+      await this.auditoriaService.create({
+        id_usuario: actor.id_usuario,
+        accion: 'CREAR',
+        entidad_afectada: 'unidad_equipo',
+        id_entidad_afectada: u.id_unidad,
+        valor_anterior: null,
+        valor_nuevo: {
+          numero_serie: u.numero_serie,
+          id_tipo_equipo: u.id_tipo_equipo,
+          estado: 'En bodega',
+          id_empresa: orden.id_empresa_destino,
+          id_bodega_actual: orden.id_bodega_destino,
+          origen: `Recepción de la orden de ingreso ${orden.correlativo}`,
+        },
+      });
+    }
 
     return this.findOneConDetalles(idOrden);
   }
@@ -454,6 +576,8 @@ export class OrdenesIngresoService {
         return {
           ...d,
           nombre_tipo_equipo: tipo?.nombre ?? null,
+          // CU-55: el frontend pide NS solo para los ítems individualizables
+          requiere_serie_individual: tipo?.requiereSerialNumber ?? false,
         };
       }),
     );

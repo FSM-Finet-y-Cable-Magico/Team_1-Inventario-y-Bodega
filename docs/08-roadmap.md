@@ -14,8 +14,8 @@ no esté reflejado aquí.
 
 - **Total de casos de uso:** 96
 - **Implementados (Incremento 1):** 46 (CU-01 a CU-46)
-- **Implementados (Incremento 2):** 6 (CU-49, CU-50, CU-51, CU-52, CU-53, CU-54)
-- **Pendientes:** 44 (CU-47, CU-48, CU-55 a CU-96)
+- **Implementados (Incremento 2):** 7 (CU-49 a CU-55, salvo CU-47 y CU-48)
+- **Pendientes:** 43 (CU-47, CU-48, CU-56 a CU-96)
 
 ## Leyenda
 
@@ -110,7 +110,7 @@ no esté reflejado aquí.
 | CU-52 | Registrando orden de ingreso desde proveedor | [x] Implementado | Módulo `ordenes-ingreso` (back + front + BDD + docs + diagramas). Rama `feat/CU-49-crear-proveedor` (Javier) — pendiente render PNG de los `.puml` y capturas en `Casos de uso/CU-52/` |
 | CU-53 | Consultando órdenes de ingreso | [x] Implementado | Filtros (estado, proveedor, rango de fechas, empresa) + ficha `/ordenes-ingreso/[id]`. Rama `feat/CU-49-crear-proveedor` (Javier) — pendiente render PNG de los `.puml` y capturas en `Casos de uso/CU-53/` |
 | CU-54 | Registrando recepción total o parcial de orden de ingreso | [x] Implementado | `POST /ordenes-ingreso/:id/recepcion` + modal en la ficha. Rama `feat/CU-49-crear-proveedor` (Javier) — pendiente render PNG de los `.puml` y capturas en `Casos de uso/CU-54/` |
-| CU-55 | Ingresando números de serie en recepción de equipos | [ ] Pendiente | |
+| CU-55 | Ingresando números de serie en recepción de equipos | [x] Implementado | NS por unidad en la recepción, reusa la validación de CU-28 y crea `unidad_equipo` 'En bodega'. Rama `feat/CU-49-crear-proveedor` (Javier) — pendiente render PNG de los `.puml` y capturas en `Casos de uso/CU-55/` |
 | CU-56 | Registrando fecha de adquisición real en recepción | [ ] Pendiente | |
 
 ### Asignación de equipos a técnicos

@@ -2,6 +2,8 @@ import { Type } from 'class-transformer';
 import {
   IsInt,
   IsArray,
+  IsString,
+  IsOptional,
   ValidateNested,
   ArrayMinSize,
   Min,
@@ -16,6 +18,14 @@ export class ItemRecepcionDto {
   @IsInt({ message: 'La cantidad recibida debe ser un número entero' })
   @Min(0, { message: 'La cantidad recibida no puede ser negativa' })
   cantidad_recibida: number;
+
+  // CU-55: números de serie de las unidades físicas recibidas en esta instancia.
+  // Obligatorio y con largo == cantidad_recibida solo si el tipo de equipo del ítem
+  // es individualizable (requiere_serie_individual = true); los consumibles no lo llevan.
+  @IsOptional()
+  @IsArray({ message: 'Los números de serie deben venir en un listado' })
+  @IsString({ each: true, message: 'Cada número de serie debe ser texto' })
+  numeros_serie?: string[];
 }
 
 export class RegistrarRecepcionDto {

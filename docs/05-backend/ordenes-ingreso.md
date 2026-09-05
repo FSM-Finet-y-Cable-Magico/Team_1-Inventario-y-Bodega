@@ -1,4 +1,4 @@
-# Módulo `ordenes-ingreso` — CU-52, CU-53, CU-54
+# Módulo `ordenes-ingreso` — CU-52, CU-53, CU-54, CU-55
 
 **Carpeta:** `codigo/backend-inventario/src/ordenes-ingreso/`
 
@@ -164,6 +164,53 @@ Superadas las validaciones, la transacción con `QueryRunner` hace `increment` s
 Los tres literales viven en las constantes `ESTADO_PENDIENTE` / `ESTADO_PARCIAL` /
 `ESTADO_COMPLETADA` del service.
 
+## Números de serie en la recepción (CU-55)
+
+El pivote es `tipo_equipo.requiere_serie_individual` (ver `03-base-de-datos.md` §2.1). El detalle
+de la orden lo expone como `requiere_serie_individual` para que el frontend sepa a qué ítems
+pedirles NS.
+
+- **Ítem individualizable:** `numeros_serie` es obligatorio y su largo debe ser **exactamente**
+  `cantidad_recibida`. Cada NS se valida con `CatalogService.validarFormatoSerialNumber`
+  (la misma de CU-28: `/^[A-Z0-9-]{4,30}$/`), se comprueba que no se repita dentro del envío y
+  que no exista ya en `unidad_equipo`.
+- **Ítem consumible:** no lleva NS; solo sube la cantidad. Si llega un `numeros_serie` no vacío
+  se rechaza, para que un error del cliente no pase inadvertido.
+
+| Situación | Respuesta |
+|-----------|-----------|
+| Formato inválido | 400 · mensaje de CU-28 (**Excepción 1**) |
+| NS repetido en el envío o ya en la BD | 409 · *"El número de serie [NS] ya se encuentra registrado en el sistema."* (**Excepción 2**) |
+| Faltan NS para la cantidad declarada | 400 · *"Debe ingresar N número(s) de serie para el ítem …"* (**Excepción 3**) |
+
+> **Mensaje de la Excepción 1:** el CU-55 lo enuncia como *"…entre 4 y 30 caracteres
+> alfanuméricos y guiones."*, pero se reutiliza el validador de CU-28, cuyo mensaje añade
+> *"No se permiten espacios ni caracteres especiales."*. Se conserva el de CU-28 porque
+> `01-flujo-de-trabajo.md` §7 prohíbe cambiar los mensajes ya establecidos, y el texto del CU-55
+> es un prefijo exacto del que se muestra.
+
+Todo se valida **antes** de la transacción. Dentro de ella, por cada NS se crea una
+`unidad_equipo` con:
+
+| Campo | Valor |
+|-------|-------|
+| `estado` | `'En bodega'` |
+| `id_tipo_equipo` | el del ítem de la orden |
+| `id_empresa` | `orden.id_empresa_destino` |
+| `id_bodega_actual` | `orden.id_bodega_destino` |
+| `fecha_adquisicion` | fecha de la recepción |
+| `fecha_venc_garantia` | `fecha_adquisicion + garantia_dias` **del ítem** (regla CU-38) |
+| `proveedor` | nombre comercial del proveedor de la orden (alimenta CU-88) |
+
+> La garantía se toma de `orden_ingreso_detalle.garantia_dias`, no de `tipo_equipo.garantiaDias`:
+> la línea de la orden puede pactar una garantía distinta a la del catálogo.
+
+> `fecha_adquisicion` usa la fecha del día. **CU-56** permitirá indicar la fecha de recepción
+> real; cuando se implemente, es el único punto a cambiar.
+
+Como todo ocurre en la misma transacción que la recepción, un NS inválido o duplicado deja la
+orden y las unidades intactas: no se crea ninguna unidad ni se acumula ninguna cantidad.
+
 ## Aislamiento por empresa
 
 Manual en el service con el flag `esSuperusuario` (patrón de `usuarios`/`bodegas`, **no**
@@ -195,6 +242,8 @@ entradas del módulo las generan los `POST` de CU-52 y CU-54.
   correlativo, proveedor, documento, fecha, empresa, bodega e ítems.
 - `RECEPCION` sobre `orden_ingreso` al registrar una recepción (CU-54). `valor_anterior` lleva
   el estado previo y `valor_nuevo` los ítems recibidos en esa instancia más el estado resultante.
+- `CREAR` sobre `unidad_equipo`, **una entrada por unidad** creada al recibir equipos
+  individualizables (CU-55), con el NS, el estado inicial y la orden de origen.
 
 > `RECEPCION` **no está en el mapa `VERBOS`** de `auditoria.service.ts` (CU-08) ni en la lista
 > de acciones del filtro de `/auditoria` (CU-09). El evento se registra y se ve en la tabla,
@@ -209,3 +258,4 @@ entradas del módulo las generan los `POST` de CU-52 y CU-54.
 | CU-52 | Registrar orden de ingreso desde proveedor (correlativo automático, estado `Pendiente de recepción`) |
 | CU-53 | Consultar órdenes de ingreso: listado con filtros (estado, proveedor, rango de fechas, empresa) y detalle con ítems esperados vs recibidos |
 | CU-54 | Registrar recepción total o parcial, con recálculo del estado de la orden |
+| CU-55 | Ingresar números de serie al recibir equipos individualizables: valida formato y unicidad y crea una `unidad_equipo` 'En bodega' por NS |

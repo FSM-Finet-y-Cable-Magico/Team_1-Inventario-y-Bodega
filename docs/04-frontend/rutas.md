@@ -129,7 +129,8 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
   el `ValidationPipe` del backend la repite como red de seguridad.
 
 ### `/ordenes-ingreso/[id]`
-- **CUs:** CU-53 (ficha de detalle de una orden de ingreso), CU-54 (registrar recepción).
+- **CUs:** CU-53 (ficha de detalle de una orden de ingreso), CU-54 (registrar recepción),
+  CU-55 (números de serie en la recepción).
 - **Endpoints:** `getOrdenIngreso(id)`, `registrarRecepcionOrden(id, items)`.
 - Cabecera con correlativo, badge de estado, proveedor, N.º documento, fecha (DD/MM/YYYY),
   empresa destinataria, bodega de destino y total de ítems. Tabla de ítems con cantidad
@@ -145,6 +146,13 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
   propio tooltip, tapando el mensaje exacto del CU
   (`La cantidad no puede superar la cantidad pendiente del ítem.`). El `max` se conserva para
   acotar las flechas del spinner.
+- **CU-55:** dentro del modal, los ítems con `requiere_serie_individual` muestran una sección de
+  números de serie: input + botón "Agregar", validación en vivo del formato con la misma regex
+  que el backend, listado de los NS ya ingresados con botón para quitarlos, y contador
+  `N / esperados ingresados`. Los ítems consumibles no muestran la sección.
+- **CU-55 Excepción 3:** "Guardar recepción" queda **deshabilitado** mientras algún ítem
+  serializado tenga menos NS que su cantidad recibida; `guardarRecepcion` lo revalida antes de
+  enviar por si el estado quedara inconsistente.
 
 ### `/auditoria`
 - **CUs:** CU-08 (visualizar log), CU-09 (filtrar).

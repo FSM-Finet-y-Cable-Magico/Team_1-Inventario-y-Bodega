@@ -8,7 +8,7 @@
 	import Button from '$lib/components/Button.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import Modal from '$lib/components/Modal.svelte';
-	import { ArrowLeft, PackageCheck } from '@lucide/svelte';
+	import { ArrowLeft, PackageCheck, Plus, Trash2 } from '@lucide/svelte';
 
 	let orden = $state<OrdenIngreso | null>(null);
 	let loading = $state(true);
@@ -20,6 +20,11 @@
 	let cantidades = $state<Record<number, number>>({});
 	let recepcionError = $state('');
 	let guardando = $state(false);
+
+	// CU-55: NS confirmados por ítem, el que se está escribiendo y su error de validación
+	let series = $state<Record<number, string[]>>({});
+	let serieBorrador = $state<Record<number, string>>({});
+	let serieError = $state<Record<number, string>>({});
 
 	// CU-54: los tres actores del CU pueden registrar la recepción, y solo se admite
 	// sobre órdenes en 'Pendiente de recepción' o 'Recepción parcial'
@@ -68,19 +73,80 @@
 		return d.cantidad_esperada - d.cantidad_recibida;
 	}
 
+	// CU-55: mismo formato de NS que CU-28 (`validarFormatoSerialNumber` en el backend).
+	// Se replica aquí para validar en vivo; el backend sigue siendo la validación real.
+	const SERIE_REGEX = /^[A-Z0-9-]{4,30}$/;
+	const MSG_FORMATO_SERIE =
+		'El formato del número de serie es inválido. Debe contener entre 4 y 30 caracteres alfanuméricos y guiones. No se permiten espacios ni caracteres especiales.';
+
 	function abrirRecepcion() {
 		cantidades = {};
-		for (const d of orden?.detalles ?? []) cantidades[d.id_detalle] = 0;
+		series = {};
+		serieBorrador = {};
+		serieError = {};
+		for (const d of orden?.detalles ?? []) {
+			cantidades[d.id_detalle] = 0;
+			series[d.id_detalle] = [];
+			serieBorrador[d.id_detalle] = '';
+		}
 		recepcionError = '';
 		success = '';
 		showRecepcion = true;
 	}
 
+	// CU-55: agrega un NS al ítem validando formato y duplicados en vivo
+	function agregarSerie(idDetalle: number) {
+		const valor = (serieBorrador[idDetalle] ?? '').trim();
+		serieError[idDetalle] = '';
+		if (!valor) return;
+		// CU-55 Excepción 1
+		if (!SERIE_REGEX.test(valor)) {
+			serieError[idDetalle] = MSG_FORMATO_SERIE;
+			return;
+		}
+		// CU-55 Excepción 2 (parte cliente): repetido en lo ya ingresado de cualquier ítem
+		const yaIngresados = Object.values(series).flat();
+		if (yaIngresados.includes(valor)) {
+			serieError[idDetalle] = `El número de serie [${valor}] ya se encuentra registrado en el sistema.`;
+			return;
+		}
+		if (series[idDetalle].length >= (cantidades[idDetalle] ?? 0)) {
+			serieError[idDetalle] = 'Ya ingresó todos los números de serie para la cantidad indicada.';
+			return;
+		}
+		series[idDetalle] = [...series[idDetalle], valor];
+		serieBorrador[idDetalle] = '';
+	}
+
+	function quitarSerie(idDetalle: number, indice: number) {
+		series[idDetalle] = series[idDetalle].filter((_, i) => i !== indice);
+	}
+
+	// CU-55 Excepción 3: no se confirma mientras la cantidad de NS no calce con la recibida.
+	// Puede fallar por defecto (faltan) o por exceso, si el actor baja la cantidad después
+	// de haber ingresado NS; el aviso distingue ambos casos para no confundir.
+	const desajusteSeries = $derived(
+		(orden?.detalles ?? [])
+			.filter((d) => d.requiere_serie_individual)
+			.map((d) => (series[d.id_detalle]?.length ?? 0) - (cantidades[d.id_detalle] ?? 0))
+			.find((diff) => diff !== 0) ?? 0
+	);
+	const seriesCompletas = $derived(desajusteSeries === 0);
+	const avisoSeries = $derived(
+		desajusteSeries === 0
+			? ''
+			: desajusteSeries > 0
+				? 'Sobran números de serie para la cantidad indicada. Quite los que no correspondan.'
+				: 'Faltan números de serie por ingresar.'
+	);
+
 	async function guardarRecepcion() {
 		recepcionError = '';
+		// CU-55: los ítems individualizables envían además sus números de serie
 		const items = (orden?.detalles ?? []).map((d) => ({
 			id_detalle: d.id_detalle,
-			cantidad_recibida: Number(cantidades[d.id_detalle] ?? 0)
+			cantidad_recibida: Number(cantidades[d.id_detalle] ?? 0),
+			...(d.requiere_serie_individual ? { numeros_serie: series[d.id_detalle] ?? [] } : {})
 		}));
 
 		// CU-54 Excepción 1: la cantidad no puede superar el pendiente del ítem.
@@ -98,6 +164,11 @@
 		}
 		if (items.every((i) => i.cantidad_recibida === 0)) {
 			recepcionError = 'Debe indicar al menos una cantidad recibida para registrar la recepción.';
+			return;
+		}
+		// CU-55 Excepción 3: refuerzo por si el botón se habilitó con datos a medias
+		if (!seriesCompletas) {
+			recepcionError = avisoSeries;
 			return;
 		}
 
@@ -268,13 +339,63 @@
 							</span>
 						</div>
 					</div>
+
+					<!-- CU-55: los ítems individualizables piden un NS por unidad recibida.
+					     Los consumibles no muestran esta sección (solo suman cantidad). -->
+					{#if d.requiere_serie_individual && (cantidades[d.id_detalle] ?? 0) > 0}
+						<div class="border-t border-border pt-2 space-y-2">
+							<div class="flex items-center justify-between">
+								<span class="text-xs font-medium text-muted">Números de serie</span>
+								<span class="text-xs {(series[d.id_detalle]?.length ?? 0) === cantidades[d.id_detalle] ? 'text-green-700' : 'text-muted'}">
+									{series[d.id_detalle]?.length ?? 0} / {cantidades[d.id_detalle]} ingresados
+								</span>
+							</div>
+
+							{#if serieError[d.id_detalle]}
+								<!-- CU-55 Excepciones 1 y 2: formato inválido o NS repetido -->
+								<div class="bg-red-50 border border-red-200 text-destructive text-xs rounded-md px-2 py-1.5">
+									{serieError[d.id_detalle]}
+								</div>
+							{/if}
+
+							<div class="flex items-center gap-2">
+								<input type="text" bind:value={serieBorrador[d.id_detalle]} maxlength={30}
+									placeholder="Ej: ABC-12345"
+									onkeydown={(e: KeyboardEvent) => { if (e.key === 'Enter') { e.preventDefault(); agregarSerie(d.id_detalle); } }}
+									class="flex-1 px-2 py-1.5 border border-border rounded-md text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary" />
+								<Button type="button" variant="secondary" size="sm" onclick={() => agregarSerie(d.id_detalle)}>
+									<Plus class="h-3 w-3" />
+									Agregar
+								</Button>
+							</div>
+
+							{#if (series[d.id_detalle]?.length ?? 0) > 0}
+								<div class="space-y-1">
+									{#each series[d.id_detalle] as ns, idx}
+										<div class="flex items-center justify-between bg-white border border-border rounded px-2 py-1">
+											<span class="text-xs font-mono text-foreground">{ns}</span>
+											<button type="button" onclick={() => quitarSerie(d.id_detalle, idx)}
+												title="Quitar número de serie"
+												class="text-destructive hover:text-destructive/80 transition-colors">
+												<Trash2 class="h-3.5 w-3.5" />
+											</button>
+										</div>
+									{/each}
+								</div>
+							{/if}
+						</div>
+					{/if}
 				</div>
 			{/each}
 		</div>
 
 		<div class="flex justify-end gap-3 pt-2">
 			<Button variant="secondary" onclick={() => (showRecepcion = false)} type="button">Cancelar</Button>
-			<Button type="submit" loading={guardando}>Guardar recepción</Button>
+			<!-- CU-55 Excepción 3: no se puede confirmar mientras falten NS por ingresar -->
+			<Button type="submit" loading={guardando} disabled={!seriesCompletas}
+				title={seriesCompletas ? 'Guardar recepción' : avisoSeries}>
+				Guardar recepción
+			</Button>
 		</div>
 	</form>
 </Modal>

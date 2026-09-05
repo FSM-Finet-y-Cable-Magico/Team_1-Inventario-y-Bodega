@@ -73,6 +73,7 @@
 | 52 | Registrar orden de ingreso desde proveedor (CU-52) | `ordenes-ingreso` | `/ordenes-ingreso` |
 | 53 | Consultar órdenes de ingreso con filtros y detalle (CU-53) | `ordenes-ingreso` | `/ordenes-ingreso`, `/ordenes-ingreso/[id]` |
 | 54 | Registrar recepción total o parcial de orden de ingreso (CU-54) | `ordenes-ingreso` | `/ordenes-ingreso/[id]` |
+| 55 | Ingresar números de serie en recepción de equipos (CU-55) | `ordenes-ingreso`, `inventario` | `/ordenes-ingreso/[id]` |
 
 ## 3. Diagramas disponibles (referencia para CUs pendientes)
 
