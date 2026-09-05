@@ -119,10 +119,12 @@
 		serieSeleccion = '';
 	}
 
-	// CU-59: si cambia la bodega de origen, las validaciones en vivo pierden vigencia
-	// y se recargan las sugerencias/saldos de la nueva bodega
+	// CU-59/CU-60: si cambia la bodega de origen, las selecciones y saldos pierden
+	// vigencia y se recargan los del nuevo origen
 	async function cambiarBodega() {
 		seriesItems = [];
+		consumibleTipo = 0;
+		consumibleCantidad = '';
 		saldosBodega = {};
 		if (form.id_bodega_origen) {
 			try {
@@ -288,7 +290,7 @@
 						<FormField label="Equipo disponible" name="sal_serie">
 							<select id="sal_serie" bind:value={serieSeleccion} onchange={agregarSerie}
 								disabled={!form.id_bodega_origen}
-								class="w-full px-3 py-2 border border-border rounded-md text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+								class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
 								<option value="" disabled>
 									{form.id_bodega_origen
 										? (seriesDisponibles.length ? `Seleccionar equipo (${seriesDisponibles.length} con filtro actual)...` : (equiposEnBodegaElegida.length ? 'Sin resultados para el filtro actual' : 'No hay equipos disponibles en esta bodega'))
@@ -325,16 +327,23 @@
 					</div>
 
 					<!-- CU-60: consumibles por tipo y cantidad (saldo en vivo de la bodega).
-					     Helpers estáticos en ambas celdas para mantener el grid alineado -->
+					     Helpers estáticos para mantener el grid alineado; deshabilitado hasta
+					     elegir la bodega de origen -->
 					<div class="mb-6">
 						<p class="text-sm font-medium text-foreground mb-2">Consumibles</p>
+						{#if !form.id_bodega_origen}
+							<p class="text-xs text-muted mb-2">Seleccione primero la bodega de origen.</p>
+						{/if}
 						<div class="grid grid-cols-1 sm:grid-cols-[1fr_8rem_auto] gap-2 items-end">
 							<FormField label="Tipo de consumible" name="sal_cons"
-								helper={consumibleTipo && saldosBodega[consumibleTipo]
-									? `Disponible en bodega: ${saldosBodega[consumibleTipo].saldo} ${saldosBodega[consumibleTipo].unidad ?? ''}`
-									: 'Saldo según bodega seleccionada'}>
+								helper={!form.id_bodega_origen
+									? 'Seleccione primero la bodega de origen.'
+									: (consumibleTipo && saldosBodega[consumibleTipo]
+										? `Disponible en bodega: ${saldosBodega[consumibleTipo].saldo} ${saldosBodega[consumibleTipo].unidad ?? ''}`
+										: 'Saldo según bodega seleccionada')}>
 								<select id="sal_cons" bind:value={consumibleTipo}
-									class="w-full h-10 px-3 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+									disabled={!form.id_bodega_origen}
+									class="w-full h-10 px-3 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white disabled:opacity-60 disabled:cursor-not-allowed">
 									<option value={0} disabled>Seleccionar...</option>
 									{#each consumiblesCatalogo as t}
 										<option value={t.id_tipo_equipo}>{t.nombre}{t.unidadMedida ? ` (${t.unidadMedida})` : ''}</option>
@@ -343,10 +352,11 @@
 							</FormField>
 							<FormField label="Cantidad" name="sal_cant" helper="Hasta 2 decimales">
 								<input id="sal_cant" type="number" min="0.01" step="0.01" bind:value={consumibleCantidad}
-									class="w-full h-10 px-3 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+									disabled={!form.id_bodega_origen}
+									class="w-full h-10 px-3 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 disabled:cursor-not-allowed" />
 							</FormField>
 							<div class="sm:pb-5">
-								<Button variant="secondary" onclick={agregarConsumible} disabled={!consumibleTipo}>Agregar</Button>
+								<Button variant="secondary" onclick={agregarConsumible} disabled={!consumibleTipo || !form.id_bodega_origen}>Agregar</Button>
 							</div>
 						</div>
 						{#if consumiblesItems.length > 0}
