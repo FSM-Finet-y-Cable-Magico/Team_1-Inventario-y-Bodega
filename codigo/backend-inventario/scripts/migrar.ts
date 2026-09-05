@@ -152,6 +152,19 @@ const SENTENCIAS = [
   `ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS proveedor varchar(80)`,
   `ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS observaciones varchar(300)`,
   `ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS ubicacion_fisica varchar(60)`,
+  // sc-113 (integración G3): cierres de OT recibidos por webhook, con idempotencia
+  `CREATE TABLE IF NOT EXISTS integracion_cierre (
+    id_cierre           SERIAL PRIMARY KEY,
+    clave_idempotencia  VARCHAR(120) NOT NULL UNIQUE,
+    id_ot               INTEGER NOT NULL,
+    id_empresa          INTEGER NOT NULL,
+    tipo_ot             VARCHAR(30),
+    payload             JSONB NOT NULL,
+    estado_proceso      VARCHAR(40) NOT NULL DEFAULT 'PROCESADO',
+    discrepancias       JSONB,
+    acciones_aplicadas  JSONB,
+    fecha_proceso       TIMESTAMPTZ DEFAULT now()
+  )`,
 ];
 
 async function main() {

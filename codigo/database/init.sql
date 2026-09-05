@@ -153,3 +153,18 @@ CREATE TABLE IF NOT EXISTS stock_consumible (
     CONSTRAINT fk_stock_bodega      FOREIGN KEY (id_bodega)      REFERENCES bodega (id_bodega),
     CONSTRAINT fk_stock_tipo_equipo FOREIGN KEY (id_tipo_equipo) REFERENCES tipo_equipo (id_tipo_equipo)
 );
+
+-- Cierres de OT recibidos por integración (webhook de G3) — sc-113
+-- Idempotencia por clave_idempotencia: "{id_ot}:{fecha_completada ISO}"
+CREATE TABLE IF NOT EXISTS integracion_cierre (
+    id_cierre           SERIAL PRIMARY KEY,
+    clave_idempotencia  VARCHAR(120) NOT NULL UNIQUE,
+    id_ot               INTEGER NOT NULL,
+    id_empresa          INTEGER NOT NULL,
+    tipo_ot             VARCHAR(30),
+    payload             JSONB NOT NULL,
+    estado_proceso      VARCHAR(40) NOT NULL DEFAULT 'PROCESADO',
+    discrepancias       JSONB,
+    acciones_aplicadas  JSONB,
+    fecha_proceso       TIMESTAMPTZ DEFAULT now()
+);
