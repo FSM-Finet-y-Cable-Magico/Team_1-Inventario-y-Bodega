@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
 	import { getOrdenesIngreso, createOrdenIngreso, getProveedores, getCatalog, getWarehouses, getWarehousesByEmpresa, getEmpresas } from '$lib/api/index';
 	import type { OrdenIngreso, Proveedor, TipoEquipo, Bodega } from '$lib/types';
 	import { authStore, userRoles } from '$lib/stores/auth';
@@ -15,7 +16,14 @@
 	let loading = $state(true);
 	let error = $state('');
 	let search = $state('');
-	let expandedOrden = $state<number | null>(null);
+
+	// CU-53: filtros por estado, nombre del proveedor, rango de fechas y empresa destinataria
+	let filters = $state({ estado: '', proveedor: '', fecha_desde: '', fecha_hasta: '', id_empresa: '' });
+	// CU-53: estados literales exactos de orden_ingreso.estado
+	const ESTADOS = ['Pendiente de recepción', 'Recepción parcial', 'Completada'];
+	const hayFiltros = $derived(
+		!!(search || filters.estado || filters.proveedor || filters.fecha_desde || filters.fecha_hasta || filters.id_empresa)
+	);
 
 	// CU-52: catálogos que alimentan el formulario (proveedores activos, tipos de equipo
 	// activos, bodegas y empresas). Se cargan por separado porque no todos los roles
@@ -61,7 +69,15 @@
 		loading = true;
 		error = '';
 		try {
-			ordenes = await getOrdenesIngreso({ buscar: search || undefined });
+			// CU-53: el backend aplica los filtros; el no-superusuario ignora id_empresa
+			ordenes = await getOrdenesIngreso({
+				buscar: search || undefined,
+				estado: filters.estado || undefined,
+				proveedor: filters.proveedor || undefined,
+				fecha_desde: filters.fecha_desde || undefined,
+				fecha_hasta: filters.fecha_hasta || undefined,
+				id_empresa: filters.id_empresa ? Number(filters.id_empresa) : undefined
+			});
 		} catch (err: unknown) {
 			error = err instanceof Error ? err.message : 'Error al cargar órdenes de ingreso';
 		} finally {
@@ -80,7 +96,12 @@
 		try { empresas = await getEmpresas(); } catch { /* sin permiso */ }
 	});
 
-	$effect(() => { search; load(); });
+	// CU-53: cualquier cambio de filtro recarga el listado
+	$effect(() => {
+		search;
+		filters.estado; filters.proveedor; filters.fecha_desde; filters.fecha_hasta; filters.id_empresa;
+		load();
+	});
 
 	function openCreate() {
 		// CU-52: para los roles que no son Superusuario la empresa destinataria es la propia;
@@ -185,16 +206,20 @@
 		}
 	}
 
-	// CU-52: estados literales exactos de orden_ingreso.estado
-	function estadoBadgeVariant(estado: string): 'default' | 'success' | 'warning' | 'danger' {
-		if (estado === 'Pendiente de recepción') return 'warning';
-		if (estado === 'Recepción parcial') return 'default';
-		if (estado === 'Completada') return 'success';
-		return 'default';
-	}
+	// CU-53: badge por estado, mismo patrón que /transferencias
+	const estadoBadge: Record<string, string> = {
+		'Pendiente de recepción': 'warning',
+		'Recepción parcial': 'info',
+		Completada: 'success'
+	};
 
-	function toggleExpand(id: number) {
-		expandedOrden = expandedOrden === id ? null : id;
+	// CU-53: la fecha del documento se muestra en formato DD/MM/YYYY.
+	// `fecha_documento` es un DATE (YYYY-MM-DD) sin hora: se parte el string en vez de
+	// usar new Date() para no correr un día por zona horaria.
+	function fmtFecha(fecha: string): string {
+		if (!fecha) return '—';
+		const [y, m, d] = fecha.slice(0, 10).split('-');
+		return d && m && y ? `${d}/${m}/${y}` : fecha;
 	}
 </script>
 
@@ -215,10 +240,36 @@
 		</div>
 	</div>
 
-	<div class="flex items-center gap-4 mb-4">
-		<div class="flex-1 max-w-xs">
+	<!-- CU-53: filtros por estado, nombre del proveedor, rango de fechas y empresa -->
+	<div class="flex flex-wrap items-center gap-3 mb-4">
+		<div class="flex-1 min-w-[16rem] max-w-xs">
 			<SearchInput bind:value={search} placeholder="Buscar por correlativo o N.o documento..." />
 		</div>
+		<input type="text" bind:value={filters.proveedor} placeholder="Nombre del proveedor..."
+			aria-label="Filtrar por nombre del proveedor"
+			class="px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+		<select bind:value={filters.estado} aria-label="Filtrar por estado"
+			class="px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+			<option value="">Todos los estados</option>
+			{#each ESTADOS as e}
+				<option value={e}>{e}</option>
+			{/each}
+		</select>
+		<!-- CU-53: la empresa destinataria solo la filtra el Superusuario; el resto ya
+		     está acotado a la suya por el backend -->
+		{#if esSuperusuario}
+			<select bind:value={filters.id_empresa} aria-label="Filtrar por empresa destinataria"
+				class="px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+				<option value="">Todas las empresas</option>
+				{#each empresas as emp}
+					<option value={String(emp.id)}>{emp.nombre}</option>
+				{/each}
+			</select>
+		{/if}
+		<input type="date" bind:value={filters.fecha_desde} aria-label="Fecha del documento desde"
+			class="px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+		<input type="date" bind:value={filters.fecha_hasta} aria-label="Fecha del documento hasta"
+			class="px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
 	</div>
 
 	{#if successMessage}
@@ -233,10 +284,12 @@
 		{#if loading}
 			<div class="p-8 text-center text-sm text-muted">Cargando...</div>
 		{:else if ordenes.length === 0}
+			<!-- CU-53 Excepción 1: listado vacío con el mensaje de filtros sin coincidencias.
+			     Sin filtros aplicados no es la excepción del CU, sino que aún no hay órdenes. -->
 			<EmptyState
-				message={search ? 'No se encontraron órdenes de ingreso con ese criterio.' : 'No se encontraron órdenes de ingreso.'}
-				action={puedeCrear ? openCreate : undefined}
-				actionlabel={puedeCrear ? 'Nueva orden de ingreso' : undefined} />
+				message={hayFiltros ? 'No se encontraron órdenes con los filtros seleccionados.' : 'No se encontraron órdenes de ingreso.'}
+				action={!hayFiltros && puedeCrear ? openCreate : undefined}
+				actionlabel={!hayFiltros && puedeCrear ? 'Nueva orden de ingreso' : undefined} />
 		{:else}
 			<div class="overflow-x-auto">
 				<table class="w-full text-sm">
@@ -249,50 +302,25 @@
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Empresa</th>
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Bodega</th>
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Estado</th>
-							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Items</th>
+							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Total de ítems</th>
 						</tr>
 					</thead>
 					<tbody>
+						<!-- CU-53: al seleccionar una orden se abre su ficha de detalle -->
 						{#each ordenes as o, i}
 							<tr class="border-b border-border transition-colors hover:bg-surface-alt/50 cursor-pointer {i % 2 === 0 ? 'bg-white' : 'bg-surface/30'}"
-								onclick={() => toggleExpand(o.id_orden)}>
+								onclick={() => goto(`/ordenes-ingreso/${o.id_orden}`)}>
 								<td class="px-4 py-3 font-mono font-medium text-primary">{o.correlativo}</td>
 								<td class="px-4 py-3 text-foreground">{o.nombre_proveedor ?? '—'}</td>
 								<td class="px-4 py-3 text-muted font-mono">{o.numero_documento}</td>
-								<td class="px-4 py-3 text-muted">{o.fecha_documento}</td>
+								<td class="px-4 py-3 text-muted">{fmtFecha(o.fecha_documento)}</td>
 								<td class="px-4 py-3 text-muted">{o.nombre_empresa ?? '—'}</td>
 								<td class="px-4 py-3 text-muted">{o.nombre_bodega ?? '—'}</td>
-								<td class="px-4 py-3"><Badge variant={estadoBadgeVariant(o.estado)}>{o.estado}</Badge></td>
+								<td class="px-4 py-3">
+									<Badge variant={(estadoBadge[o.estado] ?? 'default') as 'default' | 'success' | 'warning' | 'danger' | 'info'}>{o.estado}</Badge>
+								</td>
 								<td class="px-4 py-3 text-muted">{o.detalles?.length ?? 0}</td>
 							</tr>
-							<!-- CU-52: detalle de los ítems esperados de la orden -->
-							{#if expandedOrden === o.id_orden && o.detalles?.length > 0}
-								<tr class="bg-surface/20">
-									<td colspan="8" class="px-6 py-3">
-										<div class="text-xs font-semibold text-muted uppercase mb-2">Detalle de ítems</div>
-										<table class="w-full text-xs">
-											<thead>
-												<tr class="text-muted">
-													<th class="text-left py-1 px-2">Tipo de equipo</th>
-													<th class="text-right py-1 px-2">Cant. esperada</th>
-													<th class="text-right py-1 px-2">Cant. recibida</th>
-													<th class="text-right py-1 px-2">Garantía (días)</th>
-												</tr>
-											</thead>
-											<tbody>
-												{#each o.detalles as d}
-													<tr class="border-t border-border/50">
-														<td class="py-1 px-2 text-foreground">{d.nombre_tipo_equipo ?? `ID ${d.id_tipo_equipo}`}</td>
-														<td class="py-1 px-2 text-right">{d.cantidad_esperada}</td>
-														<td class="py-1 px-2 text-right">{d.cantidad_recibida}</td>
-														<td class="py-1 px-2 text-right">{d.garantia_dias}</td>
-													</tr>
-												{/each}
-											</tbody>
-										</table>
-									</td>
-								</tr>
-							{/if}
 						{/each}
 					</tbody>
 				</table>

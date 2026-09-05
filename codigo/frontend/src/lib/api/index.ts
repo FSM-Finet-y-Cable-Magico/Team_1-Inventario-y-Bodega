@@ -234,13 +234,31 @@ export function editProveedor(id: number, data: Record<string, unknown>) {
 	return api.patch<any>(`/proveedores/${id}`, data);
 }
 
-// CU-52: órdenes de ingreso desde proveedor
-export function getOrdenesIngreso(params?: { buscar?: string; estado?: string }) {
+// CU-52/CU-53: órdenes de ingreso desde proveedor
+export function getOrdenesIngreso(params?: {
+	buscar?: string;
+	estado?: string;
+	proveedor?: string;
+	id_proveedor?: number;
+	fecha_desde?: string;
+	fecha_hasta?: string;
+	id_empresa?: number;
+}) {
 	const qs = new URLSearchParams();
 	if (params?.buscar) qs.set('buscar', params.buscar);
 	if (params?.estado) qs.set('estado', params.estado);
+	if (params?.proveedor) qs.set('proveedor', params.proveedor);
+	if (params?.id_proveedor) qs.set('id_proveedor', String(params.id_proveedor));
+	if (params?.fecha_desde) qs.set('fecha_desde', params.fecha_desde);
+	if (params?.fecha_hasta) qs.set('fecha_hasta', params.fecha_hasta);
+	if (params?.id_empresa) qs.set('id_empresa', String(params.id_empresa));
 	const query = qs.toString();
 	return api.get<any[]>(`/ordenes-ingreso${query ? '?' + query : ''}`);
+}
+
+// CU-53: detalle de una orden con sus ítems
+export function getOrdenIngreso(id: number) {
+	return api.get<any>(`/ordenes-ingreso/${id}`);
 }
 
 export function createOrdenIngreso(data: Record<string, unknown>) {

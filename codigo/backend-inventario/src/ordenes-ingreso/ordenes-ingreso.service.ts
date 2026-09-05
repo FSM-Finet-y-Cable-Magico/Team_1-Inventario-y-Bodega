@@ -189,22 +189,64 @@ export class OrdenesIngresoService {
     }
   }
 
-  // CU-52: listar órdenes de ingreso (filtradas por empresa del actor)
+  // CU-52/CU-53: listar órdenes de ingreso (filtradas por empresa del actor)
   async findAll(
     actor: { id_empresa: number; esSuperusuario: boolean },
-    filtros?: { buscar?: string; estado?: string },
+    filtros?: {
+      buscar?: string;
+      estado?: string;
+      id_proveedor?: number;
+      proveedor?: string;
+      fecha_desde?: string;
+      fecha_hasta?: string;
+      id_empresa?: number;
+    },
   ): Promise<any[]> {
     const query = this.ordenRepository.createQueryBuilder('o');
 
-    // Aislamiento: no-superusuario solo ve órdenes de su empresa
+    // Aislamiento: el no-superusuario solo ve órdenes de su empresa y el filtro
+    // de empresa se ignora; el superusuario ve todas y puede filtrar por una (CU-53)
     if (!actor.esSuperusuario) {
       query.andWhere('o.id_empresa_destino = :empresa', {
         empresa: actor.id_empresa,
       });
+    } else if (filtros?.id_empresa) {
+      query.andWhere('o.id_empresa_destino = :empresaFiltro', {
+        empresaFiltro: filtros.id_empresa,
+      });
     }
 
+    // CU-53: filtro por estado (literales de orden_ingreso.estado)
     if (filtros?.estado) {
       query.andWhere('o.estado = :estado', { estado: filtros.estado });
+    }
+
+    // CU-53: filtro por proveedor, por id exacto o por nombre comercial
+    if (filtros?.id_proveedor) {
+      query.andWhere('o.id_proveedor = :idProveedor', {
+        idProveedor: filtros.id_proveedor,
+      });
+    }
+    if (filtros?.proveedor) {
+      query.andWhere(
+        `o.id_proveedor IN (
+           SELECT p.id_proveedor FROM proveedor p
+           WHERE p.nombre_comercial ILIKE :nombreProveedor
+         )`,
+        { nombreProveedor: `%${filtros.proveedor}%` },
+      );
+    }
+
+    // CU-53: rango de fechas sobre la fecha del documento (ambos extremos inclusive)
+    if (filtros?.fecha_desde) {
+      query.andWhere('o.fecha_documento >= :fechaDesde', {
+        fechaDesde: filtros.fecha_desde,
+      });
+    }
+    if (filtros?.fecha_hasta) {
+      query.andWhere('o.fecha_documento <= :fechaHasta', {
+        fechaHasta: filtros.fecha_hasta,
+      });
     }
 
     if (filtros?.buscar) {
@@ -217,6 +259,37 @@ export class OrdenesIngresoService {
     const ordenes = await query.orderBy('o.id_orden', 'DESC').getMany();
 
     return Promise.all(ordenes.map((o) => this.findOneConDetalles(o.id_orden)));
+  }
+
+  // CU-53: detalle de una orden con sus ítems (cantidades esperadas y recibidas).
+  // Aislamiento manual al estilo de `bodegas.verificarPertenencia`: si la orden no
+  // es de la empresa del actor se devuelve un 404 genérico, para no revelar que existe.
+  async findOne(
+    idOrden: number,
+    actor: { id_empresa: number; esSuperusuario: boolean },
+  ): Promise<any> {
+    // CU-53: un id no numérico llegaría como NaN a la consulta y reventaría en Postgres
+    // (500). Se rechaza antes, igual que hace `unidades` con la ficha de detalle.
+    if (!Number.isInteger(idOrden) || idOrden < 1) {
+      throw new BadRequestException(
+        'El identificador de la orden de ingreso proporcionado es inválido.',
+      );
+    }
+
+    const orden = await this.ordenRepository.findOne({
+      where: { id_orden: idOrden },
+    });
+    if (!orden) {
+      throw new NotFoundException('Orden de ingreso no encontrada');
+    }
+    if (
+      !actor.esSuperusuario &&
+      orden.id_empresa_destino !== actor.id_empresa
+    ) {
+      throw new NotFoundException('Orden de ingreso no encontrada');
+    }
+
+    return this.findOneConDetalles(idOrden);
   }
 
   private async findOneConDetalles(idOrden: number): Promise<any> {

@@ -106,9 +106,17 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
 - Estados backend `TRANSFERENCIA_PENDIENTE | _APROBADA | _RECHAZADA` → labels Pendiente/Aprobada/Rechazada.
 
 ### `/ordenes-ingreso`
-- **CUs:** CU-52 (registrar orden de ingreso desde proveedor).
+- **CUs:** CU-52 (registrar orden de ingreso desde proveedor), CU-53 (consultar listado con filtros).
 - **Endpoints:** `getOrdenesIngreso()`, `createOrdenIngreso()`, `getProveedores()`, `getCatalog()`,
-  `getWarehouses()`, `getEmpresas()`.
+  `getWarehouses()`, `getWarehousesByEmpresa()`, `getEmpresas()`.
+- **CU-53:** columnas correlativo, proveedor, N.º documento, fecha del documento (**DD/MM/YYYY**),
+  empresa destinataria, bodega de destino, estado y total de ítems. Filtros con `$effect` de
+  recarga: buscador (correlativo / N.º documento), nombre del proveedor, estado, rango de fechas
+  y empresa destinataria — este último **solo para el Superusuario**, porque al resto el backend
+  ya le acota el listado a su empresa. Al hacer clic en una fila se navega a la ficha de detalle.
+- **CU-53 Excepción 1:** si los filtros no arrojan coincidencias, `EmptyState` con el mensaje
+  exacto `No se encontraron órdenes con los filtros seleccionados.` (sin filtros aplicados el
+  mensaje es el genérico de listado vacío, que no es la excepción del CU).
 - **CU-52:** el modal "Nueva orden de ingreso" arma la cabecera (proveedor, N.º documento
   alfanumérico ≤30, fecha no futura vía `max` del `input[type=date]`, bodega activa) más un
   sub-formulario dinámico de ítems (agregar/quitar filas: tipo de equipo + cantidad esperada +
@@ -119,6 +127,16 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
 - **CU-52 Excepción 1:** validación en cliente antes de enviar (proveedor, documento, fecha,
   bodega, ≥1 ítem y cada ítem completo) que indica el error específico y no envía la petición;
   el `ValidationPipe` del backend la repite como red de seguridad.
+
+### `/ordenes-ingreso/[id]`
+- **CUs:** CU-53 (ficha de detalle de una orden de ingreso).
+- **Endpoints:** `getOrdenIngreso(id)`.
+- Cabecera con correlativo, badge de estado, proveedor, N.º documento, fecha (DD/MM/YYYY),
+  empresa destinataria, bodega de destino y total de ítems. Tabla de ítems con cantidad
+  esperada, recibida, pendiente (esperada − recibida) y garantía, más una fila de totales.
+- El botón **"Registrar recepción"** está presente pero **deshabilitado**: lo implementa CU-54.
+- Si la orden no existe o es de otra empresa, el backend responde el mismo 404 y la página
+  muestra `Orden de ingreso no encontrada`.
 
 ### `/auditoria`
 - **CUs:** CU-08 (visualizar log), CU-09 (filtrar).

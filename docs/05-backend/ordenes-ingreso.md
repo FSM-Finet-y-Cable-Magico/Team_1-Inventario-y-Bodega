@@ -1,4 +1,4 @@
-# Módulo `ordenes-ingreso` — CU-52
+# Módulo `ordenes-ingreso` — CU-52, CU-53
 
 **Carpeta:** `codigo/backend-inventario/src/ordenes-ingreso/`
 
@@ -50,10 +50,42 @@ Ambas tablas se crean con `CREATE TABLE IF NOT EXISTS` en `scripts/migrar.ts` y 
 | Método | Ruta | Roles | Descripción |
 |--------|------|-------|-------------|
 | `POST` | `/api/ordenes-ingreso` | ADMIN_BODEGA, ADMIN, SUPERUSUARIO | CU-52: registrar orden de ingreso |
-| `GET` | `/api/ordenes-ingreso` | ADMIN_BODEGA, ADMIN, SUPERUSUARIO | Listado (filtros: `buscar`, `estado`) |
+| `GET` | `/api/ordenes-ingreso` | ADMIN_BODEGA, ADMIN, SUPERUSUARIO | CU-53: listado con filtros |
+| `GET` | `/api/ordenes-ingreso/:id` | ADMIN_BODEGA, ADMIN, SUPERUSUARIO | CU-53: detalle con ítems |
 
-> El `GET` existe para que la página pueda mostrar lo que se acaba de crear. La consulta
-> con filtros completos (proveedor, rango de fechas, empresa) es **CU-53**, aún pendiente.
+### Filtros del listado (CU-53)
+
+| Query param | Efecto |
+|-------------|--------|
+| `buscar` | `correlativo` o `numero_documento` (ILIKE) |
+| `estado` | Igualdad exacta contra los tres literales de `estado` |
+| `id_proveedor` | Igualdad exacta |
+| `proveedor` | Nombre comercial del proveedor (ILIKE, subconsulta sobre `proveedor`) |
+| `fecha_desde` / `fecha_hasta` | Rango sobre `fecha_documento`, ambos extremos inclusive |
+| `id_empresa` | Empresa destinataria. **Solo lo aplica el Superusuario**; al resto se le ignora porque ya está acotado a la suya |
+
+> El CU pide filtrar por *nombre* del proveedor y el contrato del ticket nombra `id_proveedor`;
+> se aceptan ambos. La página usa `proveedor` (campo de texto) y `id_proveedor` queda disponible
+> para quien ya tenga el id.
+
+### Entradas inválidas
+
+Los query params llegan como texto (el `ValidationPipe` global no transforma). Si un valor
+basura llegara tal cual a la consulta, Postgres abortaría y el endpoint respondería **500**, así
+que el controller los sanea antes:
+
+- `aIdOpcional(...)`: `id_proveedor` e `id_empresa` solo se aplican si son enteros > 0; en caso
+  contrario **el filtro se descarta** y el listado responde 200 sin ese criterio.
+- `aFechaOpcional(...)`: `fecha_desde` y `fecha_hasta` solo se aplican si son `YYYY-MM-DD`
+  válidas (`2026-13-45` se descarta).
+- `findOne` rechaza un `:id` que no sea entero > 0 con
+  `BadRequestException('El identificador de la orden de ingreso proporcionado es inválido.')`,
+  siguiendo el patrón de la ficha de unidades. Un id válido pero inexistente —o de otra
+  empresa— devuelve el 404 genérico.
+
+> **Deuda conocida:** el listado enriquece cada orden con una consulta por proveedor, bodega y
+> tipo de equipo (N+1). Con el volumen actual es irrelevante; si el listado crece, conviene
+> resolverlo con joins o cargas por lote.
 
 ## Generación del correlativo (concurrencia)
 
@@ -108,7 +140,19 @@ Manual en el service con el flag `esSuperusuario` (patrón de `usuarios`/`bodega
   empresa del actor. Por eso `id_empresa_destino` es **opcional** en el DTO (igual que
   `id_empresa` en `CreateBodegaDto`, CU-41), y el frontend solo muestra el selector de empresa
   al Superusuario.
-- El `GET` filtra por `id_empresa_destino` del actor salvo que sea Superusuario.
+- El `GET` del listado filtra por `id_empresa_destino` del actor salvo que sea Superusuario.
+- **CU-53, detalle:** `findOne` replica el criterio de `bodegas.verificarPertenencia` — si la
+  orden no existe **o** no es de la empresa del actor, lanza el mismo
+  `NotFoundException('Orden de ingreso no encontrada')`. Los dos casos son indistinguibles
+  desde fuera, así que no se revela la existencia de órdenes de la otra empresa.
+
+> `orden_ingreso` solo tiene `id_empresa_destino` (no hay empresa de origen como en
+> `transferencia_equipo`), de modo que la pertenencia se resuelve con esa única columna.
+
+## Lectura sin auditoría
+
+CU-53 es solo consulta: ni el listado ni el detalle escriben en `log_auditoria`. La única
+entrada del módulo la genera el `POST` de CU-52.
 
 ## Auditoría
 
@@ -120,3 +164,4 @@ Manual en el service con el flag `esSuperusuario` (patrón de `usuarios`/`bodega
 | CU | Descripción |
 |----|-------------|
 | CU-52 | Registrar orden de ingreso desde proveedor (correlativo automático, estado `Pendiente de recepción`) |
+| CU-53 | Consultar órdenes de ingreso: listado con filtros (estado, proveedor, rango de fechas, empresa) y detalle con ítems esperados vs recibidos |

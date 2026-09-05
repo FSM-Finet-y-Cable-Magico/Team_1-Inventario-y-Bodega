@@ -85,7 +85,7 @@ Mensajes **en español**, específicos por validación. Excepción: login usa me
 | [inventario.md](./inventario.md) | `inventario` (catálogo + unidades + historial) |
 | [transferencias.md](./transferencias.md) | `transferencias` |
 | [proveedores.md](./proveedores.md) | `proveedores` (CU-49) |
-| [ordenes-ingreso.md](./ordenes-ingreso.md) | `ordenes-ingreso` (CU-52) |
+| [ordenes-ingreso.md](./ordenes-ingreso.md) | `ordenes-ingreso` (CU-52, CU-53) |
 
 > Para cada módulo se listan: endpoints, lógica de negocio, entidades, y qué CU cubre.
 
