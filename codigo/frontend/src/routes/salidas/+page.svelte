@@ -334,7 +334,7 @@
 									? `Disponible en bodega: ${saldosBodega[consumibleTipo].saldo} ${saldosBodega[consumibleTipo].unidad ?? ''}`
 									: 'Saldo según bodega seleccionada'}>
 								<select id="sal_cons" bind:value={consumibleTipo}
-									class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+									class="w-full h-10 px-3 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
 									<option value={0} disabled>Seleccionar...</option>
 									{#each consumiblesCatalogo as t}
 										<option value={t.id_tipo_equipo}>{t.nombre}{t.unidadMedida ? ` (${t.unidadMedida})` : ''}</option>
@@ -343,7 +343,7 @@
 							</FormField>
 							<FormField label="Cantidad" name="sal_cant" helper="Hasta 2 decimales">
 								<input id="sal_cant" type="number" min="0.01" step="0.01" bind:value={consumibleCantidad}
-									class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+									class="w-full h-10 px-3 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
 							</FormField>
 							<div class="sm:pb-5">
 								<Button variant="secondary" onclick={agregarConsumible} disabled={!consumibleTipo}>Agregar</Button>
