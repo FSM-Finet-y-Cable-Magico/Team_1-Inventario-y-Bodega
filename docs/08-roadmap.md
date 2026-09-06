@@ -14,7 +14,8 @@ no esté reflejado aquí.
 
 - **Total de casos de uso:** 96
 - **Implementados (Incremento 1):** 46 (CU-01 a CU-46)
-- **Pendientes:** 50 (CU-47 a CU-96)
+- **Implementados (Incremento 2):** CU-47, CU-78
+- **Pendientes:** 48
 
 ## Leyenda
 
@@ -157,7 +158,7 @@ no esté reflejado aquí.
 
 | CU | Nombre | Estado | Notas |
 |----|--------|--------|-------|
-| CU-78 | Registrando baja definitiva de equipo | [ ] Pendiente | |
+| CU-78 | Registrando baja definitiva de equipo | [x] Implementado | Rama `tomas`. Módulo backend `bajas` + `/bajas` y `/unidades/[id]`. Cubre también CU-79 (A) y (D). |
 | CU-79 | Ejecutando acciones posteriores a baja definitiva | [ ] Pendiente | |
 | CU-80 | Registrando donación de equipos dados de baja | [ ] Pendiente | |
 

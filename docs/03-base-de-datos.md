@@ -48,8 +48,17 @@ FKs → `usuario`, `rol`.
 `id_unidad` PK · `id_tipo_equipo` · `id_empresa` · `numero_serie` UNIQUE NOT NULL · `modelo` ·
 `estado` NOT NULL · `fecha_adquisicion` date · `fecha_venc_garantia` date · `diagnostico_tecnico` text ·
 `id_cliente_instalado` · `id_bodega_actual` · `numero_poste` · `id_caja_nap` · `mac_address` UNIQUE ·
-`proveedor` · `observaciones` (300) · `ubicacion_fisica` (60)
+`proveedor` · `observaciones` (300) · `ubicacion_fisica` (60) · `motivo_baja` (40) ·
+`motivo_baja_detalle` (200)
 FK → `tipo_equipo`.
+
+### `solicitud_baja` — solicitudes de baja definitiva (CU-78)
+`id_solicitud` PK · `id_unidad` NOT NULL · `id_empresa` · `id_usuario_solicitante` NOT NULL ·
+`motivo` (40) NOT NULL · `motivo_otro` (200) · `estado` (30) NOT NULL · `id_usuario_aprobador` ·
+`fecha_solicitud` · `fecha_resolucion` · `motivo_rechazo` (200)
+FK → `unidad_equipo`. Estados: `Pendiente de aprobación | Aprobada | Rechazada`.
+Solo la generan los técnicos de terreno: ADMIN/SUPERUSUARIO/ADMIN_BODEGA aplican la baja directa
+y no crean fila aquí.
 
 ### `historial_estado_equipo` — historial de transiciones de estado
 `id_historial` PK · `id_unidad` · `id_usuario` · `estado_anterior` · `estado_nuevo` · `motivo` text ·
@@ -117,6 +126,11 @@ Reglas asociadas:
   `Falla de configuración`, `Daño físico visible`, `Causa desconocida`, `Otro`). Si es `Otro`,
   requiere descripción de 5–200 caracteres.
 - Cada transición escribe en `historial_estado_equipo` (transacción con reintentos, CU-36).
+- Al pasar a `Dado de baja` (CU-78) el **motivo es obligatorio** cuando la baja se registra por el
+  módulo `bajas` (lista cerrada: `Pérdida no recuperable`, `Robo confirmado`, `Falla irreparable`,
+  `Obsolescencia`, `Donación a institución`, `Otro`; con `Otro` exige descripción de 5–200). Queda
+  en `unidad_equipo.motivo_baja` / `motivo_baja_detalle` y se audita como `BAJA_DEFINITIVA`.
+  `Dado de baja` es **terminal e irreversible**: no se agregan transiciones de salida.
 
 ### 2.3 Transferencias y estado de inventario
 - La solicitud de transferencia crea `transferencia_equipo` + un `movimiento_inventario` por unidad

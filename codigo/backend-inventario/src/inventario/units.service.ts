@@ -338,7 +338,7 @@ export class UnitsService {
         };
     }
 
-    async transicionarEstado(unitId: number, nuevoEstado: string, actor: any, motivoPayload?: string, diagnosticoPayload?: string, descripcionOtroPayload?: string, simularErrorHistorial?: boolean, ubicacionFisicaPayload?: string) {
+    async transicionarEstado(unitId: number, nuevoEstado: string, actor: any, motivoPayload?: string, diagnosticoPayload?: string, descripcionOtroPayload?: string, simularErrorHistorial?: boolean, ubicacionFisicaPayload?: string, bajaPayload?: { motivo: string; descripcion?: string | null }) {
 
         // CU-36: la observación es opcional, con máximo 300 caracteres
         const observacion = motivoPayload?.trim() || undefined;
@@ -415,6 +415,13 @@ export class UnitsService {
             }
         }
 
+        // CU-78: motivo de la baja definitiva (lo valida BajasService, aquí solo se
+        // persiste junto al cambio de estado para que quede en la misma transacción)
+        if (nuevoEstado === 'Dado de baja' && bajaPayload) {
+            unidad.motivoBaja = bajaPayload.motivo;
+            unidad.motivoBajaDetalle = bajaPayload.descripcion ?? null;
+        }
+
         // CU-47: ubicación física actual antes de la transición (para auditoría)
         const ubicacionOrigen = unidad.ubicacionFisica ?? null;
 
@@ -457,6 +464,12 @@ export class UnitsService {
                     if (nuevoEstado === 'En bodega' && ubicacionFisica) {
                         motivoHistorial += `. Ubicación física: ${ubicacionFisica}`;
                     }
+                    // CU-78/CU-79: el historial deja constancia del motivo de la baja
+                    if (nuevoEstado === 'Dado de baja' && unidad.motivoBaja) {
+                        motivoHistorial = `Baja definitiva. Motivo: ${unidad.motivoBaja}`;
+                        if (unidad.motivoBajaDetalle) motivoHistorial += ` (${unidad.motivoBajaDetalle})`;
+                        if (observacion) motivoHistorial += `. Observación: ${observacion}`;
+                    }
                     if (nuevoEstado === 'En revisión') {
                         motivoHistorial = `Ingreso a taller técnico. Diagnóstico: ${unidad.diagnosticoTecnico}`;
                         // si la descripción de "Otro" vino en el campo de observación
@@ -481,21 +494,34 @@ export class UnitsService {
                     await queryRunner.manager.save(nuevoHistorial);
                     await queryRunner.commitTransaction();
 
-                    // CU-47: auditoría de la transición; valor_nuevo incluye la ubicación física
+                    // CU-47: auditoría de la transición; valor_nuevo incluye la ubicación física.
+                    // CU-78/CU-79 (D): la baja definitiva se audita con su propia acción e
+                    // incluye número de serie, motivo y empresa además del usuario y la fecha.
+                    const esBaja = nuevoEstado === 'Dado de baja';
                     await this.auditoriaService.create({
                         id_usuario: actor.id_usuario,
-                        accion: 'CAMBIAR_ESTADO',
+                        accion: esBaja ? 'BAJA_DEFINITIVA' : 'CAMBIAR_ESTADO',
                         entidad_afectada: 'unidad_equipo',
                         id_entidad_afectada: unidad.id_unidad,
                         valor_anterior: { estado: estadoOrigen, ubicacion_fisica: ubicacionOrigen },
-                        valor_nuevo: { estado: nuevoEstado, ubicacion_fisica: unidad.ubicacionFisica ?? null },
+                        valor_nuevo: esBaja
+                            ? {
+                                  estado: nuevoEstado,
+                                  numero_serie: unidad.serialNumber,
+                                  motivo_baja: unidad.motivoBaja ?? null,
+                                  motivo_baja_detalle: unidad.motivoBajaDetalle ?? null,
+                                  id_empresa: unidad.id_empresa,
+                              }
+                            : { estado: nuevoEstado, ubicacion_fisica: unidad.ubicacionFisica ?? null },
                     });
 
                     return {
                         success: true,
                         estadoActual: unidad.estado,
                         diagnostico_registrado: unidad.diagnosticoTecnico ?? 'N/A',
-                        ubicacion_fisica: unidad.ubicacionFisica ?? null
+                        ubicacion_fisica: unidad.ubicacionFisica ?? null,
+                        // CU-78: motivo con el que quedó registrada la baja definitiva
+                        motivo_baja: unidad.motivoBaja ?? null
                     };
                 } catch (err) {
                     ultimoError = err instanceof Error ? err : new Error(String(err));
@@ -609,6 +635,9 @@ export class UnitsService {
             fecha_venc_garantia: unidad.fechaVencGarantia ?? null,
             garantia: alertaGarantia,
             ubicacion_fisica: unidad.ubicacionFisica ?? null,
+            // CU-78: motivo con el que se registró la baja definitiva (si aplica)
+            motivo_baja: unidad.motivoBaja ?? null,
+            motivo_baja_detalle: unidad.motivoBajaDetalle ?? null,
             observaciones: unidad.observaciones ?? null,
             numero_poste: unidad.numeroPoste ?? null,
             id_cliente_instalado: unidad.id_cliente_instalado ?? null,

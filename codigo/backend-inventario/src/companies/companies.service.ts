@@ -6,8 +6,11 @@ import { Bodega } from '../bodegas/entities/bodega.entity';
 import { StockConsumible } from '../bodegas/entities/stock-consumible.entity';
 import { Transferencia } from '../transferencias/entities/transferencia.entity';
 import { MovimientoInventario } from '../transferencias/entities/movimiento-inventario.entity';
+import { SolicitudBaja } from '../bajas/entities/solicitud-baja.entity';
 
 const ESTADO_TRANSFERENCIA_PENDIENTE = 'TRANSFERENCIA_PENDIENTE';
+// CU-78: solicitudes de baja que esperan la decisión de un Administrador/Superusuario
+const ESTADO_BAJA_PENDIENTE = 'Pendiente de aprobación';
 
 export const EMPRESAS = [
     { id: 1, nombre: 'Finet' },
@@ -27,6 +30,8 @@ export class CompaniesService {
         private readonly transferenciaRepository: Repository<Transferencia>,
         @InjectRepository(MovimientoInventario)
         private readonly movimientoRepository: Repository<MovimientoInventario>,
+        @InjectRepository(SolicitudBaja)
+        private readonly solicitudBajaRepository: Repository<SolicitudBaja>,
     ) {}
 
     // CU-06: listado de empresas para el selector de edición de usuarios
@@ -56,6 +61,8 @@ export class CompaniesService {
             ...estadisticas,
             // CU-20: notificación de transferencias pendientes de aprobación
             transferencias_pendientes: await this.getTransferenciasPendientes(actor),
+            // CU-78: notificación de solicitudes de baja pendientes de aprobación
+            bajas_pendientes: await this.getBajasPendientes(actor),
         };
     }
 
@@ -106,6 +113,37 @@ export class CompaniesService {
                 fecha: t.fecha_transferencia,
             }))
             .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+    }
+
+    // CU-78: solicitudes de baja generadas por técnicos que esperan aprobación.
+    // Solo se notifican a quienes pueden resolverlas (Administrador/Superusuario);
+    // el Superusuario ve las de ambas empresas y el Administrador solo las suyas.
+    private async getBajasPendientes(
+        actor: { id_empresa: number; roles?: string[] },
+    ): Promise<any[]> {
+        const puedeAprobar = ['ADMIN', 'SUPERUSUARIO'].some((r) => actor.roles?.includes(r));
+        if (!puedeAprobar) return [];
+
+        const esSuperusuario = actor.roles?.includes('SUPERUSUARIO');
+        const solicitudes = await this.solicitudBajaRepository.find({
+            where: esSuperusuario
+                ? { estado: ESTADO_BAJA_PENDIENTE }
+                : { estado: ESTADO_BAJA_PENDIENTE, id_empresa: actor.id_empresa },
+            order: { fecha_solicitud: 'DESC' },
+        });
+        if (solicitudes.length === 0) return [];
+
+        const unidades = await this.unidadRepository.findBy({
+            id_unidad: In(solicitudes.map((s) => s.id_unidad)),
+        });
+        const mapaUnidades = new Map(unidades.map((u) => [u.id_unidad, u.serialNumber]));
+
+        return solicitudes.map((s) => ({
+            id_solicitud: s.id_solicitud,
+            numero_serie: mapaUnidades.get(s.id_unidad) ?? null,
+            motivo: s.motivo,
+            fecha: s.fecha_solicitud,
+        }));
     }
 
     private async getEstadisticasEmpresa(id: number, nombre: string): Promise<any> {

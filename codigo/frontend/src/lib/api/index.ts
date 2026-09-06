@@ -127,6 +127,28 @@ export function changeUnitState(id: number, data: Record<string, unknown>) {
 	return api.patch<any>(`/unidades/${id}/cambiar-estado`, data);
 }
 
+// CU-78: registrar baja definitiva (ADMIN/SUPERUSUARIO/ADMIN_BODEGA la aplican
+// directo; el técnico de terreno genera una solicitud pendiente de aprobación)
+export function registrarBaja(data: { id_unidad: number; motivo: string; descripcion_otro?: string }) {
+	return api.post<any>('/bajas', data);
+}
+
+// CU-78: bandeja de solicitudes de baja
+export function getBajas(params?: { estado?: string }) {
+	const qs = new URLSearchParams();
+	if (params?.estado) qs.set('estado', params.estado);
+	const query = qs.toString();
+	return api.get<import('$lib/types').SolicitudBaja[]>(`/bajas${query ? '?' + query : ''}`);
+}
+
+export function approveBaja(id: number) {
+	return api.post<any>(`/bajas/${id}/aprobar`);
+}
+
+export function rejectBaja(id: number, data: { motivo_rechazo: string }) {
+	return api.post<any>(`/bajas/${id}/rechazar`, data);
+}
+
 export function getUnitHistory(serialNumber: string) {
 	return api.get<any[]>(`/unidades/${serialNumber}/historial`);
 }

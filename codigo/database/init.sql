@@ -89,6 +89,8 @@ CREATE TABLE IF NOT EXISTS unidad_equipo (
     proveedor              VARCHAR(80),
     observaciones          VARCHAR(300),
     ubicacion_fisica       VARCHAR(60),
+    motivo_baja            VARCHAR(40),
+    motivo_baja_detalle    VARCHAR(200),
     CONSTRAINT fk_unidad_tipo_equipo FOREIGN KEY (id_tipo_equipo) REFERENCES tipo_equipo (id_tipo_equipo)
 );
 
@@ -141,6 +143,22 @@ CREATE TABLE IF NOT EXISTS movimiento_inventario (
     cantidad              NUMERIC(10,2) DEFAULT 1,
     fecha                 TIMESTAMP,
     referencia_id         INTEGER
+);
+
+-- CU-78: solicitudes de baja definitiva generadas por técnicos de terreno
+CREATE TABLE IF NOT EXISTS solicitud_baja (
+    id_solicitud            SERIAL PRIMARY KEY,
+    id_unidad               INTEGER NOT NULL,
+    id_empresa              INTEGER,
+    id_usuario_solicitante  INTEGER NOT NULL,
+    motivo                  VARCHAR(40) NOT NULL,
+    motivo_otro             VARCHAR(200),
+    estado                  VARCHAR(30) NOT NULL,
+    id_usuario_aprobador    INTEGER,
+    fecha_solicitud         TIMESTAMPTZ DEFAULT now(),
+    fecha_resolucion        TIMESTAMPTZ,
+    motivo_rechazo          VARCHAR(200),
+    CONSTRAINT fk_solicitud_baja_unidad FOREIGN KEY (id_unidad) REFERENCES unidad_equipo (id_unidad)
 );
 
 -- Stock de consumibles por bodega

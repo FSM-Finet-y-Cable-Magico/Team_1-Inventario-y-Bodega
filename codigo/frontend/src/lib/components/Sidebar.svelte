@@ -6,6 +6,7 @@
 		Wrench,
 		Warehouse,
 		ArrowLeftRight,
+		Ban,
 		ScrollText,
 		LogOut,
 		PanelLeftClose,
@@ -33,6 +34,8 @@
 		{ label: 'Unidades', icon: Wrench, path: '/unidades', roles: ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA', 'TECNICO_TERRENO'] },
 		{ label: 'Bodegas', icon: Warehouse, path: '/bodegas', roles: ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'] },
 		{ label: 'Transferencias', icon: ArrowLeftRight, path: '/transferencias', roles: ['SUPERUSUARIO', 'ADMIN'] },
+		// CU-78: bandeja de solicitudes de baja definitiva
+		{ label: 'Bajas', icon: Ban, path: '/bajas', roles: ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA', 'TECNICO_TERRENO'] },
 		{ label: 'Auditoría', icon: ScrollText, path: '/auditoria', roles: ['SUPERUSUARIO', 'ADMIN'] }
 	];
 

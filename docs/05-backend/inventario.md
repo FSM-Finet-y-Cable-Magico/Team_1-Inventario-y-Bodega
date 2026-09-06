@@ -117,7 +117,7 @@ Constante: `MAC_REGEX = /^([0-9A-Fa-f]{2}[:\\-]){5}[0-9A-Fa-f]{2}$/`.
     `id_tipo_equipo+id_bodega`, crea con `cantidad_disponible: 0` si no existe).
 - **`editarConsumible`:** stock debe pertenecer a la empresa del actor. `cantidad_disponible` ≥0;
   `umbral_minimo` 0–9999. Audita `MODIFICAR` solo si hubo cambios.
-- **`transicionarEstado` (CU-35/36/40):**
+- **`transicionarEstado` (CU-35/36/40/78):**
   - **CU-36:** observación opcional, ≤300.
   - **Máquina de estados** (ver tabla en `03-base-de-datos.md`); **CU-35 Excepción 1:** transición
     no permitida → `'Transición de estado no permitida para este equipo.'`.
@@ -132,6 +132,11 @@ Constante: `MAC_REGEX = /^([0-9A-Fa-f]{2}[:\\-]){5}[0-9A-Fa-f]{2}$/`.
     (`Asignado a técnico` / `En préstamo externo` / `Dado de baja`) la vacía automáticamente
     (`null`). Audita `CAMBIAR_ESTADO` en `log_auditoria` con `ubicacion_fisica` en
     `valor_anterior`/`valor_nuevo` y la devuelve en la respuesta.
+  - **CU-78:** acepta `bajaPayload = { motivo, descripcion }` (lo valida `BajasService`, ver
+    `bajas.md`). Al pasar a `'Dado de baja'` persiste `motivo_baja` / `motivo_baja_detalle` en la
+    misma transacción, escribe el historial como `'Baja definitiva. Motivo: ...'` y audita con la
+    acción **`BAJA_DEFINITIVA`** (número de serie, motivo, empresa) en vez de `CAMBIAR_ESTADO`.
+    `'Dado de baja'` es terminal: la máquina no define transiciones de salida y no deben agregarse.
   - **CU-36:** transacción con **reintentos (3, backoff 100ms×intento)**; fecha en timezone
     `America/Santiago`; `motivo` = `'Cambio de estado ordinario'` o
     `'Ingreso a taller técnico. Diagnóstico: ...'`. Si falla → `BadRequestException('Error al

@@ -1,0 +1,58 @@
+@startuml CU78-exc-transicion-no-permitida
+title CU-78 — Excepción 1: el estado actual no permite la baja
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador" as user
+participant "V_FichaUnidad" as view
+participant "C_BajasController" as ctrl
+participant "C_BajasService" as svc
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as uent
+
+user -> view : Abre la ficha de una unidad\n'Instalado en cliente' y elige\n"Registrar baja definitiva"
+activate view
+
+view -> ctrl : POST /api/bajas\n{ id_unidad: 8, motivo: "Obsolescencia" }
+activate ctrl
+
+ctrl -> svc : registrar(dto, actor)
+activate svc
+
+svc -> svc : validarMotivo('Obsolescencia') → OK
+activate svc
+deactivate svc
+
+svc -> orm : findOne({ id_unidad: 8 })
+activate orm
+orm -> uent : SELECT unidad_equipo\nWHERE id_unidad = 8
+activate uent
+uent --> orm : Unidad (estado = 'Instalado en cliente')
+deactivate uent
+orm --> svc : unidad
+deactivate orm
+
+svc -> svc : validarEstado(unidad)\n'Instalado en cliente' ∉\n['En bodega','En revisión']
+activate svc
+svc --> ctrl : 400 BadRequestException\n'Transición de estado no permitida\npara este equipo.'
+deactivate svc
+deactivate svc
+
+note over uent : No se modifica la unidad\nni se crea solicitud_baja
+
+ctrl --> view : 400 Bad Request
+deactivate ctrl
+
+view --> user : Mensaje de error:\n'Transición de estado no permitida\npara este equipo.'
+deactivate view
+
+@enduml

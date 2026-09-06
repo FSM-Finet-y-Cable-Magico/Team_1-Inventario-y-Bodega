@@ -1,0 +1,112 @@
+@startuml CU78-normal-directa
+title CU-78 — Registrando baja definitiva de equipo (flujo normal: Administrador)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador" as user
+participant "V_FichaUnidad" as view
+participant "C_RolesGuard" as guard
+participant "C_BajasController" as ctrl
+participant "C_BajasService" as svc
+participant "C_UnitsService" as usvc
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as uent
+participant "historial_estado_equipo" as hent
+participant "log_auditoria" as aent
+
+user -> view : Abre ficha de la unidad (estado 'En bodega')\ny elige "Registrar baja definitiva"
+activate view
+
+view -> view : Selecciona motivo 'Obsolescencia'\ny confirma el ConfirmDialog\n(operación irreversible)
+activate view
+deactivate view
+
+view -> guard : POST /api/bajas\n{ id_unidad: 5, motivo: "Obsolescencia" }
+activate guard
+guard --> view : Autorizado\n(ADMIN / SUPERUSUARIO / ADMIN_BODEGA / TECNICO_TERRENO)
+deactivate guard
+
+view -> ctrl : registrar(dto, actor)
+activate ctrl
+
+ctrl -> svc : registrar({ id_unidad, motivo }, actor)
+activate svc
+
+svc -> svc : validarMotivo(motivo)\n∈ MOTIVOS_BAJA → OK\n(motivo ≠ 'Otro' → descripcion = null)
+activate svc
+deactivate svc
+
+svc -> orm : findOne({ id_unidad })
+activate orm
+orm -> uent : SELECT unidad_equipo\nWHERE id_unidad = :id
+activate uent
+uent --> orm : Unidad (estado = 'En bodega', id_empresa = 1)
+deactivate uent
+orm --> svc : unidad (existe y es de su empresa)
+deactivate orm
+
+svc -> svc : validarEstado(unidad)\n'En bodega' ∈ ['En bodega','En revisión'] → OK\naplicaBajaDirecta(actor) = true (ADMIN)
+activate svc
+deactivate svc
+
+svc -> usvc : transicionarEstado(id, 'Dado de baja', actor,\n..., bajaPayload = { motivo, descripcion })
+activate usvc
+
+usvc -> usvc : transicionesPermitidas['En bodega']\nincluye 'Dado de baja' → OK\nunidad.motivoBaja = 'Obsolescencia'
+activate usvc
+deactivate usvc
+
+usvc -> orm : queryRunner.startTransaction()\nqueryRunner.manager.save(unidad)
+activate orm
+orm -> uent : UPDATE unidad_equipo\nSET estado = 'Dado de baja',\nmotivo_baja = 'Obsolescencia'\nWHERE id_unidad = :id
+activate uent
+uent --> orm : Unidad actualizada
+deactivate uent
+orm --> usvc : unidad guardada
+deactivate orm
+
+usvc -> orm : queryRunner.manager.save(historial\n{ estadoAnterior: 'En bodega',\nestadoNuevo: 'Dado de baja',\nmotivo: 'Baja definitiva. Motivo: Obsolescencia',\nfechaHora (America/Santiago) })
+activate orm
+orm -> hent : INSERT historial_estado_equipo
+activate hent
+hent --> orm : Registro insertado
+deactivate hent
+orm --> usvc : historial guardado
+deactivate orm
+
+usvc -> orm : queryRunner.commitTransaction()
+activate orm
+orm --> usvc : Transacción confirmada
+deactivate orm
+
+usvc -> orm : auditoriaService.create({ accion: 'BAJA_DEFINITIVA',\nentidad: 'unidad_equipo', valor_nuevo: { numero_serie,\nmotivo_baja, id_empresa } })
+activate orm
+orm -> aent : INSERT log_auditoria
+activate aent
+aent --> orm : Registro insertado
+deactivate aent
+orm --> usvc : auditoría guardada
+deactivate orm
+
+usvc --> svc : { success: true, estadoActual: 'Dado de baja' }
+deactivate usvc
+
+svc --> ctrl : 201 { success: true, requiere_aprobacion: false,\nnumero_serie, estado: 'Dado de baja',\nmotivo_baja: 'Obsolescencia' }
+deactivate svc
+
+ctrl --> view : 201 Created
+deactivate ctrl
+
+view --> user : "El equipo [SN-001] quedó dado de baja\nde forma definitiva."\nFicha con estado 'Dado de baja' (irreversible)
+deactivate view
+
+@enduml

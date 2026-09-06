@@ -1,0 +1,131 @@
+@startuml CU78-normal-solicitud
+title CU-78 — Registrando baja definitiva (flujo normal: técnico solicita, Administrador aprueba)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Técnico de terreno" as tec
+actor "Administrador" as adm
+participant "V_FichaUnidad" as view
+participant "V_Bajas" as bview
+participant "C_BajasController" as ctrl
+participant "C_BajasService" as svc
+participant "C_UnitsService" as usvc
+participant "C_TypeORM" as orm
+participant "solicitud_baja" as sent
+participant "unidad_equipo" as uent
+participant "log_auditoria" as aent
+
+tec -> view : Elige "Registrar baja definitiva"\nmotivo 'Falla irreparable'
+activate view
+
+view -> ctrl : POST /api/bajas\n{ id_unidad: 5, motivo: "Falla irreparable" }
+activate ctrl
+
+ctrl -> svc : registrar(dto, actor)
+activate svc
+
+svc -> svc : validarMotivo() OK\nvalidarEstado('En revisión') OK\naplicaBajaDirecta(actor) = false\n(rol TECNICO_TERRENO)
+activate svc
+deactivate svc
+
+svc -> orm : findOne(solicitud pendiente\npara esa unidad)
+activate orm
+orm -> sent : SELECT solicitud_baja\nWHERE id_unidad = :id\nAND estado = 'Pendiente de aprobación'
+activate sent
+sent --> orm : Sin resultados
+deactivate sent
+orm --> svc : null (no hay duplicada)
+deactivate orm
+
+svc -> orm : save(solicitud { id_unidad, motivo,\nestado: 'Pendiente de aprobación',\nid_usuario_solicitante })
+activate orm
+orm -> sent : INSERT solicitud_baja
+activate sent
+sent --> orm : id_solicitud = 77
+deactivate sent
+orm --> svc : solicitud creada
+deactivate orm
+
+note over uent : La unidad NO cambia de estado
+
+svc -> orm : auditoriaService.create({ accion: 'SOLICITAR_BAJA' })
+activate orm
+orm -> aent : INSERT log_auditoria
+activate aent
+aent --> orm : Registro insertado
+deactivate aent
+orm --> svc : auditoría guardada
+deactivate orm
+
+svc --> ctrl : 201 { requiere_aprobacion: true,\nid_solicitud: 77, estado: 'Pendiente de aprobación' }
+deactivate svc
+
+ctrl --> view : 201 Created
+deactivate ctrl
+
+view --> tec : "Solicitud de baja registrada.\nQueda pendiente de aprobación de un\nAdministrador o Superusuario."
+deactivate view
+
+adm -> bview : Ve la notificación en la campana\ny abre /bajas (solicitudes pendientes)
+activate bview
+
+bview -> ctrl : POST /api/bajas/77/aprobar
+activate ctrl
+
+ctrl -> svc : aprobar(77, actor)
+activate svc
+
+svc -> orm : findOne(id_solicitud = 77)
+activate orm
+orm -> sent : SELECT solicitud_baja WHERE id_solicitud = 77
+activate sent
+sent --> orm : Solicitud (estado 'Pendiente de aprobación')
+deactivate sent
+orm --> svc : solicitud
+deactivate orm
+
+svc -> svc : validarEstado(unidad)\n(el estado pudo cambiar desde la solicitud)
+activate svc
+deactivate svc
+
+svc -> usvc : transicionarEstado(id, 'Dado de baja', actor,\n..., { motivo: 'Falla irreparable' })
+activate usvc
+usvc -> orm : UPDATE unidad + INSERT historial\n+ auditoría 'BAJA_DEFINITIVA' (misma transacción)
+activate orm
+orm -> uent : UPDATE unidad_equipo\nSET estado = 'Dado de baja',\nmotivo_baja = 'Falla irreparable'
+activate uent
+uent --> orm : Unidad actualizada
+deactivate uent
+orm --> usvc : baja aplicada
+deactivate orm
+usvc --> svc : { estadoActual: 'Dado de baja' }
+deactivate usvc
+
+svc -> orm : save(solicitud { estado: 'Aprobada',\nid_usuario_aprobador, fecha_resolucion })\n+ auditoría 'APROBAR_BAJA'
+activate orm
+orm -> sent : UPDATE solicitud_baja SET estado = 'Aprobada'
+activate sent
+sent --> orm : Solicitud actualizada
+deactivate sent
+orm --> svc : ok
+deactivate orm
+
+svc --> ctrl : 201 { estado: 'Dado de baja',\nestado_solicitud: 'Aprobada' }
+deactivate svc
+
+ctrl --> bview : 201 Created
+deactivate ctrl
+
+bview --> adm : "El equipo [SN-002] quedó dado de baja\nde forma definitiva."
+deactivate bview
+
+@enduml

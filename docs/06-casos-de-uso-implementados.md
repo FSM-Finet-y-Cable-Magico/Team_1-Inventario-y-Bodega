@@ -1,4 +1,4 @@
-# Casos de uso — Estado de implementación (CU-01 a CU-47)
+# Casos de uso — Estado de implementación (CU-01 a CU-47, CU-78)
 
 > **Contexto:** el proyecto tiene **96 casos de uso totales**. En el **Incremento 1** se implementaron
 > **46** (CU-01 a CU-46), superando el 30% mínimo exigido por la rúbrica. Los restantes (50) se
@@ -67,6 +67,7 @@
 | 45 | Stock por tipo/estado/unidad de medida | `bodegas` | `/bodegas/[id]` |
 | 46 | Umbral mínimo de stock + alertas | `bodegas`, `companies` | `/bodegas/[id]`, `/dashboard`, `Header` |
 | 47 | Ubicación física al ingresar/reingresar a bodega | `inventario/units` | `/unidades/[id]` |
+| 78 | Baja definitiva de equipo (directa o por solicitud del técnico) | `bajas`, `inventario/units`, `companies` | `/unidades/[id]`, `/bajas`, `Header` (campana) |
 
 ## 3. Diagramas disponibles (referencia para CUs pendientes)
 

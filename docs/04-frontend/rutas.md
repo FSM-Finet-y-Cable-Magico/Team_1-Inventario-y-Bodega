@@ -12,6 +12,7 @@ Todas en `codigo/frontend/src/routes/`. Sin loaders SSR; carga client-side con `
 | Unidades | `/unidades` | todos |
 | Bodegas | `/bodegas` | SUPERUSUARIO, ADMIN, ADMIN_BODEGA |
 | Transferencias | `/transferencias` | SUPERUSUARIO, ADMIN |
+| Bajas | `/bajas` | todos (aprobar/rechazar solo SUPERUSUARIO, ADMIN) |
 | Auditoría | `/auditoria` | SUPERUSUARIO, ADMIN |
 
 > La protección real está en el backend. El menú solo oculta ítems por rol.
@@ -96,6 +97,13 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
 - **Endpoints:** `getWarehouse(id)`, `getWarehouseStock(id)`, `getCatalog()`, `getUsers()`,
   `updateWarehouse()`, `setStockThreshold()`.
 
+### `/unidades/[id]` — baja definitiva (CU-78)
+- Botón **Registrar baja definitiva** (oculto solo si la unidad ya está `Dado de baja`), disponible
+  también para `TECNICO_TERRENO`, que genera una solicitud en vez de aplicar la baja.
+- Modal con motivo (lista cerrada de 6) + descripción obligatoria (5-200) si el motivo es `Otro`,
+  aviso de garantía vigente y `ConfirmDialog` de confirmación fuerte.
+- **Endpoint:** `registrarBaja()`.
+
 ### `/transferencias`
 - **CUs:** CU-20 (crear transferencia + notificación), CU-21 (detalle), CU-22 (rechazar), CU-23 (listar/filtrar).
 - **Endpoints:** `getTransfers()`, `getWarehouses()`, `getUnits()`, `getEmpresas()`,
@@ -103,6 +111,13 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
   `rejectTransfer()`.
 - Aprobar/rechazar: botones solo para `SUPERUSUARIO`. Empresa origen = empresa del usuario (inmutable).
 - Estados backend `TRANSFERENCIA_PENDIENTE | _APROBADA | _RECHAZADA` → labels Pendiente/Aprobada/Rechazada.
+
+### `/bajas`
+- **CUs:** CU-78 (bandeja de solicitudes de baja definitiva).
+- **Endpoints:** `getBajas()`, `approveBaja()`, `rejectBaja()`.
+- Filtro por estado (`Pendiente de aprobación | Aprobada | Rechazada`); por defecto muestra las pendientes.
+- Aprobar/rechazar: botones solo para `SUPERUSUARIO` y `ADMIN`. Aprobar pide `ConfirmDialog`
+  (la baja es irreversible); rechazar exige motivo (máx. 200).
 
 ### `/auditoria`
 - **CUs:** CU-08 (visualizar log), CU-09 (filtrar).

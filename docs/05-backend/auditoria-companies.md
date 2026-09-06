@@ -81,7 +81,8 @@ Controller-level: `@UseGuards(AuthGuard('jwt'), RolesGuard)`.
   `auditoria.service`, `transferencias.service`). **No convertirla en tabla sin consultar al jefe.**
 - **`findAll()`**: devuelve el array para selectores (CU-06).
 - **`getDashboard()`** (CU-15): consolida `getEstadisticasEmpresa` de ambas empresas.
-- **`getMiDashboard(actor)`** (CU-16): estadísticas de la empresa del actor + `transferencias_pendientes`.
+- **`getMiDashboard(actor)`** (CU-16): estadísticas de la empresa del actor +
+  `transferencias_pendientes` (CU-20) + `bajas_pendientes` (CU-78, solo ADMIN/SUPERUSUARIO).
 - **`getTransferenciasPendientes(actor)`** (CU-20): movimientos `TRANSFERENCIA_PENDIENTE`,
   agrupados por `referencia_id`; aislamiento por rol: SUPERUSUARIO ve todas, Admin solo las de su
   empresa (origen o destino). Se expone en la **campana de notificaciones** del Header.

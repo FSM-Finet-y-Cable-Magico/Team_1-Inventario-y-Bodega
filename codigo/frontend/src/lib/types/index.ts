@@ -118,6 +118,9 @@ export interface UnidadEquipo {
 	proveedor?: string | null;
 	observaciones?: string | null;
 	ubicacion_fisica?: string | null;
+	// CU-78: motivo con el que se registró la baja definitiva
+	motivo_baja?: string | null;
+	motivo_baja_detalle?: string | null;
 	marca?: string | null;
 	empresa?: string | null;
 	bodega?: string | null;
@@ -148,6 +151,34 @@ export interface CreateUnidadDto {
 	fecha_venc_garantia?: string;
 	id_bodega_actual?: number;
 	numero_poste?: string;
+}
+
+// CU-78: motivos de baja definitiva (lista cerrada, debe coincidir con el backend)
+export const MOTIVOS_BAJA = [
+	'Pérdida no recuperable',
+	'Robo confirmado',
+	'Falla irreparable',
+	'Obsolescencia',
+	'Donación a institución',
+	'Otro'
+] as const;
+
+export type EstadoSolicitudBaja = 'Pendiente de aprobación' | 'Aprobada' | 'Rechazada';
+
+export interface SolicitudBaja {
+	id_solicitud: number;
+	id_unidad: number;
+	numero_serie: string | null;
+	estado_unidad: string | null;
+	empresa: string | null;
+	motivo: string;
+	motivo_otro: string | null;
+	estado: EstadoSolicitudBaja;
+	solicitante: string | null;
+	aprobador: string | null;
+	fecha_solicitud: string | null;
+	fecha_resolucion: string | null;
+	motivo_rechazo: string | null;
 }
 
 export interface CambioEstadoDto {

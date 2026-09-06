@@ -126,6 +126,20 @@ CREATE TABLE IF NOT EXISTS movimiento_inventario (
     fecha                 TIMESTAMP,
     referencia_id         INTEGER
 );
+CREATE TABLE IF NOT EXISTS solicitud_baja (
+    id_solicitud            SERIAL PRIMARY KEY,
+    id_unidad               INTEGER NOT NULL,
+    id_empresa              INTEGER,
+    id_usuario_solicitante  INTEGER NOT NULL,
+    motivo                  VARCHAR(40) NOT NULL,
+    motivo_otro             VARCHAR(200),
+    estado                  VARCHAR(30) NOT NULL,
+    id_usuario_aprobador    INTEGER,
+    fecha_solicitud         TIMESTAMPTZ DEFAULT now(),
+    fecha_resolucion        TIMESTAMPTZ,
+    motivo_rechazo          VARCHAR(200),
+    CONSTRAINT fk_solicitud_baja_unidad FOREIGN KEY (id_unidad) REFERENCES unidad_equipo (id_unidad)
+);
 CREATE TABLE IF NOT EXISTS stock_consumible (
     id_stock             SERIAL PRIMARY KEY,
     id_tipo_equipo       INTEGER NOT NULL,
@@ -152,6 +166,9 @@ const SENTENCIAS = [
   `ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS proveedor varchar(80)`,
   `ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS observaciones varchar(300)`,
   `ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS ubicacion_fisica varchar(60)`,
+  // CU-78/CU-80: motivo de la baja definitiva y su descripción cuando es 'Otro'
+  `ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS motivo_baja varchar(40)`,
+  `ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS motivo_baja_detalle varchar(200)`,
 ];
 
 async function main() {

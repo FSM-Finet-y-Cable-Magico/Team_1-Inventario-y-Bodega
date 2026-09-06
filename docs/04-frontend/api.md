@@ -70,6 +70,13 @@ Todas tipadas `<T>`. Nombre de endpoint backend en comentario:
 - `approveTransfer(id)` → `PATCH /transferencias/:id/aprobar` (solo SUPERUSUARIO)
 - `rejectTransfer(id, {observaciones})` → `PATCH /transferencias/:id/rechazar` (CU-22)
 
+### Bajas definitivas (CU-78)
+- `registrarBaja({id_unidad, motivo, descripcion_otro?})` → `POST /bajas`
+  (ADMIN/SUPERUSUARIO/ADMIN_BODEGA aplican la baja; TECNICO_TERRENO genera una solicitud)
+- `getBajas({estado?})` → `GET /bajas`
+- `approveBaja(id)` → `POST /bajas/:id/aprobar` (ADMIN, SUPERUSUARIO)
+- `rejectBaja(id, {motivo_rechazo})` → `POST /bajas/:id/rechazar` (ADMIN, SUPERUSUARIO)
+
 ### Dashboards
 - `getDashboard()` → `GET /empresas/dashboard` (consolidado, SUPERUSUARIO) (CU-15)
 - `getMyDashboard()` → `GET /empresas/mi-dashboard` (CU-16)

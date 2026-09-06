@@ -2,14 +2,16 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { getUnit, changeUnitState, getUnitHistory, getWarehouses, updateUnit } from '$lib/api/index';
+	import { getUnit, changeUnitState, getUnitHistory, getWarehouses, updateUnit, registrarBaja } from '$lib/api/index';
 	import { userRoles } from '$lib/stores/auth';
 	import type { UnidadEquipo, HistorialEstado, EstadoUnidad, Bodega } from '$lib/types';
+	import { MOTIVOS_BAJA } from '$lib/types';
 	import Button from '$lib/components/Button.svelte';
 	import Modal from '$lib/components/Modal.svelte';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import FormField from '$lib/components/FormField.svelte';
 	import Badge from '$lib/components/Badge.svelte';
-	import { ArrowLeft, RotateCw, Pencil } from '@lucide/svelte';
+	import { ArrowLeft, RotateCw, Pencil, Ban } from '@lucide/svelte';
 
 	let unit = $state<UnidadEquipo | null>(null);
 	let history = $state<HistorialEstado[]>([]);
@@ -28,6 +30,15 @@
 	const puedeEditarUnidad = $derived(roles.some((r) => ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'].includes(r)));
 	let changeError = $state('');
 	let changing = $state(false);
+
+	// CU-78: baja definitiva (el técnico de terreno genera una solicitud;
+	// ADMIN/SUPERUSUARIO/ADMIN_BODEGA la aplican directamente)
+	let showBaja = $state(false);
+	let bajaForm = $state({ motivo: '', descripcion_otro: '' });
+	let bajaError = $state('');
+	let registrandoBaja = $state(false);
+	let showConfirmBaja = $state(false);
+	const motivosBaja = MOTIVOS_BAJA;
 
 	// CU-18: edición de los datos de la unidad
 	let showEdit = $state(false);
@@ -148,6 +159,50 @@
 			editError = err instanceof Error ? err.message : 'Error al actualizar unidad';
 		} finally {
 			savingEdit = false;
+		}
+	}
+
+	function abrirBaja() {
+		bajaForm = { motivo: '', descripcion_otro: '' };
+		bajaError = '';
+		showBaja = true;
+	}
+
+	// CU-78 Excepción 3: la descripción es obligatoria (5-200) cuando el motivo es 'Otro'.
+	// CU-78 Excepción 2: si el equipo tiene garantía vigente, la confirmación avisa
+	// y permite continuar de todas formas o cancelar.
+	function solicitarConfirmacionBaja() {
+		bajaError = '';
+		if (!bajaForm.motivo) {
+			bajaError = 'Debe seleccionar un motivo de baja.';
+			return;
+		}
+		const descripcion = bajaForm.descripcion_otro.trim();
+		if (bajaForm.motivo === 'Otro' && (descripcion.length < 5 || descripcion.length > 200)) {
+			bajaError = 'Debe ingresar una descripción cuando selecciona Otro.';
+			return;
+		}
+		showConfirmBaja = true;
+	}
+
+	async function handleBaja() {
+		if (!unit) return;
+		showConfirmBaja = false;
+		registrandoBaja = true;
+		try {
+			const resultado = await registrarBaja({
+				id_unidad: unit.id_unidad,
+				motivo: bajaForm.motivo,
+				descripcion_otro: bajaForm.motivo === 'Otro' ? bajaForm.descripcion_otro.trim() : undefined
+			});
+			showBaja = false;
+			// CU-78: el mensaje distingue la baja aplicada de la solicitud pendiente
+			success = resultado?.message ?? 'Baja definitiva registrada correctamente';
+			await load();
+		} catch (err: unknown) {
+			bajaError = err instanceof Error ? err.message : 'Error al registrar la baja definitiva';
+		} finally {
+			registrandoBaja = false;
 		}
 	}
 
@@ -284,6 +339,13 @@
 								<p class="text-foreground">{unit.estado}{unit.estado === 'Instalado en cliente' && unit.id_cliente_instalado ? ` (cliente #${unit.id_cliente_instalado})` : ''}</p>
 							</div>
 						{/if}
+						{#if unit.estado === 'Dado de baja' && unit.motivo_baja}
+							<!-- CU-78/CU-79: el motivo de la baja queda visible en la ficha -->
+							<div class="col-span-2">
+								<span class="text-muted">Motivo de la baja definitiva:</span>
+								<p class="text-foreground">{unit.motivo_baja}{unit.motivo_baja_detalle ? `: ${unit.motivo_baja_detalle}` : ''}</p>
+							</div>
+						{/if}
 						<div class="col-span-2">
 							<span class="text-muted">Observaciones:</span>
 							<p class="text-foreground">{unit.observaciones || '-'}</p>
@@ -299,6 +361,14 @@
 							<RotateCw class="h-4 w-4" />
 							Cambiar estado
 						</Button>
+					<!-- CU-78: baja definitiva; el sistema valida el estado (Excepción 1).
+					     Disponible también para el técnico de terreno, que genera una solicitud -->
+					{#if unit.estado !== 'Dado de baja'}
+						<Button variant="destructive" onclick={abrirBaja}>
+							<Ban class="h-4 w-4" />
+							Registrar baja definitiva
+						</Button>
+					{/if}
 					<!-- CU-18: edición de los datos de la unidad -->
 					{#if puedeEditarUnidad}
 						<Button variant="secondary" onclick={abrirEdicion}>
@@ -363,6 +433,78 @@
 		</div>
 	{/if}
 </div>
+
+<!-- CU-78: registro de la baja definitiva del equipo -->
+<Modal title="Registrar baja definitiva" open={showBaja} onclose={() => (showBaja = false)}>
+	<form onsubmit={(e: Event) => { e.preventDefault(); solicitarConfirmacionBaja(); }} class="space-y-4">
+		{#if bajaError}
+			<div class="bg-red-50 border border-red-200 text-destructive text-sm rounded-md px-3 py-2">{bajaError}</div>
+		{/if}
+		{#if unit}
+			<p class="text-sm text-muted">
+				Equipo <strong>{unit.numero_serie}</strong> · Estado actual: <strong>{unit.estado}</strong>
+			</p>
+
+			<!-- CU-78: la baja es irreversible -->
+			<div class="bg-red-50 border border-red-200 text-destructive text-sm rounded-md px-3 py-2">
+				La baja definitiva es irreversible: el equipo quedará en estado [Dado de baja] y no podrá volver a ningún otro estado.
+			</div>
+
+			<!-- CU-78 Excepción 2: aviso de garantía vigente -->
+			{#if unit.garantia?.garantia_vigente}
+				<div class="bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-md px-3 py-2">
+					AVISO: Este equipo tiene garantía vigente hasta {fmtFecha(unit.fecha_venc_garantia)}.
+					Considere su devolución al proveedor antes de darlo de baja.
+				</div>
+			{/if}
+
+			<!-- CU-78: solo el técnico de terreno genera una solicitud de aprobación -->
+			{#if !roles.some((r) => ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'].includes(r))}
+				<div class="bg-sky-50 border border-sky-200 text-sky-800 text-sm rounded-md px-3 py-2">
+					Su solicitud quedará pendiente de aprobación de un Administrador o Superusuario.
+				</div>
+			{/if}
+
+			<FormField label="Motivo de la baja" name="motivo_baja" required>
+				<select id="motivo_baja" required bind:value={bajaForm.motivo}
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+					<option value="">Seleccionar motivo...</option>
+					{#each motivosBaja as m}
+						<option value={m}>{m}</option>
+					{/each}
+				</select>
+			</FormField>
+
+			<!-- CU-78 Excepción 3: descripción obligatoria (5-200) cuando el motivo es 'Otro' -->
+			{#if bajaForm.motivo === 'Otro'}
+				<FormField label="Descripción del motivo" name="baja_otro" required
+					helper="5-200 caracteres ({bajaForm.descripcion_otro.length}/200)">
+					<textarea id="baja_otro" bind:value={bajaForm.descripcion_otro} rows="3" maxlength={200}
+						class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
+				</FormField>
+			{/if}
+		{/if}
+
+		<div class="flex justify-end gap-3 pt-2">
+			<Button variant="secondary" onclick={() => (showBaja = false)} type="button">Cancelar</Button>
+			<Button type="submit" loading={registrandoBaja}>Continuar</Button>
+		</div>
+	</form>
+</Modal>
+
+<!-- CU-78: confirmación fuerte de una operación irreversible; con garantía vigente
+     (Excepción 2) el aviso permite continuar de todas formas o cancelar -->
+<ConfirmDialog
+	open={showConfirmBaja}
+	title={unit?.garantia?.garantia_vigente ? 'Equipo con garantía vigente' : 'Confirmar baja definitiva'}
+	message={unit?.garantia?.garantia_vigente
+		? `El equipo ${unit?.numero_serie} tiene garantía vigente hasta ${fmtFecha(unit?.fecha_venc_garantia)}. La baja definitiva es irreversible. ¿Desea continuar de todas formas?`
+		: `El equipo ${unit?.numero_serie} quedará dado de baja de forma irreversible. ¿Confirma la operación?`}
+	confirmlabel={unit?.garantia?.garantia_vigente ? 'Continuar de todas formas' : 'Registrar baja'}
+	cancellabel="Cancelar"
+	onconfirm={handleBaja}
+	oncancel={() => (showConfirmBaja = false)}
+/>
 
 <!-- CU-18: edición de datos de la unidad -->
 <Modal title="Editar unidad" open={showEdit} onclose={() => (showEdit = false)}>
