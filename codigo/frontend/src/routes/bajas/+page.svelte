@@ -1,7 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { getBajas, approveBaja, rejectBaja } from '$lib/api/index';
-	import type { SolicitudBaja } from '$lib/types';
+	import {
+		getBajas, approveBaja, rejectBaja,
+		getDonaciones, getUnidadesDonables, registrarDonacion, descargarPdfDonacion
+	} from '$lib/api/index';
+	import type { SolicitudBaja, Donacion, UnidadDonable } from '$lib/types';
 	import { userRoles } from '$lib/stores/auth';
 	import Button from '$lib/components/Button.svelte';
 	import Modal from '$lib/components/Modal.svelte';
@@ -9,7 +12,7 @@
 	import Badge from '$lib/components/Badge.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
-	import { RotateCw, CheckCircle, XCircle } from '@lucide/svelte';
+	import { RotateCw, CheckCircle, XCircle, Plus, FileDown, Gift } from '@lucide/svelte';
 
 	// CU-78: bandeja de solicitudes de baja generadas por técnicos de terreno
 	let solicitudes = $state<SolicitudBaja[]>([]);
@@ -38,6 +41,14 @@
 		Rechazada: 'danger'
 	};
 
+	// CU-80: fechas de donación en formato DD/MM/YYYY
+	function fmtFecha(fecha: string | null): string {
+		if (!fecha) return '-';
+		return new Date(fecha).toLocaleDateString('en-GB', {
+			day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'America/Santiago'
+		});
+	}
+
 	function fmtFechaHora(fecha: string | null): string {
 		if (!fecha) return '-';
 		return new Date(fecha)
@@ -47,6 +58,102 @@
 				hour12: false, timeZone: 'America/Santiago'
 			})
 			.replace(',', '');
+	}
+
+	// CU-80: sección de donaciones de equipos dados de baja
+	let tab = $state<'solicitudes' | 'donaciones'>('solicitudes');
+	let donaciones = $state<Donacion[]>([]);
+	let candidatas = $state<UnidadDonable[]>([]);
+	let loadingDonaciones = $state(false);
+	let showDonacion = $state(false);
+	let donacionForm = $state({
+		nombre_institucion: '',
+		rut_institucion: '',
+		fecha_donacion: '',
+		numero_resolucion: '',
+		ids_unidades: [] as number[]
+	});
+	let donacionError = $state('');
+	let guardandoDonacion = $state(false);
+	// CU-80 Excepción 1: números de serie rechazados por el backend, resaltados en rojo
+	let seriesInvalidas = $state<string[]>([]);
+	let descargandoPdf = $state(0);
+
+	const hoyISO = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
+
+	async function loadDonaciones() {
+		loadingDonaciones = true;
+		error = '';
+		try {
+			const [lista, disponibles] = await Promise.all([getDonaciones(), getUnidadesDonables()]);
+			donaciones = lista;
+			candidatas = disponibles;
+		} catch (err: unknown) {
+			error = err instanceof Error ? err.message : 'Error al cargar las donaciones';
+		} finally {
+			loadingDonaciones = false;
+		}
+	}
+
+	function abrirDonacion() {
+		donacionForm = {
+			nombre_institucion: '',
+			rut_institucion: '',
+			fecha_donacion: hoyISO,
+			numero_resolucion: '',
+			ids_unidades: []
+		};
+		donacionError = '';
+		seriesInvalidas = [];
+		showDonacion = true;
+	}
+
+	function alternarUnidad(id: number) {
+		donacionForm.ids_unidades = donacionForm.ids_unidades.includes(id)
+			? donacionForm.ids_unidades.filter((x) => x !== id)
+			: [...donacionForm.ids_unidades, id];
+	}
+
+	async function handleDonacion() {
+		donacionError = '';
+		seriesInvalidas = [];
+		if (donacionForm.ids_unidades.length === 0) {
+			donacionError = 'Debe seleccionar al menos un equipo para incluir en la donación.';
+			return;
+		}
+		guardandoDonacion = true;
+		try {
+			const resultado = await registrarDonacion({
+				nombre_institucion: donacionForm.nombre_institucion.trim(),
+				rut_institucion: donacionForm.rut_institucion.trim(),
+				fecha_donacion: donacionForm.fecha_donacion,
+				numero_resolucion: donacionForm.numero_resolucion.trim() || undefined,
+				ids_unidades: donacionForm.ids_unidades
+			});
+			showDonacion = false;
+			success = resultado?.message ?? 'Donación registrada correctamente';
+			await loadDonaciones();
+		} catch (err: unknown) {
+			donacionError = err instanceof Error ? err.message : 'Error al registrar la donación';
+			// CU-80 Excepción 1: el backend nombra los NS que no cumplen la condición
+			seriesInvalidas = candidatas
+				.filter((u) => donacionError.includes(u.numero_serie))
+				.map((u) => u.numero_serie);
+		} finally {
+			guardandoDonacion = false;
+		}
+	}
+
+	async function handleDescargarPdf(id: number) {
+		descargandoPdf = id;
+		error = '';
+		try {
+			await descargarPdfDonacion(id);
+		} catch (err: unknown) {
+			error = err instanceof Error ? err.message : 'Error al descargar el PDF de la donación';
+		} finally {
+			descargandoPdf = 0;
+		}
 	}
 
 	async function load() {
@@ -66,6 +173,11 @@
 	$effect(() => {
 		filtroEstado;
 		load();
+	});
+
+	// CU-80: las donaciones se cargan al abrir su pestaña
+	$effect(() => {
+		if (tab === 'donaciones' && donaciones.length === 0 && !loadingDonaciones) loadDonaciones();
 	});
 
 	function pedirConfirmacion(solicitud: SolicitudBaja) {
@@ -125,12 +237,36 @@
 <div class="max-w-6xl mx-auto">
 	<div class="flex items-center justify-between mb-6">
 		<h1 class="text-xl font-bold text-foreground">Bajas definitivas</h1>
-		<Button variant="secondary" onclick={load}>
-			<RotateCw class="h-4 w-4" />
-			Actualizar
-		</Button>
+		<div class="flex items-center gap-3">
+			<Button variant="secondary" onclick={() => (tab === 'solicitudes' ? load() : loadDonaciones())}>
+				<RotateCw class="h-4 w-4" />
+				Actualizar
+			</Button>
+			<!-- CU-80: registrar una donación de equipos dados de baja -->
+			{#if tab === 'donaciones' && puedeResolver}
+				<Button onclick={abrirDonacion}>
+					<Plus class="h-4 w-4" />
+					Registrar donación
+				</Button>
+			{/if}
+		</div>
 	</div>
 
+	<!-- CU-78 / CU-80: solicitudes de baja y donaciones conviven en el módulo de bajas -->
+	<div class="flex items-center gap-1 border-b border-border mb-4">
+		<button onclick={() => (tab = 'solicitudes')}
+			class="px-4 py-2 text-sm font-medium border-b-2 transition-colors
+				{tab === 'solicitudes' ? 'border-accent text-accent' : 'border-transparent text-muted hover:text-foreground'}">
+			Solicitudes de baja
+		</button>
+		<button onclick={() => (tab = 'donaciones')}
+			class="px-4 py-2 text-sm font-medium border-b-2 transition-colors
+				{tab === 'donaciones' ? 'border-accent text-accent' : 'border-transparent text-muted hover:text-foreground'}">
+			Donaciones
+		</button>
+	</div>
+
+	{#if tab === 'solicitudes'}
 	<div class="flex flex-wrap items-center gap-3 mb-4">
 		<select bind:value={filtroEstado} aria-label="Filtrar por estado"
 			class="px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
@@ -222,6 +358,54 @@
 			</div>
 		{/if}
 	</div>
+	{:else}
+		<!-- CU-80: donaciones de equipos dados de baja -->
+		<div class="bg-white rounded-lg border border-border overflow-hidden">
+			{#if loadingDonaciones}
+				<div class="p-8 text-center text-sm text-muted">Cargando...</div>
+			{:else if donaciones.length === 0}
+				<EmptyState message="No hay donaciones registradas." />
+			{:else}
+				<div class="overflow-x-auto">
+					<table class="w-full text-sm">
+						<thead>
+							<tr class="border-b border-border bg-surface/50">
+								<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">N°</th>
+								<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Institución</th>
+								<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">RUT</th>
+								<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Fecha</th>
+								<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Resolución</th>
+								<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Equipos</th>
+								<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Registrada por</th>
+								<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Resumen</th>
+							</tr>
+						</thead>
+						<tbody>
+							{#each donaciones as d, i}
+								<tr class="border-b border-border {i % 2 === 0 ? 'bg-white' : 'bg-surface/30'}">
+									<td class="px-4 py-3 font-mono text-foreground">#{d.id_donacion}</td>
+									<td class="px-4 py-3 text-foreground">{d.nombre_institucion}</td>
+									<td class="px-4 py-3 font-mono text-foreground">{d.rut_institucion}</td>
+									<td class="px-4 py-3 text-muted whitespace-nowrap">{fmtFecha(d.fecha_donacion)}</td>
+									<td class="px-4 py-3 text-muted">{d.numero_resolucion ?? '-'}</td>
+									<td class="px-4 py-3 text-foreground text-center">{d.equipos}</td>
+									<td class="px-4 py-3 text-muted">{d.registrada_por ?? '-'}</td>
+									<td class="px-4 py-3">
+										<!-- CU-80: descarga autenticada del resumen en PDF -->
+										<button onclick={() => handleDescargarPdf(d.id_donacion)} disabled={descargandoPdf === d.id_donacion}
+											class="inline-flex items-center gap-1 text-accent hover:underline disabled:opacity-50">
+											<FileDown class="h-4 w-4" />
+											{descargandoPdf === d.id_donacion ? 'Generando...' : 'Descargar PDF'}
+										</button>
+									</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+			{/if}
+		</div>
+	{/if}
 </div>
 
 <!-- CU-78: la aprobación ejecuta una baja irreversible -->
@@ -248,6 +432,71 @@
 		<div class="flex justify-end gap-3 pt-2">
 			<Button variant="secondary" onclick={() => (showReject = false)} type="button">Cancelar</Button>
 			<Button type="submit" loading={procesando}>Rechazar solicitud</Button>
+		</div>
+	</form>
+</Modal>
+
+<!-- CU-80: formulario de registro de donación -->
+<Modal title="Registrar donación" open={showDonacion} onclose={() => (showDonacion = false)}>
+	<form onsubmit={(e: Event) => { e.preventDefault(); handleDonacion(); }} class="space-y-4">
+		{#if donacionError}
+			<div class="bg-red-50 border border-red-200 text-destructive text-sm rounded-md px-3 py-2">{donacionError}</div>
+		{/if}
+
+		<FormField label="Institución receptora" name="don_inst" required helper="Entre 3 y 100 caracteres">
+			<input id="don_inst" type="text" required bind:value={donacionForm.nombre_institucion} maxlength={100}
+				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+				placeholder="Ej: Fundación Educación Técnica" />
+		</FormField>
+
+		<FormField label="RUT de la institución" name="don_rut" required helper="Formato XXXXXXXX-X">
+			<input id="don_rut" type="text" required bind:value={donacionForm.rut_institucion} maxlength={12}
+				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+				placeholder="76543210-K" />
+		</FormField>
+
+		<!-- CU-80: la fecha no puede ser futura -->
+		<FormField label="Fecha de donación" name="don_fecha" required>
+			<input id="don_fecha" type="date" required bind:value={donacionForm.fecha_donacion} max={hoyISO}
+				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+		</FormField>
+
+		<FormField label="Número de resolución" name="don_res" helper="Opcional, hasta 30 caracteres alfanuméricos">
+			<input id="don_res" type="text" bind:value={donacionForm.numero_resolucion} maxlength={30}
+				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+				placeholder="RES-2026-014" />
+		</FormField>
+
+		<!-- CU-80: solo se listan unidades dadas de baja con motivo 'Donación a institución' -->
+		<FormField label="Equipos a donar" name="don_unidades" required
+			helper={`${donacionForm.ids_unidades.length} de ${candidatas.length} seleccionados`}>
+			<div class="border border-border rounded-md max-h-56 overflow-y-auto divide-y divide-border">
+				{#if candidatas.length === 0}
+					<p class="px-3 py-4 text-sm text-muted text-center">
+						No hay equipos dados de baja con motivo "Donación a institución".
+					</p>
+				{:else}
+					{#each candidatas as u}
+						<label class="flex items-center gap-3 px-3 py-2 text-sm cursor-pointer hover:bg-surface-alt
+							{seriesInvalidas.includes(u.numero_serie) ? 'bg-red-50' : ''}">
+							<input type="checkbox" checked={donacionForm.ids_unidades.includes(u.id_unidad)}
+								onchange={() => alternarUnidad(u.id_unidad)} class="text-accent" />
+							<span class="font-mono {seriesInvalidas.includes(u.numero_serie) ? 'text-destructive font-semibold' : 'text-foreground'}">
+								{u.numero_serie}
+							</span>
+							<span class="text-muted">{u.tipo_equipo ?? '-'} · {u.marca ?? '-'} {u.modelo ?? ''}</span>
+						</label>
+					{/each}
+				{/if}
+			</div>
+		</FormField>
+
+		<div class="flex justify-end gap-3 pt-2">
+			<Button variant="secondary" onclick={() => (showDonacion = false)} type="button">Cancelar</Button>
+			<Button type="submit" loading={guardandoDonacion}>
+				<Gift class="h-4 w-4" />
+				Registrar donación
+			</Button>
 		</div>
 	</form>
 </Modal>

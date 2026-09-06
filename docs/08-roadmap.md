@@ -14,8 +14,8 @@ no esté reflejado aquí.
 
 - **Total de casos de uso:** 96
 - **Implementados (Incremento 1):** 46 (CU-01 a CU-46)
-- **Implementados (Incremento 2):** CU-47, CU-78, CU-79
-- **Pendientes:** 47
+- **Implementados (Incremento 2):** CU-47, CU-78, CU-79, CU-80
+- **Pendientes:** 46
 
 ## Leyenda
 
@@ -160,7 +160,7 @@ no esté reflejado aquí.
 |----|--------|--------|-------|
 | CU-78 | Registrando baja definitiva de equipo | [x] Implementado | Rama `tomas`. Módulo backend `bajas` + `/bajas` y `/unidades/[id]`. |
 | CU-79 | Ejecutando acciones posteriores a baja definitiva | [x] Implementado | Rama `tomas`. Sin endpoint nuevo: exclusión del inventario activo en `bodegas`/`companies` + fix de `id_bodega_actual`. Checklist en `05-backend/bajas.md` §10. |
-| CU-80 | Registrando donación de equipos dados de baja | [ ] Pendiente | |
+| CU-80 | Registrando donación de equipos dados de baja | [x] Implementado | Rama `tomas`. Módulo backend `donaciones` (+ PDF sin dependencias) y pestaña Donaciones en `/bajas`. |
 
 ### Préstamos a externos
 

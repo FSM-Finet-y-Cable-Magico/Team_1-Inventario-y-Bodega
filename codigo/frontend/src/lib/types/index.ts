@@ -181,6 +181,31 @@ export interface SolicitudBaja {
 	motivo_rechazo: string | null;
 }
 
+// CU-80: donación de equipos dados de baja
+export interface Donacion {
+	id_donacion: number;
+	nombre_institucion: string;
+	rut_institucion: string;
+	fecha_donacion: string;
+	numero_resolucion: string | null;
+	empresa: string | null;
+	registrada_por: string | null;
+	fecha_creacion: string | null;
+	equipos: number;
+}
+
+export interface UnidadDonable {
+	id_unidad: number;
+	numero_serie: string;
+	tipo_equipo: string | null;
+	categoria: string | null;
+	marca: string | null;
+	modelo: string | null;
+	fecha_adquisicion: string | null;
+	motivo_baja: string | null;
+	estado: string;
+}
+
 export interface CambioEstadoDto {
 	estado_nuevo: EstadoUnidad;
 	diagnostico?: string;

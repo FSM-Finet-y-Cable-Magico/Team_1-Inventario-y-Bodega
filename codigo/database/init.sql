@@ -161,6 +161,25 @@ CREATE TABLE IF NOT EXISTS solicitud_baja (
     CONSTRAINT fk_solicitud_baja_unidad FOREIGN KEY (id_unidad) REFERENCES unidad_equipo (id_unidad)
 );
 
+-- CU-80: donaciones de equipos dados de baja
+CREATE TABLE IF NOT EXISTS donacion (
+    id_donacion        SERIAL PRIMARY KEY,
+    nombre_institucion VARCHAR(100) NOT NULL,
+    rut_institucion    VARCHAR(12) NOT NULL,
+    fecha_donacion     DATE NOT NULL,
+    numero_resolucion  VARCHAR(30),
+    id_usuario         INTEGER NOT NULL,
+    id_empresa         INTEGER,
+    fecha_creacion     TIMESTAMPTZ DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS donacion_detalle (
+    id_detalle   SERIAL PRIMARY KEY,
+    id_donacion  INTEGER NOT NULL,
+    id_unidad    INTEGER NOT NULL,
+    CONSTRAINT fk_donacion_detalle_donacion FOREIGN KEY (id_donacion) REFERENCES donacion (id_donacion),
+    CONSTRAINT fk_donacion_detalle_unidad   FOREIGN KEY (id_unidad)   REFERENCES unidad_equipo (id_unidad)
+);
+
 -- Stock de consumibles por bodega
 CREATE TABLE IF NOT EXISTS stock_consumible (
     id_stock             SERIAL PRIMARY KEY,

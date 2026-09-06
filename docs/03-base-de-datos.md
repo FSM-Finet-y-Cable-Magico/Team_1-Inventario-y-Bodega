@@ -60,6 +60,14 @@ FK → `unidad_equipo`. Estados: `Pendiente de aprobación | Aprobada | Rechazad
 Solo la generan los técnicos de terreno: ADMIN/SUPERUSUARIO/ADMIN_BODEGA aplican la baja directa
 y no crean fila aquí.
 
+### `donacion` / `donacion_detalle` — donaciones de equipos dados de baja (CU-80)
+`donacion`: `id_donacion` PK · `nombre_institucion` (100) NOT NULL · `rut_institucion` (12) NOT NULL ·
+`fecha_donacion` date NOT NULL · `numero_resolucion` (30) · `id_usuario` NOT NULL · `id_empresa` ·
+`fecha_creacion`
+`donacion_detalle`: `id_detalle` PK · `id_donacion` FK → `donacion` · `id_unidad` FK → `unidad_equipo`
+Solo se incluyen unidades en estado `Dado de baja` con `motivo_baja = 'Donación a institución'`,
+y una unidad no puede repetirse en dos donaciones.
+
 ### `historial_estado_equipo` — historial de transiciones de estado
 `id_historial` PK · `id_unidad` · `id_usuario` · `estado_anterior` · `estado_nuevo` · `motivo` text ·
 `fecha_hora`

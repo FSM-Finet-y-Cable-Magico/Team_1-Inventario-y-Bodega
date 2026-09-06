@@ -149,6 +149,30 @@ export function rejectBaja(id: number, data: { motivo_rechazo: string }) {
 	return api.post<any>(`/bajas/${id}/rechazar`, data);
 }
 
+// CU-80: donaciones de equipos dados de baja con motivo 'Donación a institución'
+export function getDonaciones() {
+	return api.get<import('$lib/types').Donacion[]>('/donaciones');
+}
+
+export function getUnidadesDonables() {
+	return api.get<import('$lib/types').UnidadDonable[]>('/donaciones/candidatas');
+}
+
+export function registrarDonacion(data: {
+	nombre_institucion: string;
+	rut_institucion: string;
+	fecha_donacion: string;
+	numero_resolucion?: string;
+	ids_unidades: number[];
+}) {
+	return api.post<any>('/donaciones', data);
+}
+
+// CU-80: el PDF viaja autenticado, por eso usa la descarga del cliente (no <a href>)
+export function descargarPdfDonacion(id: number) {
+	return api.download(`/donaciones/${id}/pdf`, `donacion-${id}.pdf`);
+}
+
 export function getUnitHistory(serialNumber: string) {
 	return api.get<any[]>(`/unidades/${serialNumber}/historial`);
 }

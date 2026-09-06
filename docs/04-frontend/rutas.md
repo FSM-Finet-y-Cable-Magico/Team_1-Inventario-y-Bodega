@@ -12,7 +12,7 @@ Todas en `codigo/frontend/src/routes/`. Sin loaders SSR; carga client-side con `
 | Unidades | `/unidades` | todos |
 | Bodegas | `/bodegas` | SUPERUSUARIO, ADMIN, ADMIN_BODEGA |
 | Transferencias | `/transferencias` | SUPERUSUARIO, ADMIN |
-| Bajas | `/bajas` | todos (aprobar/rechazar solo SUPERUSUARIO, ADMIN) |
+| Bajas | `/bajas` | todos (aprobar/rechazar y pestaña Donaciones solo SUPERUSUARIO, ADMIN) |
 | Auditoría | `/auditoria` | SUPERUSUARIO, ADMIN |
 
 > La protección real está en el backend. El menú solo oculta ítems por rol.
@@ -118,6 +118,13 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
 - Filtro por estado (`Pendiente de aprobación | Aprobada | Rechazada`); por defecto muestra las pendientes.
 - Aprobar/rechazar: botones solo para `SUPERUSUARIO` y `ADMIN`. Aprobar pide `ConfirmDialog`
   (la baja es irreversible); rechazar exige motivo (máx. 200).
+
+### `/bajas` — pestaña Donaciones (CU-80)
+- **Endpoints:** `getDonaciones()`, `getUnidadesDonables()`, `registrarDonacion()`, `descargarPdfDonacion()`.
+- Formulario: institución (3-100), RUT `XXXXXXXX-X` (con dígito verificador), fecha no futura
+  (`max` = hoy), número de resolución opcional y selector de equipos donables.
+- **Excepción 1:** los NS que el backend rechaza se resaltan en rojo en el selector.
+- El PDF se descarga con `api.download` (el enlace directo no sirve: la ruta exige token).
 
 ### `/auditoria`
 - **CUs:** CU-08 (visualizar log), CU-09 (filtrar).

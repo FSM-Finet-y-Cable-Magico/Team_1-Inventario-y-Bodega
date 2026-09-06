@@ -77,6 +77,12 @@ Todas tipadas `<T>`. Nombre de endpoint backend en comentario:
 - `approveBaja(id)` → `POST /bajas/:id/aprobar` (ADMIN, SUPERUSUARIO)
 - `rejectBaja(id, {motivo_rechazo})` → `POST /bajas/:id/rechazar` (ADMIN, SUPERUSUARIO)
 
+### Donaciones (CU-80)
+- `getDonaciones()` → `GET /donaciones` (ADMIN, SUPERUSUARIO)
+- `getUnidadesDonables()` → `GET /donaciones/candidatas` (unidades dadas de baja por donación)
+- `registrarDonacion({nombre_institucion, rut_institucion, fecha_donacion, numero_resolucion?, ids_unidades})` → `POST /donaciones`
+- `descargarPdfDonacion(id)` → `GET /donaciones/:id/pdf` vía `api.download` (el token va en el header)
+
 ### Dashboards
 - `getDashboard()` → `GET /empresas/dashboard` (consolidado, SUPERUSUARIO) (CU-15)
 - `getMyDashboard()` → `GET /empresas/mi-dashboard` (CU-16)
