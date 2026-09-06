@@ -87,7 +87,10 @@ Controller-level: `@UseGuards(AuthGuard('jwt'), RolesGuard)`.
   agrupados por `referencia_id`; aislamiento por rol: SUPERUSUARIO ve todas, Admin solo las de su
   empresa (origen o destino). Se expone en la **campana de notificaciones** del Header.
 - **`getEstadisticasEmpresa(id, nombre)`**:
-  - `unidades_por_estado` (conteo por `estado`).
+  - **CU-79:** `total_unidades` es el **inventario activo** (excluye `'Dado de baja'`) y
+    `unidades_dadas_de_baja` expone ese conteo por separado.
+  - `unidades_por_estado` (conteo por `estado`, **incluye** `'Dado de baja'`: el histórico
+    sigue siendo consultable).
   - `bodegas_activas` (conteo).
   - `stock_consumible_total` (suma de `cantidad_disponible` de la empresa).
   - **CU-46:** `alertas_stock_minimo` — para tipos serializados el stock = conteo de unidades

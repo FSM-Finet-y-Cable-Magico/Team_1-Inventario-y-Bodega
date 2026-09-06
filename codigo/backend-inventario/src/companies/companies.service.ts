@@ -11,6 +11,8 @@ import { SolicitudBaja } from '../bajas/entities/solicitud-baja.entity';
 const ESTADO_TRANSFERENCIA_PENDIENTE = 'TRANSFERENCIA_PENDIENTE';
 // CU-78: solicitudes de baja que esperan la decisión de un Administrador/Superusuario
 const ESTADO_BAJA_PENDIENTE = 'Pendiente de aprobación';
+// CU-79: estado terminal cuyas unidades quedan fuera del inventario activo
+const ESTADO_DADO_DE_BAJA = 'Dado de baja';
 
 export const EMPRESAS = [
     { id: 1, nombre: 'Finet' },
@@ -149,10 +151,13 @@ export class CompaniesService {
     private async getEstadisticasEmpresa(id: number, nombre: string): Promise<any> {
         const unidades = await this.unidadRepository.find({ where: { id_empresa: id } });
 
+        // CU-79 (B/C): el desglose por estado conserva las unidades dadas de baja
+        // (su historial sigue accesible), pero el total del inventario activo las excluye
         const estadisticasEstado: Record<string, number> = {};
         for (const u of unidades) {
             estadisticasEstado[u.estado] = (estadisticasEstado[u.estado] ?? 0) + 1;
         }
+        const unidadesDadasDeBaja = estadisticasEstado[ESTADO_DADO_DE_BAJA] ?? 0;
 
         const bodegasActivas = await this.bodegaRepository.count({
             where: { id_empresa: id, activa: true },
@@ -196,7 +201,9 @@ export class CompaniesService {
         return {
             empresa: nombre,
             id_empresa: id,
-            total_unidades: unidades.length,
+            // CU-79 (B): inventario activo, sin las unidades dadas de baja
+            total_unidades: unidades.length - unidadesDadasDeBaja,
+            unidades_dadas_de_baja: unidadesDadasDeBaja,
             unidades_por_estado: estadisticasEstado,
             bodegas_activas: bodegasActivas,
             stock_consumible_total: Number(stockConsumible?.total ?? 0),

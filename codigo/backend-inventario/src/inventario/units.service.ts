@@ -432,8 +432,11 @@ export class UnitsService {
         }
 
         if (estadoOrigen === 'En bodega' && nuevoEstado !== 'En bodega') {
-            unidad.id_bodega_actual = undefined;
-            unidad.numeroPoste = undefined;
+            // CU-79 (B): se limpia con null explícito — TypeORM ignora las propiedades
+            // undefined al guardar, por lo que la unidad seguía asociada a la bodega y
+            // se contaba en su stock después de salir de ella (p. ej. tras una baja).
+            unidad.id_bodega_actual = null;
+            unidad.numeroPoste = null;
             // CU-47: al salir de la bodega el sistema vacía automáticamente la ubicación física
             unidad.ubicacionFisica = null;
         }

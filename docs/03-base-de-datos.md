@@ -131,6 +131,9 @@ Reglas asociadas:
   `Obsolescencia`, `Donación a institución`, `Otro`; con `Otro` exige descripción de 5–200). Queda
   en `unidad_equipo.motivo_baja` / `motivo_baja_detalle` y se audita como `BAJA_DEFINITIVA`.
   `Dado de baja` es **terminal e irreversible**: no se agregan transiciones de salida.
+- **CU-79:** al salir de `En bodega` la unidad pierde `id_bodega_actual`, `numero_poste` y
+  `ubicacion_fisica`. Las unidades `Dado de baja` quedan fuera de los conteos de stock activo
+  (`bodegas`, `companies`) pero conservan su fila y su historial completo, consultables por NS.
 
 ### 2.3 Transferencias y estado de inventario
 - La solicitud de transferencia crea `transferencia_equipo` + un `movimiento_inventario` por unidad

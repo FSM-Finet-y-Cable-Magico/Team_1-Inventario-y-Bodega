@@ -4,10 +4,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository, In, Not } from 'typeorm';
 import { Bodega } from './entities/bodega.entity';
 import { StockConsumible } from './entities/stock-consumible.entity';
 import { UnidadEquipo } from '../inventario/entities/unidad-equipo.entity';
+
+// CU-79: estado terminal cuyas unidades quedan fuera del inventario activo
+const ESTADO_DADO_DE_BAJA = 'Dado de baja';
 import { TipoEquipo } from '../inventario/entities/tipo-equipo.entity';
 import { Auditoria } from '../auditoria/entities/auditoria.entity';
 import { Usuario } from '../usuarios/entities/usuario.entity';
@@ -218,8 +221,9 @@ export class BodegasService {
         'cantidad_disponible',
         { id_bodega: b.id_bodega },
       );
+      // CU-79 (B): las unidades dadas de baja quedan fuera del stock activo
       const countUnidades = await this.unidadEquipoRepository.count({
-        where: { id_bodega_actual: b.id_bodega },
+        where: { id_bodega_actual: b.id_bodega, estado: Not(ESTADO_DADO_DE_BAJA) },
       });
 
       const idResponsable = b.id_usuario_responsable ?? mapaCreadores.get(b.id_bodega);
@@ -273,8 +277,9 @@ export class BodegasService {
     if (!bodega) throw new NotFoundException('Bodega no encontrada');
     await this.verificarPertenencia(bodega, userEmpresaId, isSuperuser, actorId ?? 0, 'CONSULTAR_STOCK');
 
+    // CU-79 (B): el detalle de stock tampoco considera las unidades dadas de baja
     const unidades = await this.unidadEquipoRepository.find({
-      where: { id_bodega_actual: id },
+      where: { id_bodega_actual: id, estado: Not(ESTADO_DADO_DE_BAJA) },
       relations: { tipoEquipo: true },
     });
 

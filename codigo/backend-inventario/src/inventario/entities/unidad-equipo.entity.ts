@@ -35,10 +35,10 @@ export class UnidadEquipo {
     id_cliente_instalado?: number;
 
     @Column({ type: 'integer', name: 'id_bodega_actual', nullable: true })
-    id_bodega_actual?: number;
+    id_bodega_actual?: number | null;
 
     @Column({ type: 'varchar', length: 30, name: 'numero_poste', nullable: true })
-    numeroPoste?: string;
+    numeroPoste?: string | null;
 
     @Column({ type: 'integer', name: 'id_caja_nap', nullable: true })
     id_caja_nap?: number;

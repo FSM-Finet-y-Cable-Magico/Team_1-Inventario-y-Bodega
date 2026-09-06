@@ -124,7 +124,9 @@ Constante: `MAC_REGEX = /^([0-9A-Fa-f]{2}[:\\-]){5}[0-9A-Fa-f]{2}$/`.
   - **CU-40 Excepción 1:** al pasar a `'En revisión'` el diagnóstico es obligatorio
     (`DIAGNOSTICOS_PERMITIDOS`); si es `'Otro'`, descripción obligatoria 5–200
     (`'Debe ingresar una descripción cuando selecciona Otro.'`).
-  - Al salir de `'En bodega'` limpia `id_bodega_actual` y `numeroPoste`.
+  - Al salir de `'En bodega'` limpia `id_bodega_actual` y `numeroPoste` **con `null` explícito**
+    (**CU-79**: con `undefined` TypeORM ignoraba la propiedad y la unidad seguía contando en el
+    stock de su bodega incluso después de darse de baja).
   - **CU-47:** acepta `ubicacion_fisica` opcional (texto libre, ≤60 →
     `BadRequestException('La ubicación física no puede superar los 60 caracteres.')`). Al pasar a
     `'En bodega'` la persiste junto a la transición (misma transacción del historial) y la incluye
