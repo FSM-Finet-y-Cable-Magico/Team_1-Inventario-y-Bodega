@@ -181,6 +181,17 @@ export interface HistorialEstado {
 	empresa?: string | null;
 }
 
+export interface EquipoEnRevision {
+	id_unidad: number;
+	numero_serie: string;
+	tipo_equipo: { nombre: string } | null;
+	empresa: string | null;
+	bodega: string | null;
+	fecha_ingreso_revision: string | null;
+	dias_en_revision: number | null;
+	diagnostico_tecnico: string | null;
+}
+
 export interface Bodega {
 	id_bodega: number;
 	id_empresa: number | null;

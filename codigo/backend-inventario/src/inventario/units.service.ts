@@ -149,6 +149,83 @@ export class UnitsService {
     );
   }
 
+  // CU-77: listado de equipos "En revisión" con fecha de ingreso, días
+  // transcurridos y diagnóstico. Solo consulta, no audita.
+  async listarEnRevision(actor: any) {
+    const esSuperusuario = actor.roles?.includes('SUPERUSUARIO');
+
+    const qb = this.unitRepository
+      .createQueryBuilder('unidad')
+      .leftJoinAndSelect('unidad.tipoEquipo', 'tipoEquipo')
+      .where('unidad.estado = :estado', { estado: 'En revisión' });
+
+    // CU-77: aislamiento por empresa, salvo Superusuario (ve ambas empresas)
+    if (!esSuperusuario) {
+      qb.andWhere('unidad.id_empresa = :idEmpresa', {
+        idEmpresa: actor.id_empresa,
+      });
+    }
+
+    const unidades = await qb.orderBy('unidad.id_unidad', 'ASC').getMany();
+    if (unidades.length === 0) return [];
+
+    const idsUnidades = unidades.map((u) => u.id_unidad);
+
+    // CU-77: fecha de ingreso a revisión = última transición hacia 'En
+    // revisión' en el historial (una sola consulta, sin N+1 por unidad)
+    const ingresos = await this.historyRepository
+      .createQueryBuilder('historial')
+      .distinctOn(['historial.id_unidad'])
+      .where('historial.id_unidad IN (:...ids)', { ids: idsUnidades })
+      .andWhere('historial.estado_nuevo = :estadoNuevo', {
+        estadoNuevo: 'En revisión',
+      })
+      .orderBy('historial.id_unidad', 'ASC')
+      .addOrderBy('historial.fecha_hora', 'DESC')
+      .getMany();
+    const mapaIngreso = new Map(
+      ingresos.map((h) => [h.id_unidad, h.fechaHora]),
+    );
+
+    // Nota: por la máquina de estados, una unidad solo llega a 'En revisión' desde 'Asignado a técnico' o 'Instalado en cliente' (nunca desde 'En
+    // bodega' directo), así que id_bodega_actual normalmente viene vacío.
+    const idsBodegas = [
+      ...new Set(
+        unidades
+          .map((u) => u.id_bodega_actual)
+          .filter((id): id is number => !!id),
+      ),
+    ];
+    const bodegas = idsBodegas.length
+      ? await this.dataSource
+          .getRepository(Bodega)
+          .findBy({ id_bodega: In(idsBodegas) })
+      : [];
+    const mapaBodegas = new Map(bodegas.map((b) => [b.id_bodega, b.nombre]));
+
+    const ahora = Date.now();
+
+    return unidades.map((u) => {
+      const fechaIngreso = mapaIngreso.get(u.id_unidad) ?? null;
+      const diasEnRevision = fechaIngreso
+        ? Math.floor((ahora - new Date(fechaIngreso).getTime()) / 86400000)
+        : null;
+
+      return {
+        id_unidad: u.id_unidad,
+        numero_serie: u.serialNumber,
+        tipo_equipo: u.tipoEquipo ? { nombre: u.tipoEquipo.nombre } : null,
+        empresa: EMPRESAS.find((e) => e.id === u.id_empresa)?.nombre ?? null,
+        bodega: u.id_bodega_actual
+          ? (mapaBodegas.get(u.id_bodega_actual) ?? null)
+          : null,
+        fecha_ingreso_revision: fechaIngreso,
+        dias_en_revision: diasEnRevision,
+        diagnostico_tecnico: u.diagnosticoTecnico ?? null,
+      };
+    });
+  }
+
   async registrarUnidad(
     dto: {
       id_tipo_equipo: number;

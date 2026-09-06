@@ -73,6 +73,8 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
   `createUnit()`, `ingresarConsumible()`, `updateConsumible()`.
 - El tipo seleccionado decide el formulario (serializado vs. consumible). Consumibles marcados
   `es_consumible`. TECNICO_TERRENO es solo lectura.
+- Botón "Equipos en revisión" (visible para `SUPERUSUARIO`/`ADMIN`/`ADMIN_BODEGA`) navega a
+  `/unidades/en-revision` (CU-77).
 
 ### `/unidades/[id]`
 - **CUs:** CU-33 (ficha), CU-34 (editar datos), CU-35 (cambio de estado), CU-36 (historial + observaciones),
@@ -84,6 +86,14 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
 - **CU-47:** en el modal de cambio de estado, si el destino es `'En bodega'` aparece el campo
   opcional "Ubicación física en bodega" (≤60); si se deja vacío se muestra el aviso de trazabilidad
   sin bloquear el envío. La ficha muestra la ubicación actual cuando la unidad está en bodega.
+
+### `/unidades/en-revision`
+- **CU:** CU-77 (listado de equipos en revisión, solo consulta).
+- **Endpoints:** `getUnidadesEnRevision()`.
+- Tabla ordenable por cualquier columna (clic en cabecera, `$state` de columna+dirección).
+  Filas con `dias_en_revision > 30` se resaltan con `bg-amber-50`. Sin ítem propio en el
+  Sidebar; se llega desde el botón "Equipos en revisión" de `/unidades`.
+- `EmptyState` con el mensaje exacto de la Excepción 1: "No hay equipos en revisión actualmente."
 
 ### `/bodegas`
 - **CUs:** CU-41 (crear con responsable), CU-42 (desactivar), CU-44 (listado con stock).

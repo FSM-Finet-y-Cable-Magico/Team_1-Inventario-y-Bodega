@@ -1,5 +1,5 @@
 import { api } from './client';
-import type { LoginDto, LoginResponse, Usuario } from '$lib/types';
+import type { LoginDto, LoginResponse, Usuario, EquipoEnRevision } from '$lib/types';
 
 export async function login(dto: LoginDto): Promise<LoginResponse> {
 	return api.post<LoginResponse>('/auth/login', dto);
@@ -99,6 +99,10 @@ export function getUnits(params?: { estado?: string; buscar?: string }) {
 	if (params?.buscar) qs.set('buscar', params.buscar);
 	const query = qs.toString();
 	return api.get<any[]>(`/unidades${query ? '?' + query : ''}`);
+}
+
+export function getUnidadesEnRevision() {
+	return api.get<EquipoEnRevision[]>('/unidades/en-revision');
 }
 
 export function getUnit(id: number) {

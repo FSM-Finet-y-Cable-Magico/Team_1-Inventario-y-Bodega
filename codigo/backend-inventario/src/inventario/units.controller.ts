@@ -34,6 +34,13 @@ export class UnitsController {
     );
   }
 
+  // CU-77: listado de equipos en revisión (solo consulta, sin auditoría)
+  @Get('en-revision')
+  @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
+  async listarEnRevision(@CurrentUser() actor: any) {
+    return this.unitsService.listarEnRevision(actor);
+  }
+
   @Post()
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
   async registrarNuevaUnidad(@Body() body: any, @CurrentUser() actor: any) {
