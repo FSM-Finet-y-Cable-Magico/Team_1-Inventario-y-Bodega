@@ -568,46 +568,113 @@ export class PrestamosService {
       throw new BadRequestException('Debe indicar al menos un ítem retornado.');
     }
 
-    // CU-84: trazabilidad — cada ítem debe pertenecer a este préstamo y no estar
-    // ya retornado; las cantidades no pueden superar lo prestado
+    // CU-84: validaciones de trazabilidad de la devolución. Se ejecutan ANTES de
+    // abrir la transacción, acumulando un error por cada ítem inválido: si hay
+    // alguno no se procesa nada (el retorno es todo o nada).
     const detalles = await this.detalleRepository.findBy({
       id_prestamo: idPrestamo,
     });
+
+    // Datos para nombrar los ítems en los mensajes y para comprobar su estado
+    const idsUnidadesDetalle = detalles
+      .map((d) => d.id_unidad)
+      .filter((id): id is number => id !== null);
+    const unidadesDetalle = idsUnidadesDetalle.length
+      ? await this.unidadRepository.find({
+          where: { id_unidad: In(idsUnidadesDetalle) },
+          loadEagerRelations: false,
+        })
+      : [];
+    const idsTiposDetalle = detalles
+      .filter((d) => d.id_unidad === null)
+      .map((d) => d.id_tipo_equipo)
+      .filter((id): id is number => id !== null);
+    const tiposDetalle = idsTiposDetalle.length
+      ? await this.tipoRepository.findBy({
+          id_tipo_equipo: In(idsTiposDetalle),
+        })
+      : [];
+    const retornosPrevios = detalles.length
+      ? await this.retornoRepository.findBy({
+          id_detalle: In(detalles.map((d) => d.id_detalle)),
+        })
+      : [];
+
     const errores: string[] = [];
+    // Acumula lo pedido por detalle: el mismo ítem puede venir repetido en el body
+    const solicitado = new Map<number, number>();
     const aRetornar: { detalle: PrestamoDetalle; cantidad: number }[] = [];
 
     for (const item of dto.items) {
-      const detalle = detalles.find((d) => d.id_detalle === item.id_detalle);
-      if (!detalle) {
-        errores.push(
-          `El ítem #${item.id_detalle} no pertenece al préstamo ${prestamo.correlativo}.`,
-        );
-        continue;
-      }
-      if (detalle.id_unidad !== null) {
-        // Individualizable: un detalle por unidad, retorno completo o nada
-        if (Number(detalle.cantidad_retornada) > 0) {
-          errores.push(`El ítem #${item.id_detalle} ya fue retornado.`);
+      // (A) el ítem debe pertenecer al préstamo. Se acepta identificarlo por
+      // número de serie o por id_detalle (cada unidad tiene su propio detalle).
+      let detalle: PrestamoDetalle | undefined;
+      if (item.numero_serie) {
+        const ns = item.numero_serie.trim();
+        const unidad = unidadesDetalle.find((u) => u.serialNumber === ns);
+        detalle = unidad
+          ? detalles.find((d) => d.id_unidad === unidad.id_unidad)
+          : undefined;
+        if (!detalle) {
+          errores.push(
+            `El equipo [${ns}] no pertenece al préstamo [${prestamo.correlativo}].`,
+          );
           continue;
         }
+      } else {
+        detalle = detalles.find((d) => d.id_detalle === item.id_detalle);
+        if (!detalle) {
+          errores.push(
+            `El ítem #${item.id_detalle} no pertenece al préstamo [${prestamo.correlativo}].`,
+          );
+          continue;
+        }
+      }
+
+      if (detalle.id_unidad !== null) {
+        const unidad = unidadesDetalle.find(
+          (u) => u.id_unidad === detalle.id_unidad,
+        );
+        const ns = unidad?.serialNumber ?? `#${detalle.id_detalle}`;
+        // (B) la unidad debe seguir en préstamo y no tener un retorno registrado
+        const yaRetornado =
+          Number(detalle.cantidad_retornada ?? 0) > 0 ||
+          retornosPrevios.some((r) => r.id_detalle === detalle.id_detalle) ||
+          solicitado.has(detalle.id_detalle);
+        if (yaRetornado || unidad?.estado !== ESTADO_PRESTAMO) {
+          errores.push(
+            `El equipo [${ns}] ya fue retornado o no está en préstamo externo.`,
+          );
+          continue;
+        }
+        solicitado.set(detalle.id_detalle, 1);
         aRetornar.push({ detalle, cantidad: 1 });
       } else {
-        const pendiente =
-          Number(detalle.cantidad ?? 0) -
-          Number(detalle.cantidad_retornada ?? 0);
+        const nombreTipo =
+          tiposDetalle.find((t) => t.id_tipo_equipo === detalle.id_tipo_equipo)
+            ?.nombre ?? `#${detalle.id_detalle}`;
         const cantidad = Number(item.cantidad ?? 0);
         if (isNaN(cantidad) || cantidad <= 0) {
           errores.push(
-            `La cantidad retornada del ítem #${item.id_detalle} debe ser mayor que cero.`,
+            `La cantidad retornada del ítem [${nombreTipo}] debe ser mayor que cero.`,
           );
           continue;
         }
-        if (cantidad > pendiente) {
+        // (C) acumulado: retornos previos + lo ya pedido en este mismo body
+        const acumulado =
+          Number(detalle.cantidad_retornada ?? 0) +
+          (solicitado.get(detalle.id_detalle) ?? 0) +
+          cantidad;
+        if (acumulado > Number(detalle.cantidad ?? 0)) {
           errores.push(
-            `La cantidad retornada del ítem #${item.id_detalle} (${cantidad}) supera lo pendiente (${pendiente}).`,
+            `La cantidad retornada supera la cantidad prestada del ítem [${nombreTipo}].`,
           );
           continue;
         }
+        solicitado.set(
+          detalle.id_detalle,
+          (solicitado.get(detalle.id_detalle) ?? 0) + cantidad,
+        );
         aRetornar.push({ detalle, cantidad });
       }
     }
@@ -635,9 +702,11 @@ export class PrestamosService {
           const unidad = unidades[0];
           if (!unidad)
             throw new NotFoundException('El equipo solicitado no existe.');
+          // CU-84 (red de seguridad ante concurrencia): entre la validación previa
+          // y el bloqueo, otro retorno pudo procesar la misma unidad
           if (unidad.estado !== ESTADO_PRESTAMO) {
             throw new BadRequestException(
-              `El equipo [${unidad.serialNumber}] no está en préstamo externo. Estado actual: [${unidad.estado}].`,
+              `El equipo [${unidad.serialNumber}] ya fue retornado o no está en préstamo externo.`,
             );
           }
           if (

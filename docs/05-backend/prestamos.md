@@ -1,6 +1,6 @@
 # Backend — Módulo `prestamos`
 
-**Carpeta:** `codigo/backend-inventario/src/prestamos/` · **CU-81**, **CU-82** y **CU-83**.
+**Carpeta:** `codigo/backend-inventario/src/prestamos/` · **CU-81** a **CU-84**.
 
 ## 1. Endpoints
 
@@ -83,19 +83,15 @@ que necesita CU-76). El frontend replica la tabla en `/unidades/[id]`, y ambos s
 vez. El retorno **no** exige diagnóstico técnico (la obligación de CU-40 es del cambio de estado
 manual, no de este flujo).
 
-### 7.2 Validaciones
+### 7.2 Validaciones previas
 
 | Regla | Mensaje |
 |-------|---------|
 | Préstamo `Activo` | `El préstamo PE-XXXXX ya está cerrado: no admite nuevos retornos.` |
 | **Excepción 1:** fecha futura | `La fecha de retorno no puede ser futura.` |
 | Observación ≤ 300 | mensaje específico |
-| (CU-84) ítem de otro préstamo | `El ítem #N no pertenece al préstamo PE-XXXXX.` |
-| (CU-84) unidad ya retornada | `El ítem #N ya fue retornado.` |
-| (CU-84) cantidad > pendiente | `La cantidad retornada del ítem #N (X) supera lo pendiente (Y).` |
 
-Los errores de todos los ítems se acumulan **antes** de abrir la transacción: si uno falla, no se
-aplica ninguno.
+Las validaciones de trazabilidad por ítem son **CU-84** (ver §9).
 
 ### 7.3 Efectos
 
@@ -123,8 +119,38 @@ aplica ninguno.
 - Excepción 1: la lista vacía no es error; el `EmptyState` del frontend muestra
   `No hay préstamos externos activos actualmente.` cuando el filtro activo es `Activo`.
 
-## 9. Pendiente para los CUs siguientes
+## 9. CU-84 — Trazabilidad de la devolución
 
-- **CU-84**: las validaciones de trazabilidad ya viven aquí; ese CU las formaliza y documenta.
+Validaciones que corren **antes de abrir la transacción**, acumulando un error por cada ítem
+inválido. Si hay al menos uno, no se procesa nada (ni estados, ni stock, ni `cantidad_retornada`).
+
+| # | Regla | Mensaje |
+|---|-------|---------|
+| A | El ítem pertenece al préstamo | `El equipo [NS] no pertenece al préstamo [PE-XXXXX].` (o `El ítem #N no pertenece al préstamo [PE-XXXXX].` si se identificó por `id_detalle`) |
+| B | La unidad sigue `En préstamo externo` y no tiene retorno registrado | `El equipo [NS] ya fue retornado o no está en préstamo externo.` |
+| C | Lo retornado no supera lo prestado | `La cantidad retornada supera la cantidad prestada del ítem [TIPO].` |
+
+Detalles de implementación:
+
+- Cada ítem se identifica por **`numero_serie` o `id_detalle`**: enviar el NS permite dar los
+  mensajes del caso de uso tal cual, y `id_detalle` sigue funcionando para los consumibles.
+- (B) mira las **dos** fuentes: `prestamo_detalle.cantidad_retornada` y las filas de
+  `prestamo_retorno`, además del estado real de la unidad.
+- (C) suma los retornos previos **y lo pedido en el mismo envío**: mandar el mismo consumible dos
+  veces (6 + 6 sobre 10 prestados) se rechaza.
+- Dentro de la transacción se repite el chequeo de estado con la unidad bloqueada (`FOR UPDATE`),
+  como red de seguridad ante retornos simultáneos; el mensaje es el mismo de (B).
+
+Pruebas: `src/prestamos/prestamos.service.spec.ts` cubre los casos del caso de uso (NS de otro
+préstamo, NS nunca prestado, NS ya retornado, unidad que ya no está en préstamo, cantidad mayor a
+la prestada, acumulado en el mismo envío, errores múltiples y fecha futura) y comprueba que el
+`DataSource` **no se usa** cuando alguna validación falla:
+
+```bash
+cd codigo/backend-inventario && npx jest src/prestamos
+```
+
+## 10. Pendiente para los CUs siguientes
+
 - **CU-76** (Grupo 3): el reingreso desde reparación externa reutiliza esta tabla; la acción
   "Reingreso" en la fila queda para ese CU.

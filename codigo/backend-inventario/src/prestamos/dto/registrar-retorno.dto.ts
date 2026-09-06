@@ -13,5 +13,6 @@ export class RegistrarRetornoDto {
   observacion?: string;
 
   @IsArray()
-  items: { id_detalle: number; cantidad?: number }[];
+  // CU-84: cada ítem se identifica por id_detalle o por numero_serie
+  items: { id_detalle?: number; numero_serie?: string; cantidad?: number }[];
 }

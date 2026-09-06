@@ -129,7 +129,7 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
 
 ### `/prestamos`
 - **CUs:** CU-81 (registrar préstamo externo), CU-82 (retorno total o parcial),
-  CU-83 (tabla de activos).
+  CU-83 (tabla de activos), CU-84 (trazabilidad del retorno).
 - **Endpoints:** `getPrestamos()`, `getPrestamoDetalle()`, `registrarPrestamo()`, más
   `getUnits()`, `getWarehouses()` y `getWarehouseStock()` para los selectores.
 - Los equipos se agregan por NS (solo unidades `En bodega` de la bodega de origen) y los
@@ -138,6 +138,8 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
 - **CU-83:** por defecto muestra los `Activo`; filtros de estado y de empresa (este último solo
   para `SUPERUSUARIO`), badge por tipo (Préstamo / Reparación externa), columna de días restantes
   con `Vencido hace N días` en rojo y `EmptyState` con el mensaje exacto del caso de uso.
+- **CU-84:** cuando el backend rechaza ítems, el modal reparte las frases del mensaje entre los
+  ítems que nombran y marca cada uno en rojo con su motivo.
 - **CU-82:** modal "Registrar retorno" (solo en préstamos `Activo`) con fecha limitada a hoy
   (`max`), selección de ítems respetando lo ya devuelto, cantidad por consumible, observación
   con contador y el historial de retornos previos de cada ítem.

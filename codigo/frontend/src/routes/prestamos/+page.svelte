@@ -54,6 +54,8 @@
 	let retornoSeleccion = $state<Record<number, number>>({});
 	let retornoError = $state('');
 	let registrandoRetorno = $state(false);
+	// CU-84: mensaje de trazabilidad por ítem rechazado (id_detalle → mensaje)
+	let erroresPorItem = $state<Record<number, string>>({});
 
 	let detalle = $state<PrestamoDetalleCompleto | null>(null);
 	let showDetalle = $state(false);
@@ -252,6 +254,7 @@
 		retornoError = '';
 		retornoForm = { fecha_retorno: hoyISO, observacion: '' };
 		retornoSeleccion = {};
+		erroresPorItem = {};
 		registrandoRetorno = false;
 		showRetorno = true;
 		retornoPrestamo = null;
@@ -271,9 +274,25 @@
 		}
 	}
 
+	// CU-84: el backend acumula un error por ítem; cada frase se asocia al ítem
+	// que nombra (número de serie o tipo de equipo) para pintarlo en la lista
+	function repartirErrores(mensaje: string): Record<number, string> {
+		if (!retornoPrestamo) return {};
+		const frases = mensaje.split(/(?<=\.)\s+/).filter(Boolean);
+		const porItem: Record<number, string> = {};
+		for (const item of retornoPrestamo.items) {
+			const etiqueta = item.es_consumible ? item.tipo_equipo : item.numero_serie;
+			if (!etiqueta) continue;
+			const frase = frases.find((f) => f.includes(etiqueta));
+			if (frase) porItem[item.id_detalle] = frase.trim();
+		}
+		return porItem;
+	}
+
 	async function handleRetorno() {
 		if (!retornoPrestamo) return;
 		retornoError = '';
+		erroresPorItem = {};
 		const items = Object.entries(retornoSeleccion).map(([id, cantidad]) => ({
 			id_detalle: Number(id),
 			cantidad: Number(cantidad)
@@ -294,6 +313,8 @@
 			await load();
 		} catch (err: unknown) {
 			retornoError = err instanceof Error ? err.message : 'Error al registrar el retorno';
+			// CU-84: marcar en la lista los ítems que el sistema rechazó
+			erroresPorItem = repartirErrores(retornoError);
 		} finally {
 			registrandoRetorno = false;
 		}
@@ -619,7 +640,7 @@
 				<div class="border border-border rounded-md divide-y divide-border max-h-64 overflow-y-auto">
 					{#each retornoPrestamo.items as item}
 						{@const pendiente = pendienteDe(item)}
-						<div class="px-3 py-2 text-sm {pendiente === 0 ? 'bg-surface/50' : ''}">
+						<div class="px-3 py-2 text-sm {erroresPorItem[item.id_detalle] ? 'bg-red-50' : pendiente === 0 ? 'bg-surface/50' : ''}">
 							<label class="flex items-center gap-3 {pendiente === 0 ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}">
 								<input type="checkbox" disabled={pendiente === 0}
 									checked={retornoSeleccion[item.id_detalle] !== undefined}
@@ -646,6 +667,11 @@
 										class="w-24 px-2 py-1 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
 								{/if}
 							</label>
+
+							<!-- CU-84: motivo por el que este ítem no pudo retornarse -->
+							{#if erroresPorItem[item.id_detalle]}
+								<p class="text-xs text-destructive font-medium mt-1 ml-7">{erroresPorItem[item.id_detalle]}</p>
+							{/if}
 
 							{#if item.retornos_previos && item.retornos_previos.length > 0}
 								<p class="text-xs text-muted mt-1 ml-7">
