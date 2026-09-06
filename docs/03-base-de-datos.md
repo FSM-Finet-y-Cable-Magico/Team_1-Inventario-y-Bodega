@@ -68,6 +68,20 @@ y no crean fila aquí.
 Solo se incluyen unidades en estado `Dado de baja` con `motivo_baja = 'Donación a institución'`,
 y una unidad no puede repetirse en dos donaciones.
 
+### `prestamo_externo` / `prestamo_detalle` / `prestamo_retorno` — préstamos a externos (CU-81)
+`prestamo_externo`: `id_prestamo` PK · `correlativo` (12) **UNIQUE** (`PE-00001`) · `tipo`
+(`PRESTAMO` | `REPARACION_EXTERNA`) · `nombre_receptor` (80) · `rut_receptor` (12) ·
+`fecha_salida` timestamptz · `fecha_estimada_retorno` date · `motivo` (200) ·
+`descripcion_falla` (300, solo reparación) · `estado` (`Activo` | `Cerrado`) · `id_empresa` ·
+`id_bodega_origen` FK → `bodega` · `id_usuario` · `fecha_retorno_real` · `resultado_retorno`
+`prestamo_detalle`: `id_detalle` PK · `id_prestamo` FK CASCADE · `id_unidad` FK (individualizable) ·
+`id_tipo_equipo` + `cantidad` (consumible) · `cantidad_retornada` (CU-82)
+`prestamo_retorno`: `id_retorno` PK · `id_detalle` FK CASCADE · `cantidad` · `fecha_retorno` ·
+`observacion` (300) · `id_usuario` — la usa CU-82 para los retornos parciales.
+
+> **Un solo dueño de la entidad:** CU-75 (Grupo 3, reparación externa) escribe en esta misma tabla
+> con `tipo = 'REPARACION_EXTERNA'`. No crear tablas paralelas.
+
 ### `historial_estado_equipo` — historial de transiciones de estado
 `id_historial` PK · `id_unidad` · `id_usuario` · `estado_anterior` · `estado_nuevo` · `motivo` text ·
 `fecha_hora`
@@ -139,6 +153,10 @@ Reglas asociadas:
   `Obsolescencia`, `Donación a institución`, `Otro`; con `Otro` exige descripción de 5–200). Queda
   en `unidad_equipo.motivo_baja` / `motivo_baja_detalle` y se audita como `BAJA_DEFINITIVA`.
   `Dado de baja` es **terminal e irreversible**: no se agregan transiciones de salida.
+- **CU-81:** el paso a `En préstamo externo` lo hace `PrestamosService` dentro de su propia
+  transacción, validando con la constante **`TRANSICIONES_PERMITIDAS`** que exporta
+  `UnitsService` (la máquina de estados tiene un solo dueño). Las unidades se releen con
+  `FOR UPDATE` antes de cambiarlas para que dos préstamos simultáneos no tomen la misma.
 - **CU-79:** al salir de `En bodega` la unidad pierde `id_bodega_actual`, `numero_poste` y
   `ubicacion_fisica`. Las unidades `Dado de baja` quedan fuera de los conteos de stock activo
   (`bodegas`, `companies`) pero conservan su fila y su historial completo, consultables por NS.

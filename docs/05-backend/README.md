@@ -9,7 +9,7 @@
 - `ValidationPipe` global (class-validator sobre los DTOs).
 - `synchronize: false` → los cambios de esquema van por **migraciones** (`scripts/migrar.ts`).
 - Módulos feature: `auth`, `usuarios`, `roles`, `auditoria`, `companies`, `bodegas`,
-  `inventario` (catálogo + unidades), `transferencias`, `bajas`, `donaciones`, `health`.
+  `inventario` (catálogo + unidades), `transferencias`, `bajas`, `donaciones`, `prestamos`, `health`.
 
 ## 2. Seguridad transversal (obligatorio en todo endpoint)
 
@@ -32,7 +32,7 @@ Cualquier endpoint que acceda a datos protegidos usa:
 | Módulo | Patrón |
 |--------|--------|
 | `inventario` (`catalogo`, `unidades`) | Guard dedicado `CompanyIsolationGuard` (exige `id_empresa` no nulo, inyecta `req.companyContextId`; audita y lanza `ForbiddenException` si la cuenta no tiene empresa). |
-| `usuarios`, `bodegas`, `transferencias`, `bajas`, `donaciones`, `companies` | Aislamiento **manual en el service** con flag `esSuperusuario`: los no-superusuario solo ven/editan su empresa. En `bodegas` hay `verificarPertenencia` que devuelve **404 genérico** ("Bodega no encontrada") para no revelar existencia. |
+| `usuarios`, `bodegas`, `transferencias`, `bajas`, `donaciones`, `prestamos`, `companies` | Aislamiento **manual en el service** con flag `esSuperusuario`: los no-superusuario solo ven/editan su empresa. En `bodegas` hay `verificarPertenencia` que devuelve **404 genérico** ("Bodega no encontrada") para no revelar existencia. |
 | `transferencias` | Manual: un Admin solo ve transferencias donde su empresa es origen o destino (`NotFoundException('Transferencia no encontrada')` si no). |
 
 **No agregues `CompanyIsolationGuard` a un módulo que no lo usa sin justificación**, y
@@ -44,7 +44,7 @@ mantén la consistencia interna de cada módulo.
   ACTUALIZAR, DESACTIVAR, ELIMINAR, MODIFICAR, EDITAR, SOLICITAR_TRANSFERENCIA,
   APROBAR_TRANSFERENCIA, RECHAZAR_TRANSFERENCIA, RESTABLECER_PASSWORD, CAMBIAR_PASSWORD,
   CONFIGURAR_UMBRAL, SOLICITAR_BAJA, APROBAR_BAJA, RECHAZAR_BAJA, BAJA_DEFINITIVA,
-  DONACION, ACCESO_DENEGADO...), `entidad_afectada`, `id_entidad_afectada`,
+  DONACION, PRESTAMO_EXTERNO, ACCESO_DENEGADO...), `entidad_afectada`, `id_entidad_afectada`,
   `valor_anterior`/`valor_nuevo` (jsonb).
 - Los accesos denegados (RolesGuard, CompanyIsolationGuard, verificarPertenencia) también auditan.
 
@@ -86,6 +86,7 @@ Mensajes **en español**, específicos por validación. Excepción: login usa me
 | [transferencias.md](./transferencias.md) | `transferencias` |
 | [bajas.md](./bajas.md) | `bajas` (baja definitiva y solicitudes, CU-78/CU-79) |
 | [donaciones.md](./donaciones.md) | `donaciones` (donación de equipos de baja + PDF, CU-80) |
+| [prestamos.md](./prestamos.md) | `prestamos` (préstamos externos, CU-81) |
 
 > Para cada módulo se listan: endpoints, lógica de negocio, entidades, y qué CU cubre.
 

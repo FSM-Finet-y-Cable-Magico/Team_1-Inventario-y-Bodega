@@ -7,6 +7,7 @@
 		Warehouse,
 		ArrowLeftRight,
 		Ban,
+		HandCoins,
 		ScrollText,
 		LogOut,
 		PanelLeftClose,
@@ -36,6 +37,8 @@
 		{ label: 'Transferencias', icon: ArrowLeftRight, path: '/transferencias', roles: ['SUPERUSUARIO', 'ADMIN'] },
 		// CU-78: bandeja de solicitudes de baja definitiva
 		{ label: 'Bajas', icon: Ban, path: '/bajas', roles: ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA', 'TECNICO_TERRENO'] },
+		// CU-81: préstamos externos de equipos
+		{ label: 'Préstamos', icon: HandCoins, path: '/prestamos', roles: ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'] },
 		{ label: 'Auditoría', icon: ScrollText, path: '/auditoria', roles: ['SUPERUSUARIO', 'ADMIN'] }
 	];
 

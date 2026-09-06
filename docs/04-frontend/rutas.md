@@ -12,6 +12,7 @@ Todas en `codigo/frontend/src/routes/`. Sin loaders SSR; carga client-side con `
 | Unidades | `/unidades` | todos |
 | Bodegas | `/bodegas` | SUPERUSUARIO, ADMIN, ADMIN_BODEGA |
 | Transferencias | `/transferencias` | SUPERUSUARIO, ADMIN |
+| Préstamos | `/prestamos` | SUPERUSUARIO, ADMIN, ADMIN_BODEGA |
 | Bajas | `/bajas` | todos (aprobar/rechazar y pestaña Donaciones solo SUPERUSUARIO, ADMIN) |
 | Auditoría | `/auditoria` | SUPERUSUARIO, ADMIN |
 
@@ -125,6 +126,14 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
   (`max` = hoy), número de resolución opcional y selector de equipos donables.
 - **Excepción 1:** los NS que el backend rechaza se resaltan en rojo en el selector.
 - El PDF se descarga con `api.download` (el enlace directo no sirve: la ruta exige token).
+
+### `/prestamos`
+- **CUs:** CU-81 (registrar préstamo externo).
+- **Endpoints:** `getPrestamos()`, `getPrestamoDetalle()`, `registrarPrestamo()`, más
+  `getUnits()`, `getWarehouses()` y `getWarehouseStock()` para los selectores.
+- Los equipos se agregan por NS (solo unidades `En bodega` de la bodega de origen) y los
+  consumibles por tipo + cantidad, mostrando el saldo disponible.
+- Validación en vivo de los mensajes de CU-59 antes de enviar; el backend los repite.
 
 ### `/auditoria`
 - **CUs:** CU-08 (visualizar log), CU-09 (filtrar).

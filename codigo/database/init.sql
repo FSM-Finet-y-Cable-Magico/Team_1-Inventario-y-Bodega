@@ -180,6 +180,45 @@ CREATE TABLE IF NOT EXISTS donacion_detalle (
     CONSTRAINT fk_donacion_detalle_unidad   FOREIGN KEY (id_unidad)   REFERENCES unidad_equipo (id_unidad)
 );
 
+-- CU-81/CU-82: préstamos externos (y reparación externa de CU-75)
+CREATE TABLE IF NOT EXISTS prestamo_externo (
+    id_prestamo            SERIAL PRIMARY KEY,
+    correlativo            VARCHAR(12) NOT NULL UNIQUE,
+    tipo                   VARCHAR(30) NOT NULL,
+    nombre_receptor        VARCHAR(80) NOT NULL,
+    rut_receptor           VARCHAR(12),
+    fecha_salida           TIMESTAMPTZ NOT NULL,
+    fecha_estimada_retorno DATE NOT NULL,
+    motivo                 VARCHAR(200) NOT NULL,
+    descripcion_falla      VARCHAR(300),
+    estado                 VARCHAR(20) NOT NULL,
+    id_empresa             INTEGER,
+    id_bodega_origen       INTEGER NOT NULL,
+    id_usuario             INTEGER NOT NULL,
+    fecha_retorno_real     TIMESTAMPTZ,
+    resultado_retorno      VARCHAR(300),
+    CONSTRAINT fk_prestamo_bodega FOREIGN KEY (id_bodega_origen) REFERENCES bodega (id_bodega)
+);
+CREATE TABLE IF NOT EXISTS prestamo_detalle (
+    id_detalle         SERIAL PRIMARY KEY,
+    id_prestamo        INTEGER NOT NULL,
+    id_unidad          INTEGER,
+    id_tipo_equipo     INTEGER,
+    cantidad           NUMERIC(10,2),
+    cantidad_retornada NUMERIC(10,2) DEFAULT 0,
+    CONSTRAINT fk_prestamo_detalle_prestamo FOREIGN KEY (id_prestamo) REFERENCES prestamo_externo (id_prestamo) ON DELETE CASCADE,
+    CONSTRAINT fk_prestamo_detalle_unidad   FOREIGN KEY (id_unidad)   REFERENCES unidad_equipo (id_unidad)
+);
+CREATE TABLE IF NOT EXISTS prestamo_retorno (
+    id_retorno     SERIAL PRIMARY KEY,
+    id_detalle     INTEGER NOT NULL,
+    cantidad       NUMERIC(10,2),
+    fecha_retorno  TIMESTAMPTZ NOT NULL,
+    observacion    VARCHAR(300),
+    id_usuario     INTEGER NOT NULL,
+    CONSTRAINT fk_prestamo_retorno_detalle FOREIGN KEY (id_detalle) REFERENCES prestamo_detalle (id_detalle) ON DELETE CASCADE
+);
+
 -- Stock de consumibles por bodega
 CREATE TABLE IF NOT EXISTS stock_consumible (
     id_stock             SERIAL PRIMARY KEY,

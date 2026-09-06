@@ -14,6 +14,18 @@ import { AuditoriaService } from "../auditoria/auditoria.service";
 
 const MAC_REGEX = /^([0-9A-Fa-f]{2}[:\-]){5}[0-9A-Fa-f]{2}$/;
 
+// CU-35: máquina de estados de las unidades. Se exporta para que los módulos que
+// hacen su propia transacción (CU-81 préstamos) validen con la misma tabla en vez
+// de duplicarla. Los literales llevan tilde y deben coincidir exacto con el front.
+export const TRANSICIONES_PERMITIDAS: Record<string, string[]> = {
+    'En bodega': ['Asignado a técnico', 'En préstamo externo', 'Dado de baja'],
+    'Asignado a técnico': ['Instalado en cliente', 'En bodega', 'En revisión'],
+    'Instalado en cliente': ['En revisión'],
+    'En revisión': ['En bodega', 'En préstamo externo', 'Dado de baja'],
+    'En préstamo externo': ['En bodega'],
+    'Dado de baja': [],
+};
+
 @Injectable()
 export class UnitsService {
     constructor(
@@ -361,17 +373,8 @@ export class UnitsService {
         const estadoOrigen = unidad.estado;
 
 
-        const transicionesPermitidas: Record<string, string[]> = {
-            'En bodega': ['Asignado a técnico', 'En préstamo externo', 'Dado de baja'],
-            'Asignado a técnico': ['Instalado en cliente', 'En bodega', 'En revisión'],
-            'Instalado en cliente': ['En revisión'],
-            'En revisión': ['En bodega', 'En préstamo externo', 'Dado de baja'],
-            'En préstamo externo': ['En bodega'],
-            'Dado de baja': [],
-        };
-
         // CU-35 Excepción 1: mensaje exacto del caso de uso
-        if (!transicionesPermitidas[estadoOrigen]?.includes(nuevoEstado)) {
+        if (!TRANSICIONES_PERMITIDAS[estadoOrigen]?.includes(nuevoEstado)) {
             throw new BadRequestException('Transición de estado no permitida para este equipo.');
         }
 

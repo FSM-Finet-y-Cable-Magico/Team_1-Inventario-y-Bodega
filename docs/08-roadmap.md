@@ -14,8 +14,8 @@ no esté reflejado aquí.
 
 - **Total de casos de uso:** 96
 - **Implementados (Incremento 1):** 46 (CU-01 a CU-46)
-- **Implementados (Incremento 2):** CU-47, CU-78, CU-79, CU-80
-- **Pendientes:** 46
+- **Implementados (Incremento 2):** CU-47, CU-78, CU-79, CU-80, CU-81
+- **Pendientes:** 45
 
 ## Leyenda
 
@@ -166,7 +166,7 @@ no esté reflejado aquí.
 
 | CU | Nombre | Estado | Notas |
 |----|--------|--------|-------|
-| CU-81 | Registrando préstamo externo de equipos | [ ] Pendiente | |
+| CU-81 | Registrando préstamo externo de equipos | [x] Implementado | Rama `tomas`. Módulo backend `prestamos` (tabla compartida con CU-75 de G3) y página `/prestamos`. |
 | CU-82 | Registrando retorno de préstamo externo | [ ] Pendiente | |
 | CU-83 | Consultando tabla de préstamos externos activos | [ ] Pendiente | |
 | CU-84 | Validando trazabilidad de devolución de préstamo externo | [ ] Pendiente | |

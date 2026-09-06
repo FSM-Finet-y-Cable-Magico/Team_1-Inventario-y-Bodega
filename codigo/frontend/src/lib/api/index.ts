@@ -173,6 +173,30 @@ export function descargarPdfDonacion(id: number) {
 	return api.download(`/donaciones/${id}/pdf`, `donacion-${id}.pdf`);
 }
 
+// CU-81: préstamos externos de equipos y consumibles
+export function getPrestamos(params?: { estado?: string }) {
+	const qs = new URLSearchParams();
+	if (params?.estado) qs.set('estado', params.estado);
+	const query = qs.toString();
+	return api.get<import('$lib/types').PrestamoExterno[]>(`/prestamos${query ? '?' + query : ''}`);
+}
+
+export function getPrestamoDetalle(id: number) {
+	return api.get<import('$lib/types').PrestamoDetalleCompleto>(`/prestamos/${id}`);
+}
+
+export function registrarPrestamo(data: {
+	nombre_receptor: string;
+	rut_receptor?: string;
+	fecha_estimada_retorno: string;
+	motivo: string;
+	id_bodega_origen: number;
+	numeros_serie?: string[];
+	consumibles?: { id_tipo_equipo: number; cantidad: number }[];
+}) {
+	return api.post<any>('/prestamos', data);
+}
+
 export function getUnitHistory(serialNumber: string) {
 	return api.get<any[]>(`/unidades/${serialNumber}/historial`);
 }

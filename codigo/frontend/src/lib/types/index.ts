@@ -206,6 +206,41 @@ export interface UnidadDonable {
 	estado: string;
 }
 
+// CU-81: préstamo externo de equipos
+export interface PrestamoExterno {
+	id_prestamo: number;
+	correlativo: string;
+	tipo: string;
+	nombre_receptor: string;
+	rut_receptor: string | null;
+	fecha_salida: string;
+	fecha_estimada_retorno: string;
+	motivo: string;
+	estado: string;
+	empresa: string | null;
+	registrado_por: string | null;
+	equipos: number;
+	consumibles: number;
+}
+
+export interface PrestamoItem {
+	id_detalle: number;
+	es_consumible: boolean;
+	numero_serie: string | null;
+	tipo_equipo: string | null;
+	marca: string | null;
+	modelo: string | null;
+	unidad_medida: string | null;
+	cantidad: number | null;
+	cantidad_retornada: number;
+	estado_unidad: string | null;
+}
+
+export interface PrestamoDetalleCompleto extends Omit<PrestamoExterno, 'equipos' | 'consumibles'> {
+	bodega_origen: string | null;
+	items: PrestamoItem[];
+}
+
 export interface CambioEstadoDto {
 	estado_nuevo: EstadoUnidad;
 	diagnostico?: string;

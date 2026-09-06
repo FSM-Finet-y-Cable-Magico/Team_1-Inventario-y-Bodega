@@ -16,6 +16,7 @@ import { TransferenciasModule } from './transferencias/transferencias.module';
 import { CompaniesModule } from './companies/companies.module';
 import { BajasModule } from './bajas/bajas.module';
 import { DonacionesModule } from './donaciones/donaciones.module';
+import { PrestamosModule } from './prestamos/prestamos.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { DonacionesModule } from './donaciones/donaciones.module';
     CompaniesModule,
     BajasModule,
     DonacionesModule,
+    PrestamosModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],

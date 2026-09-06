@@ -1,4 +1,4 @@
-# Casos de uso — Estado de implementación (CU-01 a CU-47, CU-78 a CU-80)
+# Casos de uso — Estado de implementación (CU-01 a CU-47, CU-78 a CU-81)
 
 > **Contexto:** el proyecto tiene **96 casos de uso totales**. En el **Incremento 1** se implementaron
 > **46** (CU-01 a CU-46), superando el 30% mínimo exigido por la rúbrica. Los restantes (50) se
@@ -70,6 +70,7 @@
 | 78 | Baja definitiva de equipo (directa o por solicitud del técnico) | `bajas`, `inventario/units`, `companies` | `/unidades/[id]`, `/bajas`, `Header` (campana) |
 | 79 | Acciones automáticas posteriores a la baja (exclusión del inventario activo) | `inventario/units`, `bodegas`, `companies` | `/dashboard`, `/bodegas`, `/unidades` (sin UI propia) |
 | 80 | Donación de equipos dados de baja + resumen en PDF | `donaciones` | `/bajas` (pestaña Donaciones) |
+| 81 | Préstamo externo de equipos y consumibles (PE-XXXXX) | `prestamos`, `inventario/units`, `bodegas` | `/prestamos` |
 
 ## 3. Diagramas disponibles (referencia para CUs pendientes)
 

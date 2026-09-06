@@ -120,7 +120,9 @@ Constante: `MAC_REGEX = /^([0-9A-Fa-f]{2}[:\\-]){5}[0-9A-Fa-f]{2}$/`.
 - **`transicionarEstado` (CU-35/36/40/78):**
   - **CU-36:** observación opcional, ≤300.
   - **Máquina de estados** (ver tabla en `03-base-de-datos.md`); **CU-35 Excepción 1:** transición
-    no permitida → `'Transición de estado no permitida para este equipo.'`.
+    no permitida → `'Transición de estado no permitida para este equipo.'`. La tabla vive en la
+    constante exportada **`TRANSICIONES_PERMITIDAS`** (CU-81): los módulos que hacen su propia
+    transacción (préstamos) la reutilizan en vez de duplicarla.
   - **CU-40 Excepción 1:** al pasar a `'En revisión'` el diagnóstico es obligatorio
     (`DIAGNOSTICOS_PERMITIDOS`); si es `'Otro'`, descripción obligatoria 5–200
     (`'Debe ingresar una descripción cuando selecciona Otro.'`).

@@ -83,6 +83,11 @@ Todas tipadas `<T>`. Nombre de endpoint backend en comentario:
 - `registrarDonacion({nombre_institucion, rut_institucion, fecha_donacion, numero_resolucion?, ids_unidades})` → `POST /donaciones`
 - `descargarPdfDonacion(id)` → `GET /donaciones/:id/pdf` vía `api.download` (el token va en el header)
 
+### Préstamos externos (CU-81)
+- `getPrestamos({estado?})` → `GET /prestamos`
+- `getPrestamoDetalle(id)` → `GET /prestamos/:id`
+- `registrarPrestamo(data)` → `POST /prestamos` (ADMIN_BODEGA, ADMIN, SUPERUSUARIO)
+
 ### Dashboards
 - `getDashboard()` → `GET /empresas/dashboard` (consolidado, SUPERUSUARIO) (CU-15)
 - `getMyDashboard()` → `GET /empresas/mi-dashboard` (CU-16)

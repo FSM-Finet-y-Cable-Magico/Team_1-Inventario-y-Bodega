@@ -1,0 +1,58 @@
+@startuml CU81-exc-ns-invalido
+title CU-81 — Excepción 1: un NS no existe o no está en bodega
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega" as user
+participant "V_Prestamos" as view
+participant "C_PrestamosController" as ctrl
+participant "C_PrestamosService" as svc
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as uent
+participant "prestamo_externo" as pent
+
+user -> view : Agrega al listado un NS inexistente\ny otro que ya no está en bodega
+activate view
+
+view -> ctrl : POST /api/prestamos\n{ ..., numeros_serie: ["SN-NO-EXISTE",\n"SN-CU78-001", "SN-CU81-001"] }
+activate ctrl
+
+ctrl -> svc : registrar(dto, actor)
+activate svc
+
+svc -> svc : validarFormulario() → OK
+activate svc
+deactivate svc
+
+svc -> orm : find({ serialNumber: In(seriales) })
+activate orm
+orm -> uent : SELECT unidad_equipo\nWHERE numero_serie IN (:seriales)
+activate uent
+uent --> orm : SN-CU78-001 'Dado de baja'\nSN-CU81-001 'En bodega'\n(SN-NO-EXISTE sin resultado)
+deactivate uent
+orm --> svc : unidades encontradas
+deactivate orm
+
+svc -> svc : Revisa cada NS del listado:\nno encontrado → 'Número de serie no encontrado.'\nestado ≠ 'En bodega' → 'El equipo [NS] no está\ndisponible en esta bodega. Estado actual: [ESTADO].'
+activate svc
+svc --> ctrl : 400 BadRequestException\n'SN-NO-EXISTE: Número de serie no encontrado.\nEl equipo [SN-CU78-001] no está disponible en esta\nbodega. Estado actual: [Dado de baja].'
+deactivate svc
+deactivate svc
+
+note over pent : No se abre transacción:\nno hay préstamo ni descuento de stock
+
+ctrl --> view : 400 Bad Request
+deactivate ctrl
+view --> user : Error específico por cada NS inválido;\nno se registra el préstamo
+deactivate view
+
+@enduml
