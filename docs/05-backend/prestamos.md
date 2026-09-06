@@ -1,6 +1,6 @@
 # Backend — Módulo `prestamos`
 
-**Carpeta:** `codigo/backend-inventario/src/prestamos/` · **CU-81** y **CU-82** · Prepara CU-83.
+**Carpeta:** `codigo/backend-inventario/src/prestamos/` · **CU-81**, **CU-82** y **CU-83**.
 
 ## 1. Endpoints
 
@@ -10,7 +10,7 @@ service (patrón de `transferencias`/`bajas`).
 | Método | Ruta | Roles | Descripción |
 |--------|------|-------|-------------|
 | POST | `/api/prestamos` | `ADMIN_BODEGA`, `ADMIN`, `SUPERUSUARIO` | CU-81: registra el préstamo (transacción completa). |
-| GET | `/api/prestamos` | idem | Listado con filtro `?estado=`. **La tabla completa con días restantes y vencimientos es CU-83.** |
+| GET | `/api/prestamos` | idem | CU-83: tabla con filtros `?estado=` y `?id_empresa=`, días restantes y resumen de ítems. |
 | GET | `/api/prestamos/:id` | idem | Detalle con los ítems prestados y sus retornos previos. |
 | POST | `/api/prestamos/:id/retorno` | idem | CU-82: retorno total o parcial. |
 
@@ -108,7 +108,23 @@ aplica ninguno.
   queda nada pendiente; si queda algo, sigue `Activo`.
 - Auditoría **`RETORNO_PRESTAMO`** con correlativo, fecha, unidades, consumibles y estado resultante.
 
-## 8. Pendiente para los CUs siguientes
+## 8. CU-83 — Tabla de préstamos activos
 
-- **CU-83** (tabla de activos): días restantes, aviso `Vencido hace N días` y filtro por empresa.
+- `dias_restantes` se calcula **en el servidor** (`fecha_estimada_retorno - hoy`, zona
+  `America/Santiago`) y es `null` en los préstamos ya cerrados. Negativo = vencido; el frontend
+  lo muestra como `Vencido hace N días` en rojo.
+- `items_resumen` acompaña cada fila con el tipo, la descripción y la cantidad de cada ítem.
+- Filtros: `estado` (por defecto la página pide `Activo`) e `id_empresa`. **El filtro por empresa
+  solo lo aplica el Superusuario**: a los demás se les fija su propia empresa, así que pasar
+  `id_empresa` de otra empresa no cambia nada.
+- La tabla incluye los préstamos `tipo = 'REPARACION_EXTERNA'` (CU-75, Grupo 3): comparten tabla y
+  se distinguen con un badge.
+- Es una consulta: **no audita**.
+- Excepción 1: la lista vacía no es error; el `EmptyState` del frontend muestra
+  `No hay préstamos externos activos actualmente.` cuando el filtro activo es `Activo`.
+
+## 9. Pendiente para los CUs siguientes
+
 - **CU-84**: las validaciones de trazabilidad ya viven aquí; ese CU las formaliza y documenta.
+- **CU-76** (Grupo 3): el reingreso desde reparación externa reutiliza esta tabla; la acción
+  "Reingreso" en la fila queda para ese CU.

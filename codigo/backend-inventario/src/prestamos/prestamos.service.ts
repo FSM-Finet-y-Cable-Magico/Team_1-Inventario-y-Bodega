@@ -422,14 +422,19 @@ export class PrestamosService {
     }
   }
 
-  // Listado básico de préstamos (la tabla completa con días restantes es CU-83)
+  // CU-83: tabla de préstamos con días restantes y filtros por estado y empresa
   async listar(
-    filtros: { estado?: string },
+    filtros: { estado?: string; id_empresa?: number },
     actor: ActorJwt,
   ): Promise<Record<string, unknown>[]> {
     const where: Record<string, unknown> = {};
     if (filtros.estado) where.estado = filtros.estado;
-    if (!this.esSuperusuario(actor)) where.id_empresa = actor.id_empresa;
+    // Aislamiento: solo el Superusuario puede filtrar por otra empresa
+    if (!this.esSuperusuario(actor)) {
+      where.id_empresa = actor.id_empresa;
+    } else if (filtros.id_empresa) {
+      where.id_empresa = filtros.id_empresa;
+    }
 
     const prestamos = await this.prestamoRepository.find({
       where,
@@ -448,8 +453,31 @@ export class PrestamosService {
     );
     const mapaEmpresas = new Map(EMPRESAS.map((e) => [e.id, e.nombre]));
 
+    // CU-83: días restantes calculados en el servidor (zona America/Santiago)
+    const hoy = new Date(
+      new Date().toLocaleDateString('en-CA', { timeZone: 'America/Santiago' }),
+    );
+    const tiposEquipo = await this.tipoRepository.findBy({
+      id_tipo_equipo: In([
+        ...new Set(
+          detalles
+            .map((d) => d.id_tipo_equipo)
+            .filter((id): id is number => id !== null),
+        ),
+      ]),
+    });
+    const mapaTipos = new Map(
+      tiposEquipo.map((t) => [t.id_tipo_equipo, t.nombre]),
+    );
+
     return prestamos.map((p) => {
       const propios = detalles.filter((d) => d.id_prestamo === p.id_prestamo);
+      const vencimiento = new Date(
+        `${String(p.fecha_estimada_retorno).slice(0, 10)}T00:00:00`,
+      );
+      const diasRestantes = Math.round(
+        (vencimiento.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24),
+      );
       return {
         id_prestamo: p.id_prestamo,
         correlativo: p.correlativo,
@@ -464,6 +492,23 @@ export class PrestamosService {
         registrado_por: mapaUsuarios.get(p.id_usuario) ?? null,
         equipos: propios.filter((d) => d.id_unidad !== null).length,
         consumibles: propios.filter((d) => d.id_unidad === null).length,
+        // CU-83: negativo cuando ya pasó la fecha estimada de retorno.
+        // Solo tiene sentido mientras el préstamo sigue activo.
+        dias_restantes: p.estado === PRESTAMO_ACTIVO ? diasRestantes : null,
+        // CU-83: resumen de ítems para la fila de la tabla
+        items_resumen: propios.map((d) =>
+          d.id_unidad !== null
+            ? {
+                tipo: 'Equipo',
+                descripcion: mapaTipos.get(d.id_tipo_equipo ?? 0) ?? null,
+                cantidad: 1,
+              }
+            : {
+                tipo: 'Consumible',
+                descripcion: mapaTipos.get(d.id_tipo_equipo ?? 0) ?? null,
+                cantidad: Number(d.cantidad ?? 0),
+              },
+        ),
       };
     });
   }

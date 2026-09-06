@@ -28,10 +28,18 @@ export class PrestamosController {
     return this.prestamosService.registrar(dto, actor);
   }
 
+  // CU-83: tabla de préstamos, filtrable por estado y (solo superusuario) empresa
   @Get()
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
-  listar(@Query('estado') estado: string, @CurrentUser() actor: ActorJwt) {
-    return this.prestamosService.listar({ estado }, actor);
+  listar(
+    @Query('estado') estado: string,
+    @Query('id_empresa') idEmpresa: string,
+    @CurrentUser() actor: ActorJwt,
+  ) {
+    return this.prestamosService.listar(
+      { estado, id_empresa: idEmpresa ? +idEmpresa : undefined },
+      actor,
+    );
   }
 
   @Get(':id')

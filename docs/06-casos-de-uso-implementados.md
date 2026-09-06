@@ -1,4 +1,4 @@
-# Casos de uso — Estado de implementación (CU-01 a CU-47, CU-78 a CU-82)
+# Casos de uso — Estado de implementación (CU-01 a CU-47, CU-78 a CU-83)
 
 > **Contexto:** el proyecto tiene **96 casos de uso totales**. En el **Incremento 1** se implementaron
 > **46** (CU-01 a CU-46), superando el 30% mínimo exigido por la rúbrica. Los restantes (50) se
@@ -72,6 +72,7 @@
 | 80 | Donación de equipos dados de baja + resumen en PDF | `donaciones` | `/bajas` (pestaña Donaciones) |
 | 81 | Préstamo externo de equipos y consumibles (PE-XXXXX) | `prestamos`, `inventario/units`, `bodegas` | `/prestamos` |
 | 82 | Retorno total o parcial de préstamo externo | `prestamos`, `inventario/units`, `bodegas` | `/prestamos` |
+| 83 | Tabla de préstamos externos activos (días restantes, filtros) | `prestamos` | `/prestamos` |
 
 ## 3. Diagramas disponibles (referencia para CUs pendientes)
 

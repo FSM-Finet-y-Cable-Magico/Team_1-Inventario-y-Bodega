@@ -221,6 +221,9 @@ export interface PrestamoExterno {
 	registrado_por: string | null;
 	equipos: number;
 	consumibles: number;
+	// CU-83: negativo si ya venció; null cuando el préstamo está cerrado
+	dias_restantes?: number | null;
+	items_resumen?: { tipo: string; descripcion: string | null; cantidad: number }[];
 }
 
 export interface PrestamoItem {

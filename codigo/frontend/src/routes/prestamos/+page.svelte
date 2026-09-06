@@ -2,9 +2,10 @@
 	import { onMount } from 'svelte';
 	import {
 		getPrestamos, getPrestamoDetalle, registrarPrestamo, registrarRetornoPrestamo,
-		getUnits, getWarehouses, getWarehouseStock
+		getUnits, getWarehouses, getWarehouseStock, getEmpresas
 	} from '$lib/api/index';
-	import type { PrestamoExterno, PrestamoDetalleCompleto, UnidadEquipo, Bodega } from '$lib/types';
+	import { userRoles } from '$lib/stores/auth';
+	import type { PrestamoExterno, PrestamoDetalleCompleto, UnidadEquipo, Bodega, Empresa } from '$lib/types';
 	import Button from '$lib/components/Button.svelte';
 	import Modal from '$lib/components/Modal.svelte';
 	import FormField from '$lib/components/FormField.svelte';
@@ -19,6 +20,13 @@
 	let loading = $state(true);
 	let error = $state('');
 	let success = $state('');
+
+	// CU-83: la tabla muestra los préstamos activos y se filtra por estado y empresa
+	let filtros = $state({ estado: 'Activo', id_empresa: '' });
+	let empresas = $state<Empresa[]>([]);
+	let roles = $state<string[]>([]);
+	userRoles.subscribe((r) => (roles = r));
+	const esSuperusuario = $derived(roles.includes('SUPERUSUARIO'));
 
 	let showCreate = $state(false);
 	let createForm = $state({
@@ -54,6 +62,20 @@
 	const estadoBadge: Record<string, string> = { Activo: 'info', Cerrado: 'default' };
 	const hoyISO = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
 
+	// CU-83: texto de días restantes; vencido se muestra en rojo
+	function textoVencimiento(dias: number | null | undefined): string {
+		if (dias === null || dias === undefined) return '-';
+		if (dias < 0) return `Vencido hace ${Math.abs(dias)} ${Math.abs(dias) === 1 ? 'día' : 'días'}`;
+		if (dias === 0) return 'Vence hoy';
+		return `${dias} ${dias === 1 ? 'día' : 'días'}`;
+	}
+
+	// CU-83: la tabla incluye los préstamos por reparación externa (CU-75, misma tabla)
+	const tipoLabel: Record<string, string> = {
+		PRESTAMO: 'Préstamo',
+		REPARACION_EXTERNA: 'Reparación externa'
+	};
+
 	function fmtFecha(fecha: string | null): string {
 		if (!fecha) return '-';
 		return new Date(fecha).toLocaleDateString('en-GB', {
@@ -73,7 +95,10 @@
 		error = '';
 		try {
 			const [lista, whData, unitsData] = await Promise.all([
-				getPrestamos(),
+				getPrestamos({
+					estado: filtros.estado || undefined,
+					id_empresa: filtros.id_empresa || undefined
+				}),
 				getWarehouses({ activa: true }),
 				getUnits()
 			]);
@@ -87,7 +112,22 @@
 		}
 	}
 
-	onMount(load);
+	onMount(async () => {
+		load();
+		// CU-83: el filtro por empresa solo tiene sentido para el Superusuario
+		try {
+			empresas = await getEmpresas();
+		} catch {
+			/* sin permiso: el filtro no se muestra */
+		}
+	});
+
+	// CU-83: recargar al cambiar los filtros
+	$effect(() => {
+		filtros.estado;
+		filtros.id_empresa;
+		load();
+	});
 
 	// Al cambiar la bodega de origen se recarga su stock de consumibles
 	$effect(() => {
@@ -289,6 +329,25 @@
 		</div>
 	</div>
 
+	<!-- CU-83: filtros por estado y por empresa (empresa solo para SUPERUSUARIO) -->
+	<div class="flex flex-wrap items-center gap-3 mb-4">
+		<select bind:value={filtros.estado} aria-label="Filtrar por estado"
+			class="px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+			<option value="Activo">Activos</option>
+			<option value="Cerrado">Cerrados</option>
+			<option value="">Todos</option>
+		</select>
+		{#if esSuperusuario && empresas.length > 0}
+			<select bind:value={filtros.id_empresa} aria-label="Filtrar por empresa"
+				class="px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+				<option value="">Todas las empresas</option>
+				{#each empresas as emp}
+					<option value={String(emp.id)}>{emp.nombre}</option>
+				{/each}
+			</select>
+		{/if}
+	</div>
+
 	{#if error}
 		<div class="bg-red-50 border border-red-200 text-destructive rounded-md p-4 text-sm mb-4">{error}</div>
 	{/if}
@@ -300,16 +359,23 @@
 		{#if loading}
 			<div class="p-8 text-center text-sm text-muted">Cargando...</div>
 		{:else if prestamos.length === 0}
-			<EmptyState message="No hay préstamos externos registrados." action={abrirCreacion} actionlabel="Nuevo préstamo externo" />
+			<!-- CU-83 Excepción 1: mensaje exacto cuando no hay préstamos activos -->
+			<EmptyState
+				message={filtros.estado === 'Activo'
+					? 'No hay préstamos externos activos actualmente.'
+					: 'No se encontraron préstamos con los filtros seleccionados.'}
+				action={abrirCreacion} actionlabel="Nuevo préstamo externo" />
 		{:else}
 			<div class="overflow-x-auto">
 				<table class="w-full text-sm">
 					<thead>
 						<tr class="border-b border-border bg-surface/50">
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">N° préstamo</th>
+							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Tipo</th>
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Receptor</th>
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Salida</th>
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Retorno estimado</th>
+							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Días restantes</th>
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Ítems</th>
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Estado</th>
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Registrado por</th>
@@ -320,14 +386,29 @@
 						{#each prestamos as p, i}
 							<tr class="border-b border-border {i % 2 === 0 ? 'bg-white' : 'bg-surface/30'}">
 								<td class="px-4 py-3 font-mono text-foreground">{p.correlativo}</td>
+								<td class="px-4 py-3">
+									<!-- CU-83: la tabla incluye las reparaciones externas (CU-75) -->
+									<Badge variant={p.tipo === 'REPARACION_EXTERNA' ? 'warning' : 'default'}>
+										{tipoLabel[p.tipo] ?? p.tipo}
+									</Badge>
+								</td>
 								<td class="px-4 py-3 text-foreground">
 									{p.nombre_receptor}
 									{#if p.rut_receptor}<span class="text-muted"> · {p.rut_receptor}</span>{/if}
 								</td>
 								<td class="px-4 py-3 text-muted whitespace-nowrap">{fmtFecha(p.fecha_salida)}</td>
 								<td class="px-4 py-3 text-muted whitespace-nowrap">{fmtFecha(p.fecha_estimada_retorno)}</td>
+								<!-- CU-83: días restantes; vencido en rojo -->
+								<td class="px-4 py-3 whitespace-nowrap {(p.dias_restantes ?? 0) < 0 ? 'text-destructive font-medium' : 'text-foreground'}">
+									{textoVencimiento(p.dias_restantes)}
+								</td>
 								<td class="px-4 py-3 text-foreground">
 									{p.equipos} equipo(s){p.consumibles > 0 ? ` · ${p.consumibles} consumible(s)` : ''}
+									{#if p.items_resumen && p.items_resumen.length > 0}
+										<p class="text-xs text-muted mt-0.5">
+											{p.items_resumen.map((i) => `${i.descripcion ?? i.tipo} (${i.cantidad})`).join(' · ')}
+										</p>
+									{/if}
 								</td>
 								<td class="px-4 py-3">
 									<Badge variant={(estadoBadge[p.estado] ?? 'default') as 'default' | 'info' | 'success' | 'warning' | 'danger'}>

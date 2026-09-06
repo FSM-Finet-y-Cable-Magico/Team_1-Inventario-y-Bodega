@@ -128,12 +128,16 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
 - El PDF se descarga con `api.download` (el enlace directo no sirve: la ruta exige token).
 
 ### `/prestamos`
-- **CUs:** CU-81 (registrar préstamo externo), CU-82 (retorno total o parcial).
+- **CUs:** CU-81 (registrar préstamo externo), CU-82 (retorno total o parcial),
+  CU-83 (tabla de activos).
 - **Endpoints:** `getPrestamos()`, `getPrestamoDetalle()`, `registrarPrestamo()`, más
   `getUnits()`, `getWarehouses()` y `getWarehouseStock()` para los selectores.
 - Los equipos se agregan por NS (solo unidades `En bodega` de la bodega de origen) y los
   consumibles por tipo + cantidad, mostrando el saldo disponible.
 - Validación en vivo de los mensajes de CU-59 antes de enviar; el backend los repite.
+- **CU-83:** por defecto muestra los `Activo`; filtros de estado y de empresa (este último solo
+  para `SUPERUSUARIO`), badge por tipo (Préstamo / Reparación externa), columna de días restantes
+  con `Vencido hace N días` en rojo y `EmptyState` con el mensaje exacto del caso de uso.
 - **CU-82:** modal "Registrar retorno" (solo en préstamos `Activo`) con fecha limitada a hoy
   (`max`), selección de ítems respetando lo ya devuelto, cantidad por consumible, observación
   con contador y el historial de retornos previos de cada ítem.

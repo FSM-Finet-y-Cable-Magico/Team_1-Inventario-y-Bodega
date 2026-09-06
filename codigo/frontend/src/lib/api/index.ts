@@ -174,9 +174,11 @@ export function descargarPdfDonacion(id: number) {
 }
 
 // CU-81: préstamos externos de equipos y consumibles
-export function getPrestamos(params?: { estado?: string }) {
+export function getPrestamos(params?: { estado?: string; id_empresa?: string }) {
 	const qs = new URLSearchParams();
 	if (params?.estado) qs.set('estado', params.estado);
+	// CU-83: filtro por empresa (solo lo aplica el backend para SUPERUSUARIO)
+	if (params?.id_empresa) qs.set('id_empresa', params.id_empresa);
 	const query = qs.toString();
 	return api.get<import('$lib/types').PrestamoExterno[]>(`/prestamos${query ? '?' + query : ''}`);
 }
