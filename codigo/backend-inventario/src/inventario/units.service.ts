@@ -22,7 +22,9 @@ export const TRANSICIONES_PERMITIDAS: Record<string, string[]> = {
     'Asignado a técnico': ['Instalado en cliente', 'En bodega', 'En revisión'],
     'Instalado en cliente': ['En revisión'],
     'En revisión': ['En bodega', 'En préstamo externo', 'Dado de baja'],
-    'En préstamo externo': ['En bodega'],
+    // CU-82: 'En revisión' se agregó con la ratificación del jefe de grupo para que
+    // el retorno de un préstamo externo pase el equipo a revisión (también CU-76).
+    'En préstamo externo': ['En bodega', 'En revisión'],
     'Dado de baja': [],
 };
 

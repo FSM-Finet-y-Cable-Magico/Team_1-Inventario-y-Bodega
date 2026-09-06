@@ -11,6 +11,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { PrestamosService } from './prestamos.service';
 import type { ActorJwt } from './prestamos.service';
 import { CreatePrestamoDto } from './dto/create-prestamo.dto';
+import { RegistrarRetornoDto } from './dto/registrar-retorno.dto';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -37,5 +38,16 @@ export class PrestamosController {
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   detalle(@Param('id') id: string, @CurrentUser() actor: ActorJwt) {
     return this.prestamosService.obtenerDetalle(+id, actor);
+  }
+
+  // CU-82: retorno total o parcial del préstamo
+  @Post(':id/retorno')
+  @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
+  registrarRetorno(
+    @Param('id') id: string,
+    @Body() dto: RegistrarRetornoDto,
+    @CurrentUser() actor: ActorJwt,
+  ) {
+    return this.prestamosService.registrarRetorno(+id, dto, actor);
   }
 }

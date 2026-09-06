@@ -1,0 +1,73 @@
+@startuml CU82-normal-parcial
+title CU-82 — Retorno parcial: el préstamo sigue activo
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega" as user
+participant "V_Prestamos" as view
+participant "C_PrestamosService" as svc
+participant "C_TypeORM" as orm
+participant "prestamo_detalle" as dent
+participant "unidad_equipo" as uent
+participant "stock_consumible" as sent
+participant "prestamo_retorno" as rent
+participant "prestamo_externo" as pent
+
+user -> view : Devuelve solo 1 de 2 equipos\ny 10 de los 25 metros prestados
+activate view
+
+view -> svc : POST /api/prestamos/1/retorno\n{ items: [{ id_detalle: 1 },\n{ id_detalle: 3, cantidad: 10 }] }
+activate svc
+
+svc -> svc : Valida fecha, pertenencia de los ítems\ny que 10 ≤ pendiente (25)
+activate svc
+deactivate svc
+
+svc -> orm : Transacción: unidad + consumible + trazabilidad
+activate orm
+orm -> uent : UPDATE unidad_equipo\nSET estado = 'En revisión'\n(solo la unidad devuelta)
+activate uent
+uent --> orm : SN-CU81-002 en revisión
+deactivate uent
+orm -> sent : UPDATE stock_consumible\nSET cantidad_disponible = cantidad_disponible + 10
+activate sent
+sent --> orm : Saldo 55 → 65
+deactivate sent
+orm -> dent : UPDATE prestamo_detalle\nSET cantidad_retornada = 10 (de 25)
+activate dent
+dent --> orm : Ítem parcialmente retornado
+deactivate dent
+orm -> rent : INSERT prestamo_retorno (x2)
+activate rent
+rent --> orm : Retornos registrados
+deactivate rent
+orm --> svc : cambios aplicados
+deactivate orm
+
+svc -> orm : ¿Queda pendiente?
+activate orm
+orm -> dent : SELECT prestamo_detalle WHERE id_prestamo = 1
+activate dent
+dent --> orm : 1 unidad sin retornar y 15 metros pendientes
+deactivate dent
+orm --> svc : sí, queda pendiente
+deactivate orm
+
+note over pent : El préstamo NO se cierra:\nestado sigue 'Activo'
+
+svc --> view : 201 { estado: 'Activo',\nmessage: 'Retorno parcial registrado...' }
+deactivate svc
+
+view --> user : "Retorno parcial registrado en el préstamo\nPE-00001. Quedan ítems pendientes de devolución."
+deactivate view
+
+@enduml

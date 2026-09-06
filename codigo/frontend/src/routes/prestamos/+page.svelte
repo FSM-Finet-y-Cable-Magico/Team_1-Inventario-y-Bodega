@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import {
-		getPrestamos, getPrestamoDetalle, registrarPrestamo,
+		getPrestamos, getPrestamoDetalle, registrarPrestamo, registrarRetornoPrestamo,
 		getUnits, getWarehouses, getWarehouseStock
 	} from '$lib/api/index';
 	import type { PrestamoExterno, PrestamoDetalleCompleto, UnidadEquipo, Bodega } from '$lib/types';
@@ -10,7 +10,7 @@
 	import FormField from '$lib/components/FormField.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
-	import { Plus, RotateCw, Eye, Trash2 } from '@lucide/svelte';
+	import { Plus, RotateCw, Eye, Trash2, PackageCheck } from '@lucide/svelte';
 
 	// CU-81: registro de préstamos externos de equipos y consumibles
 	let prestamos = $state<PrestamoExterno[]>([]);
@@ -38,6 +38,14 @@
 	let stockBodega = $state<any[]>([]);
 	let consumibleSeleccionado = $state(0);
 	let cantidadConsumible = $state(1);
+
+	// CU-82: registro del retorno (total o parcial) del préstamo
+	let showRetorno = $state(false);
+	let retornoPrestamo = $state<PrestamoDetalleCompleto | null>(null);
+	let retornoForm = $state({ fecha_retorno: '', observacion: '' });
+	let retornoSeleccion = $state<Record<number, number>>({});
+	let retornoError = $state('');
+	let registrandoRetorno = $state(false);
 
 	let detalle = $state<PrestamoDetalleCompleto | null>(null);
 	let showDetalle = $state(false);
@@ -193,6 +201,64 @@
 		}
 	}
 
+	// CU-82: cada ítem muestra lo pendiente de devolver
+	function pendienteDe(item: { es_consumible: boolean; cantidad: number | null; cantidad_retornada: number }): number {
+		return item.es_consumible
+			? Number(item.cantidad ?? 0) - Number(item.cantidad_retornada ?? 0)
+			: Number(item.cantidad_retornada ?? 0) > 0 ? 0 : 1;
+	}
+
+	async function abrirRetorno(id: number) {
+		retornoError = '';
+		retornoForm = { fecha_retorno: hoyISO, observacion: '' };
+		retornoSeleccion = {};
+		registrandoRetorno = false;
+		showRetorno = true;
+		retornoPrestamo = null;
+		try {
+			retornoPrestamo = await getPrestamoDetalle(id);
+		} catch (err: unknown) {
+			retornoError = err instanceof Error ? err.message : 'Error al cargar el préstamo';
+		}
+	}
+
+	function alternarItemRetorno(idDetalle: number, pendiente: number, esConsumible: boolean) {
+		if (retornoSeleccion[idDetalle] !== undefined) {
+			const { [idDetalle]: _, ...resto } = retornoSeleccion;
+			retornoSeleccion = resto;
+		} else {
+			retornoSeleccion = { ...retornoSeleccion, [idDetalle]: esConsumible ? pendiente : 1 };
+		}
+	}
+
+	async function handleRetorno() {
+		if (!retornoPrestamo) return;
+		retornoError = '';
+		const items = Object.entries(retornoSeleccion).map(([id, cantidad]) => ({
+			id_detalle: Number(id),
+			cantidad: Number(cantidad)
+		}));
+		if (items.length === 0) {
+			retornoError = 'Debe indicar al menos un ítem retornado.';
+			return;
+		}
+		registrandoRetorno = true;
+		try {
+			const resultado = await registrarRetornoPrestamo(retornoPrestamo.id_prestamo, {
+				fecha_retorno: retornoForm.fecha_retorno,
+				observacion: retornoForm.observacion.trim() || undefined,
+				items
+			});
+			showRetorno = false;
+			success = resultado?.message ?? 'Retorno registrado';
+			await load();
+		} catch (err: unknown) {
+			retornoError = err instanceof Error ? err.message : 'Error al registrar el retorno';
+		} finally {
+			registrandoRetorno = false;
+		}
+	}
+
 	async function verDetalle(id: number) {
 		loadingDetalle = true;
 		showDetalle = true;
@@ -270,11 +336,21 @@
 								</td>
 								<td class="px-4 py-3 text-muted">{p.registrado_por ?? '-'}</td>
 								<td class="px-4 py-3">
-									<button onclick={() => verDetalle(p.id_prestamo)}
-										class="inline-flex items-center gap-1 text-accent hover:underline" aria-label="Ver detalle">
-										<Eye class="h-4 w-4" />
-										Ver detalle
-									</button>
+									<div class="flex items-center gap-3">
+										<button onclick={() => verDetalle(p.id_prestamo)}
+											class="inline-flex items-center gap-1 text-accent hover:underline" aria-label="Ver detalle">
+											<Eye class="h-4 w-4" />
+											Ver detalle
+										</button>
+										<!-- CU-82: registrar el retorno mientras el préstamo siga activo -->
+										{#if p.estado === 'Activo'}
+											<button onclick={() => abrirRetorno(p.id_prestamo)}
+												class="inline-flex items-center gap-1 text-emerald-700 hover:underline" aria-label="Registrar retorno">
+												<PackageCheck class="h-4 w-4" />
+												Registrar retorno
+											</button>
+										{/if}
+									</div>
 								</td>
 							</tr>
 						{/each}
@@ -431,4 +507,92 @@
 			</div>
 		</div>
 	{/if}
+</Modal>
+
+<!-- CU-82: registro del retorno total o parcial del préstamo -->
+<Modal title="Registrar retorno" open={showRetorno} onclose={() => (showRetorno = false)}>
+	<form onsubmit={(e: Event) => { e.preventDefault(); handleRetorno(); }} class="space-y-4">
+		{#if retornoError}
+			<div class="bg-red-50 border border-red-200 text-destructive text-sm rounded-md px-3 py-2">{retornoError}</div>
+		{/if}
+
+		{#if !retornoPrestamo}
+			<p class="text-sm text-muted">Cargando préstamo...</p>
+		{:else}
+			<div class="grid grid-cols-2 gap-3 text-sm">
+				<div><span class="text-muted">N° préstamo:</span> <span class="font-mono text-foreground">{retornoPrestamo.correlativo}</span></div>
+				<div><span class="text-muted">Receptor:</span> <span class="text-foreground">{retornoPrestamo.nombre_receptor}</span></div>
+				<div><span class="text-muted">Fecha de salida:</span> <span class="text-foreground">{fmtFecha(retornoPrestamo.fecha_salida)}</span></div>
+				<div><span class="text-muted">Retorno estimado:</span> <span class="text-foreground">{fmtFecha(retornoPrestamo.fecha_estimada_retorno)}</span></div>
+			</div>
+
+			<!-- CU-82 Excepción 1: la fecha de retorno no puede ser futura -->
+			<FormField label="Fecha de retorno real" name="ret_fecha" required helper="No puede ser una fecha futura">
+				<input id="ret_fecha" type="date" required bind:value={retornoForm.fecha_retorno} max={hoyISO}
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+			</FormField>
+
+			<!-- CU-82: retorno parcial permitido; se muestran los retornos previos -->
+			<FormField label="Ítems retornados en esta instancia" name="ret_items" required
+				helper="Marque solo lo que se devuelve ahora">
+				<div class="border border-border rounded-md divide-y divide-border max-h-64 overflow-y-auto">
+					{#each retornoPrestamo.items as item}
+						{@const pendiente = pendienteDe(item)}
+						<div class="px-3 py-2 text-sm {pendiente === 0 ? 'bg-surface/50' : ''}">
+							<label class="flex items-center gap-3 {pendiente === 0 ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}">
+								<input type="checkbox" disabled={pendiente === 0}
+									checked={retornoSeleccion[item.id_detalle] !== undefined}
+									onchange={() => alternarItemRetorno(item.id_detalle, pendiente, item.es_consumible)}
+									class="text-accent" />
+								<span class="flex-1">
+									{#if item.es_consumible}
+										<span class="text-foreground">{item.tipo_equipo ?? '-'}</span>
+										<span class="text-muted">
+											· prestado {item.cantidad}{item.unidad_medida ? ` ${item.unidad_medida}` : ''}
+											· pendiente {pendiente}
+										</span>
+									{:else}
+										<span class="font-mono text-foreground">{item.numero_serie}</span>
+										<span class="text-muted"> · {item.tipo_equipo ?? '-'}</span>
+										{#if pendiente === 0}<span class="text-muted"> · ya retornado</span>{/if}
+									{/if}
+								</span>
+								{#if item.es_consumible && retornoSeleccion[item.id_detalle] !== undefined}
+									<input type="number" min="1" max={pendiente}
+										value={retornoSeleccion[item.id_detalle]}
+										onchange={(e) => (retornoSeleccion = { ...retornoSeleccion, [item.id_detalle]: Number((e.currentTarget as HTMLInputElement).value) })}
+										aria-label="Cantidad a retornar"
+										class="w-24 px-2 py-1 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+								{/if}
+							</label>
+
+							{#if item.retornos_previos && item.retornos_previos.length > 0}
+								<p class="text-xs text-muted mt-1 ml-7">
+									Retornos previos:
+									{#each item.retornos_previos as r, i}
+										{i > 0 ? ' · ' : ' '}{fmtFecha(r.fecha_retorno)}{r.cantidad !== null ? ` (${r.cantidad})` : ''}
+									{/each}
+								</p>
+							{/if}
+						</div>
+					{/each}
+				</div>
+			</FormField>
+
+			<FormField label="Observación" name="ret_obs" helper="Opcional, máximo 300 caracteres ({retornoForm.observacion.length}/300)">
+				<textarea id="ret_obs" bind:value={retornoForm.observacion} rows="2" maxlength={300}
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
+			</FormField>
+
+			<p class="text-xs text-muted">
+				Los equipos retornados pasan a estado "En revisión" y los consumibles vuelven al stock de
+				{retornoPrestamo.bodega_origen ?? 'la bodega de origen'}.
+			</p>
+		{/if}
+
+		<div class="flex justify-end gap-3 pt-2">
+			<Button variant="secondary" onclick={() => (showRetorno = false)} type="button">Cancelar</Button>
+			<Button type="submit" loading={registrandoRetorno} disabled={!retornoPrestamo}>Registrar retorno</Button>
+		</div>
+	</form>
 </Modal>

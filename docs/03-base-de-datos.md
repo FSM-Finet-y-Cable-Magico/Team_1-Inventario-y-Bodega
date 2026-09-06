@@ -139,7 +139,7 @@ replica el frontend):
 | `Asignado a técnico` | `Instalado en cliente`, `En bodega`, `En revisión` |
 | `Instalado en cliente` | `En revisión` |
 | `En revisión` | `En bodega`, `En préstamo externo`, `Dado de baja` |
-| `En préstamo externo` | `En bodega` |
+| `En préstamo externo` | `En bodega`, `En revisión` |
 | `Dado de baja` | *(ninguno, estado terminal)* |
 
 Reglas asociadas:
@@ -153,6 +153,10 @@ Reglas asociadas:
   `Obsolescencia`, `Donación a institución`, `Otro`; con `Otro` exige descripción de 5–200). Queda
   en `unidad_equipo.motivo_baja` / `motivo_baja_detalle` y se audita como `BAJA_DEFINITIVA`.
   `Dado de baja` es **terminal e irreversible**: no se agregan transiciones de salida.
+- **CU-82 (transición ampliada, ratificada por el jefe de grupo):** `En préstamo externo` admite
+  ahora `En revisión`, porque el retorno de un préstamo externo deja el equipo en revisión (el JSON
+  del CU lo exige, y CU-76 usa la misma salida). Antes solo permitía `En bodega`. El retorno **no**
+  pide diagnóstico técnico: la obligación de CU-40 aplica al cambio de estado manual, no a este flujo.
 - **CU-81:** el paso a `En préstamo externo` lo hace `PrestamosService` dentro de su propia
   transacción, validando con la constante **`TRANSICIONES_PERMITIDAS`** que exporta
   `UnitsService` (la máquina de estados tiene un solo dueño). Las unidades se releen con

@@ -1,0 +1,17 @@
+import { IsArray, IsOptional, IsString } from 'class-validator';
+
+// CU-82: retorno total o parcial de un préstamo externo.
+// Cada ítem se identifica por su id_detalle; para consumibles se indica la
+// cantidad devuelta en esta instancia (las unidades individualizables ocupan un
+// detalle cada una, así que no necesitan cantidad).
+export class RegistrarRetornoDto {
+  @IsString()
+  fecha_retorno: string;
+
+  @IsOptional()
+  @IsString()
+  observacion?: string;
+
+  @IsArray()
+  items: { id_detalle: number; cantidad?: number }[];
+}

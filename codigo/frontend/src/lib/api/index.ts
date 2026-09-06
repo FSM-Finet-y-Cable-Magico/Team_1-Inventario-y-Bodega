@@ -197,6 +197,14 @@ export function registrarPrestamo(data: {
 	return api.post<any>('/prestamos', data);
 }
 
+// CU-82: retorno total o parcial de un préstamo externo
+export function registrarRetornoPrestamo(
+	id: number,
+	data: { fecha_retorno: string; observacion?: string; items: { id_detalle: number; cantidad?: number }[] }
+) {
+	return api.post<any>(`/prestamos/${id}/retorno`, data);
+}
+
 export function getUnitHistory(serialNumber: string) {
 	return api.get<any[]>(`/unidades/${serialNumber}/historial`);
 }

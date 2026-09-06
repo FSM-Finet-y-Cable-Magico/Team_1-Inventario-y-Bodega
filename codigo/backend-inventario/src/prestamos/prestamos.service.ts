@@ -7,7 +7,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, In, QueryRunner } from 'typeorm';
 import { PrestamoExterno } from './entities/prestamo-externo.entity';
 import { PrestamoDetalle } from './entities/prestamo-detalle.entity';
+import { PrestamoRetorno } from './entities/prestamo-retorno.entity';
 import { CreatePrestamoDto } from './dto/create-prestamo.dto';
+import { RegistrarRetornoDto } from './dto/registrar-retorno.dto';
 import { UnidadEquipo } from '../inventario/entities/unidad-equipo.entity';
 import { HistorialEstado } from '../inventario/entities/historial-estado.entity';
 import { TRANSICIONES_PERMITIDAS } from '../inventario/units.service';
@@ -20,6 +22,8 @@ import { EMPRESAS } from '../companies/companies.service';
 
 const ESTADO_EN_BODEGA = 'En bodega';
 const ESTADO_PRESTAMO = 'En préstamo externo';
+// CU-82: destino de las unidades retornadas (transición ampliada y ratificada)
+const ESTADO_REVISION = 'En revisión';
 export const PRESTAMO_ACTIVO = 'Activo';
 export const PRESTAMO_CERRADO = 'Cerrado';
 // CU-75 (Grupo 3) usará la variante 'REPARACION_EXTERNA' sobre la misma tabla
@@ -40,6 +44,8 @@ export class PrestamosService {
     private readonly prestamoRepository: Repository<PrestamoExterno>,
     @InjectRepository(PrestamoDetalle)
     private readonly detalleRepository: Repository<PrestamoDetalle>,
+    @InjectRepository(PrestamoRetorno)
+    private readonly retornoRepository: Repository<PrestamoRetorno>,
     @InjectRepository(UnidadEquipo)
     private readonly unidadRepository: Repository<UnidadEquipo>,
     @InjectRepository(StockConsumible)
@@ -462,6 +468,253 @@ export class PrestamosService {
     });
   }
 
+  // CU-82: retorno total o parcial de un préstamo externo
+  async registrarRetorno(
+    idPrestamo: number,
+    dto: RegistrarRetornoDto,
+    actor: ActorJwt,
+  ): Promise<Record<string, unknown>> {
+    const prestamo = await this.prestamoRepository.findOne({
+      where: { id_prestamo: idPrestamo },
+    });
+    if (!prestamo)
+      throw new NotFoundException(
+        `No existe el préstamo con ID [${idPrestamo}].`,
+      );
+    if (
+      !this.esSuperusuario(actor) &&
+      prestamo.id_empresa !== actor.id_empresa
+    ) {
+      throw new NotFoundException(
+        `No existe el préstamo con ID [${idPrestamo}].`,
+      );
+    }
+    if (prestamo.estado !== PRESTAMO_ACTIVO) {
+      throw new BadRequestException(
+        `El préstamo ${prestamo.correlativo} ya está cerrado: no admite nuevos retornos.`,
+      );
+    }
+
+    // CU-82 Excepción 1: mensaje exacto del caso de uso
+    const fechaRetorno = dto.fecha_retorno?.trim() ?? '';
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(fechaRetorno) ||
+      isNaN(new Date(fechaRetorno).getTime())
+    ) {
+      throw new BadRequestException(
+        'La fecha de retorno es obligatoria y debe tener el formato DD/MM/YYYY.',
+      );
+    }
+    if (
+      fechaRetorno >
+      new Date().toLocaleDateString('en-CA', { timeZone: 'America/Santiago' })
+    ) {
+      throw new BadRequestException('La fecha de retorno no puede ser futura.');
+    }
+
+    const observacion = dto.observacion?.trim() ?? '';
+    if (observacion.length > 300) {
+      throw new BadRequestException(
+        'La observación no puede superar los 300 caracteres.',
+      );
+    }
+
+    if (!Array.isArray(dto.items) || dto.items.length === 0) {
+      throw new BadRequestException('Debe indicar al menos un ítem retornado.');
+    }
+
+    // CU-84: trazabilidad — cada ítem debe pertenecer a este préstamo y no estar
+    // ya retornado; las cantidades no pueden superar lo prestado
+    const detalles = await this.detalleRepository.findBy({
+      id_prestamo: idPrestamo,
+    });
+    const errores: string[] = [];
+    const aRetornar: { detalle: PrestamoDetalle; cantidad: number }[] = [];
+
+    for (const item of dto.items) {
+      const detalle = detalles.find((d) => d.id_detalle === item.id_detalle);
+      if (!detalle) {
+        errores.push(
+          `El ítem #${item.id_detalle} no pertenece al préstamo ${prestamo.correlativo}.`,
+        );
+        continue;
+      }
+      if (detalle.id_unidad !== null) {
+        // Individualizable: un detalle por unidad, retorno completo o nada
+        if (Number(detalle.cantidad_retornada) > 0) {
+          errores.push(`El ítem #${item.id_detalle} ya fue retornado.`);
+          continue;
+        }
+        aRetornar.push({ detalle, cantidad: 1 });
+      } else {
+        const pendiente =
+          Number(detalle.cantidad ?? 0) -
+          Number(detalle.cantidad_retornada ?? 0);
+        const cantidad = Number(item.cantidad ?? 0);
+        if (isNaN(cantidad) || cantidad <= 0) {
+          errores.push(
+            `La cantidad retornada del ítem #${item.id_detalle} debe ser mayor que cero.`,
+          );
+          continue;
+        }
+        if (cantidad > pendiente) {
+          errores.push(
+            `La cantidad retornada del ítem #${item.id_detalle} (${cantidad}) supera lo pendiente (${pendiente}).`,
+          );
+          continue;
+        }
+        aRetornar.push({ detalle, cantidad });
+      }
+    }
+
+    if (errores.length > 0) throw new BadRequestException(errores.join(' '));
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const unidadesRetornadas: string[] = [];
+      const consumiblesRetornados: { tipo: number | null; cantidad: number }[] =
+        [];
+      const fechaHoraRetorno = new Date(`${fechaRetorno}T12:00:00`);
+
+      for (const { detalle, cantidad } of aRetornar) {
+        if (detalle.id_unidad !== null) {
+          // CU-82: la unidad retornada pasa a 'En revisión' (transición ratificada)
+          const unidades = await queryRunner.manager.find(UnidadEquipo, {
+            where: { id_unidad: detalle.id_unidad },
+            loadEagerRelations: false,
+            lock: { mode: 'pessimistic_write' },
+          });
+          const unidad = unidades[0];
+          if (!unidad)
+            throw new NotFoundException('El equipo solicitado no existe.');
+          if (unidad.estado !== ESTADO_PRESTAMO) {
+            throw new BadRequestException(
+              `El equipo [${unidad.serialNumber}] no está en préstamo externo. Estado actual: [${unidad.estado}].`,
+            );
+          }
+          if (
+            !TRANSICIONES_PERMITIDAS[unidad.estado]?.includes(ESTADO_REVISION)
+          ) {
+            throw new BadRequestException(
+              'Transición de estado no permitida para este equipo.',
+            );
+          }
+
+          unidad.estado = ESTADO_REVISION;
+          await queryRunner.manager.save(unidad);
+
+          await queryRunner.manager.save(
+            queryRunner.manager.create(HistorialEstado, {
+              id_unidad: unidad.id_unidad,
+              id_usuario: actor.id_usuario,
+              estadoAnterior: ESTADO_PRESTAMO,
+              estadoNuevo: ESTADO_REVISION,
+              motivo:
+                `Retorno de préstamo externo ${prestamo.correlativo}` +
+                (observacion ? `. Observación: ${observacion}` : ''),
+              fechaHora: new Date(
+                new Date().toLocaleString('en-US', {
+                  timeZone: 'America/Santiago',
+                }),
+              ),
+            }),
+          );
+          unidadesRetornadas.push(unidad.serialNumber);
+        } else {
+          // CU-82: el consumible vuelve al stock de la bodega de origen del préstamo
+          const filas = (await queryRunner.query(
+            `UPDATE stock_consumible SET cantidad_disponible = cantidad_disponible + $1
+             WHERE id_bodega = $2 AND id_tipo_equipo = $3 RETURNING id_stock`,
+            [cantidad, prestamo.id_bodega_origen, detalle.id_tipo_equipo],
+          )) as unknown[];
+          if (filas.length === 0) {
+            // La fila de stock puede no existir si se eliminó tras el préstamo
+            await queryRunner.query(
+              `INSERT INTO stock_consumible (id_tipo_equipo, id_bodega, cantidad_disponible)
+               VALUES ($1, $2, $3)`,
+              [detalle.id_tipo_equipo, prestamo.id_bodega_origen, cantidad],
+            );
+          }
+          consumiblesRetornados.push({
+            tipo: detalle.id_tipo_equipo,
+            cantidad,
+          });
+        }
+
+        detalle.cantidad_retornada =
+          Number(detalle.cantidad_retornada ?? 0) + cantidad;
+        await queryRunner.manager.save(detalle);
+
+        await queryRunner.manager.save(
+          this.retornoRepository.create({
+            id_detalle: detalle.id_detalle,
+            cantidad,
+            fecha_retorno: fechaHoraRetorno,
+            observacion: observacion || null,
+            id_usuario: actor.id_usuario,
+          }),
+        );
+      }
+
+      // CU-82: el préstamo se cierra solo cuando no queda nada pendiente
+      const detallesActualizados = await queryRunner.manager.find(
+        PrestamoDetalle,
+        {
+          where: { id_prestamo: idPrestamo },
+        },
+      );
+      const pendiente = detallesActualizados.some((d) =>
+        d.id_unidad !== null
+          ? Number(d.cantidad_retornada) === 0
+          : Number(d.cantidad_retornada) < Number(d.cantidad ?? 0),
+      );
+
+      if (!pendiente) {
+        prestamo.estado = PRESTAMO_CERRADO;
+        prestamo.fecha_retorno_real = fechaHoraRetorno;
+        prestamo.resultado_retorno = observacion || null;
+        await queryRunner.manager.save(prestamo);
+      }
+
+      await queryRunner.commitTransaction();
+
+      await this.auditoriaService.create({
+        id_usuario: actor.id_usuario,
+        accion: 'RETORNO_PRESTAMO',
+        entidad_afectada: 'prestamo_externo',
+        id_entidad_afectada: prestamo.id_prestamo,
+        valor_anterior: { estado: PRESTAMO_ACTIVO },
+        valor_nuevo: {
+          correlativo: prestamo.correlativo,
+          fecha_retorno: fechaRetorno,
+          unidades: unidadesRetornadas,
+          consumibles: consumiblesRetornados,
+          observacion: observacion || null,
+          estado: pendiente ? PRESTAMO_ACTIVO : PRESTAMO_CERRADO,
+        },
+      });
+
+      return {
+        success: true,
+        correlativo: prestamo.correlativo,
+        estado: pendiente ? PRESTAMO_ACTIVO : PRESTAMO_CERRADO,
+        unidades_retornadas: unidadesRetornadas.length,
+        consumibles_retornados: consumiblesRetornados.length,
+        message: pendiente
+          ? `Retorno parcial registrado en el préstamo ${prestamo.correlativo}. Quedan ítems pendientes de devolución.`
+          : `Retorno completo registrado: el préstamo ${prestamo.correlativo} quedó cerrado.`,
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
   async obtenerDetalle(
     idPrestamo: number,
     actor: ActorJwt,
@@ -500,6 +753,13 @@ export class PrestamosService {
       .filter((id): id is number => id !== null);
     const tipos = idsTipos.length
       ? await this.tipoRepository.findBy({ id_tipo_equipo: In(idsTipos) })
+      : [];
+    // CU-82: retornos previos de cada ítem
+    const retornos = detalles.length
+      ? await this.retornoRepository.find({
+          where: { id_detalle: In(detalles.map((d) => d.id_detalle)) },
+          order: { fecha_retorno: 'ASC' },
+        })
       : [];
     const bodega = await this.bodegaRepository.findOne({
       where: { id_bodega: prestamo.id_bodega_origen },
@@ -540,6 +800,14 @@ export class PrestamosService {
           cantidad: d.cantidad === null ? null : Number(d.cantidad),
           cantidad_retornada: Number(d.cantidad_retornada ?? 0),
           estado_unidad: unidad?.estado ?? null,
+          // CU-82: historial de retornos de este ítem
+          retornos_previos: retornos
+            .filter((r) => r.id_detalle === d.id_detalle)
+            .map((r) => ({
+              fecha_retorno: r.fecha_retorno,
+              cantidad: r.cantidad === null ? null : Number(r.cantidad),
+              observacion: r.observacion,
+            })),
         };
       }),
     };

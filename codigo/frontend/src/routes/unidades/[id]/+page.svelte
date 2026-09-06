@@ -83,7 +83,8 @@
 		'Asignado a técnico': ['Instalado en cliente', 'En bodega', 'En revisión'],
 		'Instalado en cliente': ['En revisión'],
 		'En revisión': ['En bodega', 'En préstamo externo', 'Dado de baja'],
-		'En préstamo externo': ['En bodega'],
+		// CU-82: transición ampliada (retorno de préstamo externo a revisión)
+		'En préstamo externo': ['En bodega', 'En revisión'],
 		'Dado de baja': []
 	};
 

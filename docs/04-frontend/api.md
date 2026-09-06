@@ -87,6 +87,7 @@ Todas tipadas `<T>`. Nombre de endpoint backend en comentario:
 - `getPrestamos({estado?})` → `GET /prestamos`
 - `getPrestamoDetalle(id)` → `GET /prestamos/:id`
 - `registrarPrestamo(data)` → `POST /prestamos` (ADMIN_BODEGA, ADMIN, SUPERUSUARIO)
+- `registrarRetornoPrestamo(id, {fecha_retorno, observacion?, items})` → `POST /prestamos/:id/retorno` (CU-82)
 
 ### Dashboards
 - `getDashboard()` → `GET /empresas/dashboard` (consolidado, SUPERUSUARIO) (CU-15)

@@ -234,6 +234,8 @@ export interface PrestamoItem {
 	cantidad: number | null;
 	cantidad_retornada: number;
 	estado_unidad: string | null;
+	// CU-82: retornos ya registrados para este ítem
+	retornos_previos?: { fecha_retorno: string; cantidad: number | null; observacion: string | null }[];
 }
 
 export interface PrestamoDetalleCompleto extends Omit<PrestamoExterno, 'equipos' | 'consumibles'> {

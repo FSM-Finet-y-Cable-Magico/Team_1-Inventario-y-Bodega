@@ -1,0 +1,149 @@
+@startuml CU82-normal-total
+title CU-82 — Registrando retorno de préstamo externo (retorno total)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega" as user
+participant "V_Prestamos" as view
+participant "C_PrestamosController" as ctrl
+participant "C_PrestamosService" as svc
+participant "C_TypeORM" as orm
+participant "prestamo_detalle" as dent
+participant "unidad_equipo" as uent
+participant "historial_estado_equipo" as hent
+participant "stock_consumible" as sent
+participant "prestamo_retorno" as rent
+participant "prestamo_externo" as pent
+participant "log_auditoria" as aent
+
+user -> view : Elige "Registrar retorno" en un préstamo Activo
+activate view
+
+view -> ctrl : GET /api/prestamos/:id
+activate ctrl
+ctrl -> svc : obtenerDetalle(id, actor)
+activate svc
+svc -> orm : cabecera + detalles + retornos previos
+activate orm
+orm -> dent : SELECT prestamo_detalle WHERE id_prestamo = :id
+activate dent
+dent --> orm : Ítems con cantidad_retornada
+deactivate dent
+orm -> rent : SELECT prestamo_retorno WHERE id_detalle IN (...)
+activate rent
+rent --> orm : Retornos previos
+deactivate rent
+orm --> svc : detalle completo
+deactivate orm
+svc --> ctrl : 200 { items con retornos_previos }
+deactivate svc
+ctrl --> view : 200 OK
+deactivate ctrl
+view --> user : Detalle del préstamo con lo pendiente por ítem
+deactivate view
+
+user -> view : Marca todos los ítems pendientes,\nindica fecha de retorno y observación
+activate view
+
+view -> ctrl : POST /api/prestamos/:id/retorno\n{ fecha_retorno, observacion,\nitems: [{ id_detalle, cantidad }] }
+activate ctrl
+ctrl -> svc : registrarRetorno(id, dto, actor)
+activate svc
+
+svc -> svc : Préstamo 'Activo'\nfecha no futura [Excepción 1]\nobservación ≤ 300
+activate svc
+deactivate svc
+
+svc -> orm : findBy({ id_prestamo })
+activate orm
+orm -> dent : SELECT prestamo_detalle
+activate dent
+dent --> orm : Ítems del préstamo
+deactivate dent
+orm --> svc : (CU-84) cada ítem pertenece al préstamo,\nno está retornado y la cantidad ≤ pendiente
+deactivate orm
+
+svc -> orm : queryRunner.startTransaction()
+activate orm
+orm --> svc : Transacción iniciada
+deactivate orm
+
+svc -> orm : find(UnidadEquipo, lock: pessimistic_write)\n+ save(unidad)
+activate orm
+orm -> uent : UPDATE unidad_equipo\nSET estado = 'En revisión'\n(transición ampliada ratificada)
+activate uent
+uent --> orm : Unidad actualizada
+deactivate uent
+orm -> hent : INSERT historial_estado_equipo\n(motivo: 'Retorno de préstamo externo PE-XXXXX')
+activate hent
+hent --> orm : Registro insertado
+deactivate hent
+orm --> svc : equipos en revisión
+deactivate orm
+
+svc -> orm : UPDATE del consumible retornado
+activate orm
+orm -> sent : UPDATE stock_consumible\nSET cantidad_disponible = cantidad_disponible + :cantidad\nWHERE id_bodega = :origen AND id_tipo_equipo = :tipo
+activate sent
+sent --> orm : Saldo repuesto en la bodega de origen
+deactivate sent
+orm --> svc : consumibles devueltos
+deactivate orm
+
+svc -> orm : save(detalle) + save(prestamo_retorno)
+activate orm
+orm -> dent : UPDATE prestamo_detalle\nSET cantidad_retornada = cantidad_retornada + :cantidad
+activate dent
+dent --> orm : Detalle actualizado
+deactivate dent
+orm -> rent : INSERT prestamo_retorno\n(id_detalle, cantidad, fecha_retorno, observacion)
+activate rent
+rent --> orm : Retorno registrado
+deactivate rent
+orm --> svc : trazabilidad guardada
+deactivate orm
+
+svc -> svc : ¿Queda algo pendiente?\nNo → el préstamo se cierra
+activate svc
+deactivate svc
+
+svc -> orm : save(prestamo)
+activate orm
+orm -> pent : UPDATE prestamo_externo\nSET estado = 'Cerrado',\nfecha_retorno_real, resultado_retorno
+activate pent
+pent --> orm : Préstamo cerrado
+deactivate pent
+orm --> svc : ok
+deactivate orm
+
+svc -> orm : queryRunner.commitTransaction()
+activate orm
+orm --> svc : Transacción confirmada
+deactivate orm
+
+svc -> orm : auditoriaService.create({ accion: 'RETORNO_PRESTAMO',\nvalor_nuevo: { correlativo, fecha_retorno,\nunidades, consumibles, estado } })
+activate orm
+orm -> aent : INSERT log_auditoria
+activate aent
+aent --> orm : Registro insertado
+deactivate aent
+orm --> svc : auditoría guardada
+deactivate orm
+
+svc --> ctrl : 201 { estado: 'Cerrado',\nunidades_retornadas, consumibles_retornados }
+deactivate svc
+ctrl --> view : 201 Created
+deactivate ctrl
+view --> user : "Retorno completo registrado:\nel préstamo PE-XXXXX quedó cerrado."
+deactivate view
+
+@enduml

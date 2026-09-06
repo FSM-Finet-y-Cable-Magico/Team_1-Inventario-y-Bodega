@@ -44,7 +44,7 @@ mantén la consistencia interna de cada módulo.
   ACTUALIZAR, DESACTIVAR, ELIMINAR, MODIFICAR, EDITAR, SOLICITAR_TRANSFERENCIA,
   APROBAR_TRANSFERENCIA, RECHAZAR_TRANSFERENCIA, RESTABLECER_PASSWORD, CAMBIAR_PASSWORD,
   CONFIGURAR_UMBRAL, SOLICITAR_BAJA, APROBAR_BAJA, RECHAZAR_BAJA, BAJA_DEFINITIVA,
-  DONACION, PRESTAMO_EXTERNO, ACCESO_DENEGADO...), `entidad_afectada`, `id_entidad_afectada`,
+  DONACION, PRESTAMO_EXTERNO, RETORNO_PRESTAMO, ACCESO_DENEGADO...), `entidad_afectada`, `id_entidad_afectada`,
   `valor_anterior`/`valor_nuevo` (jsonb).
 - Los accesos denegados (RolesGuard, CompanyIsolationGuard, verificarPertenencia) también auditan.
 
@@ -86,7 +86,7 @@ Mensajes **en español**, específicos por validación. Excepción: login usa me
 | [transferencias.md](./transferencias.md) | `transferencias` |
 | [bajas.md](./bajas.md) | `bajas` (baja definitiva y solicitudes, CU-78/CU-79) |
 | [donaciones.md](./donaciones.md) | `donaciones` (donación de equipos de baja + PDF, CU-80) |
-| [prestamos.md](./prestamos.md) | `prestamos` (préstamos externos, CU-81) |
+| [prestamos.md](./prestamos.md) | `prestamos` (préstamos externos y retornos, CU-81/CU-82) |
 
 > Para cada módulo se listan: endpoints, lógica de negocio, entidades, y qué CU cubre.
 
