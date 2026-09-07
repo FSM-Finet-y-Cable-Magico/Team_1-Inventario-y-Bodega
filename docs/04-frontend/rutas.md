@@ -98,12 +98,19 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
 - **Endpoints:** `getWarehouse(id)`, `getWarehouseStock(id)`, `getCatalog()`, `getUsers()`,
   `updateWarehouse()`, `setStockThreshold()`.
 
-### `/unidades/[id]` — baja definitiva (CU-78)
+### `/unidades/[id]` — baja definitiva (CU-78) y donación (CU-80)
 - Botón **Registrar baja definitiva** (oculto solo si la unidad ya está `Dado de baja`), disponible
   también para `TECNICO_TERRENO`, que genera una solicitud en vez de aplicar la baja.
 - Modal con motivo (lista cerrada de 6) + descripción obligatoria (5-200) si el motivo es `Otro`,
   aviso de garantía vigente y `ConfirmDialog` de confirmación fuerte.
-- **Endpoint:** `registrarBaja()`.
+- **Endpoints:** `registrarBaja()`, `registrarDonacion()`.
+- **CU-80 encadenado:** si el motivo es `Donación a institución` y el actor aplica la baja directa
+  (ADMIN / SUPERUSUARIO / ADMIN_BODEGA), "Continuar" abre un **segundo paso** en el mismo modal con
+  los datos de la institución (nombre, RUT, fecha no futura y resolución). Al confirmar se registra
+  la baja y, acto seguido, la donación de ese equipo. El técnico de terreno no ve este paso: su
+  solicitud queda pendiente y la unidad todavía no está dada de baja.
+- Registrar la donación de **varios** equipos ya dados de baja sigue estando en
+  `/bajas` → pestaña Donaciones.
 
 ### `/transferencias`
 - **CUs:** CU-20 (crear transferencia + notificación), CU-21 (detalle), CU-22 (rechazar), CU-23 (listar/filtrar).

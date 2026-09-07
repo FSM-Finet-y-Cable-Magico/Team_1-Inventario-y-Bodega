@@ -58,6 +58,18 @@ registró, fecha de emisión y la tabla de equipos (NS, tipo, marca, modelo, fec
 > adquisición** de una unidad, así que el PDF lista la fecha de adquisición. Si el cliente necesita
 > el monto, hay que agregar el campo al modelo (consultar al jefe de grupo).
 
+## 4.1 Dos caminos hacia el mismo endpoint
+
+| Camino | Cuándo |
+|--------|--------|
+| `/unidades/[id]` → baja con motivo `Donación a institución` | La baja abre un segundo paso con los datos de la institución y registra la donación del equipo recién dado de baja (un equipo). |
+| `/bajas` → pestaña Donaciones | Donación de varios equipos ya dados de baja con ese motivo. |
+
+Ambos llaman a `POST /api/donaciones`; la validación es la misma, porque el endpoint exige que las
+unidades ya estén `Dado de baja` con motivo `Donación a institución`. Por eso el flujo encadenado
+**registra primero la baja** y después la donación: si la segunda llamada falla, el frontend avisa
+de que el equipo ya quedó dado de baja y que la donación puede completarse desde la pestaña.
+
 ## 5. Auditoría
 
 | Acción | Cuándo |

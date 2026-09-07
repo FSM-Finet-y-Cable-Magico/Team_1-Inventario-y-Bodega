@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { getUnit, changeUnitState, getUnitHistory, getWarehouses, updateUnit, registrarBaja } from '$lib/api/index';
+	import { getUnit, changeUnitState, getUnitHistory, getWarehouses, updateUnit, registrarBaja, registrarDonacion } from '$lib/api/index';
 	import { userRoles } from '$lib/stores/auth';
 	import type { UnidadEquipo, HistorialEstado, EstadoUnidad, Bodega } from '$lib/types';
 	import { MOTIVOS_BAJA } from '$lib/types';
@@ -39,6 +39,22 @@
 	let registrandoBaja = $state(false);
 	let showConfirmBaja = $state(false);
 	const motivosBaja = MOTIVOS_BAJA;
+
+	// CU-80: cuando el motivo es la donación, la baja continúa con el formulario
+	// de la donación en el mismo flujo (paso 2 del modal)
+	const MOTIVO_DONACION = 'Donación a institución';
+	let pasoDonacion = $state(false);
+	let donacionForm = $state({
+		nombre_institucion: '',
+		rut_institucion: '',
+		fecha_donacion: '',
+		numero_resolucion: ''
+	});
+	const hoyISO = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
+	// El técnico de terreno solo genera una solicitud: la unidad todavía no queda
+	// dada de baja, así que la donación no puede registrarse en ese momento
+	const aplicaBajaDirecta = $derived(roles.some((r) => ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'].includes(r)));
+	const requiereDatosDonacion = $derived(bajaForm.motivo === MOTIVO_DONACION && aplicaBajaDirecta);
 
 	// CU-18: edición de los datos de la unidad
 	let showEdit = $state(false);
@@ -165,6 +181,8 @@
 
 	function abrirBaja() {
 		bajaForm = { motivo: '', descripcion_otro: '' };
+		donacionForm = { nombre_institucion: '', rut_institucion: '', fecha_donacion: hoyISO, numero_resolucion: '' };
+		pasoDonacion = false;
 		bajaError = '';
 		showBaja = true;
 	}
@@ -183,6 +201,30 @@
 			bajaError = 'Debe ingresar una descripción cuando selecciona Otro.';
 			return;
 		}
+
+		// CU-80: con motivo de donación, "Continuar" despliega el formulario de la
+		// donación; la confirmación llega después de completarlo
+		if (requiereDatosDonacion && !pasoDonacion) {
+			pasoDonacion = true;
+			return;
+		}
+
+		if (pasoDonacion) {
+			const institucion = donacionForm.nombre_institucion.trim();
+			if (institucion.length < 3 || institucion.length > 100) {
+				bajaError = 'El nombre de la institución receptora debe tener entre 3 y 100 caracteres.';
+				return;
+			}
+			if (!/^\d{7,8}-[\dkK]$/.test(donacionForm.rut_institucion.trim())) {
+				bajaError = 'El RUT de la institución debe tener el formato XXXXXXXX-X.';
+				return;
+			}
+			if (!donacionForm.fecha_donacion) {
+				bajaError = 'La fecha de donación es obligatoria.';
+				return;
+			}
+		}
+
 		showConfirmBaja = true;
 	}
 
@@ -196,12 +238,33 @@
 				motivo: bajaForm.motivo,
 				descripcion_otro: bajaForm.motivo === 'Otro' ? bajaForm.descripcion_otro.trim() : undefined
 			});
+			// CU-80: con el motivo de donación, la baja continúa registrando la
+			// donación del equipo recién dado de baja (el backend exige que ya lo esté)
+			let mensajeDonacion = '';
+			if (pasoDonacion && resultado?.requiere_aprobacion === false) {
+				const donacion = await registrarDonacion({
+					nombre_institucion: donacionForm.nombre_institucion.trim(),
+					rut_institucion: donacionForm.rut_institucion.trim(),
+					fecha_donacion: donacionForm.fecha_donacion,
+					numero_resolucion: donacionForm.numero_resolucion.trim() || undefined,
+					ids_unidades: [unit.id_unidad]
+				});
+				mensajeDonacion = ` ${donacion?.message ?? 'Donación registrada.'}`;
+			}
+
 			showBaja = false;
+			pasoDonacion = false;
 			// CU-78: el mensaje distingue la baja aplicada de la solicitud pendiente
-			success = resultado?.message ?? 'Baja definitiva registrada correctamente';
+			success = (resultado?.message ?? 'Baja definitiva registrada correctamente') + mensajeDonacion;
 			await load();
 		} catch (err: unknown) {
-			bajaError = err instanceof Error ? err.message : 'Error al registrar la baja definitiva';
+			const mensaje = err instanceof Error ? err.message : 'Error al registrar la baja definitiva';
+			// La baja es irreversible: si falló el registro de la donación hay que
+			// avisar que el equipo ya quedó dado de baja
+			bajaError = pasoDonacion
+				? `${mensaje} Si el equipo ya quedó dado de baja, registre la donación desde Bajas → Donaciones.`
+				: mensaje;
+			await load();
 		} finally {
 			registrandoBaja = false;
 		}
@@ -436,7 +499,7 @@
 </div>
 
 <!-- CU-78: registro de la baja definitiva del equipo -->
-<Modal title="Registrar baja definitiva" open={showBaja} onclose={() => (showBaja = false)}>
+<Modal title={pasoDonacion ? 'Datos de la donación' : 'Registrar baja definitiva'} open={showBaja} onclose={() => (showBaja = false)}>
 	<form onsubmit={(e: Event) => { e.preventDefault(); solicitarConfirmacionBaja(); }} class="space-y-4">
 		{#if bajaError}
 			<div class="bg-red-50 border border-red-200 text-destructive text-sm rounded-md px-3 py-2">{bajaError}</div>
@@ -466,6 +529,7 @@
 				</div>
 			{/if}
 
+			{#if !pasoDonacion}
 			<FormField label="Motivo de la baja" name="motivo_baja" required>
 				<select id="motivo_baja" required bind:value={bajaForm.motivo}
 					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
@@ -484,11 +548,54 @@
 						class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
 				</FormField>
 			{/if}
+
+			{#if requiereDatosDonacion}
+				<p class="text-xs text-muted">
+					Al continuar se pedirán los datos de la institución receptora para registrar la donación.
+				</p>
+			{/if}
+			{:else}
+				<!-- CU-80: datos de la donación del equipo que se está dando de baja -->
+				<div class="bg-sky-50 border border-sky-200 text-sky-800 text-sm rounded-md px-3 py-2">
+					El equipo {unit.numero_serie} quedará dado de baja con motivo "{MOTIVO_DONACION}" y se
+					registrará la donación a la institución indicada.
+				</div>
+
+				<FormField label="Institución receptora" name="don_inst" required helper="Entre 3 y 100 caracteres">
+					<input id="don_inst" type="text" required bind:value={donacionForm.nombre_institucion} maxlength={100}
+						class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+						placeholder="Ej: Fundación Educación Técnica" />
+				</FormField>
+
+				<FormField label="RUT de la institución" name="don_rut" required helper="Formato XXXXXXXX-X">
+					<input id="don_rut" type="text" required bind:value={donacionForm.rut_institucion} maxlength={12}
+						class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+						placeholder="76543210-3" />
+				</FormField>
+
+				<!-- CU-80: la fecha de donación no puede ser futura -->
+				<FormField label="Fecha de donación" name="don_fecha" required>
+					<input id="don_fecha" type="date" required bind:value={donacionForm.fecha_donacion} max={hoyISO}
+						class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+				</FormField>
+
+				<FormField label="Número de resolución" name="don_res" helper="Opcional, hasta 30 caracteres alfanuméricos">
+					<input id="don_res" type="text" bind:value={donacionForm.numero_resolucion} maxlength={30}
+						class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+						placeholder="RES-2026-014" />
+				</FormField>
+			{/if}
 		{/if}
 
 		<div class="flex justify-end gap-3 pt-2">
-			<Button variant="secondary" onclick={() => (showBaja = false)} type="button">Cancelar</Button>
-			<Button type="submit" loading={registrandoBaja}>Continuar</Button>
+			{#if pasoDonacion}
+				<Button variant="secondary" onclick={() => { pasoDonacion = false; bajaError = ''; }} type="button">Volver</Button>
+			{:else}
+				<Button variant="secondary" onclick={() => (showBaja = false)} type="button">Cancelar</Button>
+			{/if}
+			<Button type="submit" loading={registrandoBaja}>
+				{pasoDonacion ? 'Registrar baja y donación' : 'Continuar'}
+			</Button>
 		</div>
 	</form>
 </Modal>
@@ -500,8 +607,14 @@
 	title={unit?.garantia?.garantia_vigente ? 'Equipo con garantía vigente' : 'Confirmar baja definitiva'}
 	message={unit?.garantia?.garantia_vigente
 		? `El equipo ${unit?.numero_serie} tiene garantía vigente hasta ${fmtFecha(unit?.fecha_venc_garantia)}. La baja definitiva es irreversible. ¿Desea continuar de todas formas?`
-		: `El equipo ${unit?.numero_serie} quedará dado de baja de forma irreversible. ¿Confirma la operación?`}
-	confirmlabel={unit?.garantia?.garantia_vigente ? 'Continuar de todas formas' : 'Registrar baja'}
+		: pasoDonacion
+			? `El equipo ${unit?.numero_serie} quedará dado de baja de forma irreversible y se registrará su donación a ${donacionForm.nombre_institucion.trim()}. ¿Confirma la operación?`
+			: `El equipo ${unit?.numero_serie} quedará dado de baja de forma irreversible. ¿Confirma la operación?`}
+	confirmlabel={unit?.garantia?.garantia_vigente
+		? 'Continuar de todas formas'
+		: pasoDonacion
+			? 'Registrar baja y donación'
+			: 'Registrar baja'}
 	cancellabel="Cancelar"
 	onconfirm={handleBaja}
 	oncancel={() => (showConfirmBaja = false)}
