@@ -20,7 +20,7 @@ actor Administrador as Usuario
 participant "Vista /reportes" as V
 participant "ReportesController" as C
 participant "ReportesService" as SVC
-database "PostgreSQL" as DB
+participant "PostgreSQL" as DB
 
 Usuario -> V : Configura filtros y selecciona Generar
 activate V

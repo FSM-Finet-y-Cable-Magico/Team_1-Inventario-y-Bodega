@@ -17,10 +17,10 @@ skinparam sequence {
 hide footbox
 
 actor "Administrador de bodega" as U
-participant "Vista reportes" as V
-participant "Controlador reportes" as C
-participant "Servicio reportes" as S
-database "postgres" as DB
+participant "V_reportes" as V
+participant "C_reportesController" as C
+participant "C_ReportesService" as S
+participant "PostgreSQL" as DB
 
 U -> V : Ejecuta filtros sin coincidencias
 activate V

@@ -17,10 +17,10 @@ skinparam sequence {
 hide footbox
 
 actor "Administrador de bodega" as Usuario
-participant "Vista /reportes" as V
-participant "ReportesController" as C
+participant "V_reportes" as V
+participant "C_ReportesController" as C
 participant "ReportesService" as SVC
-database "PostgreSQL" as DB
+participant "PostgreSQL" as DB
 
 Usuario -> V : Selecciona empresa y tecnico/Todos
 activate V
