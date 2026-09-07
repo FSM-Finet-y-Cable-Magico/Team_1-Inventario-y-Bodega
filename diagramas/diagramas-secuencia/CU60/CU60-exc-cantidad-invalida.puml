@@ -1,0 +1,28 @@
+@startuml CU60-exc-cantidad-invalida
+title CU-60 — Excepción 1: cantidad 0 o negativa
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 30 } actor { Margin 12 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega" as user
+participant "V_Salidas" as view
+participant "C_ValidationPipe" as pipe
+participant "C_SalidasController" as ctrl
+participant "C_SalidasService" as svc
+
+user -> view : Cantidad = 0 (o negativa)
+view -> pipe : POST /api/salidas { items: [{ tipo: 'CONSUMIBLE', cantidad: 0 }] }
+pipe -> pipe : DTO: @Min(0.01) → falla
+pipe --> ctrl : 400 ['items.0.La cantidad debe ser mayor a cero.']
+ctrl -> svc : (no se invoca)
+pipe --> view : 400
+view --> user : Banner: 'La cantidad debe ser mayor a cero.'
+note right : El service también lo valida por si el DTO se omite\n(fuente de verdad dentro de la transacción)
+@enduml

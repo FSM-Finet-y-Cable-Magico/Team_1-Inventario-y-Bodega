@@ -1,0 +1,31 @@
+@startuml CU58-exc-saldo-negativo
+title CU-58 — Excepción 1: operación llevaría el saldo a negativo
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 30 } actor { Margin 12 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+participant "Sistema" as sys #lightgrey
+participant "C_InventarioPersonalService" as ips
+participant "C_TypeORM" as orm
+database "postgres" as db
+participant "Llamador (CU-64/68/82 futuro)" as caller
+
+note over sys : El descuento ('usado en cierres' o 'devuelto' contra saldo) usa descontar()
+sys -> caller : operación que descontaría 50 del saldo 35.5
+caller -> ips : descontar(manager, id_tecnico, id_tipo_equipo, 50)
+activate ips
+ips -> orm : SELECT inventario_personal_tecnico FOR UPDATE\nWHERE (id_tecnico, id_tipo_equipo)
+db --> orm : fila (cantidad = 35.5)
+ips -> ips : 35.5 < 50 → saldo resultaría negativo → BLOQUEA
+ips --> caller : 400 BadRequestException\n('Saldo insuficiente. No es posible registrar esta operación.')
+deactivate ips
+caller -> db : ROLLBACK de la operación que lo invocó
+note right : El saldo queda intacto; ninguna operación puede dejarlo bajo cero
+@enduml

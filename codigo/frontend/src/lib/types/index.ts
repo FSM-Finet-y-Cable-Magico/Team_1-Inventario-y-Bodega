@@ -304,3 +304,53 @@ export interface DecodedToken {
 	iat: number;
 	exp: number;
 }
+
+// CU-57/59/60/62: salidas de bodega a técnico
+export interface VerificacionSerie {
+	existe: boolean;
+	numero_serie?: string;
+	estado?: EstadoUnidad;
+	id_bodega_actual?: number | null;
+	disponible: boolean;
+}
+
+export interface ItemSalida {
+	tipo: 'UNIDAD' | 'CONSUMIBLE';
+	numero_serie?: string;
+	id_tipo_equipo?: number;
+	cantidad?: number;
+}
+
+export interface SalidaResumen {
+	id_salida: number;
+	tecnico: string;
+	bodega: string;
+	fecha_hora: string;
+	items: {
+		id_detalle: number;
+		id_unidad: number | null;
+		id_tipo_equipo: number | null;
+		cantidad: number | null;
+	}[];
+}
+
+export interface InventarioTecnico {
+	tecnico: {
+		id_usuario: number;
+		nombre_completo: string;
+		nombre_usuario: string | null;
+		empresa: string | null;
+	};
+	ns_asignados: {
+		numero_serie: string;
+		id_unidad: number;
+		tipo: string | null;
+		estado: string;
+	}[];
+	saldos: {
+		id_tipo_equipo: number;
+		tipo: string | null;
+		saldo: number;
+		unidad_medida: string | null;
+	}[];
+}
