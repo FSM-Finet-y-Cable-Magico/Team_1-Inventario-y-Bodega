@@ -14,6 +14,7 @@ import { BodegasModule } from './bodegas/bodegas.module';
 import { InventarioModule } from './inventario/inventario.module';
 import { TransferenciasModule } from './transferencias/transferencias.module';
 import { CompaniesModule } from './companies/companies.module';
+import { ReportesModule } from './reportes/reportes.module';
 import { ProveedoresModule } from './proveedores/proveedores.module';
 import { OrdenesIngresoModule } from './ordenes-ingreso/ordenes-ingreso.module';
 import { IntegracionesModule } from './integraciones/integraciones.module';
@@ -48,6 +49,7 @@ import { SalidasModule } from './salidas/salidas.module';
     InventarioModule,
     TransferenciasModule,
     CompaniesModule,
+    ReportesModule,
     ProveedoresModule,
     OrdenesIngresoModule,
     IntegracionesModule,

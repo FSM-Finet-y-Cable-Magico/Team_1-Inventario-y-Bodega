@@ -231,6 +231,20 @@ export interface ConfigurarUmbralDto {
 	umbral: number;
 }
 
+export interface ReporteStock {
+	id_tipo_equipo: number;
+	tipo_equipo: string;
+	id_bodega: number;
+	bodega: string;
+	en_bodega: number;
+	asignado_a_tecnico: number;
+	en_revision: number;
+	en_prestamo_externo: number;
+	total_activo: number;
+	umbral_minimo: number;
+	bajo_umbral: boolean;
+}
+
 // Respuesta de GET /transferencias (CU-23)
 export interface Transferencia {
 	id_transferencia: number;
