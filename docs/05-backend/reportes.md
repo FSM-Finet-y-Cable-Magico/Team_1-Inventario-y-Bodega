@@ -24,3 +24,16 @@
 - `dias_transcurridos` se calcula en PostgreSQL con `CURRENT_DATE - fecha_asignacion`.
 - Cada generación registra `GENERAR_REPORTE` con entidad `reporte_inventario_tecnicos`.
 - Un técnico sin ambos tipos de ítems conserva su tarjeta y muestra `Este técnico no tiene ítems en su inventario personal.`.
+
+## CU-91: reporte de consumo de consumibles
+
+- `GET /api/reportes/consumo?id_empresa=&id_tipo_equipo=&fecha_desde=&fecha_hasta=`
+- Roles: `ADMIN_BODEGA`, `ADMIN`, `SUPERUSUARIO`; el aislamiento sigue el patrón de CU-85.
+- El rango de fechas admite como máximo 365 días y reutiliza `El rango de fechas no puede superar los 365 días.`.
+- Los ingresos se leen de `orden_ingreso_detalle` y sus órdenes de ingreso cuando las tablas de CU-52/54 están desplegadas.
+- Las entregas se leen de `salida_detalle` + `salida_bodega`, solo para consumibles y dentro del rango.
+- Las devoluciones se leen de `prestamo_retorno` cuando CU-82 está desplegado. Si las fuentes futuras aún no existen, se consideran cero sin romper el reporte.
+- `cantidad_usada_en_cierres` queda en `0` hasta implementar CU-64/68; al cruzar esos casos se debe reemplazar esta fuente y revalidar el desvío.
+- La diferencia es `ingresada - entregada + devuelta`; `desvio` es verdadero cuando `abs(diferencia) > 15% * ingresada` y el ingreso es mayor que cero.
+- Cada generación registra `GENERAR_REPORTE` con entidad `reporte_consumo`.
+- Sin resultados, el frontend muestra `No se encontraron consumibles con los filtros seleccionados.`.

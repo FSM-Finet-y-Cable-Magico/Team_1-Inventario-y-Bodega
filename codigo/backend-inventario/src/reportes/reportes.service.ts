@@ -40,6 +40,13 @@ type FiltrosInventarioTecnicos = {
   id_usuario?: number;
 };
 
+type FiltrosConsumo = {
+  id_empresa?: number;
+  id_tipo_equipo?: number;
+  fecha_desde?: string;
+  fecha_hasta?: string;
+};
+
 type Actor = {
   id_usuario?: number;
   sub?: number;
@@ -197,6 +204,157 @@ export class ReportesService {
       'reporte_inventario_tecnicos',
     );
     return resultado;
+  }
+
+  async getConsumoReport(
+    filtros: FiltrosConsumo,
+    actor: Actor,
+  ): Promise<any[]> {
+    this.validateDateRange(filtros.fecha_desde, filtros.fecha_hasta);
+    const esSuperusuario = actor.roles?.includes('SUPERUSUARIO') ?? false;
+    if (
+      !esSuperusuario &&
+      filtros.id_empresa !== undefined &&
+      filtros.id_empresa !== actor.id_empresa
+    ) {
+      throw new ForbiddenException(
+        'No tiene permisos para consultar esta empresa.',
+      );
+    }
+
+    const idEmpresa = esSuperusuario ? filtros.id_empresa : actor.id_empresa;
+    if (!esSuperusuario && !idEmpresa) {
+      throw new BadRequestException(
+        'El usuario no tiene una empresa asignada.',
+      );
+    }
+
+    const tipos = await this.tipoEquipoRepository.find({
+      where: {
+        ...(idEmpresa !== undefined ? { id_empresa: idEmpresa } : {}),
+        ...(filtros.id_tipo_equipo !== undefined
+          ? { id_tipo_equipo: filtros.id_tipo_equipo }
+          : {}),
+        requiereSerialNumber: false,
+        activo: true,
+      },
+      order: { nombre: 'ASC' },
+    });
+
+    const [tieneIngresos, tieneRetornos] = await Promise.all([
+      this.tableExists('orden_ingreso_detalle'),
+      this.tableExists('prestamo_retorno'),
+    ]);
+
+    const resultado = await Promise.all(
+      tipos.map(async (tipo) => {
+        const [ingresado, entregado, devuelto] = await Promise.all([
+          tieneIngresos
+            ? this.dataSource
+                .query(
+                  `SELECT COALESCE(SUM(oid.cantidad), 0) AS cantidad
+                 FROM orden_ingreso_detalle oid
+                 INNER JOIN orden_ingreso oi ON oi.id_orden_ingreso = oid.id_orden_ingreso
+                 WHERE oid.id_tipo_equipo = $1
+                   AND ($2::int IS NULL OR oi.id_empresa = $2)
+                   AND ($3::date IS NULL OR oi.fecha >= $3::date)
+                   AND ($4::date IS NULL OR oi.fecha < ($4::date + INTERVAL '1 day'))`,
+                  [
+                    tipo.id_tipo_equipo,
+                    idEmpresa,
+                    filtros.fecha_desde ?? null,
+                    filtros.fecha_hasta ?? null,
+                  ],
+                )
+                .then((rows: Array<{ cantidad: string | number }>) =>
+                  Number(rows[0]?.cantidad ?? 0),
+                )
+            : Promise.resolve(0),
+          this.getConsumibleTotal(
+            `SELECT COALESCE(SUM(sd.cantidad), 0) AS cantidad
+             FROM salida_detalle sd
+             INNER JOIN salida_bodega sb ON sb.id_salida = sd.id_salida
+             WHERE sd.id_tipo_equipo = $1
+               AND sd.id_unidad IS NULL
+               AND ($2::int IS NULL OR sb.id_empresa = $2)
+               AND ($3::date IS NULL OR sb.fecha_hora >= $3::date)
+               AND ($4::date IS NULL OR sb.fecha_hora < ($4::date + INTERVAL '1 day'))`,
+            tipo.id_tipo_equipo,
+            idEmpresa,
+            filtros.fecha_desde,
+            filtros.fecha_hasta,
+          ),
+          tieneRetornos
+            ? this.dataSource
+                .query(
+                  `SELECT COALESCE(SUM(pr.cantidad), 0) AS cantidad
+                 FROM prestamo_retorno pr
+                 WHERE pr.id_tipo_equipo = $1
+                   AND ($2::int IS NULL OR pr.id_empresa = $2)
+                   AND ($3::date IS NULL OR pr.fecha_hora >= $3::date)
+                   AND ($4::date IS NULL OR pr.fecha_hora < ($4::date + INTERVAL '1 day'))`,
+                  [
+                    tipo.id_tipo_equipo,
+                    idEmpresa,
+                    filtros.fecha_desde ?? null,
+                    filtros.fecha_hasta ?? null,
+                  ],
+                )
+                .then((rows: Array<{ cantidad: string | number }>) =>
+                  Number(rows[0]?.cantidad ?? 0),
+                )
+            : Promise.resolve(0),
+        ]);
+
+        // CU-64/CU-68 aún no están implementados: se deja la columna lista.
+        const usadoEnCierres = 0;
+        const diferencia = ingresado - entregado + devuelto;
+        return {
+          id_tipo_equipo: tipo.id_tipo_equipo,
+          tipo_consumible: tipo.nombre,
+          unidad_medida: tipo.unidadMedida ?? null,
+          cantidad_ingresada: ingresado,
+          cantidad_entregada: entregado,
+          cantidad_usada_en_cierres: usadoEnCierres,
+          cantidad_devuelta: devuelto,
+          diferencia,
+          desvio: ingresado > 0 && Math.abs(diferencia) > ingresado * 0.15,
+        };
+      }),
+    );
+
+    const filas = resultado.filter(
+      (fila) =>
+        fila.cantidad_ingresada > 0 ||
+        fila.cantidad_entregada > 0 ||
+        fila.cantidad_devuelta > 0,
+    );
+    await this.auditReport(actor, filtros, filas.length, 'reporte_consumo');
+    return filas;
+  }
+
+  private async getConsumibleTotal(
+    sql: string,
+    idTipoEquipo: number,
+    idEmpresa?: number,
+    fechaDesde?: string,
+    fechaHasta?: string,
+  ): Promise<number> {
+    const rows = await this.dataSource.query(sql, [
+      idTipoEquipo,
+      idEmpresa,
+      fechaDesde ?? null,
+      fechaHasta ?? null,
+    ]);
+    return Number(rows[0]?.cantidad ?? 0);
+  }
+
+  private async tableExists(tableName: string): Promise<boolean> {
+    const rows = await this.dataSource.query(
+      'SELECT to_regclass($1) IS NOT NULL AS existe',
+      [tableName],
+    );
+    return rows[0]?.existe === true;
   }
 
   async getStockReport(filtros: FiltrosStock, actor: Actor): Promise<any[]> {
@@ -635,7 +793,8 @@ export class ReportesService {
       | FiltrosStock
       | FiltrosMovimientos
       | FiltrosGarantias
-      | FiltrosInventarioTecnicos,
+      | FiltrosInventarioTecnicos
+      | FiltrosConsumo,
     filas: number,
     entidad = 'reporte_stock',
   ) {

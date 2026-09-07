@@ -277,6 +277,18 @@ export interface ReporteInventarioTecnico {
 	}[];
 }
 
+export interface ReporteConsumoFila {
+	id_tipo_equipo: number;
+	tipo_consumible: string;
+	unidad_medida: string | null;
+	cantidad_ingresada: number;
+	cantidad_entregada: number;
+	cantidad_usada_en_cierres: number;
+	cantidad_devuelta: number;
+	diferencia: number;
+	desvio: boolean;
+}
+
 // Respuesta de GET /transferencias (CU-23)
 export interface Transferencia {
 	id_transferencia: number;

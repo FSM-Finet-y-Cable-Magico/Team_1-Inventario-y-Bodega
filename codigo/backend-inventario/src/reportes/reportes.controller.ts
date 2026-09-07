@@ -94,6 +94,26 @@ export class ReportesController {
     );
   }
 
+  @Get('consumo')
+  @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
+  getConsumo(
+    @Query('id_empresa') idEmpresa: string | undefined,
+    @Query('id_tipo_equipo') idTipoEquipo: string | undefined,
+    @Query('fecha_desde') fechaDesde: string | undefined,
+    @Query('fecha_hasta') fechaHasta: string | undefined,
+    @Req() req,
+  ) {
+    return this.reportesService.getConsumoReport(
+      {
+        id_empresa: this.parseOptionalId(idEmpresa, 'empresa'),
+        id_tipo_equipo: this.parseOptionalId(idTipoEquipo, 'tipo de equipo'),
+        fecha_desde: fechaDesde,
+        fecha_hasta: fechaHasta,
+      },
+      req.user,
+    );
+  }
+
   private parseOptionalId(
     value: string | undefined,
     label: string,

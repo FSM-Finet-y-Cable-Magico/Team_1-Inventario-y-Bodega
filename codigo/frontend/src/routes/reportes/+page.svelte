@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { getCatalog, getEmpresas, getUsers, getWarehouses, generarReporteGarantias, generarReporteMovimientos, generarReporteInventarioTecnicos } from '$lib/api/index';
-	import type { Bodega, Empresa, ReporteGarantiaFila, ReporteInventarioTecnico, ReporteMovimientoFila, TipoEquipo, Usuario } from '$lib/types';
+	import { getCatalog, getEmpresas, getUsers, getWarehouses, generarReporteGarantias, generarReporteMovimientos, generarReporteInventarioTecnicos, generarReporteConsumo } from '$lib/api/index';
+	import type { Bodega, Empresa, ReporteConsumoFila, ReporteGarantiaFila, ReporteInventarioTecnico, ReporteMovimientoFila, TipoEquipo, Usuario } from '$lib/types';
 	import Badge from '$lib/components/Badge.svelte';
 	import Button from '$lib/components/Button.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
@@ -23,10 +23,11 @@
 		{ value: '90', label: 'Vencen en 90 días' },
 	] as const;
 
-	let activeTab = $state<'movimientos' | 'garantias' | 'inventario-tecnicos'>('garantias');
+	let activeTab = $state<'movimientos' | 'garantias' | 'inventario-tecnicos' | 'consumo'>('garantias');
 	let filas = $state<ReporteMovimientoFila[]>([]);
 	let filasGarantias = $state<ReporteGarantiaFila[]>([]);
 	let inventarioTecnicos = $state<ReporteInventarioTecnico[]>([]);
+	let filasConsumo = $state<ReporteConsumoFila[]>([]);
 	let empresas = $state<Empresa[]>([]);
 	let bodegas = $state<Bodega[]>([]);
 	let tipos = $state<TipoEquipo[]>([]);
@@ -38,18 +39,24 @@
 	let errorGarantias = $state('');
 	let loadingInventarioTecnicos = $state(false);
 	let errorInventarioTecnicos = $state('');
+	let loadingConsumo = $state(false);
+	let errorConsumo = $state('');
 	let filters = $state({ id_empresa: '', id_bodega: '', id_tipo_equipo: '', fecha_desde: '', fecha_hasta: '', tipo_movimiento: '', id_usuario: '' });
 	let garantiaFilters = $state({ id_empresa: '', id_tipo_equipo: '', periodo: 'TODAS' as 'VENCIDAS' | '30' | '60' | '90' | 'TODAS' });
 	let inventarioTecnicosFilters = $state({ id_empresa: '', id_usuario: '' });
+	let consumoFilters = $state({ id_empresa: '', id_tipo_equipo: '', fecha_desde: '', fecha_hasta: '' });
 	const esSuperusuario = $derived($userRoles.includes('SUPERUSUARIO'));
 	const empresaActual = $derived($currentUser?.id_empresa);
 	const filteredBodegas = $derived(bodegas.filter((bodega) => !filters.id_empresa || String(bodega.id_empresa) === filters.id_empresa));
 	const filteredTipos = $derived(tipos.filter((tipo) => !filters.id_empresa || String(tipo.id_empresa) === filters.id_empresa));
 	const filteredGarantiaTipos = $derived(tipos.filter((tipo) => !garantiaFilters.id_empresa || String(tipo.id_empresa) === garantiaFilters.id_empresa));
+	const filteredConsumoTipos = $derived(tipos.filter((tipo) => tipo.requiereSerialNumber !== true && (!consumoFilters.id_empresa || String(tipo.id_empresa) === consumoFilters.id_empresa)));
 	const filteredUsuarios = $derived(usuarios.filter((usuario) => usuario.nombre_completo.toLowerCase().includes(usuarioBusqueda.toLowerCase())).slice(0, 6));
 	const tecnicos = $derived(usuarios.filter((usuario) => usuario.roles?.some((rol) => rol.nombre_rol === 'TECNICO_TERRENO')));
 	const rangoInvalido = $derived(filters.fecha_desde && filters.fecha_hasta && differenceInDays(filters.fecha_desde, filters.fecha_hasta) > 365);
 	const fechasIncoherentes = $derived(filters.fecha_desde && filters.fecha_hasta && filters.fecha_desde > filters.fecha_hasta);
+	const consumoRangoInvalido = $derived(consumoFilters.fecha_desde && consumoFilters.fecha_hasta && differenceInDays(consumoFilters.fecha_desde, consumoFilters.fecha_hasta) > 365);
+	const consumoFechasIncoherentes = $derived(consumoFilters.fecha_desde && consumoFilters.fecha_hasta && consumoFilters.fecha_desde > consumoFilters.fecha_hasta);
 
 	function differenceInDays(from: string, to: string) {
 		return (Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86400000;
@@ -78,6 +85,10 @@
 
 	function resetInventarioTecnicosFilters() {
 		inventarioTecnicosFilters = { id_empresa: '', id_usuario: '' };
+	}
+
+	function resetConsumoFilters() {
+		consumoFilters = { id_empresa: '', id_tipo_equipo: '', fecha_desde: '', fecha_hasta: '' };
 	}
 
 	async function loadFilters() {
@@ -128,6 +139,23 @@
 		} finally { loadingInventarioTecnicos = false; }
 	}
 
+	async function loadConsumoReport() {
+		if (consumoRangoInvalido || consumoFechasIncoherentes) return;
+		loadingConsumo = true;
+		errorConsumo = '';
+		try {
+			filasConsumo = await generarReporteConsumo({
+				id_empresa: consumoFilters.id_empresa || undefined,
+				id_tipo_equipo: consumoFilters.id_tipo_equipo || undefined,
+				fecha_desde: consumoFilters.fecha_desde || undefined,
+				fecha_hasta: consumoFilters.fecha_hasta || undefined,
+			});
+		} catch (err: unknown) {
+			errorConsumo = err instanceof Error ? err.message : 'No se pudo cargar el reporte de consumo.';
+			filasConsumo = [];
+		} finally { loadingConsumo = false; }
+	}
+
 	function selectUser(usuario: Usuario) {
 		filters.id_usuario = String(usuario.id_usuario);
 		usuarioBusqueda = usuario.nombre_completo;
@@ -150,6 +178,12 @@
 		}
 	}
 
+	function onConsumoEmpresaChange() {
+		if (consumoFilters.id_tipo_equipo && !filteredConsumoTipos.some((tipo) => String(tipo.id_tipo_equipo) === consumoFilters.id_tipo_equipo)) {
+			consumoFilters.id_tipo_equipo = '';
+		}
+	}
+
 	function getGarantiaBadge(fila: ReporteGarantiaFila): { variant: 'default' | 'success' | 'danger'; text: string } {
 		if (fila.dias === null) return { variant: 'default', text: 'Sin garantía' };
 		if (fila.dias >= 0) return { variant: 'success', text: `${fila.dias} días restantes` };
@@ -161,10 +195,12 @@
 		await loadReport();
 		await loadGarantiaReport();
 		await loadInventarioTecnicosReport();
+		await loadConsumoReport();
 	});
 	$effect(() => { if (!esSuperusuario && filters.id_empresa) filters.id_empresa = ''; });
 	$effect(() => { if (!esSuperusuario && garantiaFilters.id_empresa) garantiaFilters.id_empresa = ''; });
 	$effect(() => { if (!esSuperusuario && inventarioTecnicosFilters.id_empresa) inventarioTecnicosFilters.id_empresa = ''; });
+	$effect(() => { if (!esSuperusuario && consumoFilters.id_empresa) consumoFilters.id_empresa = ''; });
 </script>
 
 <div class="max-w-7xl mx-auto">
@@ -205,6 +241,16 @@
 			onclick={() => (activeTab = 'inventario-tecnicos')}
 		>
 			Inventario de técnicos
+		</button>
+		<button
+			type="button"
+			class="px-4 py-2 text-sm font-medium rounded-md transition-colors"
+			class:bg-surface-alt={activeTab === 'consumo'}
+			class:text-accent={activeTab === 'consumo'}
+			class:text-muted={activeTab !== 'consumo'}
+			onclick={() => (activeTab = 'consumo')}
+		>
+			Consumo de consumibles
 		</button>
 	</div>
 
@@ -327,7 +373,7 @@
 				</div>
 			</div>
 		{/if}
-	{:else}
+	{:else if activeTab === 'inventario-tecnicos'}
 		<div class="flex items-center justify-between mb-6">
 			<div><h2 class="text-lg font-semibold text-foreground">Inventario de técnicos</h2></div>
 			<Button variant="secondary" onclick={loadInventarioTecnicosReport}><RotateCw class="h-4 w-4" />Actualizar</Button>
@@ -386,6 +432,61 @@
 						{/if}
 					</div>
 				{/each}
+			</div>
+		{/if}
+	{:else}
+		<div class="flex items-center justify-between mb-6">
+			<div><h2 class="text-lg font-semibold text-foreground">Consumo de consumibles</h2></div>
+			<Button variant="secondary" onclick={loadConsumoReport}><RotateCw class="h-4 w-4" />Actualizar</Button>
+		</div>
+
+		<div class="bg-white border border-border rounded-lg p-4 mb-6">
+			<div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+				{#if esSuperusuario}
+					<div>
+						<label for="consumo-empresa-filter" class="block text-xs font-medium text-muted mb-1">Empresa</label>
+						<select id="consumo-empresa-filter" bind:value={consumoFilters.id_empresa} onchange={onConsumoEmpresaChange} class="w-full px-3 py-2 border border-border rounded-md text-sm bg-white">
+							<option value="">Todas</option>
+							{#each empresas as empresa}<option value={String(empresa.id)}>{empresa.nombre}</option>{/each}
+						</select>
+					</div>
+				{/if}
+				<div>
+					<label for="consumo-tipo-filter" class="block text-xs font-medium text-muted mb-1">Tipo de consumible</label>
+					<select id="consumo-tipo-filter" bind:value={consumoFilters.id_tipo_equipo} class="w-full px-3 py-2 border border-border rounded-md text-sm bg-white">
+						<option value="">Todos</option>
+						{#each filteredConsumoTipos as tipo}<option value={String(tipo.id_tipo_equipo)}>{tipo.nombre}</option>{/each}
+					</select>
+				</div>
+				<div>
+					<label for="consumo-desde-filter" class="block text-xs font-medium text-muted mb-1">Fecha desde</label>
+					<input id="consumo-desde-filter" type="date" bind:value={consumoFilters.fecha_desde} class="w-full px-3 py-2 border border-border rounded-md text-sm" />
+				</div>
+				<div>
+					<label for="consumo-hasta-filter" class="block text-xs font-medium text-muted mb-1">Fecha hasta</label>
+					<input id="consumo-hasta-filter" type="date" bind:value={consumoFilters.fecha_hasta} class="w-full px-3 py-2 border border-border rounded-md text-sm" />
+				</div>
+				<div class="flex gap-2">
+					<Button onclick={loadConsumoReport} disabled={!!consumoRangoInvalido || !!consumoFechasIncoherentes}><Filter class="h-4 w-4" />Generar</Button>
+					<Button variant="secondary" onclick={resetConsumoFilters}>Limpiar</Button>
+				</div>
+			</div>
+			{#if consumoRangoInvalido}<p class="text-sm text-destructive mt-3">El rango de fechas no puede superar los 365 días.</p>{:else if consumoFechasIncoherentes}<p class="text-sm text-destructive mt-3">La fecha de inicio debe ser anterior o igual a la fecha de fin.</p>{/if}
+		</div>
+
+		{#if errorConsumo}<div class="bg-red-50 border border-red-200 text-destructive rounded-md p-4 text-sm mb-4">{errorConsumo}</div>{/if}
+		{#if loadingConsumo}
+			<div class="bg-white border border-border rounded-lg p-8 text-sm text-muted">Cargando reporte...</div>
+		{:else if filasConsumo.length === 0}
+			<EmptyState message="No se encontraron consumibles con los filtros seleccionados." />
+		{:else}
+			<div class="bg-white border border-border rounded-lg overflow-hidden shadow-sm">
+				<div class="overflow-x-auto">
+					<table class="min-w-full text-sm">
+						<thead class="bg-surface-alt text-left text-muted"><tr><th class="px-4 py-3 font-medium">Tipo de consumible</th><th class="px-4 py-3 font-medium">Ingresada</th><th class="px-4 py-3 font-medium">Entregada a técnicos</th><th class="px-4 py-3 font-medium">Usada en cierres</th><th class="px-4 py-3 font-medium">Devuelta a bodega</th><th class="px-4 py-3 font-medium">Diferencia</th><th class="px-4 py-3 font-medium">Indicador</th></tr></thead>
+						<tbody>{#each filasConsumo as fila}<tr class:border-amber-300={fila.desvio} class="border-t border-border hover:bg-surface-alt/50"><td class="px-4 py-3 font-medium">{fila.tipo_consumible}</td><td class="px-4 py-3">{fila.cantidad_ingresada} {fila.unidad_medida ?? ''}</td><td class="px-4 py-3">{fila.cantidad_entregada}</td><td class="px-4 py-3">{fila.cantidad_usada_en_cierres}</td><td class="px-4 py-3">{fila.cantidad_devuelta}</td><td class="px-4 py-3">{fila.diferencia}</td><td class="px-4 py-3">{#if fila.desvio}<Badge variant="warning">Desvío significativo</Badge>{:else}-{/if}</td></tr>{/each}</tbody>
+					</table>
+				</div>
 			</div>
 		{/if}
 	{/if}

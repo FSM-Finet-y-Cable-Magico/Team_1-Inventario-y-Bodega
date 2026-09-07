@@ -4,8 +4,16 @@ skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
-skinparam sequence { MessageAlign center  LifeLineBorderColor black }
+<style>
+sequenceDiagram {
+	participant { Margin 35 }
+	actor { Margin 15 }
+}
+</style>
+skinparam sequence {
+	MessageAlign center
+	LifeLineBorderColor black
+}
 hide footbox
 
 actor "Administrador de bodega" as U

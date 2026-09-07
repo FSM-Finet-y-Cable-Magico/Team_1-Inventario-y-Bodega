@@ -180,7 +180,7 @@ no esté reflejado aquí.
 | CU-88 | Generando reporte de garantías | [x] Implementado | Grupo 5 · RF-63 · `/api/reportes/garantias` · filtro por empresa, tipo y período, empty state y auditoría |
 | CU-89 | Generando reporte de inventario actual de técnicos | [~] En progreso | Grupo 5 · RF-64 · endpoint `/api/reportes/tecnicos/inventario` y pestaña en `/reportes`; pendiente resolver conflicto heredado de `units.service` para validación global |
 | CU-90 | Generando reporte de productividad de técnicos | [ ] Pendiente | |
-| CU-91 | Generando reporte de consumo de consumibles | [ ] Pendiente | |
+| CU-91 | Generando reporte de consumo de consumibles | [~] En progreso | Grupo 5 · RF-66 · endpoint `/api/reportes/consumo` y pestaña Consumo de consumibles |
 | CU-92 | Exportando reporte a Excel | [ ] Pendiente | |
 | CU-93 | Exportando reporte a PDF | [ ] Pendiente | |
 

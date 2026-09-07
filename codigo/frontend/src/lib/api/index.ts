@@ -197,6 +197,17 @@ export function generarReporteInventarioTecnicos(params?: { id_empresa?: string;
 	return api.get<import('$lib/types').ReporteInventarioTecnico[]>(`/reportes/tecnicos/inventario${query ? '?' + query : ''}`);
 }
 
+// CU-91: consumo de consumibles por empresa, tipo y rango de fechas
+export function generarReporteConsumo(params?: { id_empresa?: string; id_tipo_equipo?: string; fecha_desde?: string; fecha_hasta?: string }) {
+	const qs = new URLSearchParams();
+	if (params?.id_empresa) qs.set('id_empresa', params.id_empresa);
+	if (params?.id_tipo_equipo) qs.set('id_tipo_equipo', params.id_tipo_equipo);
+	if (params?.fecha_desde) qs.set('fecha_desde', params.fecha_desde);
+	if (params?.fecha_hasta) qs.set('fecha_hasta', params.fecha_hasta);
+	const query = qs.toString();
+	return api.get<import('$lib/types').ReporteConsumoFila[]>(`/reportes/consumo${query ? '?' + query : ''}`);
+}
+
 // CU-23: filtros por estado, rango de fechas o empresa
 export function getTransfers(params?: { estado?: string; id_empresa?: string; fecha_inicio?: string; fecha_fin?: string }) {
 	const qs = new URLSearchParams();
