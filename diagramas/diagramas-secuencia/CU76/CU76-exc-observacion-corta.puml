@@ -1,0 +1,67 @@
+@startuml CU76-exc-observacion-corta
+title CU-76 — Reingresando equipo desde reparación externa\n(excepción: observación con menos de 5 caracteres)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega" as user
+participant "V_FichaUnidad" as view
+participant "C_UnitsController" as ctrl
+participant "C_UnitsService" as svc
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as uent
+participant "prestamo_externo" as pent
+
+user -> view : Selecciona "Reparado" y deja\nla observación con menos de\n5 caracteres ("ok")
+activate view
+
+view -> ctrl : POST /unidades/:id/retorno-reparacion\n{ resultado: 'REPARADO', observacion: 'ok' }
+activate ctrl
+
+ctrl -> svc : registrarRetornoReparacion(idUnidad, dto, actor)
+activate svc
+
+svc -> orm : findOne(id_unidad, id_empresa)
+activate orm
+orm -> uent : SELECT unidad_equipo\nWHERE id_unidad = :id
+activate uent
+uent --> orm : Datos unidad (estado = 'En préstamo externo')
+deactivate uent
+orm --> svc : unidad (existe)
+deactivate orm
+
+svc -> svc : Precondición de estado OK
+activate svc
+deactivate svc
+
+svc -> orm : getRepository(PrestamoExterno).findOne\n({ id_unidad, tipo: 'REPARACION_EXTERNA', estado: 'ACTIVO' })
+activate orm
+orm -> pent : SELECT prestamo_externo WHERE ...
+activate pent
+pent --> orm : préstamo activo (existe)
+deactivate pent
+orm --> svc : préstamo
+deactivate orm
+
+svc -> svc : resultado = 'REPARADO' → válido\nobservacion.trim().length (2) < 5
+activate svc
+deactivate svc
+
+svc --> ctrl : throw BadRequestException\n('La observación debe tener al menos\n5 caracteres.')
+deactivate svc
+
+ctrl --> view : 400 Bad Request
+deactivate ctrl
+
+view --> user : Muestra el error dentro del modal:\n'La observación debe tener al menos\n5 caracteres.'\n(no cierra el modal, no cambia el estado)
+deactivate view
+
+@enduml

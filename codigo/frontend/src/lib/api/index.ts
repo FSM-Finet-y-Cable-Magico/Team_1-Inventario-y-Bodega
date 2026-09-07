@@ -145,6 +145,11 @@ export function enviarAReparacionExterna(id: number, data: Record<string, unknow
 	return api.post<any>(`/unidades/${id}/reparacion-externa`, data);
 }
 
+// CU-76: registrar retorno de reparación externa (equipo → "En revisión")
+export function registrarRetornoReparacion(id: number, data: Record<string, unknown>) {
+	return api.post<any>(`/unidades/${id}/retorno-reparacion`, data);
+}
+
 export function getUnitHistory(serialNumber: string) {
 	return api.get<any[]>(`/unidades/${serialNumber}/historial`);
 }

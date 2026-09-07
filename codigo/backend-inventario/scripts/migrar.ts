@@ -256,6 +256,8 @@ const SENTENCIAS = [
     fecha_actualizacion TIMESTAMPTZ DEFAULT now(),
     CONSTRAINT uq_inventario_tecnico_tipo UNIQUE (id_tecnico, id_tipo_equipo)
   )`,
+  // CU-76: resultado del servicio (REPARADO/NO_REPARADO) al cerrar el préstamo
+  `ALTER TABLE prestamo_externo ADD COLUMN IF NOT EXISTS resultado varchar(20)`,
 ];
 
 async function main() {

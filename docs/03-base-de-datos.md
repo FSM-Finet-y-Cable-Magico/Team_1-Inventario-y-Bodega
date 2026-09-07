@@ -145,15 +145,19 @@ replica el frontend):
 | `Asignado a técnico` | `Instalado en cliente`, `En bodega`, `En revisión` |
 | `Instalado en cliente` | `En revisión` |
 | `En revisión` | `En bodega`, `En préstamo externo`, `Dado de baja` |
-| `En préstamo externo` | `En bodega` |
+| `En préstamo externo` | `En bodega`, `En revisión` |
 | `Dado de baja` | *(ninguno, estado terminal)* |
 
 Reglas asociadas:
 - Al pasar a `En revisión` el **diagnóstico técnico es obligatorio** (CU-40), con lista permitida
   (`No enciende`, `Se reinicia continuamente`, `Sin señal óptica`, `Copla o puerto dañado`,
   `Falla de configuración`, `Daño físico visible`, `Causa desconocida`, `Otro`). Si es `Otro`,
-  requiere descripción de 5–200 caracteres.
+  requiere descripción de 5–200 caracteres. **Excepción:** el retorno de reparación externa
+  (CU-76) pasa directo a `En revisión` sin pedir diagnóstico (usa observación propia).
 - Cada transición escribe en `historial_estado_equipo` (transacción con reintentos, CU-36).
+- **CU-76 (ratificado por el jefe de grupo, 2026-09-07):** `En préstamo externo → En revisión`
+  se agregó a la máquina para que el retorno de un equipo enviado a reparación externa
+  (reparado o no) quede siempre en revisión para reevaluación interna. Aplica también a CU-82.
 
 ### 2.3 Transferencias y estado de inventario
 - La solicitud de transferencia crea `transferencia_equipo` + un `movimiento_inventario` por unidad

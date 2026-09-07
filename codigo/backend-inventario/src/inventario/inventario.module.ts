@@ -9,6 +9,7 @@ import { UnidadEquipo } from './entities/unidad-equipo.entity';
 import { HistorialEstado } from './entities/historial-estado.entity';
 import { PrestamoExterno } from './entities/prestamo-externo.entity';
 import { AuditoriaModule } from 'src/auditoria/auditoria.module';
+import { ProveedoresModule } from 'src/proveedores/proveedores.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { AuditoriaModule } from 'src/auditoria/auditoria.module';
       PrestamoExterno,
     ]),
     AuditoriaModule,
+    ProveedoresModule,
   ],
   controllers: [CatalogController, UnitsController],
   providers: [CatalogService, UnitsService],

@@ -217,6 +217,7 @@ CREATE TABLE IF NOT EXISTS prestamo_externo (
     fecha_retorno_real      DATE,
     detalle                 TEXT NOT NULL,
     estado                  VARCHAR(20) NOT NULL DEFAULT 'ACTIVO',
+    resultado               VARCHAR(20),
     id_usuario_registro     INTEGER NOT NULL
 );
 

@@ -173,6 +173,21 @@ export class UnitsController {
     );
   }
 
+  // CU-76: registrar retorno de reparación externa (equipo → "En revisión")
+  @Post(':id/retorno-reparacion')
+  @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
+  async registrarRetornoReparacion(
+    @Param('id') id: string,
+    @Body() body: any,
+    @CurrentUser() actor: any,
+  ) {
+    return this.unitsService.registrarRetornoReparacion(
+      parseInt(id),
+      body,
+      actor,
+    );
+  }
+
   @Patch(':id')
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
   async editarDatosUnidad(

@@ -83,6 +83,7 @@
 | 72 | Registrando resultado de revisión (Operativo/Reparación externa/Baja) | `inventario/units` | `/unidades/[id]` |
 | 74 | Reacondicionando equipo operativo desde revisión a bodega | `inventario/units` | `/unidades/[id]` |
 | 75 | Enviando equipo a reparación externa | `inventario/units` | `/unidades/[id]` |
+| 76 | Reingresando equipo desde reparación externa | `inventario/units` | `/unidades/[id]` |
 | 77 | Consultando listado de equipos en revisión | `inventario/units` | `/unidades/en-revision` |
 | 85 | Reporte de stock actual | `reportes`, `bodegas`, `inventario`, `auditoria` | `/reportes/stock` |
 | 86 | Reporte de movimientos de inventario | `reportes`, `transferencias` | `/reportes` |

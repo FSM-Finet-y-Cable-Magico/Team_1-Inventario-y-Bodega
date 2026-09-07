@@ -2,14 +2,14 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { getUnit, changeUnitState, getUnitHistory, getWarehouses, updateUnit, registrarResultadoRevision, reacondicionarUnidad, enviarAReparacionExterna } from '$lib/api/index';
+	import { getUnit, changeUnitState, getUnitHistory, getWarehouses, updateUnit, registrarResultadoRevision, reacondicionarUnidad, enviarAReparacionExterna, registrarRetornoReparacion } from '$lib/api/index';
 	import { userRoles } from '$lib/stores/auth';
 	import type { UnidadEquipo, HistorialEstado, EstadoUnidad, Bodega } from '$lib/types';
 	import Button from '$lib/components/Button.svelte';
 	import Modal from '$lib/components/Modal.svelte';
 	import FormField from '$lib/components/FormField.svelte';
 	import Badge from '$lib/components/Badge.svelte';
-	import { ArrowLeft, RotateCw, Pencil, ClipboardCheck, PackageCheck, Wrench } from '@lucide/svelte';
+	import { ArrowLeft, RotateCw, Pencil, ClipboardCheck, PackageCheck, Wrench, PackageOpen } from '@lucide/svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	
 
@@ -59,6 +59,12 @@
 	let reparacionExternaError = $state('');
 	let enviandoReparacion = $state(false);
 
+	// CU-76: registrar retorno de reparación externa (equipo → "En revisión")
+	let showRetorno = $state(false);
+	let retornoForm = $state({ resultado: '' as 'REPARADO' | 'NO_REPARADO' | '', observacion: '' });
+	let retornoError = $state('');
+	let registrandoRetorno = $state(false);
+
 
 	// CU-18: edición de los datos de la unidad
 	let showEdit = $state(false);
@@ -103,7 +109,8 @@
 		'Asignado a técnico': ['Instalado en cliente', 'En bodega', 'En revisión'],
 		'Instalado en cliente': ['En revisión'],
 		'En revisión': ['En bodega', 'En préstamo externo', 'Dado de baja'],
-		'En préstamo externo': ['En bodega'],
+		// CU-76: ratificado por el jefe de grupo — retorno de reparación externa
+		'En préstamo externo': ['En bodega', 'En revisión'],
 		'Dado de baja': []
 	};
 
@@ -310,6 +317,32 @@ async function handleEnviarReparacionExterna() {
 	}
 }
 
+// CU-76: registrar retorno de reparación externa
+async function handleRegistrarRetorno() {
+	if (!unit) return;
+	// E1: mensaje exacto del CU, no permite confirmar con observación corta
+	if (retornoForm.observacion.trim().length < 5) {
+		retornoError = 'La observación debe tener al menos 5 caracteres.';
+		return;
+	}
+	retornoError = '';
+	registrandoRetorno = true;
+	try {
+		await registrarRetornoReparacion(unit.id_unidad, {
+			resultado: retornoForm.resultado,
+			observacion: retornoForm.observacion.trim()
+		});
+		showRetorno = false;
+		success = 'Retorno de reparación externa registrado correctamente';
+		retornoForm = { resultado: '', observacion: '' };
+		await load();
+	} catch (err: unknown) {
+		retornoError = err instanceof Error ? err.message : 'Error al registrar el retorno';
+	} finally {
+		registrandoRetorno = false;
+	}
+}
+
 </script>
 
 <div class="max-w-4xl mx-auto">
@@ -450,6 +483,17 @@ async function handleEnviarReparacionExterna() {
 							}}>
 								<Wrench class="h-4 w-4" />
 								Enviar a reparación externa
+							</Button>
+						{/if}
+						<!-- CU-76: solo disponible cuando la unidad está en préstamo externo -->
+						{#if unit.estado === 'En préstamo externo'}
+							<Button variant="secondary" onclick={() => {
+								retornoForm = { resultado: '', observacion: '' };
+								retornoError = '';
+								showRetorno = true;
+							}}>
+								<PackageOpen class="h-4 w-4" />
+								Registrar retorno
 							</Button>
 						{/if}
 					<!-- CU-18: edición de los datos de la unidad -->
@@ -817,6 +861,46 @@ async function handleEnviarReparacionExterna() {
 		<div class="flex justify-end gap-3 pt-2">
 			<Button variant="secondary" onclick={() => (showReparacionExterna = false)} type="button">Cancelar</Button>
 			<Button type="submit" loading={enviandoReparacion}>Confirmar</Button>
+		</div>
+	</form>
+</Modal>
+
+<!-- CU-76: registrar retorno de reparación externa -->
+<Modal title="Registrar retorno" open={showRetorno} onclose={() => (showRetorno = false)}>
+	<form onsubmit={(e: Event) => { e.preventDefault(); handleRegistrarRetorno(); }} class="space-y-4">
+		{#if retornoError}
+			<div class="bg-red-50 border border-red-200 text-destructive text-sm rounded-md px-3 py-2">{retornoError}</div>
+		{/if}
+		{#if unit}
+			<p class="text-sm text-muted">
+				El equipo pasará de <strong>{unit.estado}</strong> a <strong>En revisión</strong>.
+			</p>
+
+			<FormField label="Resultado del servicio" name="ret_resultado" required>
+				<div class="flex gap-4">
+					<label class="flex items-center gap-2 text-sm cursor-pointer">
+						<input type="radio" name="ret_resultado" required bind:group={retornoForm.resultado} value="REPARADO" class="text-accent" />
+						Reparado
+					</label>
+					<label class="flex items-center gap-2 text-sm cursor-pointer">
+						<input type="radio" name="ret_resultado" required bind:group={retornoForm.resultado} value="NO_REPARADO" class="text-accent" />
+						No reparado
+					</label>
+				</div>
+			</FormField>
+
+			<!-- E1: sin "minlength" nativo para que el envío llegue a
+			     handleRegistrarRetorno() y muestre el mensaje exacto del CU -->
+			<FormField label="Observación" name="ret_obs" required
+				helper="Mínimo 5, máximo 300 caracteres ({retornoForm.observacion.length}/300)">
+				<textarea id="ret_obs" required bind:value={retornoForm.observacion} maxlength={300} rows="3"
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
+			</FormField>
+		{/if}
+
+		<div class="flex justify-end gap-3 pt-2">
+			<Button variant="secondary" onclick={() => (showRetorno = false)} type="button">Cancelar</Button>
+			<Button type="submit" loading={registrandoRetorno} disabled={registrandoRetorno}>Confirmar</Button>
 		</div>
 	</form>
 </Modal>

@@ -17,6 +17,7 @@ import { HistorialEstado } from './entities/historial-estado.entity';
 import { EditarDatosUnidadDto } from './dto/editar-datos-unidad.dto';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { PrestamoExterno } from './entities/prestamo-externo.entity';
+import { ProveedoresService } from '../proveedores/proveedores.service';
 
 const MAC_REGEX = /^([0-9A-Fa-f]{2}[:\-]){5}[0-9A-Fa-f]{2}$/;
 
@@ -30,6 +31,7 @@ export class UnitsService {
     private readonly catalogService: CatalogService,
     private readonly dataSource: DataSource,
     private readonly auditoriaService: AuditoriaService,
+    private readonly proveedoresService: ProveedoresService,
   ) {}
 
   async listarUnidades(
@@ -536,7 +538,9 @@ export class UnitsService {
       ],
       'Instalado en cliente': ['En revisión'],
       'En revisión': ['En bodega', 'En préstamo externo', 'Dado de baja'],
-      'En préstamo externo': ['En bodega'],
+      // CU-76: ratificado por el jefe de grupo (2026-09-07) — el retorno de
+      // reparación externa deja el equipo "En revisión" para reevaluación.
+      'En préstamo externo': ['En bodega', 'En revisión'],
       'Dado de baja': [],
     };
 
@@ -739,34 +743,15 @@ export class UnitsService {
     return { bodega, ubicacionFisica };
   }
 
-  // CU-75: copia temporal del helper de RUT chileno de CU-49
-  // (proveedores.service.ts, commit 86c155c, rama sin mergear a dev).
-  // Deduplicar cuando esa rama se fusione: mismo algoritmo (módulo 11)
-  // y mismo regex de formato, para no romper nada al unificar.
-  private calcularDVRut(rutNumero: number): string {
-    let suma = 0;
-    let multiplo = 2;
-    let temp = rutNumero;
-    while (temp > 0) {
-      suma += (temp % 10) * multiplo;
-      temp = Math.floor(temp / 10);
-      multiplo = multiplo === 7 ? 2 : multiplo + 1;
-    }
-    const resultado = 11 - (suma % 11);
-    if (resultado === 11) return '0';
-    if (resultado === 10) return 'K';
-    return String(resultado);
-  }
-
   // CU-75: RUT opcional; si viene, valida formato (XXXXXXXX-X) y DV
+  // reutilizando ProveedoresService (CU-49), sin duplicar el algoritmo.
   private validarRutOpcional(rut: string | undefined): string | null {
     if (!rut || !rut.trim()) return null;
     const rutNormalizado = rut.trim().toUpperCase();
     if (!/^\d{7,8}-[0-9K]$/.test(rutNormalizado)) {
       throw new BadRequestException('El RUT debe tener el formato XXXXXXXX-X.');
     }
-    const [numStr, dv] = rutNormalizado.split('-');
-    if (this.calcularDVRut(parseInt(numStr, 10)) !== dv) {
+    if (!this.proveedoresService.validarRut(rutNormalizado)) {
       throw new BadRequestException(
         'El dígito verificador del RUT no es válido.',
       );
@@ -1021,6 +1006,120 @@ export class UnitsService {
       success: true,
       estadoActual: unidad.estado,
       message: 'El equipo fue enviado a reparación externa correctamente.',
+    };
+  }
+
+  // CU-76: registrar el retorno de un equipo desde reparación externa.
+  // El equipo pasa a "En revisión" siempre (reparado o no), el préstamo se cierra.
+  async registrarRetornoReparacion(
+    idUnidad: number,
+    dto: {
+      resultado?: 'REPARADO' | 'NO_REPARADO';
+      observacion?: string;
+    },
+    actor: any,
+  ) {
+    if (!idUnidad || isNaN(idUnidad)) {
+      throw new BadRequestException('El ID de la unidad es inválido.');
+    }
+
+    const unidad = await this.unitRepository.findOne({
+      where: { id_unidad: idUnidad, id_empresa: actor.id_empresa },
+    });
+    if (!unidad) throw new NotFoundException('El equipo solicitado no existe.');
+
+    // Precondición del CU-76: 'En préstamo externo' con préstamo de
+    // reparación externa activo
+    if (unidad.estado !== 'En préstamo externo') {
+      throw new BadRequestException(
+        'Transición de estado no permitida para este equipo.',
+      );
+    }
+
+    const prestamoRepo = this.dataSource.getRepository(PrestamoExterno);
+    const prestamo = await prestamoRepo.findOne({
+      where: {
+        id_unidad: unidad.id_unidad,
+        tipo: 'REPARACION_EXTERNA',
+        estado: 'ACTIVO',
+      },
+    });
+    if (!prestamo) {
+      throw new BadRequestException(
+        'Transición de estado no permitida para este equipo.',
+      );
+    }
+
+    if (!['REPARADO', 'NO_REPARADO'].includes(dto.resultado ?? '')) {
+      throw new BadRequestException(
+        'Debe seleccionar el resultado del servicio (Reparado o No reparado).',
+      );
+    }
+
+    // CU-76 Excepción: mensaje exacto del caso de uso
+    const observacion = dto.observacion?.trim() ?? '';
+    if (observacion.length < 5) {
+      throw new BadRequestException(
+        'La observación debe tener al menos 5 caracteres.',
+      );
+    }
+    if (observacion.length > 300) {
+      throw new BadRequestException(
+        'La observación no puede superar los 300 caracteres.',
+      );
+    }
+
+    const estadoOrigen = unidad.estado;
+    const motivoHistorial = `Retorno de reparación externa: ${dto.resultado === 'REPARADO' ? 'Reparado' : 'No reparado'}. ${observacion}`;
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      unidad.estado = 'En revisión';
+      await queryRunner.manager.save(unidad);
+
+      prestamo.estado = 'CERRADO';
+      prestamo.fechaRetornoReal = new Date();
+      prestamo.resultado = dto.resultado;
+      await queryRunner.manager.save(prestamo);
+
+      const fechaChile = new Date(
+        new Date().toLocaleString('en-US', { timeZone: 'America/Santiago' }),
+      );
+      const nuevoHistorial = this.historyRepository.create({
+        id_unidad: unidad.id_unidad,
+        id_usuario: actor.id_usuario,
+        estadoAnterior: estadoOrigen,
+        estadoNuevo: 'En revisión',
+        motivo: motivoHistorial,
+        fechaHora: fechaChile,
+      });
+      await queryRunner.manager.save(nuevoHistorial);
+
+      await queryRunner.commitTransaction();
+    } catch {
+      await queryRunner.rollbackTransaction();
+      throw new BadRequestException(
+        'Error al registrar el retorno de reparación externa. Intente nuevamente.',
+      );
+    } finally {
+      await queryRunner.release();
+    }
+
+    await this.auditoriaService.create({
+      id_usuario: actor.id_usuario,
+      accion: 'CAMBIAR_ESTADO',
+      entidad_afectada: 'unidad_equipo',
+      id_entidad_afectada: unidad.id_unidad,
+      valor_anterior: { estado: estadoOrigen },
+      valor_nuevo: { estado: 'En revisión', resultado: dto.resultado },
+    });
+
+    return {
+      success: true,
+      estadoActual: unidad.estado,
+      message: 'El retorno de reparación externa fue registrado correctamente.',
     };
   }
 

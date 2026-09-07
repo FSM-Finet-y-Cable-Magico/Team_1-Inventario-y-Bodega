@@ -13,8 +13,8 @@ no esté reflejado aquí.
 ## Resumen
 
 - **Total de casos de uso:** 96
-- **Implementados:** 67 (CU-01 a CU-46, CU-49 a CU-62, CU-72, CU-74, CU-77, CU-85, CU-86, CU-88, CU-89, CU-91)
-- **Pendientes:** 29 (CU-47, CU-48, CU-61, CU-63 a CU-71, CU-73, CU-75, CU-76, CU-78 a CU-84, CU-87, CU-90, CU-92 a CU-96)
+- **Implementados:** 69 (CU-01 a CU-46, CU-49 a CU-62, CU-72, CU-74, CU-75, CU-76, CU-77, CU-85, CU-86, CU-88, CU-89, CU-91)
+- **Pendientes:** 27 (CU-47, CU-48, CU-61, CU-63 a CU-71, CU-73, CU-78 a CU-84, CU-87, CU-90, CU-92 a CU-96)
 
 ## Leyenda
 
@@ -150,7 +150,7 @@ no esté reflejado aquí.
 |----|--------|--------|-------|
 | CU-74 | Reacondicionando equipo operativo desde revisión a bodega | [x] Implementado | |
 | CU-75 | Enviando equipo a reparación externa | [x] Implementado | |
-| CU-76 | Reingresando equipo desde reparación externa | [ ] Pendiente | |
+| CU-76 | Reingresando equipo desde reparación externa | [x] Implementado | |
 | CU-77 | Consultando listado de equipos en revisión | [x] Implementado | |
 
 ### Baja definitiva de equipos
