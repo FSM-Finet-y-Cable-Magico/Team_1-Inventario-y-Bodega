@@ -143,8 +143,9 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
   consumibles por tipo + cantidad, mostrando el saldo disponible.
 - Validación en vivo de los mensajes de CU-59 antes de enviar; el backend los repite.
 - **CU-83:** por defecto muestra los `Activo`; filtros de estado y de empresa (este último solo
-  para `SUPERUSUARIO`), badge por tipo (Préstamo / Reparación externa), columna de días restantes
-  con `Vencido hace N días` en rojo y `EmptyState` con el mensaje exacto del caso de uso.
+  para `SUPERUSUARIO`), columna de días restantes con `Vencido hace N días` en rojo y `EmptyState`
+  con el mensaje exacto del caso de uso. La tabla **no** muestra el tipo: el sistema solo registra
+  préstamos (ver `05-backend/prestamos.md` §2).
 - **CU-84:** cuando el backend rechaza ítems, el modal reparte las frases del mensaje entre los
   ítems que nombran y marca cada uno en rojo con su motivo.
 - **CU-82:** modal "Registrar retorno" (solo en préstamos `Activo`) con fecha limitada a hoy

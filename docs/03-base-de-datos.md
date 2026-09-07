@@ -79,8 +79,9 @@ y una unidad no puede repetirse en dos donaciones.
 `prestamo_retorno`: `id_retorno` PK · `id_detalle` FK CASCADE · `cantidad` · `fecha_retorno` ·
 `observacion` (300) · `id_usuario` — la usa CU-82 para los retornos parciales.
 
-> **Un solo dueño de la entidad:** CU-75 (Grupo 3, reparación externa) escribe en esta misma tabla
-> con `tipo = 'REPARACION_EXTERNA'`. No crear tablas paralelas.
+> **`tipo` es hoy siempre `PRESTAMO`.** La columna queda reservada para la reparación externa de
+> CU-75 (Grupo 3), que según el acuerdo de integración compartiría esta tabla; hasta que exista ese
+> CU (y su reingreso, CU-76) el sistema no crea ni muestra registros de ese tipo.
 
 ### `historial_estado_equipo` — historial de transiciones de estado
 `id_historial` PK · `id_unidad` · `id_usuario` · `estado_anterior` · `estado_nuevo` · `motivo` text ·

@@ -14,11 +14,17 @@ service (patrón de `transferencias`/`bajas`).
 | GET | `/api/prestamos/:id` | idem | Detalle con los ítems prestados y sus retornos previos. |
 | POST | `/api/prestamos/:id/retorno` | idem | CU-82: retorno total o parcial. |
 
-## 2. Un solo dueño de la tabla (coordinación con Grupo 3)
+## 2. Hoy solo existe el tipo `PRESTAMO`
 
-`prestamo_externo.tipo` distingue `PRESTAMO` (CU-81) de `REPARACION_EXTERNA` (CU-75, Grupo 3).
-**Ambos flujos comparten tabla**; no crear entidades paralelas. Las columnas `descripcion_falla`,
-`fecha_retorno_real` y `resultado_retorno` existen para esa variante y para el cierre de CU-82.
+`prestamo_externo.tipo` está siempre en `PRESTAMO`: **el sistema no crea ni muestra otro tipo**.
+La columna existe porque el acuerdo de integración de CU-81 reserva esta tabla para la reparación
+externa de CU-75 (Grupo 3), junto con `descripcion_falla`; mientras ese CU y su reingreso (CU-76)
+no estén implementados, un registro `REPARACION_EXTERNA` quedaría **sin forma de cerrarse**, así que
+no se ofrece en la UI ni en la API.
+
+Cuando el Grupo 3 implemente CU-75/CU-76 se retoma la variante (la columna ya está); si el jefe de
+grupo decide que la reparación externa vivirá en otra entidad, la columna se puede eliminar sin
+tocar el resto del módulo.
 
 ## 3. Validaciones (mensajes acumulados)
 
@@ -113,8 +119,6 @@ Las validaciones de trazabilidad por ítem son **CU-84** (ver §9).
 - Filtros: `estado` (por defecto la página pide `Activo`) e `id_empresa`. **El filtro por empresa
   solo lo aplica el Superusuario**: a los demás se les fija su propia empresa, así que pasar
   `id_empresa` de otra empresa no cambia nada.
-- La tabla incluye los préstamos `tipo = 'REPARACION_EXTERNA'` (CU-75, Grupo 3): comparten tabla y
-  se distinguen con un badge.
 - Es una consulta: **no audita**.
 - Excepción 1: la lista vacía no es error; el `EmptyState` del frontend muestra
   `No hay préstamos externos activos actualmente.` cuando el filtro activo es `Activo`.

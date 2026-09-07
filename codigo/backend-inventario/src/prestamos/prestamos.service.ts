@@ -26,7 +26,10 @@ const ESTADO_PRESTAMO = 'En préstamo externo';
 const ESTADO_REVISION = 'En revisión';
 export const PRESTAMO_ACTIVO = 'Activo';
 export const PRESTAMO_CERRADO = 'Cerrado';
-// CU-75 (Grupo 3) usará la variante 'REPARACION_EXTERNA' sobre la misma tabla
+// Único tipo que registra el sistema hoy. La columna existe porque el acuerdo de
+// integración (CU-81) reserva esta tabla para la reparación externa de CU-75
+// (Grupo 3), pero mientras ese CU no exista no se crea ni se muestra otro tipo:
+// sin CU-76 un registro de reparación no se podría cerrar.
 export const TIPO_PRESTAMO = 'PRESTAMO';
 
 const RUT_REGEX = /^\d{7,8}-[\dkK]$/;

@@ -72,12 +72,6 @@
 		return `${dias} ${dias === 1 ? 'día' : 'días'}`;
 	}
 
-	// CU-83: la tabla incluye los préstamos por reparación externa (CU-75, misma tabla)
-	const tipoLabel: Record<string, string> = {
-		PRESTAMO: 'Préstamo',
-		REPARACION_EXTERNA: 'Reparación externa'
-	};
-
 	function fmtFecha(fecha: string | null): string {
 		if (!fecha) return '-';
 		return new Date(fecha).toLocaleDateString('en-GB', {
@@ -392,7 +386,6 @@
 					<thead>
 						<tr class="border-b border-border bg-surface/50">
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">N° préstamo</th>
-							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Tipo</th>
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Receptor</th>
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Salida</th>
 							<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Retorno estimado</th>
@@ -407,12 +400,6 @@
 						{#each prestamos as p, i}
 							<tr class="border-b border-border {i % 2 === 0 ? 'bg-white' : 'bg-surface/30'}">
 								<td class="px-4 py-3 font-mono text-foreground">{p.correlativo}</td>
-								<td class="px-4 py-3">
-									<!-- CU-83: la tabla incluye las reparaciones externas (CU-75) -->
-									<Badge variant={p.tipo === 'REPARACION_EXTERNA' ? 'warning' : 'default'}>
-										{tipoLabel[p.tipo] ?? p.tipo}
-									</Badge>
-								</td>
 								<td class="px-4 py-3 text-foreground">
 									{p.nombre_receptor}
 									{#if p.rut_receptor}<span class="text-muted"> · {p.rut_receptor}</span>{/if}
