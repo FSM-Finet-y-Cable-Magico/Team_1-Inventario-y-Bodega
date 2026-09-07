@@ -1,0 +1,46 @@
+@startuml CU89-Inventario-Tecnicos-Normal
+title CU-89 - Reporte de inventario actual de tecnicos (flujo normal)
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style>
+sequenceDiagram {
+	participant { Margin 35 }
+	actor { Margin 15 }
+}
+</style>
+skinparam sequence {
+	MessageAlign center
+	LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega" as Usuario
+participant "Vista /reportes" as V
+participant "ReportesController" as C
+participant "ReportesService" as SVC
+database "PostgreSQL" as DB
+
+Usuario -> V : Selecciona empresa y tecnico/Todos
+activate V
+V -> C : GET /api/reportes/tecnicos/inventario?id_empresa=&id_usuario=
+activate C
+C -> SVC : getInventarioTecnicosReport(filtros, req.user)
+activate SVC
+SVC -> SVC : Valida rol, empresa y tecnico activo
+SVC -> DB : SELECT usuarios TECNICO_TERRENO activos
+DB --> SVC : tecnicos
+SVC -> DB : SELECT unidad_equipo + tipo_equipo + historial_estado_equipo
+DB --> SVC : NS, fecha_asignacion y dias_transcurridos
+SVC -> DB : SELECT inventario_personal_tecnico + tipo_equipo
+DB --> SVC : saldos de consumibles
+SVC -> DB : INSERT log_auditoria (GENERAR_REPORTE)
+DB --> SVC : confirmado
+SVC --> C : tecnicos con equipos_individualizables y consumibles
+C --> V : 200 OK
+V --> Usuario : Tarjeta por tecnico con dos tablas
+ deactivate SVC
+ deactivate C
+ deactivate V
+@enduml

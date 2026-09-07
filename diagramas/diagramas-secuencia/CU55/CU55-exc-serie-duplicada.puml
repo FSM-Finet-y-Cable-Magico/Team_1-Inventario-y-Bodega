@@ -1,0 +1,65 @@
+@startuml CU55-NumerosSerieRecepcion-Exc-SerieDuplicada
+title CU-55 — Ingresando números de serie (excepción: número de serie ya registrado)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+skinparam sequence { MessageAlign center  LifeLineBorderColor black }
+hide footbox
+
+actor "Admin/AdminBodega/\nSuperusuario" as user
+participant "V_OrdenIngresoDetalle" as view
+participant "C_OrdenesIngresoController" as ctrl
+participant "C_OrdenesIngresoService" as svc
+participant "C_CatalogService" as cat
+database "postgres" as db
+
+user -> view : Ingresa un NS que ya existe\nen el inventario y confirma
+activate view
+
+view -> view : El NS pasa la validación de formato\ny no está repetido en el listado local:\nla duplicación en BD solo la ve el backend
+
+view -> ctrl : POST /api/ordenes-ingreso/{id}/recepcion\n{ items: [ { id_detalle, cantidad_recibida: 2,\nnumeros_serie: ["OK-9991", "NS-0002"] } ] }
+activate ctrl
+
+ctrl -> svc : registrarRecepcion(id, dto, actor)
+activate svc
+
+svc -> cat : validarFormatoSerialNumber("OK-9991")
+activate cat
+cat --> svc : formato válido
+deactivate cat
+
+svc -> db : SELECT * FROM unidad_equipo\nWHERE numero_serie = 'OK-9991'
+db --> svc : sin coincidencias
+
+svc -> cat : validarFormatoSerialNumber("NS-0002")
+activate cat
+cat --> svc : formato válido
+deactivate cat
+
+svc -> db : SELECT * FROM unidad_equipo\nWHERE numero_serie = 'NS-0002'
+db --> svc : unidad existente
+
+svc -> svc : Excepción 2
+
+note right of svc
+  La comprobación ocurre ANTES de abrir
+  la transacción: ni siquiera se crea la
+  unidad del NS válido que venía en el
+  mismo envío, y la orden conserva sus
+  cantidades y su estado
+end note
+
+svc --> ctrl : throw ConflictException
+deactivate svc
+
+ctrl --> view : 409 Conflict\n{ message: "El número de serie [NS-0002]\nya se encuentra registrado en el sistema." }
+deactivate ctrl
+
+view --> user : Banner de error en el modal.\nNo se creó ninguna unidad
+deactivate view
+
+@enduml

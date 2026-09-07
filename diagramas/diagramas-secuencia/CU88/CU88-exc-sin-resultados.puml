@@ -1,0 +1,41 @@
+@startuml CU88-Reporte-Garantias-Exc-Sin-Resultados
+title CU-88 — Generando reporte de garantías (excepción: sin resultados)
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style>
+sequenceDiagram {
+	participant { Margin 35 }
+	actor { Margin 15 }
+}
+</style>
+skinparam sequence {
+	MessageAlign center
+	LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega" as U
+participant "Vista reportes" as V
+participant "Controlador reportes" as C
+participant "Servicio reportes" as S
+database "postgres" as DB
+
+U -> V : Ejecuta filtros sin coincidencias
+activate V
+V -> C : GET /api/reportes/garantias?id_empresa=2&id_tipo_equipo=15&periodo=60
+activate C
+C -> S : getGarantiasReport(filtros, req.user)
+activate S
+S -> DB : SELECT ... WHERE empresa/tipo/período aplicados
+DB --> S : 0 filas
+S -> S : retorna []
+S -> C : HTTP 200 + []
+C --> V : respuesta vacía
+V --> U : EmptyState: "No se encontraron equipos con los filtros seleccionados."
+
+deactivate V
+deactivate C
+deactivate S
+@enduml

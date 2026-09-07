@@ -1,0 +1,29 @@
+@startuml CU86-Reporte-Movimientos-Excepcion
+title CU-86 — Generando reporte de movimientos (excepción: rango mayor a 365 días)
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+hide footbox
+
+actor Usuario
+participant "Vista SvelteKit" as V
+participant "ReportesController" as C
+participant "ReportesService" as S
+ database "movimiento_inventario" as DB
+
+Usuario -> V : Selecciona fechas con más de 365 días
+V -> V : Validación en vivo deshabilita Generar
+Usuario -> V : Intenta generar el reporte
+V -> C : GET /api/reportes/movimientos?fecha_desde=...&fecha_hasta=...
+activate C
+C -> S : getMovementsReport(filtros, req.user)
+activate S
+S -> S : detecta diferencia de fechas > 365 días
+S --> C : BadRequestException
+C --> V : 400 Bad Request
+V --> Usuario : El rango de fechas no puede superar los 365 días.
+V -> DB : No ejecuta consulta ni genera reporte
+ deactivate S
+ deactivate C
+@enduml

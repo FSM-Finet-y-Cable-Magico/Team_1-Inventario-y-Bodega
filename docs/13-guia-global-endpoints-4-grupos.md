@@ -12,6 +12,9 @@
 > **G3** = Terreno/FSM (OTs) · **G8** = CRM.
 > **Nota de avance:** G3 trae `estado_implementacion` (17/56 ✅). Los JSON de G2 y G8 no traen
 > estado; lo que consta como "ya existe" abajo fue **verificado en su código**, no en su JSON.
+>
+> **🆕 v2 (05-sept-2026):** incorpora la respuesta de G2 a esta guía (duplicados del portal,
+> derivaciones por actor, SmartOLT). Decisiones del jefe de grupo resumidas en §8.0.
 
 ---
 
@@ -32,13 +35,15 @@
 | Dominio | Dueño | Todos los demás |
 |---------|-------|-----------------|
 | `cliente` — alta | **G3** (CU-27 ✅) | Solo lectura por endpoint |
-| `cliente` — ciclo de vida / servicios / planes | **G8** | Solo lectura |
+| `cliente` — ciclo de vida / servicios / planes / edición | **G8** | Solo lectura · G2 edita contacto vía `PATCH /clientes/{id}` (G8-5) |
 | Credenciales del portal cliente | **G3** (guarda `password_portal_hash`) — pendiente ratificar | G2 consume validación |
 | OTs / trabajos / cierres en terreno | **G3** | Consumen eventos |
 | Inventario: unidades, estados, stock, bodegas, transferencias, garantías de equipo, préstamos, bajas | **G1 (T1)** | Solo leen / solicitan transiciones |
 | Máquina de estados de equipos | **G1 (T1)** — 6 literales exactos con tildes | Nadie actualiza `unidad_equipo` directo |
-| Tickets | **G8** (creación) / G2 (desde portal y chatbot) | G3 puede crear desde terreno |
-| Pagos / pasarelas / SmartOLT | **G2** | Reciben notificaciones |
+| Tickets | **G2** crea desde portal y chatbot (CU-71/77) · **G8** gestiona y crea comerciales · G3 recibe/gestiona desde terreno (G3-CU-30). G8-CU-41 y G3-CU-29 desisten como creación (v2) | — |
+| Pagos: checkout pasarela (Webpay/Mercado Pago) | **G2** (CU-42/43) | G8 recibe la notificación del pago (G2-1 → G8-3) |
+| Pagos: registro financiero, unicidad, recaudación externa, morosidad | **G8** (absorbe G2-CU-44/45/46/47/80 — v2) | G2 muestra en portal |
+| SmartOLT — suspensión/reactivación por morosidad | **G8** — **único disparador** (cadena CU-13→CU-30→CU-31) (v2) | G2 consume el estado para el portal; G3 mantiene sus CUs de monitoreo (G3-CU-12..17) |
 | Correlativos | Prefijos únicos por dueño: `OT-` (G3), `SRV-` `OI-` `PE-` (G1), ticket (G8), transacción (G2) | Nadie repite prefijos |
 
 ---
@@ -138,9 +143,13 @@ webhook de cierre emitido por G3 para CU-64/68/69 · `GET /clientes/rut/{rut}` y
 | # | Endpoint | Consumido por | Para qué CU | Datos |
 |---|----------|---------------|-------------|-------|
 | G8-1 | `GET /deuda?rut= \| ?codigo_abonado=` (módulo cobranza — **aún no existe en su backend**) | **G2** | G2-CU-23..28, 39..41 (deuda/estado contrato en portal y chatbot G2-CU-64) | `{rut, codigo_abonado, contratos[] {plan, estado, fecha_vencimiento}, saldo_total, deuda_vencida, al_dia}` |
-| G8-2 | `POST /integraciones/wifi-cambio` (su CU-40, no implementado) | **G2** | G2-CU-32/33 (cambio de clave WiFi solicitado desde portal) | `{rut, nueva_clave}` → valida complejidad y ejecuta en router/SmartOLT |
-| G8-3 | `POST /webhooks/pagos-confirmados` (receptor) | **G2** | G2-CU-42/43/44 notifican el pago → G8-CU-31/78 (reactivar servicio, estado comercial) | `{rut, codigo_abonado, monto, medio (WEBPAY/MERCADO_PAGO), id_transaccion (único, G2-CU-45), fecha}` |
+| G8-2 | `POST /integraciones/wifi-cambio` (su CU-40, no implementado) | **G2** | G2-CU-32 (cambio de clave WiFi solicitado desde portal; ejecuta G8) | `{rut, nueva_clave}` → valida complejidad y ejecuta en router/SmartOLT |
+| G8-3 | `POST /webhooks/pagos-confirmados` (receptor) | **G2** | G2-CU-42/43 notifican el pago → G8-CU-31/78 (reactivar servicio, estado comercial) | `{rut, codigo_abonado, monto, medio (WEBPAY/MERCADO_PAGO), id_transaccion (único, ahora G8-CU-45), fecha}` |
 | G8-4 | `GET /contratos?rut=` (lectura de servicios activos) | **G2** | G2-CU-23/25/26 (plan vigente, múltiples planes) | `{contratos[] {id, plan, estado, fecha_inicio}}` |
+| G8-5 | `PATCH /clientes/{id}` — teléfono y correo desde el portal *(pedido G2)* | **G2** | G2-CU-08/09 (actualización de contacto) | `{telefono, email}` |
+| G8-6 | `POST /leads` — botón "Contratar ahora" *(pedido G2)* | **G2** | G2-CU-18 (prospecto comercial) | datos del lead |
+| G8-7 | `GET /pagos/{id}/comprobante` — PDF *(pedido G2)* | **G2** | G2-CU-52/53 (descarga y presentación del comprobante) | PDF binario |
+| G8-8 | **Endpoints de lista** para polling diario *(acordado v2: G2 consulta en vez de webhooks CRM→G2)* | **G2** | G2-CU-67 (contratos que vencen en 3 días), CU-68 (morosos que cruzaron umbral hoy), CU-69 (pagos nuevos de recaudación externa) | `GET /contratos?vencen_en=N` · `GET /contratos?morosos_desde=<fecha>` · `GET /pagos?desde=<fecha>` |
 
 ### 5.2 MODIFICAR (redirigir su dominio inventario hacia G1)
 
@@ -151,9 +160,9 @@ webhook de cierre emitido por G3 para CU-64/68/69 · `GET /clientes/rut/{rut}` y
 | G8-M3 | CU-59 (vincular equipo↔cliente): consumir estado de G1 / registrar la vinculación vía transición `Instalado en cliente` | La vinculación real la hace T1-CU-64; no duplicar |
 | G8-M4 | CU-55 (diagnóstico de equipo devuelto): reutilizar T1-CU-40 (ya implementado) en vez de re-implementar | Ya existe con auditoría e historial |
 
-### 5.3 DESISTIR (propuesta formal al jefe de grupo — evitar duplicar el dominio de G1)
+### 5.3 DESISTIR (propuesta formal al jefe de grupo — evitar duplicar dominios ajenos)
 
-Su módulo "Gestión de Inventario" (13 CUs) duplica funcionalidad que **T1 ya tiene implementada
+**(a) Módulo "Gestión de Inventario" (13 CUs)** duplica funcionalidad que **T1 ya tiene implementada
 y andando**. Se propone cancelarlos y consumir G1 en su lugar:
 
 | SU CU (G8) | Equivalente en T1 (ya implementado) |
@@ -168,9 +177,17 @@ y andando**. Se propone cancelarlos y consumir G1 en su lugar:
 | CU-72 clasificación modalidad equipo | T1 CU-31 + catálogo |
 | CU-85 garantía (equipo) | T1 CU-38/39 (G8 conserva la parte comercial/servicio si la hay) |
 | CU-60 evidencia multimedia instalación | G3-CU-05 (fotos del cierre, ya implementado) |
+| **CU-38** Autenticando cliente en portal web con RUT | **G2-CU-01** (portal login) — módulo "Portal del Cliente y TV IP" desiste (v2) |
+| **CU-39** Visualizando plan contratado en el portal | **G2-CU-25** — ídem |
+| **CU-40** Cambiando contraseña de Wi-Fi desde el portal | **G2-CU-32** (portal) + ejecución G8 vía G8-2 — ídem |
+| **CU-41** Generando ticket de soporte desde el portal del cliente | **G2-CU-71** — ídem |
 
 Si el jefe aprueba, los G8-M1..M4 ni siquiera hacen falta como modificaciones: G8 consume los
 endpoints G1-2/3/4/5 para todo.
+
+**(b) Módulo "Portal del Cliente y TV IP" (CU-38..42) — decisión v2:** G8 **desiste de CU-38/39/40/41**
+(actor `Cliente`, mismas pantallas del portal que G2 ya construye: login, plan, WiFi, ticket).
+G8 **conserva CU-42** (credenciales TV IP, actor `Módulo CRM`). Verificados contra su JSON.
 
 ### 5.4 HABILITAR (ya existen — verificado en su código; solo conceder acceso)
 
@@ -189,8 +206,13 @@ endpoints G1-2/3/4/5 para todo.
 
 | # | Endpoint / acción | Consumido por | Para qué CU | Datos |
 |---|--------------------|---------------|-------------|-------|
-| G2-1 | **Llamada saliente** `POST {API_G8}/webhooks/pagos-confirmados` tras confirmar Webpay/Mercado Pago (G2-CU-44) | G8 | G8-CU-31/78 (reactivación/estado comercial) | `{rut, codigo_abonado, monto, medio, id_transaccion, fecha}` |
-| G2-2 | *(Opcional)* receptor `POST /webhooks/estado-servicio` para que G8/G3 empujen avisos de corte/reconexión al portal | G8 | G2-CU-49/50/51 (avisos de suspensión en portal) | `{rut, estado (SUSPENDIDO/REACTIVADO), motivo, fecha}` |
+| G2-1 | **Llamada saliente** `POST {API_G8}/webhooks/pagos-confirmados` tras confirmar Webpay/Mercado Pago (checkout G2-CU-42/43) | G8 | G8-CU-31/78 (reactivación/estado comercial) | `{rut, codigo_abonado, monto, medio, id_transaccion, fecha}` |
+| G2-2 | *(Opcional)* receptor `POST /webhooks/estado-servicio` para que G8 empuje avisos de corte/reconexión al portal | G8 | G2-CU-49/50/51 (avisos de suspensión en portal) | `{rut, estado (SUSPENDIDO/REACTIVADO), motivo, fecha}` |
+
+> **v2 — Webhooks CRM→G2:** G2 aceptó **polling** en vez de webhooks entrantes. Los 3 eventos
+> (vencimiento próximo, morosidad alcanzada, pago de recaudación externa) se resuelven con los
+> endpoints de lista **G8-8** (`GET /contratos?vencen_en=`, `GET /contratos?morosos_desde=`,
+> `GET /pagos?desde=`), una consulta diaria de G2. El único webhook saliente de G2 es G2-1.
 
 ### 6.2 MODIFICAR
 - Nada estructural. Solo asegurar que el login del portal (CU-01) **no valide contraseñas
@@ -204,11 +226,32 @@ endpoints G1-2/3/4/5 para todo.
 | CU-15/17 catálogo de planes | G8 | G8-H2 `GET /plans` |
 | CU-23..28, 39..41 deuda y estado de contrato | G8 | G8-1 `GET /deuda`, G8-4 `GET /contratos` |
 | CU-30/71/77/78 tickets | G8 | G8-H1 `POST /tickets` |
-| CU-32/33 cambio de clave WiFi | G8 | G8-2 |
-| CU-42..44 pago | G8 | G2-1 notifica webhook |
-| CU-48/50 suspensión/reactivación | SmartOLT (externo) | API de terceros — **coordinar con G8-CU-30 quién dispara** |
-| CU-63..69 chatbot | G8 | mismos endpoints de deuda/tickets |
+| CU-32 cambio de clave WiFi (solicitud portal) | G8 | G8-2 (ejecuta G8 con su CU-40) |
+| CU-42/43 checkout pago | G8 | G2-1 notifica webhook |
+| CU-48/50/51 suspensión/reactivación/bitácora | G8 | **disparador único G8** (CU-30/31 + SmartOLT); G2 consume estado (G8-8 listas o G2-2 receptor) |
+| CU-63..69 chatbot | G8 | mismos endpoints de deuda/tickets + G8-5/6/7/8 |
 | CU-59..61 factibilidad/mapa | (opcional) G3 | topología/planta externa si G3 la expone — hoy no está definido |
+
+### 6.4 DERIVAR (decisión v2 — los CUs de G2 que pasan a otro grupo por criterio de actor)
+
+**15 → G8** (actores `Sistema/Administrador`, dominio comercial/cobranza): CU-06 (IPs bloqueadas),
+CU-44 (registro de pago), CU-45 (unicidad transacción), CU-46 (recaudación externa),
+CU-47 (morosos diarios), CU-54 (vencimiento fijo), CU-55 (cartera vencida), CU-56 (seguimiento),
+CU-57/58 (reporte financiero + descarga), CU-79 (auditoría chatbot), CU-80 (parámetros morosidad)
+**+ la cadena completa de suspensión: CU-48/50/51** (G2 los tenía anotados tanto para CRM como
+para Terreno; se resuelven al **dueño único del disparador SmartOLT**: G8 los absorbe con sus
+CU-30/31 existentes; G3 mantiene por su cuenta G3-CU-36, el desbloqueo físico en terreno).
+
+**3 → G3** (actores `Técnico/Sistema`, dominio terreno): CU-33 (cambio clave WiFi por técnico),
+CU-36 (evaluación de red), CU-78 (cierre de ticket por técnico; G8-CU-26 conserva la gestión
+comercial del ciclo de vida del ticket).
+
+**4 compartidos (no derivados):** CU-49 (recargo: G8 aplica, G2 muestra desglosado) ·
+CU-52 (comprobante: G8 genera vía G8-7, G2 expone) · CU-70 (bot deriva a operador: G3 atiende) ·
+CU-77 (ticket al escalar: G2 genera evento, G3/G8 lo reciben).
+
+Fuente: respuesta de G2 del 04-sept-2026 (verificada contra los JSON de los 4 grupos;
+copia en `local/respuesta-g2-original.md`).
 
 ---
 
@@ -236,36 +279,57 @@ endpoints G1-2/3/4/5 para todo.
 | 18 | G2-CU-15/17 | G2 | planes | G8 | G8-H2 | ✅ existe |
 | 19 | G2-CU-23..28/39..41/64 | G2 | deuda/contratos/servicios | G8 | G8-1, G8-4 | ⚠ por construir (cobranza no implementada) |
 | 20 | G2-CU-30/71/77/78 | G2 | tickets | G8 | G8-H1 | ✅ existe |
-| 21 | G2-CU-32/33 | G2 | cambio WiFi | G8 | G8-2 | ⚠ por construir |
-| 22 | G2-CU-42..44 | G2 | notificar pago | G8 | G8-3 receptor + G2-1 llamada | ⚠ por construir (ambos lados) |
-| 23 | G2-CU-48/50 · G8-CU-30 | G2/G8 | suspensión por morosidad | SmartOLT | **acuerdo: un solo disparador** | ⚠ decisión |
+| 21 | G2-CU-32 (solicitud portal) · G2-CU-33 | G2 | cambio WiFi | G8 / G3 | CU-32: G8-2 (ejecuta G8, su CU-40) · CU-33 derivada a G3 (v2) | ⚠ por construir |
+| 22 | G2-CU-42/43 | G2 | notificar pago | G8 | G8-3 receptor + G2-1 llamada | ⚠ por construir (ambos lados) |
+| 23 | G8-CU-30/31 · G2 consume | G8 (disparador único) / G2 | suspensión/reactivación por morosidad | SmartOLT | **decidido v2: G8 dispara (cadena CU-13→30→31); G2 consume estado** | ✅ decisión tomada / ⚠ G8 por implementar |
+| 24 | G2-CU-67/68/69 | G2 | listas para polling (vencimientos, morosos, pagos externos) | G8 | G8-8 endpoints de lista | ⚠ por construir |
+| 25 | G2-CU-08/09 · CU-18 · CU-52/53 | G2 | editar contacto, leads, comprobante | G8 | G8-5/6/7 | ⚠ por construir |
+| 26 | G2-CU-38..41 · G8-CU-38..41 | G2/G8 | pantallas del portal duplicadas | — | **decidido v2: G8 desiste de CU-38..41** (G2 es el portal; G8 conserva CU-42) | ✅ decisión tomada |
 
 ---
 
 ## 8. Acuerdos globales pendientes (bloquean lo de arriba)
 
+### 8.0 Decisiones tomadas (v2 — 05-sept-2026, del jefe de grupo con base en la respuesta de G2)
+
+1. **Duplicados del portal:** G8 desiste de CU-38..41 (portal de clientes); G2 es el dueño del
+   portal. G8 conserva CU-42 (TV IP, actor `Módulo CRM`).
+2. **CU-71 (ticket desde portal):** dueño G2; G8-CU-41 y G3-CU-29 desisten como creación —
+   G3 mantiene G3-CU-30 (recibir/gestionar desde terreno).
+3. **WiFi:** G2-CU-32 es la solicitud del portal (queda en G2); la ejecución la hace G8 (G8-2,
+   su CU-40). G2-CU-33 (actor Técnico) deriva a G3.
+4. **SmartOLT:** **G8 es el disparador único** por morosidad (cadena CU-13→CU-30→CU-31).
+   G2 consume el estado; G3 mantiene sus CUs de monitoreo (G3-CU-12..17). La fila "Pagos /
+   pasarelas / SmartOLT → G2" de §1 se corrige: G2 es dueño solo del **checkout**.
+5. **Derivaciones de G2:** 15 CUs → G8 (motor de pago, morosidad, reportes, auditoría chatbot +
+   cadena CU-48/50/51), 3 → G3 (CU-33/36/78), 4 compartidos con el corte indicado en §6.4.
+6. **Webhooks CRM→G2:** reemplazados por **polling con endpoints de lista** (G8-8); G2 consulta
+   una vez al día. El único webhook saliente de G2 sigue siendo G2-1 (pago confirmado → G8).
+7. G2 coordina **directo con G8 y G3** los endpoints que le faltan (G8-5/6/7/8), copiando al jefe.
+
+Sigue pendiente de ratificar: **credenciales del portal cliente** (dueño G3 vs G8 — afecta G3-4).
+
+### 8.1 Pendientes que no cambian
+
 1. **Máquina de estados (dueño G1):** ratificar tabla de equivalencias de `docs/12 §3` y decidir
    si `Bloqueado` (G8-CU-22) es un 7º estado.
-2. **Descuento único de stock:** Opción A (T1 descuenta, G3 solo declara — recomendada) u
-   Opción B (G3 descuenta). Afecta filas 8, 10 y T1-CU-57..69.
+2. **Descuento único de stock:** Opción A (T1 descuenta, G3 solo declara) — **ya aceptada por G3**.
 3. **Credenciales del portal cliente:** dueño G3 (guarda el hash) vs G8. Afecta fila 17.
-4. **Suspensión de servicio:** un solo disparador de SmartOLT (G2 motor de pago vs G8-CU-30).
-   Afecta fila 23.
-5. **Módulo inventario de G8:** ¿desiste y consume G1 (recomendado) o duplica? Afecta filas 11–14.
-6. **Claves `X-API-KEY`:** generar una por grupo y compartirlas por canal seguro.
-7. **Regla de oro de la BDD compartida:** `mere_finet.sql` contiene tablas de todos; cada grupo
+4. **Módulo inventario de G8:** ¿desiste y consume G1 (recomendado) o duplica? Afecta filas 11–14.
+5. **Claves `X-API-KEY`:** generar una por grupo y compartirlas por canal seguro.
+6. **Regla de oro de la BDD compartida:** `mere_finet.sql` contiene tablas de todos; cada grupo
    solo escribe las suyas. Todo lo demás, endpoint.
 
 ---
 
 ## 9. Checklist ejecutivo (carga de trabajo por grupo)
 
-| Grupo | Crear | Modificar | Habilitar (solo acceso) | Desistir |
-|-------|-------|-----------|--------------------------|----------|
-| **G1 T1** | 5 endpoints de integración (G1-1..5) + 1 opcional (G1-6) | Auth API-KEY + mapeo estados | — | CU-65/66/67 (ya tomados por G3) |
-| **G3 Terreno** | 4 (G3-1..4; G3-2 y G3-3 condicionales) | 4 (DTO cierre, materiales en listado, no tocar unidad_equipo, descuento) | 4 endpoints ya existentes | — |
-| **G8 CRM** | 4 (deuda, WiFi, webhook pagos, contratos) | 4 (redirigir inventario a G1) | 4 endpoints ya existentes | 10 CUs de su módulo inventario (propuesta) |
-| **G2 Web** | 1 llamada saliente + 1 receptor opcional | login delegado a G3 | — | — |
+| Grupo | Crear | Modificar | Habilitar (solo acceso) | Desistir / absorber |
+|-------|-------|-----------|--------------------------|----------------------|
+| **G1 T1** | 5 endpoints de integración (G1-1..5) + 1 opcional (G1-6) — **sc-113: G1-2 y G1-1 ya implementados** | Auth API-KEY + mapeo estados | — | CU-65/66/67 (ya tomados por G3) |
+| **G3 Terreno** | 4 (G3-1..4; G3-2 y G3-3 condicionales) | 4 (DTO cierre, materiales en listado, no tocar unidad_equipo, descuento — **descuento ya resuelto Opción A**) | 4 endpoints ya existentes | CU-29 como creación (v2) · **absorbe 3 CUs de G2 (CU-33/36/78)** |
+| **G8 CRM** | 8 (deuda, WiFi, webhook pagos, contratos + G8-5/6/7/8 pedidos por G2) | 4 (redirigir inventario a G1) | 4 endpoints ya existentes | **desiste: 10 CUs inventario + 4 CUs portal (CU-38..41) · absorbe 15 CUs de G2** |
+| **G2 Web** | 1 llamada saliente (G2-1) + 1 receptor opcional (G2-2) | login delegado a G3 | — | **deriva 18 CUs (15→G8, 3→G3)** |
 
 > **Ruta crítica sugerida:** (1) acuerdos §8.1 y §8.2 → (2) G3-M1 + G3-1 y G1-1 (el cierre
 > completo: G8-CU-07, T1-CU-64/68/69) → (3) G3-4 (portal login) → (4) G8-1 (deuda para portal) →

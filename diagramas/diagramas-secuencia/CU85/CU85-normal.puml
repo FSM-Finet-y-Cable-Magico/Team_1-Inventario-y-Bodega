@@ -1,0 +1,47 @@
+@startuml CU85-ReporteStockActual-Normal
+title CU-85 — Generando reporte de stock actual (flujo normal)
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style>
+sequenceDiagram {
+	participant { Margin 35 }
+	actor { Margin 15 }
+}
+</style>
+skinparam sequence {
+	MessageAlign center
+	LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega / Administrador / Superusuario" as Usuario
+participant "Vista /reportes/stock" as V
+participant "ReportesController" as C
+participant "ReportesService" as SVC
+database "postgres" as DB
+
+Usuario -> V : Selecciona filtros opcionales y Generar
+activate V
+V -> C : GET /api/reportes/stock?id_empresa=&id_bodega=&id_tipo_equipo=
+activate C
+C -> SVC : getStockReport(filtros, req.user)
+activate SVC
+SVC -> DB : SELECT bodegas y tipos filtrados
+DB --> SVC : bodegas, tipos
+SVC -> DB : SELECT unidad_equipo por bodega/tipo
+DB --> SVC : unidades agrupables por estado
+SVC -> DB : SELECT stock_consumible por bodega/tipo
+DB --> SVC : cantidad_disponible y umbral_minimo
+SVC -> SVC : Construye filas tipo x bodega y calcula total_activo/bajo_umbral
+SVC -> DB : INSERT log_auditoria(GENERAR_REPORTE, filtros)
+DB --> SVC : auditoría registrada
+SVC --> C : filas del reporte
+C --> V : 200 OK + JSON
+V --> Usuario : Tabla con estados, total, umbral y alerta roja
+
+deactivate SVC
+deactivate C
+deactivate V
+@enduml

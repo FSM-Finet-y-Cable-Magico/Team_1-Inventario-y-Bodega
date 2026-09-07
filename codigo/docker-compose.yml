@@ -34,6 +34,9 @@ services:
       PORT: 3003
       DATABASE_URL: postgresql://${POSTGRES_USER:-inventario}:${POSTGRES_PASSWORD:-inventario}@db:5432/${POSTGRES_DB:-inventario}
       JWT_SECRET: ${JWT_SECRET:-secreto-inventario-cambiar}
+      # sc-113: API keys de integración server-to-server (X-API-KEY). Solo valor de desarrollo;
+      # en Railway se define la variable real con las keys de producción.
+      INTEGRACION_API_KEYS: '[{"key":"g3-dev-key","grupo":"G3","empresas":[1,2]}]'
     depends_on:
       db:
         condition: service_healthy

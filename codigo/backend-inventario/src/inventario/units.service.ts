@@ -1169,6 +1169,39 @@ export class UnitsService {
     };
   }
 
+  // CU-59: validación en vivo del NS para el formulario de salida de bodega.
+  // No lanza excepción: devuelve existe/estado/disponible para que el front
+  // marque el NS inválido y deshabilite Confirmar.
+  async verificarSerie(
+    numeroSerie: string,
+    idEmpresaContexto: number,
+    idBodega?: number,
+  ) {
+    const serie = (numeroSerie ?? '').trim();
+    const unidad =
+      serie === ''
+        ? null
+        : await this.unitRepository.findOne({
+            where: { serialNumber: serie, id_empresa: idEmpresaContexto },
+          });
+
+    if (!unidad) {
+      return { existe: false, disponible: false };
+    }
+
+    const disponible =
+      unidad.estado === 'En bodega' &&
+      (idBodega === undefined || unidad.id_bodega_actual === idBodega);
+
+    return {
+      existe: true,
+      numero_serie: unidad.serialNumber,
+      estado: unidad.estado,
+      id_bodega_actual: unidad.id_bodega_actual ?? null,
+      disponible,
+    };
+  }
+
   async verFichaDetalle(idUnidad: number, idEmpresaContexto: number) {
     if (!idUnidad || isNaN(idUnidad)) {
       throw new BadRequestException(
