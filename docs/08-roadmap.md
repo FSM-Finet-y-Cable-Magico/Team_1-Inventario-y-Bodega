@@ -13,9 +13,8 @@ no esté reflejado aquí.
 ## Resumen
 
 - **Total de casos de uso:** 96
-- **Implementados (Incremento 1):** 46 (CU-01 a CU-46)
-- **Implementados (Incremento 2):** 8 (CU-49 a CU-56)
-- **Pendientes:** 42 (CU-47, CU-48, CU-57 a CU-96)
+- **Implementados:** 67 (CU-01 a CU-46, CU-49 a CU-62, CU-72, CU-74, CU-77, CU-85, CU-86, CU-88, CU-89, CU-91)
+- **Pendientes:** 29 (CU-47, CU-48, CU-61, CU-63 a CU-71, CU-73, CU-75, CU-76, CU-78 a CU-84, CU-87, CU-90, CU-92 a CU-96)
 
 ## Leyenda
 
@@ -175,13 +174,13 @@ no esté reflejado aquí.
 
 | CU | Nombre | Estado | Notas |
 |----|--------|--------|-------|
-| CU-85 | Generando reporte de stock actual | [x] Implementado | Módulo `reportes`, ruta `/reportes` |
-| CU-86 | Generando reporte de movimientos de inventario | [ ] Pendiente | |
+| CU-85 | Generando reporte de stock actual | [x] Implementado | Grupo 5 · RF-60 · `/reportes/stock` · filtros, estados, umbral y auditoría |
+| CU-86 | Generando reporte de movimientos de inventario | [x] Implementado | Grupo 5 · RF-61 · `/reportes` · filtros, rango máximo 365 días, aislamiento y auditoría |
 | CU-87 | Generando reporte de equipos instalados por cliente | [ ] Pendiente | |
-| CU-88 | Generando reporte de garantías | [ ] Pendiente | |
-| CU-89 | Generando reporte de inventario actual de técnicos | [ ] Pendiente | |
+| CU-88 | Generando reporte de garantías | [x] Implementado | Grupo 5 · RF-63 · `/api/reportes/garantias` · filtro por empresa, tipo y período, empty state y auditoría |
+| CU-89 | Generando reporte de inventario actual de técnicos | [x] Implementado | Grupo 5 · RF-64 · endpoint `/api/reportes/tecnicos/inventario` y pestaña en `/reportes` |
 | CU-90 | Generando reporte de productividad de técnicos | [ ] Pendiente | |
-| CU-91 | Generando reporte de consumo de consumibles | [ ] Pendiente | |
+| CU-91 | Generando reporte de consumo de consumibles | [x] Implementado | Grupo 5 · RF-66 · endpoint `/api/reportes/consumo` y pestaña Consumo de consumibles |
 | CU-92 | Exportando reporte a Excel | [ ] Pendiente | |
 | CU-93 | Exportando reporte a PDF | [ ] Pendiente | |
 

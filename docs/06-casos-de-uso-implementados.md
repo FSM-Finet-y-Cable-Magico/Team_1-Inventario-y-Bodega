@@ -83,7 +83,11 @@
 | 72 | Registrando resultado de revisión (Operativo/Reparación externa/Baja) | `inventario/units` | `/unidades/[id]` |
 | 74 | Reacondicionando equipo operativo desde revisión a bodega | `inventario/units` | `/unidades/[id]` |
 | 77 | Consultando listado de equipos en revisión | `inventario/units` | `/unidades/en-revision` |
-| 85 | Generar reporte de stock actual | `reportes`, `auditoria` | `/reportes` |
+| 85 | Reporte de stock actual | `reportes`, `bodegas`, `inventario`, `auditoria` | `/reportes/stock` |
+| 86 | Reporte de movimientos de inventario | `reportes`, `transferencias` | `/reportes` |
+| 88 | Reporte de garantías | `reportes`, `inventario`, `auditoria` | `/reportes` (pestaña Garantías) |
+| 89 | Reporte de inventario actual de técnicos | `reportes`, `salidas`, `inventario`, `auditoria` | `/reportes` (pestaña Inventario de técnicos) |
+| 91 | Reporte de consumo de consumibles | `reportes`, `salidas`, `auditoria` | `/reportes` (pestaña Consumo de consumibles) |
 
 
 ## 3. Diagramas disponibles (referencia para CUs pendientes)

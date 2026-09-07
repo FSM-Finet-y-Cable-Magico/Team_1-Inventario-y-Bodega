@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ReportesController } from './reportes.controller';
-import { ReportesService } from './reportes.service';
+import { AuditoriaModule } from '../auditoria/auditoria.module';
 import { Bodega } from '../bodegas/entities/bodega.entity';
 import { StockConsumible } from '../bodegas/entities/stock-consumible.entity';
 import { TipoEquipo } from '../inventario/entities/tipo-equipo.entity';
 import { UnidadEquipo } from '../inventario/entities/unidad-equipo.entity';
-import { AuditoriaModule } from '../auditoria/auditoria.module';
+import { MovimientoInventario } from '../transferencias/entities/movimiento-inventario.entity';
+import { ReportesController } from './reportes.controller';
+import { ReportesService } from './reportes.service';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { AuditoriaModule } from '../auditoria/auditoria.module';
       StockConsumible,
       TipoEquipo,
       UnidadEquipo,
+      MovimientoInventario,
     ]),
     AuditoriaModule,
   ],

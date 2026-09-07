@@ -8,9 +8,11 @@ import { SalidaDetalle } from './entities/salida-detalle.entity';
 import { InventarioPersonal } from './entities/inventario-personal.entity';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([SalidaBodega, SalidaDetalle, InventarioPersonal])],
-    controllers: [SalidasController, TecnicosController],
-    providers: [SalidasService, InventarioPersonalService],
-    exports: [InventarioPersonalService],
+  imports: [
+    TypeOrmModule.forFeature([SalidaBodega, SalidaDetalle, InventarioPersonal]),
+  ],
+  controllers: [SalidasController, TecnicosController],
+  providers: [SalidasService, InventarioPersonalService],
+  exports: [InventarioPersonalService],
 })
 export class SalidasModule {}

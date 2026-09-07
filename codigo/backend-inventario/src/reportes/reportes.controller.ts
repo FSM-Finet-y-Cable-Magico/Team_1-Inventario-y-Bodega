@@ -1,16 +1,15 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Controller,
+  Get,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { RolesGuard } from '../auth/guards/roles.guard';
 import { ReportesService } from './reportes.service';
-
-interface AuthenticatedUser {
-  id_usuario?: number;
-  sub?: number;
-  id_empresa?: number;
-  roles?: string[];
-}
 
 @Controller('reportes')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -19,26 +18,113 @@ export class ReportesController {
 
   @Get('stock')
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
-  generarReporteStock(
-    @Query('id_empresa') idEmpresa: string,
-    @Query('id_bodega') idBodega: string,
-    @Query('id_tipo_equipo') idTipoEquipo: string,
-    @CurrentUser() actor: AuthenticatedUser,
+  getStock(
+    @Query('id_empresa') idEmpresa: string | undefined,
+    @Query('id_bodega') idBodega: string | undefined,
+    @Query('id_tipo_equipo') idTipoEquipo: string | undefined,
+    @Req() req,
   ) {
-    const isSuperuser = actor.roles?.includes('SUPERUSUARIO') === true;
-    const parseOptionalId = (value: string | undefined): number | undefined => {
-      if (!value) return undefined;
-      const parsed = Number(value);
-      return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
-    };
-
-    return this.reportesService.generarReporteStock(
+    return this.reportesService.getStockReport(
       {
-        id_empresa: isSuperuser ? parseOptionalId(idEmpresa) : actor.id_empresa,
-        id_bodega: parseOptionalId(idBodega),
-        id_tipo_equipo: parseOptionalId(idTipoEquipo),
+        id_empresa: this.parseOptionalId(idEmpresa, 'empresa'),
+        id_bodega: this.parseOptionalId(idBodega, 'bodega'),
+        id_tipo_equipo: this.parseOptionalId(idTipoEquipo, 'tipo de equipo'),
       },
-      actor.id_usuario ?? actor.sub ?? 0,
+      req.user,
     );
+  }
+
+  @Get('movimientos')
+  @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
+  getMovimientos(
+    @Query('id_empresa') idEmpresa: string | undefined,
+    @Query('id_bodega') idBodega: string | undefined,
+    @Query('id_tipo_equipo') idTipoEquipo: string | undefined,
+    @Query('fecha_desde') fechaDesde: string | undefined,
+    @Query('fecha_hasta') fechaHasta: string | undefined,
+    @Query('tipo_movimiento') tipoMovimiento: string | undefined,
+    @Query('id_usuario') idUsuario: string | undefined,
+    @Req() req,
+  ) {
+    return this.reportesService.getMovementsReport(
+      {
+        id_empresa: this.parseOptionalId(idEmpresa, 'empresa'),
+        id_bodega: this.parseOptionalId(idBodega, 'bodega'),
+        id_tipo_equipo: this.parseOptionalId(idTipoEquipo, 'tipo de equipo'),
+        fecha_desde: fechaDesde,
+        fecha_hasta: fechaHasta,
+        tipo_movimiento: tipoMovimiento,
+        id_usuario: this.parseOptionalId(idUsuario, 'usuario'),
+      },
+      req.user,
+    );
+  }
+
+  @Get('garantias')
+  @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
+  getGarantias(
+    @Query('id_empresa') idEmpresa: string | undefined,
+    @Query('id_tipo_equipo') idTipoEquipo: string | undefined,
+    @Query('periodo') periodo: string | undefined,
+    @Req() req,
+  ) {
+    return this.reportesService.getGarantiasReport(
+      {
+        id_empresa: this.parseOptionalId(idEmpresa, 'empresa'),
+        id_tipo_equipo: this.parseOptionalId(idTipoEquipo, 'tipo de equipo'),
+        periodo: periodo,
+      },
+      req.user,
+    );
+  }
+
+  @Get('tecnicos/inventario')
+  @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
+  getInventarioTecnicos(
+    @Query('id_empresa') idEmpresa: string | undefined,
+    @Query('id_usuario') idUsuario: string | undefined,
+    @Req() req,
+  ) {
+    return this.reportesService.getInventarioTecnicosReport(
+      {
+        id_empresa: this.parseOptionalId(idEmpresa, 'empresa'),
+        id_usuario: this.parseOptionalId(idUsuario, 'usuario'),
+      },
+      req.user,
+    );
+  }
+
+  @Get('consumo')
+  @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
+  getConsumo(
+    @Query('id_empresa') idEmpresa: string | undefined,
+    @Query('id_tipo_equipo') idTipoEquipo: string | undefined,
+    @Query('fecha_desde') fechaDesde: string | undefined,
+    @Query('fecha_hasta') fechaHasta: string | undefined,
+    @Req() req,
+  ) {
+    return this.reportesService.getConsumoReport(
+      {
+        id_empresa: this.parseOptionalId(idEmpresa, 'empresa'),
+        id_tipo_equipo: this.parseOptionalId(idTipoEquipo, 'tipo de equipo'),
+        fecha_desde: fechaDesde,
+        fecha_hasta: fechaHasta,
+      },
+      req.user,
+    );
+  }
+
+  private parseOptionalId(
+    value: string | undefined,
+    label: string,
+  ): number | undefined {
+    if (value === undefined || value === '') return undefined;
+    const parsed = Number(value);
+    if (!Number.isInteger(parsed) || parsed <= 0) {
+      throw new BadRequestException(
+        `El identificador de ${label} no es válido.`,
+      );
+    }
+    return parsed;
   }
 }

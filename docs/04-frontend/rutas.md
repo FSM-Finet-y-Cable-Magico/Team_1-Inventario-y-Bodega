@@ -191,13 +191,19 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
 - **Endpoints:** `getAuditLog()` (paginado), `getEmpresas()`.
 - Listas fijas de acciones y entidades (ver código). `limit = 30`.
 
-### `/reportes`
+### `/reportes/stock`
 - **CU:** CU-85 (reporte de stock actual).
 - **Endpoint:** `generarReporteStock()` → `GET /reportes/stock`.
-- Filtros opcionales de empresa (solo SUPERUSUARIO), bodega y tipo de equipo.
-- La tabla muestra cantidades por estado, total activo y umbral mínimo; las filas bajo umbral
-  usan el badge de peligro y fondo rojo del sistema.
-- Sin resultados se muestra `No se encontraron datos para los filtros seleccionados.`.
+- Filtros opcionales por empresa (solo SUPERUSUARIO), bodega y tipo de equipo.
+- Tabla por tipo y bodega con estados, total activo, umbral y alerta visual bajo umbral.
+
+### `/reportes`
+- **CUs:** CU-86 (movimientos), CU-88 (garantías), CU-89 (inventario de técnicos),
+  CU-91 (consumo de consumibles) — pestañas dentro del mismo hub de reportes.
+- **Endpoints:** `generarReporteMovimientos()`, `generarReporteGarantias()`,
+  `generarReporteInventarioTecnicos()`, `generarReporteConsumo()`.
+- Filtros por empresa, bodega, tipo, fechas, tipo de movimiento y usuario; el rango máximo de 365 días se valida en vivo.
+- Tabla con fecha/hora, movimiento, NS o consumible, cantidad, empresa, bodega, usuario y referencia.
 
 ---
 

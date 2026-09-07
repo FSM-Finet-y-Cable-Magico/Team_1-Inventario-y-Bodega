@@ -231,6 +231,25 @@ export interface ConfigurarUmbralDto {
 	umbral: number;
 }
 
+// CU-85: fila del reporte de stock (versión con empresa y unidad de medida)
+export interface ReporteStockFila {
+	id_empresa: number | null;
+	empresa: string | null;
+	id_bodega: number;
+	bodega: string;
+	id_tipo_equipo: number;
+	tipo_equipo: string;
+	unidad_medida: string | null;
+	en_bodega: number;
+	asignado_a_tecnico: number;
+	en_revision: number;
+	en_prestamo_externo: number;
+	total_activo: number;
+	umbral_minimo: number;
+	bajo_umbral: boolean;
+}
+
+// CU-85: fila del reporte de stock (versión simple)
 export interface ReporteStock {
 	id_tipo_equipo: number;
 	tipo_equipo: string;
@@ -243,6 +262,70 @@ export interface ReporteStock {
 	total_activo: number;
 	umbral_minimo: number;
 	bajo_umbral: boolean;
+}
+
+export interface ReporteMovimientoFila {
+	id_movimiento: number;
+	fecha: string | null;
+	tipo_movimiento: string;
+	item: string | null;
+	cantidad: number;
+	tipo_equipo: string | null;
+	id_empresa: number | null;
+	empresa: string | null;
+	id_bodega: number | null;
+	bodega: string | null;
+	usuario: string | null;
+	referencia_id: number | null;
+	referencia_tipo: string | null;
+}
+
+export interface ReporteGarantiaFila {
+	numero_serie: string;
+	tipo_equipo: string;
+	marca: string | null;
+	modelo: string | null;
+	proveedor: string | null;
+	fecha_adquisicion: string | null;
+	duracion_garantia_dias: number;
+	fecha_vencimiento: string | null;
+	dias: number | null;
+	dias_restantes: number | null;
+	dias_vencidos: number | null;
+	estado: string;
+	empresa: string | null;
+}
+
+export interface ReporteInventarioTecnico {
+	tecnico: {
+		id_usuario: number;
+		nombre_completo: string;
+		empresa: string | null;
+	};
+	equipos_individualizables: {
+		numero_serie: string;
+		tipo_equipo: string;
+		fecha_asignacion: string | null;
+		dias_transcurridos: number;
+	}[];
+	consumibles: {
+		id_tipo_equipo: number;
+		tipo_equipo: string;
+		cantidad_disponible: number;
+		unidad_medida: string | null;
+	}[];
+}
+
+export interface ReporteConsumoFila {
+	id_tipo_equipo: number;
+	tipo_consumible: string;
+	unidad_medida: string | null;
+	cantidad_ingresada: number;
+	cantidad_entregada: number;
+	cantidad_usada_en_cierres: number;
+	cantidad_devuelta: number;
+	diferencia: number;
+	desvio: boolean;
 }
 
 // Respuesta de GET /transferencias (CU-23)

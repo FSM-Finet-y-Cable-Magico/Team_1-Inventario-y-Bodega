@@ -74,6 +74,9 @@ Todas tipadas `<T>`. Nombre de endpoint backend en comentario:
 - `getDashboard()` → `GET /empresas/dashboard` (consolidado, SUPERUSUARIO) (CU-15)
 - `getMyDashboard()` → `GET /empresas/mi-dashboard` (CU-16)
 
+### Reportes
+- `generarReporteStock({id_empresa?, id_bodega?, id_tipo_equipo?})` → `GET /reportes/stock` (CU-85).
+
 ### Auditoría
 - `getAuditLog(filters)` → `GET /auditoria` (CU-08/09) con `pagina, limite, accion, entidad_afectada,
   fecha_inicio, fecha_fin, usuario, id_empresa`.

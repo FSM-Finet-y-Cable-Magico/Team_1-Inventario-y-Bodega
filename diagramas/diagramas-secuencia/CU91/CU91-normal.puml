@@ -1,0 +1,49 @@
+@startuml CU91-Consumo-Consumibles-Normal
+title CU-91 - Reporte de consumo de consumibles (flujo normal)
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style>
+sequenceDiagram {
+	participant { Margin 35 }
+	actor { Margin 15 }
+}
+</style>
+skinparam sequence {
+	MessageAlign center
+	LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega" as Usuario
+participant "Vista /reportes" as V
+participant "ReportesController" as C
+participant "ReportesService" as SVC
+database "PostgreSQL" as DB
+
+Usuario -> V : Selecciona empresa, consumible y fechas
+activate V
+V -> C : GET /api/reportes/consumo?id_empresa=&id_tipo_equipo=&fecha_desde=&fecha_hasta=
+activate C
+C -> SVC : getConsumoReport(filtros, req.user)
+activate SVC
+SVC -> SVC : Valida rango maximo 365 dias y aislamiento
+SVC -> DB : SELECT tipos de equipo donde requiere_serial_number=false
+DB --> SVC : tipos consumibles
+SVC -> DB : SUM orden_ingreso_detalle por fecha y empresa
+DB --> SVC : cantidad ingresada
+SVC -> DB : SUM salida_detalle + salida_bodega por fecha y empresa
+DB --> SVC : cantidad entregada
+SVC -> DB : SUM prestamo_retorno por fecha y empresa
+DB --> SVC : cantidad devuelta
+SVC -> SVC : usado_en_cierres=0; diferencia=ingresado-entregado+devuelto
+SVC -> DB : INSERT log_auditoria (GENERAR_REPORTE)
+DB --> SVC : confirmado
+SVC --> C : filas con desvio cuando abs(diferencia)>15% del ingresado
+C --> V : 200 OK
+V --> Usuario : Tabla de consumo visible
+ deactivate SVC
+ deactivate C
+ deactivate V
+@enduml
