@@ -1,0 +1,35 @@
+@startuml CU89-Inventario-Tecnicos-Excepcion
+ title CU-89 - Reporte de inventario actual de tecnicos (tecnico sin items)
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+skinparam sequence { MessageAlign center LifeLineBorderColor black }
+hide footbox
+
+actor "Administrador" as Usuario
+participant "Vista /reportes" as V
+participant "ReportesController" as C
+participant "ReportesService" as SVC
+database "PostgreSQL" as DB
+
+Usuario -> V : Selecciona un tecnico y Generar
+activate V
+V -> C : GET /api/reportes/tecnicos/inventario?id_usuario=X
+activate C
+C -> SVC : getInventarioTecnicosReport({id_usuario:X}, req.user)
+activate SVC
+SVC -> DB : SELECT tecnico activo de la empresa
+DB --> SVC : tecnico
+SVC -> DB : SELECT unidades asignadas y saldos > 0
+DB --> SVC : 0 equipos y 0 consumibles
+SVC -> DB : INSERT log_auditoria (GENERAR_REPORTE)
+DB --> SVC : confirmado
+SVC --> C : tarjeta con ambas secciones vacias
+C --> V : 200 OK
+V --> Usuario : Este técnico no tiene ítems en su inventario personal.
+deactivate SVC
+deactivate C
+deactivate V
+@enduml

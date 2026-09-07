@@ -257,6 +257,26 @@ export interface ReporteGarantiaFila {
 	empresa: string | null;
 }
 
+export interface ReporteInventarioTecnico {
+	tecnico: {
+		id_usuario: number;
+		nombre_completo: string;
+		empresa: string | null;
+	};
+	equipos_individualizables: {
+		numero_serie: string;
+		tipo_equipo: string;
+		fecha_asignacion: string | null;
+		dias_transcurridos: number;
+	}[];
+	consumibles: {
+		id_tipo_equipo: number;
+		tipo_equipo: string;
+		cantidad_disponible: number;
+		unidad_medida: string | null;
+	}[];
+}
+
 // Respuesta de GET /transferencias (CU-23)
 export interface Transferencia {
 	id_transferencia: number;

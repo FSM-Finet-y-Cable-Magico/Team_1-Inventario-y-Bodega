@@ -47,13 +47,8 @@ export class UnidadEquipo {
   @Column({ type: 'integer', name: 'id_cliente_instalado', nullable: true })
   id_cliente_instalado?: number;
 
-<<<<<<< HEAD
   @Column({ type: 'integer', name: 'id_bodega_actual', nullable: true })
-  id_bodega_actual?: number;
-=======
-    @Column({ type: 'integer', name: 'id_bodega_actual', nullable: true })
-    id_bodega_actual?: number | null;
->>>>>>> origin/dev
+  id_bodega_actual?: number | null;
 
   @Column({ type: 'varchar', length: 30, name: 'numero_poste', nullable: true })
   numeroPoste?: string;
@@ -61,7 +56,6 @@ export class UnidadEquipo {
   @Column({ type: 'integer', name: 'id_caja_nap', nullable: true })
   id_caja_nap?: number;
 
-<<<<<<< HEAD
   @Column({
     type: 'varchar',
     length: 17,
@@ -70,14 +64,10 @@ export class UnidadEquipo {
     unique: true,
   })
   macAddress?: string | null;
-=======
-    // CU-57: técnico que tiene la unidad asignada (estado 'Asignado a técnico')
-    @Column({ type: 'integer', name: 'id_tecnico_asignado', nullable: true })
-    idTecnicoAsignado?: number | null;
 
-    @Column({ type: 'varchar', length: 17, name: 'mac_address', nullable: true, unique: true })
-    macAddress?: string | null;
->>>>>>> origin/dev
+  // CU-57: técnico que tiene la unidad asignada (estado 'Asignado a técnico')
+  @Column({ type: 'integer', name: 'id_tecnico_asignado', nullable: true })
+  idTecnicoAsignado?: number | null;
 
   // CU-32/CU-33/CU-34: proveedor, observaciones y ubicación física.
   // Requieren migración: npm run migrar

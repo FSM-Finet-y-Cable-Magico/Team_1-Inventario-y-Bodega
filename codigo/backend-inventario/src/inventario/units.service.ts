@@ -102,10 +102,9 @@ export class UnitsService {
         });
       }
 
-<<<<<<< HEAD
       const consumibles = await consumibleQb
         .orderBy('stock.id_stock', 'DESC')
-=======
+        /*
         const tipo = await this.dataSource.getRepository(TipoEquipo).findOne({
             where: { id_tipo_equipo: dto.id_tipo_equipo },
         });
@@ -363,7 +362,7 @@ export class UnitsService {
                 } catch (err) {
                     ultimoError = err instanceof Error ? err : new Error(String(err));
                     await queryRunner.rollbackTransaction().catch(() => {
-                        /* la transacción ya puede estar abortada */
+                        // la transacción ya puede estar abortada
                     });
                     if (intento < maxIntentos - 1) {
                         await new Promise((resolve) => setTimeout(resolve, 100 * (intento + 1)));
@@ -404,6 +403,26 @@ export class UnitsService {
             id_bodega_actual: unidad.id_bodega_actual ?? null,
             disponible,
         };
+    }
+
+    async verificarSerie(numeroSerie: string, idEmpresaContexto: number, idBodega?: number) {
+      const serie = (numeroSerie ?? '').trim();
+      const unidad = serie === ''
+        ? null
+        : await this.unitRepository.findOne({
+          where: { serialNumber: serie, id_empresa: idEmpresaContexto },
+        });
+
+      if (!unidad) return { existe: false, disponible: false };
+
+      return {
+        existe: true,
+        numero_serie: unidad.serialNumber,
+        estado: unidad.estado,
+        id_bodega_actual: unidad.id_bodega_actual ?? null,
+        disponible: unidad.estado === 'En bodega'
+          && (idBodega === undefined || unidad.id_bodega_actual === idBodega),
+      };
     }
 
     async verFichaDetalle(idUnidad: number, idEmpresaContexto: number) {
@@ -559,7 +578,7 @@ export class UnitsService {
         .where('unidad.numero_serie = :serial', { serial: serialNormalizado })
         .andWhere('unidad.id_empresa = :idEmpresa', { idEmpresa: idEmpresaContexto })
         .orderBy('historial.fecha_hora', 'DESC')
->>>>>>> origin/dev
+*/
         .getMany();
 
       for (const c of consumibles) {
@@ -1044,6 +1063,32 @@ export class UnitsService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  async verificarSerie(
+    numeroSerie: string,
+    idEmpresaContexto: number,
+    idBodega?: number,
+  ) {
+    const serie = (numeroSerie ?? '').trim();
+    const unidad =
+      serie === ''
+        ? null
+        : await this.unitRepository.findOne({
+            where: { serialNumber: serie, id_empresa: idEmpresaContexto },
+          });
+
+    if (!unidad) return { existe: false, disponible: false };
+
+    return {
+      existe: true,
+      numero_serie: unidad.serialNumber,
+      estado: unidad.estado,
+      id_bodega_actual: unidad.id_bodega_actual ?? null,
+      disponible:
+        unidad.estado === 'En bodega' &&
+        (idBodega === undefined || unidad.id_bodega_actual === idBodega),
+    };
   }
 
   async verFichaDetalle(idUnidad: number, idEmpresaContexto: number) {

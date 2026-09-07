@@ -63,7 +63,22 @@ export class UnitsController {
     );
   }
 
-<<<<<<< HEAD
+  @Get('serie/:numeroSerie')
+  @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
+  async verificarSerieParaSalida(
+    @Param('numeroSerie') numeroSerie: string,
+    @Query('id_bodega') idBodega: string,
+    @CurrentUser() actor: any,
+  ) {
+    // CU-59: validación en vivo para el formulario de salida de bodega.
+    // La validación de verdad la re-ejecuta SalidasService en la transacción.
+    return this.unitsService.verificarSerie(
+      numeroSerie,
+      actor.id_empresa,
+      idBodega ? parseInt(idBodega, 10) : undefined,
+    );
+  }
+
   @Get(':id/ficha')
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
   async verFichaDeSeguimiento(
@@ -72,25 +87,6 @@ export class UnitsController {
   ) {
     return this.unitsService.verFichaDetalle(parseInt(id), actor.id_empresa);
   }
-=======
-    @Get('serie/:numeroSerie')
-    @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
-    async verificarSerieParaSalida(
-        @Param('numeroSerie') numeroSerie: string,
-        @Query('id_bodega') idBodega: string,
-        @CurrentUser() actor: any,
-    ) {
-        // CU-59: validación en vivo para el formulario de salida de bodega.
-        // La validación de verdad la re-ejecuta SalidasService en la transacción.
-        return this.unitsService.verificarSerie(numeroSerie, actor.id_empresa, idBodega ? parseInt(idBodega, 10) : undefined);
-    }
-
-    @Get(':id/ficha')
-    @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
-    async verFichaDeSeguimiento(@Param('id') id: string, @CurrentUser() actor: any) {
-        return this.unitsService.verFichaDetalle(parseInt(id), actor.id_empresa);
-    }
->>>>>>> origin/dev
 
   @Get(':serialNumber/historial')
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
@@ -104,7 +100,6 @@ export class UnitsController {
     );
   }
 
-<<<<<<< HEAD
   @Patch(':id/cambiar-estado')
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
   async transicionarEstadoEquipo(
@@ -126,31 +121,6 @@ export class UnitsController {
       simularErrorHistorial,
     );
   }
-=======
-    @Patch(':id/cambiar-estado')
-    @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
-    async transicionarEstadoEquipo(
-        @Param('id') id: string,
-        @Body('nuevoEstado') nuevoEstado: string,
-        @Body('observacion') observacion: string,
-        @Body('diagnostico') diagnostico: string,
-        @Body('descripcionOtro') descripcionOtro: string,
-        @Body('simularErrorHistorial') simularErrorHistorial: boolean,
-        @Body('ubicacion_fisica') ubicacionFisica: string,
-        @CurrentUser() actor: any
-    ) {
-        return this.unitsService.transicionarEstado(
-            parseInt(id),
-            nuevoEstado,
-            actor,
-            observacion,
-            diagnostico,
-            descripcionOtro,
-            simularErrorHistorial,
-            ubicacionFisica
-        );
-    }
->>>>>>> origin/dev
 
   @Patch(':id')
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')

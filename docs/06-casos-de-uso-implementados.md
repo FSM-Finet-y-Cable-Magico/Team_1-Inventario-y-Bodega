@@ -70,6 +70,7 @@
 | 85 | Reporte de stock actual | `reportes`, `bodegas`, `inventario`, `auditoria` | `/reportes/stock` |
 | 86 | Reporte de movimientos de inventario | `reportes`, `transferencias` | `/reportes` |
 | 88 | Reporte de garantías | `reportes`, `inventario`, `auditoria` | `/reportes` (pestaña Garantías) |
+| 89 | Reporte de inventario actual de técnicos | `reportes`, `salidas`, `inventario`, `auditoria` | `/reportes` (pestaña Inventario de técnicos) |
 =======
 | 47 | Ubicación física al ingresar/reingresar a bodega | `inventario/units` | `/unidades/[id]` |
 | 57 | Salida de bodega a técnico (mixta, atómica) | `salidas` | `/salidas` |

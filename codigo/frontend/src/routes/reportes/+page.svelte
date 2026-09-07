@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { getCatalog, getEmpresas, getUsers, getWarehouses, generarReporteGarantias, generarReporteMovimientos } from '$lib/api/index';
-	import type { Bodega, Empresa, ReporteGarantiaFila, ReporteMovimientoFila, TipoEquipo, Usuario } from '$lib/types';
+	import { getCatalog, getEmpresas, getUsers, getWarehouses, generarReporteGarantias, generarReporteMovimientos, generarReporteInventarioTecnicos } from '$lib/api/index';
+	import type { Bodega, Empresa, ReporteGarantiaFila, ReporteInventarioTecnico, ReporteMovimientoFila, TipoEquipo, Usuario } from '$lib/types';
 	import Badge from '$lib/components/Badge.svelte';
 	import Button from '$lib/components/Button.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
@@ -23,9 +23,10 @@
 		{ value: '90', label: 'Vencen en 90 días' },
 	] as const;
 
-	let activeTab = $state<'movimientos' | 'garantias'>('garantias');
+	let activeTab = $state<'movimientos' | 'garantias' | 'inventario-tecnicos'>('garantias');
 	let filas = $state<ReporteMovimientoFila[]>([]);
 	let filasGarantias = $state<ReporteGarantiaFila[]>([]);
+	let inventarioTecnicos = $state<ReporteInventarioTecnico[]>([]);
 	let empresas = $state<Empresa[]>([]);
 	let bodegas = $state<Bodega[]>([]);
 	let tipos = $state<TipoEquipo[]>([]);
@@ -35,14 +36,18 @@
 	let loadingGarantias = $state(false);
 	let error = $state('');
 	let errorGarantias = $state('');
+	let loadingInventarioTecnicos = $state(false);
+	let errorInventarioTecnicos = $state('');
 	let filters = $state({ id_empresa: '', id_bodega: '', id_tipo_equipo: '', fecha_desde: '', fecha_hasta: '', tipo_movimiento: '', id_usuario: '' });
 	let garantiaFilters = $state({ id_empresa: '', id_tipo_equipo: '', periodo: 'TODAS' as 'VENCIDAS' | '30' | '60' | '90' | 'TODAS' });
+	let inventarioTecnicosFilters = $state({ id_empresa: '', id_usuario: '' });
 	const esSuperusuario = $derived($userRoles.includes('SUPERUSUARIO'));
 	const empresaActual = $derived($currentUser?.id_empresa);
 	const filteredBodegas = $derived(bodegas.filter((bodega) => !filters.id_empresa || String(bodega.id_empresa) === filters.id_empresa));
 	const filteredTipos = $derived(tipos.filter((tipo) => !filters.id_empresa || String(tipo.id_empresa) === filters.id_empresa));
 	const filteredGarantiaTipos = $derived(tipos.filter((tipo) => !garantiaFilters.id_empresa || String(tipo.id_empresa) === garantiaFilters.id_empresa));
 	const filteredUsuarios = $derived(usuarios.filter((usuario) => usuario.nombre_completo.toLowerCase().includes(usuarioBusqueda.toLowerCase())).slice(0, 6));
+	const tecnicos = $derived(usuarios.filter((usuario) => usuario.roles?.some((rol) => rol.nombre_rol === 'TECNICO_TERRENO')));
 	const rangoInvalido = $derived(filters.fecha_desde && filters.fecha_hasta && differenceInDays(filters.fecha_desde, filters.fecha_hasta) > 365);
 	const fechasIncoherentes = $derived(filters.fecha_desde && filters.fecha_hasta && filters.fecha_desde > filters.fecha_hasta);
 
@@ -69,6 +74,10 @@
 
 	function resetGarantiaFilters() {
 		garantiaFilters = { id_empresa: '', id_tipo_equipo: '', periodo: 'TODAS' };
+	}
+
+	function resetInventarioTecnicosFilters() {
+		inventarioTecnicosFilters = { id_empresa: '', id_usuario: '' };
 	}
 
 	async function loadFilters() {
@@ -105,6 +114,20 @@
 		} finally { loadingGarantias = false; }
 	}
 
+	async function loadInventarioTecnicosReport() {
+		loadingInventarioTecnicos = true;
+		errorInventarioTecnicos = '';
+		try {
+			inventarioTecnicos = await generarReporteInventarioTecnicos({
+				id_empresa: inventarioTecnicosFilters.id_empresa || undefined,
+				id_usuario: inventarioTecnicosFilters.id_usuario || undefined,
+			});
+		} catch (err: unknown) {
+			errorInventarioTecnicos = err instanceof Error ? err.message : 'No se pudo cargar el inventario de técnicos.';
+			inventarioTecnicos = [];
+		} finally { loadingInventarioTecnicos = false; }
+	}
+
 	function selectUser(usuario: Usuario) {
 		filters.id_usuario = String(usuario.id_usuario);
 		usuarioBusqueda = usuario.nombre_completo;
@@ -121,6 +144,12 @@
 		}
 	}
 
+	function onInventarioEmpresaChange() {
+		if (inventarioTecnicosFilters.id_usuario && !tecnicos.some((tecnico) => String(tecnico.id_empresa) === inventarioTecnicosFilters.id_empresa && String(tecnico.id_usuario) === inventarioTecnicosFilters.id_usuario)) {
+			inventarioTecnicosFilters.id_usuario = '';
+		}
+	}
+
 	function getGarantiaBadge(fila: ReporteGarantiaFila): { variant: 'default' | 'success' | 'danger'; text: string } {
 		if (fila.dias === null) return { variant: 'default', text: 'Sin garantía' };
 		if (fila.dias >= 0) return { variant: 'success', text: `${fila.dias} días restantes` };
@@ -131,9 +160,11 @@
 		await loadFilters();
 		await loadReport();
 		await loadGarantiaReport();
+		await loadInventarioTecnicosReport();
 	});
 	$effect(() => { if (!esSuperusuario && filters.id_empresa) filters.id_empresa = ''; });
 	$effect(() => { if (!esSuperusuario && garantiaFilters.id_empresa) garantiaFilters.id_empresa = ''; });
+	$effect(() => { if (!esSuperusuario && inventarioTecnicosFilters.id_empresa) inventarioTecnicosFilters.id_empresa = ''; });
 </script>
 
 <div class="max-w-7xl mx-auto">
@@ -165,6 +196,16 @@
 		>
 			Garantías
 		</button>
+		<button
+			type="button"
+			class="px-4 py-2 text-sm font-medium rounded-md transition-colors"
+			class:bg-surface-alt={activeTab === 'inventario-tecnicos'}
+			class:text-accent={activeTab === 'inventario-tecnicos'}
+			class:text-muted={activeTab !== 'inventario-tecnicos'}
+			onclick={() => (activeTab = 'inventario-tecnicos')}
+		>
+			Inventario de técnicos
+		</button>
 	</div>
 
 	{#if activeTab === 'movimientos'}
@@ -191,7 +232,7 @@
 		{#if loading}<div class="bg-white border border-border rounded-lg p-8 text-sm text-muted">Cargando reporte...</div>{:else if filas.length === 0}<EmptyState message="No se encontraron datos para los filtros seleccionados." />{:else}
 			<div class="bg-white border border-border rounded-lg overflow-hidden shadow-sm"><div class="overflow-x-auto"><table class="min-w-full text-sm"><thead class="bg-surface-alt text-left text-muted"><tr><th class="px-4 py-3 font-medium">Fecha y hora</th><th class="px-4 py-3 font-medium">Movimiento</th><th class="px-4 py-3 font-medium">NS / consumible</th><th class="px-4 py-3 font-medium">Cantidad</th><th class="px-4 py-3 font-medium">Empresa</th><th class="px-4 py-3 font-medium">Bodega</th><th class="px-4 py-3 font-medium">Usuario</th><th class="px-4 py-3 font-medium">Referencia</th></tr></thead><tbody>{#each filas as fila}<tr class="border-t border-border hover:bg-surface-alt/50"><td class="px-4 py-3 whitespace-nowrap">{formatDate(fila.fecha)}</td><td class="px-4 py-3">{fila.tipo_movimiento}</td><td class="px-4 py-3">{fila.item ?? fila.tipo_equipo ?? '-'}</td><td class="px-4 py-3">{fila.cantidad}</td><td class="px-4 py-3">{fila.empresa ?? '-'}</td><td class="px-4 py-3">{fila.bodega ?? '-'}</td><td class="px-4 py-3">{fila.usuario ?? '-'}</td><td class="px-4 py-3">{fila.referencia_id ? `${fila.referencia_tipo ?? 'documento'} #${fila.referencia_id}` : '-'}</td></tr>{/each}</tbody></table></div></div>
 		{/if}
-	{:else}
+	{:else if activeTab === 'garantias'}
 		<div class="flex items-center justify-between mb-6">
 			<div><h2 class="text-lg font-semibold text-foreground">Garantías</h2></div>
 			<Button variant="secondary" onclick={loadGarantiaReport}><RotateCw class="h-4 w-4" />Actualizar</Button>
@@ -284,6 +325,67 @@
 						</tbody>
 					</table>
 				</div>
+			</div>
+		{/if}
+	{:else}
+		<div class="flex items-center justify-between mb-6">
+			<div><h2 class="text-lg font-semibold text-foreground">Inventario de técnicos</h2></div>
+			<Button variant="secondary" onclick={loadInventarioTecnicosReport}><RotateCw class="h-4 w-4" />Actualizar</Button>
+		</div>
+
+		<div class="bg-white border border-border rounded-lg p-4 mb-6">
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+				{#if esSuperusuario}
+					<div>
+						<label for="inventario-tecnicos-empresa" class="block text-xs font-medium text-muted mb-1">Empresa</label>
+						<select id="inventario-tecnicos-empresa" bind:value={inventarioTecnicosFilters.id_empresa} onchange={onInventarioEmpresaChange} class="w-full px-3 py-2 border border-border rounded-md text-sm bg-white">
+							<option value="">Todas</option>
+							{#each empresas as empresa}<option value={String(empresa.id)}>{empresa.nombre}</option>{/each}
+						</select>
+					</div>
+				{/if}
+				<div>
+					<label for="inventario-tecnicos-tecnico" class="block text-xs font-medium text-muted mb-1">Técnico</label>
+					<select id="inventario-tecnicos-tecnico" bind:value={inventarioTecnicosFilters.id_usuario} class="w-full px-3 py-2 border border-border rounded-md text-sm bg-white">
+						<option value="">Todos</option>
+						{#each tecnicos.filter((tecnico) => !inventarioTecnicosFilters.id_empresa || String(tecnico.id_empresa) === inventarioTecnicosFilters.id_empresa) as tecnico}
+							<option value={String(tecnico.id_usuario)}>{tecnico.nombre_completo}</option>
+						{/each}
+					</select>
+				</div>
+				<div class="flex gap-2">
+					<Button onclick={loadInventarioTecnicosReport}><Filter class="h-4 w-4" />Generar</Button>
+					<Button variant="secondary" onclick={resetInventarioTecnicosFilters}>Limpiar</Button>
+				</div>
+			</div>
+		</div>
+
+		{#if errorInventarioTecnicos}<div class="bg-red-50 border border-red-200 text-destructive rounded-md p-4 text-sm mb-4">{errorInventarioTecnicos}</div>{/if}
+		{#if loadingInventarioTecnicos}
+			<div class="bg-white border border-border rounded-lg p-8 text-sm text-muted">Cargando reporte...</div>
+		{:else if inventarioTecnicos.length === 0}
+			<EmptyState message="No se encontraron técnicos con los filtros seleccionados." />
+		{:else}
+			<div class="space-y-6">
+				{#each inventarioTecnicos as reporte}
+					<div class="bg-white border border-border rounded-lg overflow-hidden shadow-sm">
+						<div class="px-4 py-3 border-b border-border"><h3 class="font-semibold text-foreground">{reporte.tecnico.nombre_completo}</h3><p class="text-sm text-muted">{reporte.tecnico.empresa ?? '-'}</p></div>
+						{#if reporte.equipos_individualizables.length === 0 && reporte.consumibles.length === 0}
+							<p class="p-4 text-sm text-muted">Este técnico no tiene ítems en su inventario personal.</p>
+						{:else}
+							<div class="p-4 space-y-5">
+								<section>
+									<h4 class="text-sm font-semibold text-foreground mb-2">Equipos individualizables</h4>
+									<div class="overflow-x-auto"><table class="min-w-full text-sm"><thead class="bg-surface-alt text-left text-muted"><tr><th class="px-3 py-2">NS</th><th class="px-3 py-2">Tipo de equipo</th><th class="px-3 py-2">Fecha de asignación</th><th class="px-3 py-2">Días transcurridos</th></tr></thead><tbody>{#each reporte.equipos_individualizables as equipo}<tr class="border-t border-border"><td class="px-3 py-2 font-medium">{equipo.numero_serie}</td><td class="px-3 py-2">{equipo.tipo_equipo}</td><td class="px-3 py-2">{formatISODate(equipo.fecha_asignacion)}</td><td class="px-3 py-2">{equipo.dias_transcurridos}</td></tr>{/each}</tbody></table></div>
+								</section>
+								<section>
+									<h4 class="text-sm font-semibold text-foreground mb-2">Consumibles</h4>
+									<div class="overflow-x-auto"><table class="min-w-full text-sm"><thead class="bg-surface-alt text-left text-muted"><tr><th class="px-3 py-2">Tipo de equipo</th><th class="px-3 py-2">Cantidad disponible</th><th class="px-3 py-2">Unidad de medida</th></tr></thead><tbody>{#each reporte.consumibles as consumible}<tr class="border-t border-border"><td class="px-3 py-2">{consumible.tipo_equipo}</td><td class="px-3 py-2">{consumible.cantidad_disponible}</td><td class="px-3 py-2">{consumible.unidad_medida ?? '-'}</td></tr>{/each}</tbody></table></div>
+								</section>
+							</div>
+						{/if}
+					</div>
+				{/each}
 			</div>
 		{/if}
 	{/if}

@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { Bodega } from '../bodegas/entities/bodega.entity';
 import { StockConsumible } from '../bodegas/entities/stock-consumible.entity';
@@ -35,6 +35,11 @@ type FiltrosGarantias = {
   periodo?: string;
 };
 
+type FiltrosInventarioTecnicos = {
+  id_empresa?: number;
+  id_usuario?: number;
+};
+
 type Actor = {
   id_usuario?: number;
   sub?: number;
@@ -52,6 +57,7 @@ const ESTADOS_REPORTE = [
 @Injectable()
 export class ReportesService {
   constructor(
+    private readonly dataSource: DataSource,
     @InjectRepository(Bodega)
     private readonly bodegaRepository: Repository<Bodega>,
     @InjectRepository(StockConsumible)
@@ -64,6 +70,134 @@ export class ReportesService {
     private readonly movimientoRepository: Repository<MovimientoInventario>,
     private readonly auditoriaService: AuditoriaService,
   ) {}
+
+  async getInventarioTecnicosReport(
+    filtros: FiltrosInventarioTecnicos,
+    actor: Actor,
+  ): Promise<any[]> {
+    const esSuperusuario = actor.roles?.includes('SUPERUSUARIO') ?? false;
+    if (
+      !esSuperusuario &&
+      filtros.id_empresa !== undefined &&
+      filtros.id_empresa !== actor.id_empresa
+    ) {
+      throw new ForbiddenException(
+        'No tiene permisos para consultar esta empresa.',
+      );
+    }
+
+    const idEmpresa = esSuperusuario ? filtros.id_empresa : actor.id_empresa;
+    if (!esSuperusuario && !idEmpresa) {
+      throw new BadRequestException(
+        'El usuario no tiene una empresa asignada.',
+      );
+    }
+
+    const tecnicos = await this.dataSource.query(
+      `SELECT u.id_usuario, u.nombre_completo, u.id_empresa
+       FROM usuario u
+       INNER JOIN usuario_rol ur ON ur.id_usuario = u.id_usuario
+       INNER JOIN rol r ON r.id_rol = ur.id_rol
+       WHERE u.activo = true
+         AND r.nombre_rol = 'TECNICO_TERRENO'
+         AND ($1::int IS NULL OR u.id_empresa = $1)
+         AND ($2::int IS NULL OR u.id_usuario = $2)
+       ORDER BY u.nombre_completo ASC, u.id_usuario ASC`,
+      [idEmpresa, filtros.id_usuario],
+    );
+
+    if (filtros.id_usuario !== undefined && tecnicos.length === 0) {
+      throw new NotFoundException('Técnico no encontrado.');
+    }
+
+    const resultado = await Promise.all(
+      tecnicos.map(
+        async (tecnico: {
+          id_usuario: number;
+          nombre_completo: string;
+          id_empresa: number;
+        }) => {
+          const [unidades, saldos] = await Promise.all([
+            this.dataSource.query(
+              `SELECT u.numero_serie, t.nombre AS tipo_equipo,
+                    COALESCE(h.fecha_hora, sb.fecha_hora) AS fecha_asignacion,
+                    GREATEST(0, CURRENT_DATE - COALESCE(h.fecha_hora, sb.fecha_hora)::date)::int AS dias_transcurridos
+             FROM unidad_equipo u
+             INNER JOIN tipo_equipo t ON t.id_tipo_equipo = u.id_tipo_equipo
+             LEFT JOIN LATERAL (
+               SELECT he.fecha_hora
+               FROM historial_estado_equipo he
+               WHERE he.id_unidad = u.id_unidad
+                 AND he.estado_nuevo = 'Asignado a técnico'
+                 AND he.id_usuario = u.id_tecnico_asignado
+               ORDER BY he.fecha_hora DESC, he.id_historial DESC
+               LIMIT 1
+             ) h ON true
+             LEFT JOIN LATERAL (
+               SELECT s.fecha_hora
+               FROM salida_detalle sd
+               INNER JOIN salida_bodega s ON s.id_salida = sd.id_salida
+               WHERE sd.id_unidad = u.id_unidad
+                 AND s.id_tecnico = u.id_tecnico_asignado
+               ORDER BY s.fecha_hora DESC, s.id_salida DESC
+               LIMIT 1
+             ) sb ON true
+             WHERE u.id_empresa = $1
+               AND u.id_tecnico_asignado = $2
+               AND u.estado = 'Asignado a técnico'
+             ORDER BY u.numero_serie ASC`,
+              [tecnico.id_empresa, tecnico.id_usuario],
+            ),
+            this.dataSource.query(
+              `SELECT ip.id_tipo_equipo, t.nombre AS tipo_equipo,
+                    ip.cantidad AS cantidad_disponible, t.unidad_medida
+             FROM inventario_personal_tecnico ip
+             INNER JOIN tipo_equipo t ON t.id_tipo_equipo = ip.id_tipo_equipo
+             WHERE ip.id_tecnico = $1
+               AND t.requiere_serial_number = false
+               AND ip.cantidad > 0
+             ORDER BY t.nombre ASC`,
+              [tecnico.id_usuario],
+            ),
+          ]);
+
+          return {
+            tecnico: {
+              id_usuario: tecnico.id_usuario,
+              nombre_completo: tecnico.nombre_completo,
+              empresa: this.nombreEmpresa(tecnico.id_empresa),
+            },
+            equipos_individualizables: unidades.map(
+              (unidad: Record<string, unknown>) => ({
+                numero_serie: unidad.numero_serie,
+                tipo_equipo: unidad.tipo_equipo,
+                fecha_asignacion: unidad.fecha_asignacion
+                  ? new Date(unidad.fecha_asignacion as string)
+                      .toISOString()
+                      .slice(0, 10)
+                  : null,
+                dias_transcurridos: Number(unidad.dias_transcurridos ?? 0),
+              }),
+            ),
+            consumibles: saldos.map((saldo: Record<string, unknown>) => ({
+              id_tipo_equipo: saldo.id_tipo_equipo,
+              tipo_equipo: saldo.tipo_equipo,
+              cantidad_disponible: Number(saldo.cantidad_disponible),
+              unidad_medida: saldo.unidad_medida ?? null,
+            })),
+          };
+        },
+      ),
+    );
+
+    await this.auditReport(
+      actor,
+      filtros,
+      resultado.length,
+      'reporte_inventario_tecnicos',
+    );
+    return resultado;
+  }
 
   async getStockReport(filtros: FiltrosStock, actor: Actor): Promise<any[]> {
     const esSuperusuario = actor.roles?.includes('SUPERUSUARIO') ?? false;
@@ -497,7 +631,11 @@ export class ReportesService {
 
   private async auditReport(
     actor: Actor,
-    filtros: FiltrosStock | FiltrosMovimientos | FiltrosGarantias,
+    filtros:
+      | FiltrosStock
+      | FiltrosMovimientos
+      | FiltrosGarantias
+      | FiltrosInventarioTecnicos,
     filas: number,
     entidad = 'reporte_stock',
   ) {

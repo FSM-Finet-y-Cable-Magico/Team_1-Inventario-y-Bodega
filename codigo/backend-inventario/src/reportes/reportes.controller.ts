@@ -78,6 +78,22 @@ export class ReportesController {
     );
   }
 
+  @Get('tecnicos/inventario')
+  @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
+  getInventarioTecnicos(
+    @Query('id_empresa') idEmpresa: string | undefined,
+    @Query('id_usuario') idUsuario: string | undefined,
+    @Req() req,
+  ) {
+    return this.reportesService.getInventarioTecnicosReport(
+      {
+        id_empresa: this.parseOptionalId(idEmpresa, 'empresa'),
+        id_usuario: this.parseOptionalId(idUsuario, 'usuario'),
+      },
+      req.user,
+    );
+  }
+
   private parseOptionalId(
     value: string | undefined,
     label: string,

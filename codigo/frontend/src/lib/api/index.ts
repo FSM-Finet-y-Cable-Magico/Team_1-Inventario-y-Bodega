@@ -188,6 +188,15 @@ export function generarReporteGarantias(params?: { id_empresa?: string; id_tipo_
 	return api.get<import('$lib/types').ReporteGarantiaFila[]>(`/reportes/garantias${query ? '?' + query : ''}`);
 }
 
+// CU-89: inventario actual de técnicos, por empresa y técnico opcional
+export function generarReporteInventarioTecnicos(params?: { id_empresa?: string; id_usuario?: string }) {
+	const qs = new URLSearchParams();
+	if (params?.id_empresa) qs.set('id_empresa', params.id_empresa);
+	if (params?.id_usuario) qs.set('id_usuario', params.id_usuario);
+	const query = qs.toString();
+	return api.get<import('$lib/types').ReporteInventarioTecnico[]>(`/reportes/tecnicos/inventario${query ? '?' + query : ''}`);
+}
+
 // CU-23: filtros por estado, rango de fechas o empresa
 export function getTransfers(params?: { estado?: string; id_empresa?: string; fecha_inicio?: string; fecha_fin?: string }) {
 	const qs = new URLSearchParams();
@@ -236,7 +245,6 @@ export function getAuditLog(filters?: Record<string, string | number | undefined
 	return api.get<any>(`/auditoria${query ? '?' + query : ''}`);
 }
 
-<<<<<<< HEAD
 // CU-86: reporte de movimientos con filtros por período y responsable
 export function generarReporteMovimientos(params?: {
 	id_empresa?: string;
@@ -257,7 +265,8 @@ export function generarReporteMovimientos(params?: {
 	if (params?.id_usuario) qs.set('id_usuario', params.id_usuario);
 	const query = qs.toString();
 	return api.get<import('$lib/types').ReporteMovimientoFila[]>(`/reportes/movimientos${query ? '?' + query : ''}`);
-=======
+}
+
 // CU-59: validación en vivo del NS para la salida de bodega (la validación de
 // verdad la re-ejecuta el backend en la transacción de la salida)
 export function verificarSerie(numeroSerie: string, idBodega?: number): Promise<VerificacionSerie> {
@@ -278,5 +287,4 @@ export function listarSalidas(): Promise<SalidaResumen[]> {
 export function getInventarioTecnico(id: number, empresa?: number): Promise<InventarioTecnico> {
 	const qs = empresa !== undefined ? `?empresa=${empresa}` : '';
 	return api.get<InventarioTecnico>(`/tecnicos/${id}/inventario${qs}`);
->>>>>>> origin/dev
 }
