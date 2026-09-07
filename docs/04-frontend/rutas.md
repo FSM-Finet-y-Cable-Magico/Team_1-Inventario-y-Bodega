@@ -77,10 +77,28 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
 
 ### `/unidades/[id]`
 - **CUs:** CU-33 (ficha), CU-34 (editar datos), CU-35 (cambio de estado), CU-36 (historial + observaciones),
-  CU-37 (historial con usuario/empresa), CU-38/39 (garantía), CU-40 (diagnóstico en revisión).
+  CU-37 (historial con usuario/empresa), CU-38/39 (garantía), CU-40 (diagnóstico en revisión),
+  CU-47 (ubicación física al ingresar/reingresar a bodega).
 - **Endpoints:** `getUnit(id)`, `getUnitHistory(serialNumber)`, `getWarehouses()`, `updateUnit()`,
   `changeUnitState()`.
 - Máquina de transiciones replicada en el front (ver `03-base-de-datos.md`).
+- **CU-47:** en el modal de cambio de estado, si el destino es `'En bodega'` aparece el campo
+  opcional "Ubicación física en bodega" (≤60); si se deja vacío se muestra el aviso de trazabilidad
+  sin bloquear el envío. La ficha muestra la ubicación actual cuando la unidad está en bodega.
+
+### `/salidas`
+- **CUs:** CU-57 (salida de equipos/consumibles a técnico), CU-58 (inventario personal del técnico,
+  sección de consulta), CU-59 (validación en vivo de NS), CU-60 (consumibles con 2 decimales),
+  CU-62 (stock insuficiente como banner).
+- **Endpoints:** `getUsers({rol:'TECNICO_TERRENO'})`, `getWarehouses({activa:true})`,
+  `getCatalog({activo:true})`, `getUnits({estado:'En bodega'})`, `getWarehouseStock(id)`,
+  `verificarSerie(ns, id_bodega)`, `crearSalida()`, `listarSalidas()`, `getInventarioTecnico(id)`.
+- Los NS se eligen de un **datalist** con las unidades disponibles de la bodega elegida
+  (escribir para filtrar); igual pasa por la validación en vivo (CU-59). Junto al consumible
+  se muestra el saldo en vivo de la bodega (CU-62, pre-validación). Confirmar deshabilitado
+  mientras haya NS inválidos o sin ítems. Ítem "Salidas" agregado al
+  Sidebar (roles `SUPERUSUARIO`, `ADMIN`, `ADMIN_BODEGA`, `TECNICO_TERRENO` — el técnico solo
+  consulta su inventario; el backend lo valida igual).
 
 ### `/bodegas`
 - **CUs:** CU-41 (crear con responsable), CU-42 (desactivar), CU-44 (listado con stock).

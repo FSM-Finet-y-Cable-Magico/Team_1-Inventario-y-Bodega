@@ -15,11 +15,12 @@
    `06-casos-de-uso-implementados.md` y el árbol de navegación).
 3. **Busca el CU más parecido ya implementado** y úsalo como plantilla (p. ej. si es un CRUD de
    una entidad nueva, copia la estructura de `bodegas` o `catalog`).
-4. Crea tu rama desde `dev`:
+4. Crea (o reutiliza) tu **rama única de trabajo** desde `dev`:
    ```bash
    git checkout dev && git pull origin dev
-   git checkout -b feat/CU-47-nombre
+   git checkout -b feat/<nombre>-cus   # solo la primera vez; después reutiliza la misma
    ```
+   > Cada desarrollador acumula sus CUs en UNA sola rama propia; no se abre rama ni PR por ticket.
 
 ## Fase 1 — Base de datos (si el CU agrega datos)
 
@@ -92,7 +93,8 @@ npm run build
 - Actualiza el estado del CU en `docs/08-roadmap.md` (pendiente → implementado).
 - Actualiza el doc del módulo tocado en `docs/05-backend/` o `docs/04-frontend/`.
 - Crea los diagramas de secuencia en `diagramas/diagramas-secuencia/CUXX/`
-  (`CUXX-normal.puml` + `CUXX-exc-*.puml`, formato de `01-flujo-de-trabajo.md` §5).
+  (`CUXX-normal.puml` + `CUXX-exc-*.puml`, formato de `01-flujo-de-trabajo.md` §5) y
+  **renderízalos a PNG** (`plantuml -tpng <archivo>.puml`); commitea siempre .puml + .png juntos.
 - Agrega capturas en `Casos de uso/CU-XX/` (`Correcto*.png`, `Excepcion*.png`).
 
 ## Fase 6 — Pull Request
@@ -100,10 +102,10 @@ npm run build
 1. `git fetch origin && git merge origin/dev`
 2. Correr validaciones (Fase 4).
 3. Revisar el diff (`git diff origin/dev...HEAD`) — que solo toque lo necesario.
-4. Commit con mensaje tipo `feat(CU-47): <descripción>`.
-5. `git push origin feat/CU-47-nombre`
-6. Abrir PR hacia `dev` describiendo: CU + restricciones cubiertas, endpoints/páginas tocadas,
-   cómo probar. El jefe de grupo revisa y aprueba.
+4. Commit con mensaje tipo `feat(CU-47): <descripción>` (un commit por CU en la rama única).
+5. `git push origin feat/<nombre>-cus`
+6. Al cierre del lote de CUs: abrir PR hacia `dev` describiendo los CUs incluidos + restricciones
+   cubiertas, endpoints/páginas tocados y cómo probar. El jefe de grupo revisa y aprueba el merge.
 
 ---
 
@@ -115,6 +117,8 @@ npm run build
 - ✅ Nuevas columnas → `migrar.ts` (+ `init.sql`), nunca `synchronize`.
 - ✅ Consumibles vs. serializados → respeta el pivote `requiereSerialNumber`.
 - ✅ Diseño UI → copia los patrones actuales, NO rediseñes.
+- ✅ Todo `.puml` se renderiza a PNG (`plantuml -tpng`) y se commitea (.puml + .png).
 - ✅ Solo se trabaja en casos de uso; bugs/cambios de cliente los administra el jefe de grupo.
+- ✅ UNA rama propia por desarrollador (no una por ticket); merge a dev vía PR al cierre del lote.
 - ❌ No hacer push directo a `dev`.
 - ❌ No cambiar reglas de negocio existentes (estados, roles, transferencias, empresas) sin consultar.

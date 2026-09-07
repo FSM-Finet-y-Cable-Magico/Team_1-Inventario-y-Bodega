@@ -1,4 +1,4 @@
-# Casos de uso — Estado de implementación (CU-01 a CU-46)
+# Casos de uso — Estado de implementación (CU-01 a CU-47)
 
 > **Contexto:** el proyecto tiene **96 casos de uso totales**. En el **Incremento 1** se implementaron
 > **46** (CU-01 a CU-46), superando el 30% mínimo exigido por la rúbrica. Los restantes (50) se
@@ -66,9 +66,20 @@
 | 44 | Listado de bodegas con stock | `bodegas` | `/bodegas` |
 | 45 | Stock por tipo/estado/unidad de medida | `bodegas` | `/bodegas/[id]` |
 | 46 | Umbral mínimo de stock + alertas | `bodegas`, `companies` | `/bodegas/[id]`, `/dashboard`, `Header` |
+<<<<<<< HEAD
 | 85 | Reporte de stock actual | `reportes`, `bodegas`, `inventario`, `auditoria` | `/reportes/stock` |
 | 86 | Reporte de movimientos de inventario | `reportes`, `transferencias` | `/reportes` |
 | 88 | Reporte de garantías | `reportes`, `inventario`, `auditoria` | `/reportes` (pestaña Garantías) |
+=======
+| 47 | Ubicación física al ingresar/reingresar a bodega | `inventario/units` | `/unidades/[id]` |
+| 57 | Salida de bodega a técnico (mixta, atómica) | `salidas` | `/salidas` |
+| 58 | Inventario personal del técnico (consulta) | `salidas` | `/salidas` (sección) |
+| 59 | Validación de NS en salida (en vivo + transacción) | `salidas`, `inventario/units` | `/salidas` |
+| 60 | Salida de consumibles a técnico | `salidas` | `/salidas` |
+| 62 | Validación de stock con bloqueo de fila | `salidas` | `/salidas` (banner) |
+
+> **Nota:** CU-57..62 implementados el 05-sept (commit `a3d71aa`), pendientes de merge de la PR #15.
+>>>>>>> origin/dev
 
 ## 3. Diagramas disponibles (referencia para CUs pendientes)
 

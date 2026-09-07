@@ -102,8 +102,464 @@ export class UnitsService {
         });
       }
 
+<<<<<<< HEAD
       const consumibles = await consumibleQb
         .orderBy('stock.id_stock', 'DESC')
+=======
+        const tipo = await this.dataSource.getRepository(TipoEquipo).findOne({
+            where: { id_tipo_equipo: dto.id_tipo_equipo },
+        });
+
+        const stockRepo = this.dataSource.getRepository(StockConsumible);
+        let stock = await stockRepo.findOne({
+            where: { id_tipo_equipo: dto.id_tipo_equipo, id_bodega: dto.id_bodega },
+        });
+        if (!stock) {
+            stock = stockRepo.create({
+                id_tipo_equipo: dto.id_tipo_equipo,
+                id_bodega: dto.id_bodega,
+                cantidad_disponible: 0,
+            });
+        }
+        stock.cantidad_disponible = Number(stock.cantidad_disponible) + cantidad;
+        await stockRepo.save(stock);
+
+        return {
+            success: true,
+            id_tipo_equipo: dto.id_tipo_equipo,
+            id_bodega: dto.id_bodega,
+            cantidad_ingresada: cantidad,
+            cantidad_disponible: stock.cantidad_disponible,
+            unidad_medida: tipo?.unidadMedida ?? null,
+            message: `Se ingresaron ${cantidad} ${tipo?.unidadMedida ?? 'unidades'} de [${naturaleza.nombre}] al stock de la bodega [${bodega.nombre}].`,
+        };
+    }
+
+    // CU-28/CU-31: edición del stock de un consumible desde el listado de unidades.
+    // Permite ajustar cantidad disponible y umbral mínimo.
+    async editarConsumible(
+        idStock: number,
+        dto: { cantidad_disponible?: number; umbral_minimo?: number },
+        idEmpresaContexto: number,
+        actorId: number,
+    ) {
+        if (!idStock || isNaN(idStock)) {
+            throw new BadRequestException('El identificador del stock consumible es inválido.');
+        }
+
+        const stockRepo = this.dataSource.getRepository(StockConsumible);
+        const stock = await stockRepo.findOne({
+            where: { id_stock: idStock },
+            relations: { bodega: true, tipoEquipo: true },
+        });
+        if (!stock || stock.bodega.id_empresa !== idEmpresaContexto) {
+            throw new NotFoundException('Stock consumible no encontrado.');
+        }
+
+        const anterior = { ...stock };
+        let cambioCantidad = false;
+        let cambioUmbral = false;
+
+        if (dto.cantidad_disponible !== undefined) {
+            const cantidad = Number(dto.cantidad_disponible);
+            if (isNaN(cantidad) || cantidad < 0) {
+                throw new BadRequestException('La cantidad disponible debe ser un número mayor o igual a cero.');
+            }
+            cambioCantidad = Number(stock.cantidad_disponible) !== cantidad;
+            stock.cantidad_disponible = cantidad;
+        }
+
+        if (dto.umbral_minimo !== undefined) {
+            const umbral = Number(dto.umbral_minimo);
+            if (isNaN(umbral) || umbral < 0 || umbral > 9999) {
+                throw new BadRequestException('El umbral mínimo debe ser un número entre 0 y 9999.');
+            }
+            cambioUmbral = Number(stock.umbral_minimo) !== umbral;
+            stock.umbral_minimo = umbral;
+        }
+
+        await stockRepo.save(stock);
+
+        if (actorId && (cambioCantidad || cambioUmbral)) {
+            await this.auditoriaService.create({
+                id_usuario: actorId,
+                accion: 'MODIFICAR',
+                entidad_afectada: 'stock_consumible',
+                id_entidad_afectada: stock.id_stock,
+                valor_anterior: anterior,
+                valor_nuevo: stock,
+            });
+        }
+
+        return {
+            success: true,
+            id_stock: stock.id_stock,
+            cantidad_disponible: Number(stock.cantidad_disponible),
+            umbral_minimo: stock.umbral_minimo,
+            unidad_medida: stock.tipoEquipo?.unidadMedida ?? null,
+            message: 'Stock de consumible actualizado correctamente.',
+        };
+    }
+
+    async transicionarEstado(unitId: number, nuevoEstado: string, actor: any, motivoPayload?: string, diagnosticoPayload?: string, descripcionOtroPayload?: string, simularErrorHistorial?: boolean, ubicacionFisicaPayload?: string) {
+
+        // CU-36: la observación es opcional, con máximo 300 caracteres
+        const observacion = motivoPayload?.trim() || undefined;
+        if (observacion && observacion.length > 300) {
+            throw new BadRequestException('La observación no puede superar los 300 caracteres.');
+        }
+
+        // CU-47: la ubicación física es texto libre opcional, con máximo 60 caracteres
+        const ubicacionFisica = ubicacionFisicaPayload?.trim() || null;
+        if (ubicacionFisica && ubicacionFisica.length > 60) {
+            throw new BadRequestException('La ubicación física no puede superar los 60 caracteres.');
+        }
+
+        const unidad = await this.unitRepository.findOne({
+            where: { id_unidad: unitId },
+            relations: { tipoEquipo: true }
+        });
+        if (!unidad) throw new NotFoundException('El equipo solicitado no existe.');
+
+        const estadoOrigen = unidad.estado;
+
+
+        const transicionesPermitidas: Record<string, string[]> = {
+            'En bodega': ['Asignado a técnico', 'En préstamo externo', 'Dado de baja'],
+            'Asignado a técnico': ['Instalado en cliente', 'En bodega', 'En revisión'],
+            'Instalado en cliente': ['En revisión'],
+            'En revisión': ['En bodega', 'En préstamo externo', 'Dado de baja'],
+            'En préstamo externo': ['En bodega'],
+            'Dado de baja': [],
+        };
+
+        // CU-35 Excepción 1: mensaje exacto del caso de uso
+        if (!transicionesPermitidas[estadoOrigen]?.includes(nuevoEstado)) {
+            throw new BadRequestException('Transición de estado no permitida para este equipo.');
+        }
+
+        if (nuevoEstado === 'En revisión') {
+            // CU-40 Excepción 1: diagnóstico técnico obligatorio al ingresar a revisión
+            if (!diagnosticoPayload || diagnosticoPayload.trim() === '') {
+                throw new BadRequestException(
+                    'Debe seleccionar un diagnóstico técnico para enviar el equipo a revisión.',
+                );
+            }
+
+            const DIAGNOSTICOS_PERMITIDOS = [
+                'No enciende',
+                'Se reinicia continuamente',
+                'Sin señal óptica',
+                'Copla o puerto dañado',
+                'Falla de configuración',
+                'Daño físico visible',
+                'Causa desconocida',
+                'Otro',
+            ];
+
+            const diagnosticoNormalizado = diagnosticoPayload.trim();
+
+            if (!DIAGNOSTICOS_PERMITIDOS.includes(diagnosticoNormalizado)) {
+                throw new BadRequestException(
+                    `El diagnóstico seleccionado no es válido. Opciones permitidas: ${DIAGNOSTICOS_PERMITIDOS.join(', ')}.`,
+                );
+            }
+
+            // CU-40 Excepción 1: si selecciona "Otro" debe incluir una descripción
+            // obligatoria (entre 5 y 200 caracteres); mensaje exacto del caso de uso
+            if (diagnosticoNormalizado === 'Otro') {
+                const descripcion = (descripcionOtroPayload ?? motivoPayload)?.trim() ?? '';
+                if (descripcion.length < 5 || descripcion.length > 200) {
+                    throw new BadRequestException('Debe ingresar una descripción cuando selecciona Otro.');
+                }
+                unidad.diagnosticoTecnico = `Otro: ${descripcion}`;
+            } else {
+                unidad.diagnosticoTecnico = diagnosticoNormalizado;
+            }
+        }
+
+        // CU-47: ubicación física actual antes de la transición (para auditoría)
+        const ubicacionOrigen = unidad.ubicacionFisica ?? null;
+
+        // CU-47: al ingresar/reingresar a bodega se registra la ubicación física
+        // indicada por el actor (puede quedar vacía según la excepción del caso de uso)
+        if (nuevoEstado === 'En bodega') {
+            unidad.ubicacionFisica = ubicacionFisica;
+        }
+
+        if (estadoOrigen === 'En bodega' && nuevoEstado !== 'En bodega') {
+            unidad.id_bodega_actual = undefined;
+            unidad.numeroPoste = undefined;
+            // CU-47: al salir de la bodega el sistema vacía automáticamente la ubicación física
+            unidad.ubicacionFisica = null;
+        }
+
+        // CU-36: registro transaccional del cambio de estado con reintentos.
+        // Si falla la escritura del historial se reintenta toda la transacción
+        // hasta 3 veces. En modo QA/development se puede forzar el error con
+        // el flag simularErrorHistorial para comprobar la Excepción 1.
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+
+        const maxIntentos = 3;
+        let ultimoError: Error | undefined;
+
+        try {
+            for (let intento = 0; intento < maxIntentos; intento++) {
+                await queryRunner.startTransaction();
+                try {
+                    unidad.estado = nuevoEstado;
+                    await queryRunner.manager.save(unidad);
+
+                    const fechaChile = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Santiago' }));
+
+                    // CU-36/CU-40: el historial registra la observación opcional y, al
+                    // entrar a revisión, también el diagnóstico técnico
+                    let motivoHistorial = observacion ?? 'Cambio de estado ordinario';
+                    // CU-47: la ubicación física queda registrada junto al cambio de estado
+                    if (nuevoEstado === 'En bodega' && ubicacionFisica) {
+                        motivoHistorial += `. Ubicación física: ${ubicacionFisica}`;
+                    }
+                    if (nuevoEstado === 'En revisión') {
+                        motivoHistorial = `Ingreso a taller técnico. Diagnóstico: ${unidad.diagnosticoTecnico}`;
+                        // si la descripción de "Otro" vino en el campo de observación
+                        // (compatibilidad), no se duplica como observación general
+                        const obsExtra = (!descripcionOtroPayload && unidad.diagnosticoTecnico?.startsWith('Otro:')) ? undefined : observacion;
+                        if (obsExtra) motivoHistorial += `. Observación: ${obsExtra}`;
+                    }
+
+                    const nuevoHistorial = this.historyRepository.create({
+                        id_unidad: unidad.id_unidad,
+                        id_usuario: actor.id_usuario,
+                        estadoAnterior: estadoOrigen,
+                        estadoNuevo: nuevoEstado,
+                        motivo: motivoHistorial,
+                        fechaHora: fechaChile
+                    });
+
+                    if (simularErrorHistorial) {
+                        throw new Error('Simulación de error al registrar el historial de estados.');
+                    }
+
+                    await queryRunner.manager.save(nuevoHistorial);
+                    await queryRunner.commitTransaction();
+
+                    // CU-47: auditoría de la transición; valor_nuevo incluye la ubicación física
+                    await this.auditoriaService.create({
+                        id_usuario: actor.id_usuario,
+                        accion: 'CAMBIAR_ESTADO',
+                        entidad_afectada: 'unidad_equipo',
+                        id_entidad_afectada: unidad.id_unidad,
+                        valor_anterior: { estado: estadoOrigen, ubicacion_fisica: ubicacionOrigen },
+                        valor_nuevo: { estado: nuevoEstado, ubicacion_fisica: unidad.ubicacionFisica ?? null },
+                    });
+
+                    return {
+                        success: true,
+                        estadoActual: unidad.estado,
+                        diagnostico_registrado: unidad.diagnosticoTecnico ?? 'N/A',
+                        ubicacion_fisica: unidad.ubicacionFisica ?? null
+                    };
+                } catch (err) {
+                    ultimoError = err instanceof Error ? err : new Error(String(err));
+                    await queryRunner.rollbackTransaction().catch(() => {
+                        /* la transacción ya puede estar abortada */
+                    });
+                    if (intento < maxIntentos - 1) {
+                        await new Promise((resolve) => setTimeout(resolve, 100 * (intento + 1)));
+                    }
+                }
+            }
+
+            throw new BadRequestException(
+                'Error al registrar el cambio en el historial. El sistema reintentó la escritura pero el error persiste.',
+            );
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    // CU-59: validación en vivo del NS para el formulario de salida de bodega.
+    // No lanza excepción: devuelve existe/estado/disponible para que el front
+    // marque el NS inválido y deshabilite Confirmar.
+    async verificarSerie(numeroSerie: string, idEmpresaContexto: number, idBodega?: number) {
+        const serie = (numeroSerie ?? '').trim();
+        const unidad = serie === ''
+            ? null
+            : await this.unitRepository.findOne({
+                where: { serialNumber: serie, id_empresa: idEmpresaContexto },
+            });
+
+        if (!unidad) {
+            return { existe: false, disponible: false };
+        }
+
+        const disponible = unidad.estado === 'En bodega'
+            && (idBodega === undefined || unidad.id_bodega_actual === idBodega);
+
+        return {
+            existe: true,
+            numero_serie: unidad.serialNumber,
+            estado: unidad.estado,
+            id_bodega_actual: unidad.id_bodega_actual ?? null,
+            disponible,
+        };
+    }
+
+    async verFichaDetalle(idUnidad: number, idEmpresaContexto: number) {
+        if (!idUnidad || isNaN(idUnidad)) {
+            throw new BadRequestException('El identificador de la unidad proporcionado es inválido.');
+        }
+
+        const unidad = await this.unitRepository.findOne({
+            where: { id_unidad: idUnidad, id_empresa: idEmpresaContexto },
+            relations: { tipoEquipo: true }
+        });
+
+        if (!unidad) {
+            throw new NotFoundException(`No se encontró ninguna unidad con el ID [${idUnidad}].`);
+        }
+
+        let alertaGarantia = {
+            posee_garantia: false,
+            garantia_vigente: false,
+            no_calculable: false,
+            dias_restantes: 0,
+            mensaje_alerta: 'Este dispositivo fue registrado sin un contrato de garantía comercial asociado.'
+        };
+
+        // CU-38 Excepción 1: sin fecha de adquisición o sin duración de garantía
+        // configurada en el tipo, la garantía no es calculable
+        const garantiaDiasTipo = unidad.tipoEquipo?.garantiaDias;
+        if (!unidad.fechaAdquisicion || garantiaDiasTipo === null || garantiaDiasTipo === undefined) {
+            alertaGarantia = {
+                posee_garantia: false,
+                garantia_vigente: false,
+                no_calculable: true,
+                dias_restantes: 0,
+                mensaje_alerta: 'Garantía no calculable'
+            };
+        } else if (unidad.fechaVencGarantia) {
+
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+
+        const fechaVencimiento = new Date(unidad.fechaVencGarantia);
+        fechaVencimiento.setHours(0, 0, 0, 0);
+
+        const diferenciaMilisegundos = fechaVencimiento.getTime() - hoy.getTime();
+        const diasCalculados = Math.ceil(diferenciaMilisegundos / (1000 * 60 * 60 * 24));
+
+        if (diasCalculados >= 0) {
+            alertaGarantia = {
+                posee_garantia: true,
+                garantia_vigente: true,
+                no_calculable: false,
+                dias_restantes: diasCalculados,
+                mensaje_alerta: `¡ALERTA VIGENTE! El dispositivo cuenta con cobertura de soporte técnico de fábrica por ${diasCalculados} días más.`
+            };
+        } else {
+                alertaGarantia = {
+                    posee_garantia: true,
+                    garantia_vigente: false,
+                    no_calculable: false,
+                    dias_restantes: 0, // Ya expiró, el contador de días hábiles restantes cae a cero
+                    mensaje_alerta: `COBERTURA EXPIRADA. La garantía comercial de este hardware venció hace ${Math.abs(diasCalculados)} días.`
+                };
+            }
+        }
+
+        // CU-33: bodega actual (nombre) y empresa propietaria
+        const bodega = unidad.id_bodega_actual
+            ? await this.dataSource.getRepository(Bodega).findOne({ where: { id_bodega: unidad.id_bodega_actual } })
+            : null;
+        const empresa = EMPRESAS.find((e) => e.id === unidad.id_empresa) ?? null;
+
+        // CU-33: ficha plana con todos los campos del caso de uso
+        return {
+            id_unidad: unidad.id_unidad,
+            numero_serie: unidad.serialNumber,
+            mac_address: unidad.macAddress ?? null,
+            tipo_equipo: {
+                nombre: unidad.tipoEquipo?.nombre ?? null,
+                categoria: unidad.tipoEquipo?.categoria ?? null,
+                marca: unidad.tipoEquipo?.marca ?? null,
+                modelo: unidad.tipoEquipo?.modelo ?? null,
+                ficha_tecnica_pdf_url: unidad.tipoEquipo?.fichaTecnicaPdfUrl ?? null,
+            },
+            marca: unidad.tipoEquipo?.marca ?? null,
+            modelo: unidad.modelo ?? unidad.tipoEquipo?.modelo ?? null,
+            empresa: empresa?.nombre ?? null,
+            id_empresa: unidad.id_empresa,
+            bodega: bodega?.nombre ?? null,
+            id_bodega_actual: unidad.id_bodega_actual ?? null,
+            estado: unidad.estado,
+            proveedor: unidad.proveedor ?? null,
+            fecha_adquisicion: unidad.fechaAdquisicion ?? null,
+            fecha_venc_garantia: unidad.fechaVencGarantia ?? null,
+            garantia: alertaGarantia,
+            ubicacion_fisica: unidad.ubicacionFisica ?? null,
+            observaciones: unidad.observaciones ?? null,
+            numero_poste: unidad.numeroPoste ?? null,
+            id_cliente_instalado: unidad.id_cliente_instalado ?? null,
+            id_caja_nap: unidad.id_caja_nap ?? null,
+        };
+    }
+
+    async editarDatos(
+        idUnidad: number,
+        dto: EditarDatosUnidadDto,
+        actor: any
+    ) {
+        if (!idUnidad || isNaN(idUnidad)) {
+            throw new BadRequestException('El ID de la unidad es inválido.');
+        }
+
+        const unidad = await this.unitRepository.findOne({
+            where: { id_unidad: idUnidad, id_empresa: actor.id_empresa },
+        });
+
+        if (!unidad) {
+            throw new NotFoundException(`No se encontró la unidad con ID [${idUnidad}] en su empresa.`);
+        }
+
+        // CU-34: las observaciones van a su propio campo (no al diagnóstico técnico)
+        if (dto.observaciones !== undefined) unidad.observaciones = dto.observaciones;
+        // CU-34: la ubicación física solo aplica con la unidad en bodega
+        if (dto.ubicacion_fisica !== undefined) {
+            if (unidad.estado !== 'En bodega') {
+                throw new BadRequestException(
+                    'La ubicación física en bodega solo puede editarse cuando la unidad está en estado [En bodega].',
+                );
+            }
+            unidad.ubicacionFisica = dto.ubicacion_fisica;
+        }
+        if (dto.id_bodega_actual !== undefined) unidad.id_bodega_actual = dto.id_bodega_actual;
+        if (dto.numero_poste !== undefined) unidad.numeroPoste = dto.numero_poste;
+        if (dto.modelo !== undefined) unidad.modelo = dto.modelo;
+
+        await this.unitRepository.save(unidad);
+
+        return {
+            success: true,
+            id_unidad: unidad.id_unidad,
+            message: 'Los datos de la unidad fueron actualizados correctamente.'
+        };
+    }
+
+    async verHistorialEstados(serialNumber: string, idEmpresaContexto: number) {
+
+        if (!serialNumber || serialNumber.trim() === '') {
+            throw new BadRequestException('El número de serie es un parámetro obligatorio para realizar el rastreo.');}
+
+        const serialNormalizado = serialNumber.trim();
+
+        const historial = await this.historyRepository.createQueryBuilder('historial')
+        .innerJoin(UnidadEquipo, 'unidad', 'unidad.id_unidad = historial.id_unidad')
+        .where('unidad.numero_serie = :serial', { serial: serialNormalizado })
+        .andWhere('unidad.id_empresa = :idEmpresa', { idEmpresa: idEmpresaContexto })
+        .orderBy('historial.fecha_hora', 'DESC')
+>>>>>>> origin/dev
         .getMany();
 
       for (const c of consumibles) {
