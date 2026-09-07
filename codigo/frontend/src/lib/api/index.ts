@@ -1,5 +1,5 @@
 import { api } from './client';
-import type { LoginDto, LoginResponse, Usuario, VerificacionSerie, ItemSalida, SalidaResumen, InventarioTecnico } from '$lib/types';
+import type { LoginDto, LoginResponse, Usuario, EquipoEnRevision, VerificacionSerie, ItemSalida, SalidaResumen, InventarioTecnico } from '$lib/types';
 
 export async function login(dto: LoginDto): Promise<LoginResponse> {
 	return api.post<LoginResponse>('/auth/login', dto);
@@ -101,6 +101,10 @@ export function getUnits(params?: { estado?: string; buscar?: string }) {
 	return api.get<any[]>(`/unidades${query ? '?' + query : ''}`);
 }
 
+export function getUnidadesEnRevision() {
+	return api.get<EquipoEnRevision[]>('/unidades/en-revision');
+}
+
 export function getUnit(id: number) {
 	return api.get<any>(`/unidades/${id}/ficha`);
 }
@@ -126,6 +130,16 @@ export function updateUnit(id: number, data: Record<string, unknown>) {
 export function changeUnitState(id: number, data: Record<string, unknown>) {
 	return api.patch<any>(`/unidades/${id}/cambiar-estado`, data);
 }
+
+export function registrarResultadoRevision(id: number, data: Record<string, unknown>) {
+	return api.post<any>(`/unidades/${id}/resultado-revision`, data);
+}
+
+// CU-74: reacondicionar equipo "En revisión" directo a "En bodega" (Operativo)
+export function reacondicionarUnidad(id: number, data: Record<string, unknown>) {
+	return api.post<any>(`/unidades/${id}/reacondicionar`, data);
+}
+
 
 export function getUnitHistory(serialNumber: string) {
 	return api.get<any[]>(`/unidades/${serialNumber}/historial`);

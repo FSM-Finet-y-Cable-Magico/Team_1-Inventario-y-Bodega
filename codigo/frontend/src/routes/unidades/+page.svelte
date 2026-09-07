@@ -41,6 +41,7 @@
 	const esConsumible = $derived(tipoSeleccionado?.requiereSerialNumber === false);
 	const roles = $derived($userRoles);
 	const puedeCrearUnidad = $derived(roles.some((r) => ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'].includes(r)));
+	const puedeVerEnRevision = $derived(roles.some((r) => ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'].includes(r)));
 	const puedeEditarConsumible = $derived(roles.some((r) => ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'].includes(r)));
 	let createError = $state('');
 	let creating = $state(false);
@@ -162,6 +163,11 @@
 				<RotateCw class="h-4 w-4" />
 				Actualizar
 			</Button>
+			{#if puedeVerEnRevision}
+				<Button variant="secondary" onclick={() => goto('/unidades/en-revision')}>
+					Equipos en revisión
+				</Button>
+			{/if}
 			{#if puedeCrearUnidad}
 				<Button onclick={() => (showCreate = true)}>
 					<Plus class="h-4 w-4" />

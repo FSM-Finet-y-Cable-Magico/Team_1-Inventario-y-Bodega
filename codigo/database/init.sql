@@ -154,6 +154,22 @@ CREATE TABLE IF NOT EXISTS stock_consumible (
     CONSTRAINT fk_stock_tipo_equipo FOREIGN KEY (id_tipo_equipo) REFERENCES tipo_equipo (id_tipo_equipo)
 );
 
+-- Reparación externa y préstamos externos
+CREATE TABLE IF NOT EXISTS prestamo_externo (
+    id_prestamo             SERIAL PRIMARY KEY,
+    tipo                    VARCHAR(30) NOT NULL,
+    id_empresa              INTEGER NOT NULL,
+    id_unidad               INTEGER REFERENCES unidad_equipo (id_unidad),
+    nombre_receptor         VARCHAR(80) NOT NULL,
+    rut_receptor            VARCHAR(12),
+    fecha_salida            TIMESTAMPTZ NOT NULL DEFAULT now(),
+    fecha_retorno_estimada  DATE NOT NULL,
+    fecha_retorno_real      DATE,
+    detalle                 TEXT NOT NULL,
+    estado                  VARCHAR(20) NOT NULL DEFAULT 'ACTIVO',
+    id_usuario_registro     INTEGER NOT NULL
+);
+
 -- Cierres de OT recibidos por integración (webhook de G3) — sc-113
 -- Idempotencia por clave_idempotencia: "{id_ot}:{fecha_completada ISO}"
 CREATE TABLE IF NOT EXISTS integracion_cierre (

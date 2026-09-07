@@ -72,8 +72,10 @@
 | 59 | Validación de NS en salida (en vivo + transacción) | `salidas`, `inventario/units` | `/salidas` |
 | 60 | Salida de consumibles a técnico | `salidas` | `/salidas` |
 | 62 | Validación de stock con bloqueo de fila | `salidas` | `/salidas` (banner) |
+| 72 | Registrando resultado de revisión (Operativo/Reparación externa/Baja) | `inventario/units` | `/unidades/[id]` |
+| 74 | Reacondicionando equipo operativo desde revisión a bodega | `inventario/units` | `/unidades/[id]` |
+| 77 | Consultando listado de equipos en revisión | `inventario/units` | `/unidades/en-revision` |
 
-> **Nota:** CU-57..62 implementados el 05-sept (commit `a3d71aa`), pendientes de merge de la PR #15.
 
 ## 3. Diagramas disponibles (referencia para CUs pendientes)
 

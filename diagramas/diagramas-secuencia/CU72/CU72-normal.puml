@@ -1,0 +1,132 @@
+@startuml CU72-normal
+title CU-72 — Registrando resultado de revisión de equipo (flujo normal)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega" as user
+participant "V_FichaUnidad" as view
+participant "C_RolesGuard" as guard
+participant "C_UnitsController" as ctrl
+participant "C_UnitsService" as svc
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as uent
+participant "prestamo_externo" as pent
+participant "historial_estado_equipo" as hent
+participant "log_auditoria" as aent
+
+user -> view : Abre unidad en estado\n"En revisión" y elige\n"Registrar resultado"
+activate view
+
+view -> guard : POST /unidades/:id/resultado-revision\n{ resultado, ...campos }
+activate guard
+guard --> view : Autorizado\n(ADMIN_BODEGA / ADMIN / SUPERUSUARIO)
+deactivate guard
+
+view -> ctrl : registrarResultadoRevision(id, body, actor)
+activate ctrl
+
+ctrl -> svc : registrarResultadoRevision(unitId, dto, actor)
+activate svc
+
+svc -> orm : findOne(id_unidad, id_empresa,\nrelations: tipoEquipo)
+activate orm
+orm -> uent : SELECT unidad_equipo\nWHERE id_unidad = :id AND id_empresa = :idEmpresa
+activate uent
+uent --> orm : Datos unidad (estado = 'En revisión')
+deactivate uent
+orm --> svc : unidad (existe)
+deactivate orm
+
+svc -> svc : Precondición: estado === 'En revisión'\n(si no → 400 'Transición de estado no\npermitida para este equipo.\nEstado actual: [ESTADO].')
+activate svc
+deactivate svc
+
+alt dto.resultado == "OPERATIVO"
+  svc -> svc : Valida bodega destino obligatoria\n+ ubicación física ≤ 60 (CU-47)
+  activate svc
+  deactivate svc
+  svc -> orm : getRepository(Bodega).findOne\n(id_bodega, id_empresa)
+  activate orm
+  orm --> svc : bodega (existe y activa)
+  deactivate orm
+  svc -> svc : nuevoEstado = 'En bodega'\nunidad.id_bodega_actual = destino\nunidad.ubicacionFisica = ubicación
+  activate svc
+  deactivate svc
+else dto.resultado == "REPARACION_EXTERNA"
+  svc -> svc : Valida nombre receptor (3-80),\nfecha retorno (> hoy),\ndescripción de falla (5-300)
+  activate svc
+  deactivate svc
+  svc -> svc : nuevoEstado = 'En préstamo externo'\nprestamoData = { tipo: 'REPARACION_EXTERNA',\nid_unidad, nombreReceptor,\nfechaRetornoEstimada, detalle }
+  activate svc
+  deactivate svc
+else dto.resultado == "BAJA"
+  svc -> svc : Valida motivo obligatorio (≤ 200)\ngarantiaVigente = fechaVencGarantia >= hoy\n(sin garantía vigente → continúa directo)
+  activate svc
+  deactivate svc
+  svc -> svc : nuevoEstado = 'Dado de baja'
+  activate svc
+  deactivate svc
+end
+
+svc -> orm : queryRunner.startTransaction()\nmanager.save(unidad)
+activate orm
+orm -> uent : UPDATE unidad_equipo\nSET estado = :nuevoEstado, ...\nWHERE id_unidad = :id
+activate uent
+uent --> orm : Unidad actualizada
+deactivate uent
+orm --> svc : unidad guardada
+deactivate orm
+
+opt dto.resultado == "REPARACION_EXTERNA"
+  svc -> orm : manager.save(PrestamoExterno, prestamoData)
+  activate orm
+  orm -> pent : INSERT prestamo_externo\n(tipo, id_unidad, nombre_receptor,\nfecha_retorno_estimada, detalle, estado='ACTIVO')
+  activate pent
+  pent --> orm : Registro insertado
+  deactivate pent
+  orm --> svc : préstamo guardado
+  deactivate orm
+end
+
+svc -> orm : manager.save(historial\n{ estadoAnterior: 'En revisión', estadoNuevo,\nmotivo: 'Resultado de revisión: ...' })
+activate orm
+orm -> hent : INSERT historial_estado_equipo
+activate hent
+hent --> orm : Registro insertado
+deactivate hent
+orm --> svc : historial guardado
+deactivate orm
+
+svc -> orm : queryRunner.commitTransaction()
+activate orm
+orm --> svc : Transacción confirmada
+deactivate orm
+
+svc -> orm : auditoriaService.create({ accion:\n'CAMBIAR_ESTADO', entidad: 'unidad_equipo',\nvalor_anterior: { estado: 'En revisión' },\nvalor_nuevo: { estado: nuevoEstado, resultado } })
+activate orm
+orm -> aent : INSERT log_auditoria
+activate aent
+aent --> orm : Registro insertado
+deactivate aent
+orm --> svc : auditoría guardada
+deactivate orm
+
+svc --> ctrl : 201 Created { success: true,\nestadoActual: nuevoEstado }
+deactivate svc
+
+ctrl --> view : 201 Created
+deactivate ctrl
+
+view --> user : Ficha actualizada con\nel nuevo estado de la unidad
+deactivate view
+
+@enduml
