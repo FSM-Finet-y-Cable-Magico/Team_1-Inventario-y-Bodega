@@ -5,13 +5,13 @@
 		Package,
 		Wrench,
 		Warehouse,
+		Truck,
 		ArrowLeftRight,
 		ScrollText,
 		LogOut,
 		PanelLeftClose,
 		PanelLeft,
 		Building2,
-		Truck,
 		ClipboardList
 	} from '@lucide/svelte';
 	import { authStore, userRoles } from '$lib/stores/auth';
@@ -34,6 +34,7 @@
 		{ label: 'Catálogo', icon: Package, path: '/catalogo', roles: ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'] },
 		{ label: 'Unidades', icon: Wrench, path: '/unidades', roles: ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA', 'TECNICO_TERRENO'] },
 		{ label: 'Bodegas', icon: Warehouse, path: '/bodegas', roles: ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'] },
+		{ label: 'Salidas', icon: Truck, path: '/salidas', roles: ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA', 'TECNICO_TERRENO'] },
 		{ label: 'Transferencias', icon: ArrowLeftRight, path: '/transferencias', roles: ['SUPERUSUARIO', 'ADMIN'] },
 		{ label: 'Proveedores', icon: Truck, path: '/proveedores', roles: ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'] },
 		{ label: 'Órdenes de ingreso', icon: ClipboardList, path: '/ordenes-ingreso', roles: ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'] },

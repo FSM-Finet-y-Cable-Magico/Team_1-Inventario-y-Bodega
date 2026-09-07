@@ -16,6 +16,7 @@ import { CatalogService } from './catalog.service';
 import { HistorialEstado } from './entities/historial-estado.entity';
 import { EditarDatosUnidadDto } from './dto/editar-datos-unidad.dto';
 import { AuditoriaService } from '../auditoria/auditoria.service';
+import { PrestamoExterno } from './entities/prestamo-externo.entity';
 
 const MAC_REGEX = /^([0-9A-Fa-f]{2}[:\-]){5}[0-9A-Fa-f]{2}$/;
 
@@ -146,6 +147,83 @@ export class UnitsService {
     return resultado.sort(
       (a, b) => Math.abs(b.id_unidad) - Math.abs(a.id_unidad),
     );
+  }
+
+  // CU-77: listado de equipos "En revisión" con fecha de ingreso, días
+  // transcurridos y diagnóstico. Solo consulta, no audita.
+  async listarEnRevision(actor: any) {
+    const esSuperusuario = actor.roles?.includes('SUPERUSUARIO');
+
+    const qb = this.unitRepository
+      .createQueryBuilder('unidad')
+      .leftJoinAndSelect('unidad.tipoEquipo', 'tipoEquipo')
+      .where('unidad.estado = :estado', { estado: 'En revisión' });
+
+    // CU-77: aislamiento por empresa, salvo Superusuario (ve ambas empresas)
+    if (!esSuperusuario) {
+      qb.andWhere('unidad.id_empresa = :idEmpresa', {
+        idEmpresa: actor.id_empresa,
+      });
+    }
+
+    const unidades = await qb.orderBy('unidad.id_unidad', 'ASC').getMany();
+    if (unidades.length === 0) return [];
+
+    const idsUnidades = unidades.map((u) => u.id_unidad);
+
+    // CU-77: fecha de ingreso a revisión = última transición hacia 'En
+    // revisión' en el historial (una sola consulta, sin N+1 por unidad)
+    const ingresos = await this.historyRepository
+      .createQueryBuilder('historial')
+      .distinctOn(['historial.id_unidad'])
+      .where('historial.id_unidad IN (:...ids)', { ids: idsUnidades })
+      .andWhere('historial.estado_nuevo = :estadoNuevo', {
+        estadoNuevo: 'En revisión',
+      })
+      .orderBy('historial.id_unidad', 'ASC')
+      .addOrderBy('historial.fecha_hora', 'DESC')
+      .getMany();
+    const mapaIngreso = new Map(
+      ingresos.map((h) => [h.id_unidad, h.fechaHora]),
+    );
+
+    // Nota: por la máquina de estados, una unidad solo llega a 'En revisión' desde 'Asignado a técnico' o 'Instalado en cliente' (nunca desde 'En
+    // bodega' directo), así que id_bodega_actual normalmente viene vacío.
+    const idsBodegas = [
+      ...new Set(
+        unidades
+          .map((u) => u.id_bodega_actual)
+          .filter((id): id is number => !!id),
+      ),
+    ];
+    const bodegas = idsBodegas.length
+      ? await this.dataSource
+          .getRepository(Bodega)
+          .findBy({ id_bodega: In(idsBodegas) })
+      : [];
+    const mapaBodegas = new Map(bodegas.map((b) => [b.id_bodega, b.nombre]));
+
+    const ahora = Date.now();
+
+    return unidades.map((u) => {
+      const fechaIngreso = mapaIngreso.get(u.id_unidad) ?? null;
+      const diasEnRevision = fechaIngreso
+        ? Math.floor((ahora - new Date(fechaIngreso).getTime()) / 86400000)
+        : null;
+
+      return {
+        id_unidad: u.id_unidad,
+        numero_serie: u.serialNumber,
+        tipo_equipo: u.tipoEquipo ? { nombre: u.tipoEquipo.nombre } : null,
+        empresa: EMPRESAS.find((e) => e.id === u.id_empresa)?.nombre ?? null,
+        bodega: u.id_bodega_actual
+          ? (mapaBodegas.get(u.id_bodega_actual) ?? null)
+          : null,
+        fecha_ingreso_revision: fechaIngreso,
+        dias_en_revision: diasEnRevision,
+        diagnostico_tecnico: u.diagnosticoTecnico ?? null,
+      };
+    });
   }
 
   async registrarUnidad(
@@ -419,12 +497,21 @@ export class UnitsService {
     diagnosticoPayload?: string,
     descripcionOtroPayload?: string,
     simularErrorHistorial?: boolean,
+    ubicacionFisicaPayload?: string,
   ) {
     // CU-36: la observación es opcional, con máximo 300 caracteres
     const observacion = motivoPayload?.trim() || undefined;
     if (observacion && observacion.length > 300) {
       throw new BadRequestException(
         'La observación no puede superar los 300 caracteres.',
+      );
+    }
+
+    // CU-47: la ubicación física es texto libre opcional, con máximo 60 caracteres
+    const ubicacionFisica = ubicacionFisicaPayload?.trim() || null;
+    if (ubicacionFisica && ubicacionFisica.length > 60) {
+      throw new BadRequestException(
+        'La ubicación física no puede superar los 60 caracteres.',
       );
     }
 
@@ -503,9 +590,20 @@ export class UnitsService {
       }
     }
 
+    // CU-47: ubicación física actual antes de la transición (para auditoría)
+    const ubicacionOrigen = unidad.ubicacionFisica ?? null;
+
+    // CU-47: al ingresar/reingresar a bodega se registra la ubicación física
+    // indicada por el actor (puede quedar vacía según la excepción del caso de uso)
+    if (nuevoEstado === 'En bodega') {
+      unidad.ubicacionFisica = ubicacionFisica;
+    }
+
     if (estadoOrigen === 'En bodega' && nuevoEstado !== 'En bodega') {
       unidad.id_bodega_actual = undefined;
       unidad.numeroPoste = undefined;
+      // CU-47: al salir de la bodega el sistema vacía automáticamente la ubicación física
+      unidad.ubicacionFisica = null;
     }
 
     // CU-36: registro transaccional del cambio de estado con reintentos.
@@ -534,6 +632,10 @@ export class UnitsService {
           // CU-36/CU-40: el historial registra la observación opcional y, al
           // entrar a revisión, también el diagnóstico técnico
           let motivoHistorial = observacion ?? 'Cambio de estado ordinario';
+          // CU-47: la ubicación física queda registrada junto al cambio de estado
+          if (nuevoEstado === 'En bodega' && ubicacionFisica) {
+            motivoHistorial += `. Ubicación física: ${ubicacionFisica}`;
+          }
           if (nuevoEstado === 'En revisión') {
             motivoHistorial = `Ingreso a taller técnico. Diagnóstico: ${unidad.diagnosticoTecnico}`;
             // si la descripción de "Otro" vino en el campo de observación
@@ -564,10 +666,27 @@ export class UnitsService {
           await queryRunner.manager.save(nuevoHistorial);
           await queryRunner.commitTransaction();
 
+          // CU-47: auditoría de la transición; valor_nuevo incluye la ubicación física
+          await this.auditoriaService.create({
+            id_usuario: actor.id_usuario,
+            accion: 'CAMBIAR_ESTADO',
+            entidad_afectada: 'unidad_equipo',
+            id_entidad_afectada: unidad.id_unidad,
+            valor_anterior: {
+              estado: estadoOrigen,
+              ubicacion_fisica: ubicacionOrigen,
+            },
+            valor_nuevo: {
+              estado: nuevoEstado,
+              ubicacion_fisica: unidad.ubicacionFisica ?? null,
+            },
+          });
+
           return {
             success: true,
             estadoActual: unidad.estado,
             diagnostico_registrado: unidad.diagnosticoTecnico ?? 'N/A',
+            ubicacion_fisica: unidad.ubicacionFisica ?? null,
           };
         } catch (err) {
           ultimoError = err instanceof Error ? err : new Error(String(err));
@@ -588,6 +707,341 @@ export class UnitsService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  // CU-72/CU-74: valida la bodega de destino (activa, de la empresa) y el
+  // formato de la ubicación física opcional (≤60) para el resultado "Operativo".
+  private async validarDestinoOperativo(
+    idBodegaDestino: number | undefined,
+    ubicacionFisicaInput: string | undefined,
+    idEmpresaContexto: number,
+  ): Promise<{ bodega: Bodega; ubicacionFisica: string | null }> {
+    // CU-74 Excepción 1: mensaje exacto del caso de uso
+    if (!idBodegaDestino) {
+      throw new BadRequestException(
+        'Debe seleccionar una bodega de destino para continuar.',
+      );
+    }
+    const bodega = await this.dataSource.getRepository(Bodega).findOne({
+      where: { id_bodega: idBodegaDestino, id_empresa: idEmpresaContexto },
+    });
+    if (!bodega || !bodega.activa) {
+      throw new BadRequestException(
+        'La bodega de destino no existe o no está activa en su empresa.',
+      );
+    }
+    const ubicacionFisica = ubicacionFisicaInput?.trim() || null;
+    if (ubicacionFisica && ubicacionFisica.length > 60) {
+      throw new BadRequestException(
+        'La ubicación física no puede superar los 60 caracteres.',
+      );
+    }
+    return { bodega, ubicacionFisica };
+  }
+
+  // CU-74: reacondicionamiento directo de un equipo "En revisión" a "En bodega"
+  // (atajo del resultado "Operativo" de CU-72, con observación propia opcional).
+  async reacondicionarEquipo(
+    idUnidad: number,
+    dto: {
+      id_bodega_destino?: number;
+      ubicacion_fisica?: string;
+      observacion?: string;
+    },
+    actor: any,
+  ) {
+    if (!idUnidad || isNaN(idUnidad)) {
+      throw new BadRequestException('El ID de la unidad es inválido.');
+    }
+
+    const unidad = await this.unitRepository.findOne({
+      where: { id_unidad: idUnidad, id_empresa: actor.id_empresa },
+    });
+    if (!unidad) throw new NotFoundException('El equipo solicitado no existe.');
+
+    // Precondición del CU-74: solo se puede reacondicionar desde 'En revisión'
+    if (unidad.estado !== 'En revisión') {
+      throw new BadRequestException(
+        'Transición de estado no permitida para este equipo.',
+      );
+    }
+
+    const { bodega, ubicacionFisica } = await this.validarDestinoOperativo(
+      dto.id_bodega_destino,
+      dto.ubicacion_fisica,
+      actor.id_empresa,
+    );
+
+    // Observación opcional (≤300); si no se indica, el historial usa un texto por defecto
+    const observacion = dto.observacion?.trim() || undefined;
+    if (observacion && observacion.length > 300) {
+      throw new BadRequestException(
+        'La observación no puede superar los 300 caracteres.',
+      );
+    }
+
+    const estadoOrigen = unidad.estado;
+    const ubicacionOrigen = unidad.ubicacionFisica ?? null;
+
+    let motivoHistorial =
+      observacion ?? 'Reacondicionamiento: equipo operativo enviado a bodega';
+    if (ubicacionFisica) {
+      motivoHistorial += `. Ubicación física: ${ubicacionFisica}`;
+    }
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      unidad.estado = 'En bodega';
+      unidad.id_bodega_actual = bodega.id_bodega;
+      unidad.ubicacionFisica = ubicacionFisica;
+      await queryRunner.manager.save(unidad);
+
+      const fechaChile = new Date(
+        new Date().toLocaleString('en-US', { timeZone: 'America/Santiago' }),
+      );
+      const nuevoHistorial = this.historyRepository.create({
+        id_unidad: unidad.id_unidad,
+        id_usuario: actor.id_usuario,
+        estadoAnterior: estadoOrigen,
+        estadoNuevo: 'En bodega',
+        motivo: motivoHistorial,
+        fechaHora: fechaChile,
+      });
+      await queryRunner.manager.save(nuevoHistorial);
+
+      await queryRunner.commitTransaction();
+    } catch {
+      await queryRunner.rollbackTransaction();
+      throw new BadRequestException(
+        'Error al registrar el reacondicionamiento del equipo. Intente nuevamente.',
+      );
+    } finally {
+      await queryRunner.release();
+    }
+
+    await this.auditoriaService.create({
+      id_usuario: actor.id_usuario,
+      accion: 'CAMBIAR_ESTADO',
+      entidad_afectada: 'unidad_equipo',
+      id_entidad_afectada: unidad.id_unidad,
+      valor_anterior: {
+        estado: estadoOrigen,
+        ubicacion_fisica: ubicacionOrigen,
+      },
+      valor_nuevo: {
+        estado: 'En bodega',
+        ubicacion_fisica: unidad.ubicacionFisica ?? null,
+        id_bodega_actual: unidad.id_bodega_actual,
+      },
+    });
+
+    return {
+      success: true,
+      estadoActual: unidad.estado,
+      id_bodega_actual: unidad.id_bodega_actual,
+      ubicacion_fisica: unidad.ubicacionFisica ?? null,
+      message:
+        'El equipo fue reacondicionado y enviado a bodega correctamente.',
+    };
+  }
+
+  async registrarResultadoRevision(
+    unitId: number,
+    dto: {
+      resultado: 'OPERATIVO' | 'REPARACION_EXTERNA' | 'BAJA';
+      id_bodega_actual?: number;
+      ubicacion_fisica?: string;
+      nombre_receptor?: string;
+      fecha_retorno_estimada?: string;
+      descripcion_falla?: string;
+      motivo?: string;
+      confirmar_garantia?: boolean;
+    },
+    actor: any,
+  ) {
+    const unidad = await this.unitRepository.findOne({
+      where: { id_unidad: unitId, id_empresa: actor.id_empresa },
+      relations: { tipoEquipo: true },
+    });
+    if (!unidad) throw new NotFoundException('El equipo solicitado no existe.');
+
+    // Precondición del CU-72: solo se puede registrar resultado desde 'En revisión'
+    if (unidad.estado !== 'En revisión') {
+      throw new BadRequestException(
+        `Transición de estado no permitida para este equipo. Estado actual: ${unidad.estado}.`,
+      );
+    }
+
+    if (!['OPERATIVO', 'REPARACION_EXTERNA', 'BAJA'].includes(dto.resultado)) {
+      throw new BadRequestException(
+        'Debe seleccionar un resultado de revisión válido.',
+      );
+    }
+
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const garantiaVigente =
+      !!unidad.fechaVencGarantia && new Date(unidad.fechaVencGarantia) >= hoy;
+
+    let nuevoEstado: string;
+    let motivoHistorial: string;
+    let prestamoData: Partial<PrestamoExterno> | null = null;
+
+    if (dto.resultado === 'OPERATIVO') {
+      // CU-74: misma validación de bodega destino + ubicación física que usa
+      // el reacondicionamiento directo, para no duplicar las reglas.
+      const { bodega, ubicacionFisica: ubicacion } =
+        await this.validarDestinoOperativo(
+          dto.id_bodega_actual,
+          dto.ubicacion_fisica,
+          actor.id_empresa,
+        );
+      nuevoEstado = 'En bodega';
+      unidad.id_bodega_actual = bodega.id_bodega;
+      unidad.ubicacionFisica = ubicacion;
+      motivoHistorial = `Resultado de revisión: Operativo. Ubicación física: ${ubicacion ?? 'no registrada'}.`;
+    } else if (dto.resultado === 'REPARACION_EXTERNA') {
+      // (B)
+      const nombreReceptor = dto.nombre_receptor?.trim() ?? '';
+      if (nombreReceptor.length < 3 || nombreReceptor.length > 80) {
+        throw new BadRequestException(
+          'El nombre del receptor debe tener entre 3 y 80 caracteres.',
+        );
+      }
+      if (!dto.fecha_retorno_estimada) {
+        throw new BadRequestException(
+          'La fecha estimada de retorno es obligatoria.',
+        );
+      }
+      const fechaRetorno = new Date(dto.fecha_retorno_estimada);
+      if (isNaN(fechaRetorno.getTime()) || fechaRetorno <= hoy) {
+        throw new BadRequestException(
+          'La fecha estimada de retorno debe ser posterior a la fecha actual.',
+        );
+      }
+      const descripcionFalla = dto.descripcion_falla?.trim() ?? '';
+      if (descripcionFalla.length < 5 || descripcionFalla.length > 300) {
+        throw new BadRequestException(
+          'La descripción de la falla debe tener entre 5 y 300 caracteres.',
+        );
+      }
+      nuevoEstado = 'En préstamo externo';
+      prestamoData = {
+        tipo: 'REPARACION_EXTERNA',
+        id_empresa: actor.id_empresa,
+        id_unidad: unidad.id_unidad,
+        nombreReceptor,
+        fechaRetornoEstimada: fechaRetorno,
+        detalle: descripcionFalla,
+        estado: 'ACTIVO',
+        idUsuarioRegistro: actor.id_usuario,
+      };
+      motivoHistorial = `Resultado de revisión: Requiere reparación externa. Receptor: ${nombreReceptor}. Retorno estimado: ${dto.fecha_retorno_estimada}.`;
+    } else {
+      // (C) BAJA — Excepción 1: garantía vigente exige confirmación explícita
+      const motivo = dto.motivo?.trim() ?? '';
+      if (motivo.length === 0 || motivo.length > 200) {
+        throw new BadRequestException(
+          'Debe ingresar un motivo de baja (máximo 200 caracteres).',
+        );
+      }
+      if (garantiaVigente && dto.confirmar_garantia !== true) {
+        throw new BadRequestException(
+          'El equipo tiene garantía vigente. Confirme que desea continuar con la baja de todas formas.',
+        );
+      }
+      nuevoEstado = 'Dado de baja';
+      motivoHistorial = `Resultado de revisión: Dado de baja. Motivo: ${motivo}.`;
+    }
+
+    const estadoOrigen = unidad.estado;
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      unidad.estado = nuevoEstado;
+      await queryRunner.manager.save(unidad);
+
+      if (prestamoData) {
+        const prestamo = queryRunner.manager.create(
+          PrestamoExterno,
+          prestamoData,
+        );
+        await queryRunner.manager.save(prestamo);
+      }
+
+      const fechaChile = new Date(
+        new Date().toLocaleString('en-US', { timeZone: 'America/Santiago' }),
+      );
+      const nuevoHistorial = this.historyRepository.create({
+        id_unidad: unidad.id_unidad,
+        id_usuario: actor.id_usuario,
+        estadoAnterior: estadoOrigen,
+        estadoNuevo: nuevoEstado,
+        motivo: motivoHistorial,
+        fechaHora: fechaChile,
+      });
+      await queryRunner.manager.save(nuevoHistorial);
+
+      await queryRunner.commitTransaction();
+    } catch {
+      await queryRunner.rollbackTransaction();
+      throw new BadRequestException(
+        'Error al registrar el resultado de la revisión. Intente nuevamente.',
+      );
+    } finally {
+      await queryRunner.release();
+    }
+
+    await this.auditoriaService.create({
+      id_usuario: actor.id_usuario,
+      accion: 'CAMBIAR_ESTADO',
+      entidad_afectada: 'unidad_equipo',
+      id_entidad_afectada: unidad.id_unidad,
+      valor_anterior: { estado: estadoOrigen },
+      valor_nuevo: { estado: nuevoEstado, resultado: dto.resultado },
+    });
+
+    return {
+      success: true,
+      estadoActual: unidad.estado,
+      message: 'El resultado de la revisión fue registrado correctamente.',
+    };
+  }
+
+  // CU-59: validación en vivo del NS para el formulario de salida de bodega.
+  // No lanza excepción: devuelve existe/estado/disponible para que el front
+  // marque el NS inválido y deshabilite Confirmar.
+  async verificarSerie(
+    numeroSerie: string,
+    idEmpresaContexto: number,
+    idBodega?: number,
+  ) {
+    const serie = (numeroSerie ?? '').trim();
+    const unidad =
+      serie === ''
+        ? null
+        : await this.unitRepository.findOne({
+            where: { serialNumber: serie, id_empresa: idEmpresaContexto },
+          });
+
+    if (!unidad) {
+      return { existe: false, disponible: false };
+    }
+
+    const disponible =
+      unidad.estado === 'En bodega' &&
+      (idBodega === undefined || unidad.id_bodega_actual === idBodega);
+
+    return {
+      existe: true,
+      numero_serie: unidad.serialNumber,
+      estado: unidad.estado,
+      id_bodega_actual: unidad.id_bodega_actual ?? null,
+      disponible,
+    };
   }
 
   async verFichaDetalle(idUnidad: number, idEmpresaContexto: number) {

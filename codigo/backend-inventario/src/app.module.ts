@@ -16,6 +16,8 @@ import { TransferenciasModule } from './transferencias/transferencias.module';
 import { CompaniesModule } from './companies/companies.module';
 import { ProveedoresModule } from './proveedores/proveedores.module';
 import { OrdenesIngresoModule } from './ordenes-ingreso/ordenes-ingreso.module';
+import { IntegracionesModule } from './integraciones/integraciones.module';
+import { SalidasModule } from './salidas/salidas.module';
 
 @Module({
   imports: [
@@ -48,6 +50,8 @@ import { OrdenesIngresoModule } from './ordenes-ingreso/ordenes-ingreso.module';
     CompaniesModule,
     ProveedoresModule,
     OrdenesIngresoModule,
+    IntegracionesModule,
+    SalidasModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],

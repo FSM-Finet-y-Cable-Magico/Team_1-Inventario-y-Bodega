@@ -1,5 +1,5 @@
 import { api } from './client';
-import type { LoginDto, LoginResponse, Usuario } from '$lib/types';
+import type { LoginDto, LoginResponse, Usuario, EquipoEnRevision, VerificacionSerie, ItemSalida, SalidaResumen, InventarioTecnico } from '$lib/types';
 
 export async function login(dto: LoginDto): Promise<LoginResponse> {
 	return api.post<LoginResponse>('/auth/login', dto);
@@ -101,6 +101,10 @@ export function getUnits(params?: { estado?: string; buscar?: string }) {
 	return api.get<any[]>(`/unidades${query ? '?' + query : ''}`);
 }
 
+export function getUnidadesEnRevision() {
+	return api.get<EquipoEnRevision[]>('/unidades/en-revision');
+}
+
 export function getUnit(id: number) {
 	return api.get<any>(`/unidades/${id}/ficha`);
 }
@@ -126,6 +130,16 @@ export function updateUnit(id: number, data: Record<string, unknown>) {
 export function changeUnitState(id: number, data: Record<string, unknown>) {
 	return api.patch<any>(`/unidades/${id}/cambiar-estado`, data);
 }
+
+export function registrarResultadoRevision(id: number, data: Record<string, unknown>) {
+	return api.post<any>(`/unidades/${id}/resultado-revision`, data);
+}
+
+// CU-74: reacondicionar equipo "En revisión" directo a "En bodega" (Operativo)
+export function reacondicionarUnidad(id: number, data: Record<string, unknown>) {
+	return api.post<any>(`/unidades/${id}/reacondicionar`, data);
+}
+
 
 export function getUnitHistory(serialNumber: string) {
 	return api.get<any[]>(`/unidades/${serialNumber}/historial`);
@@ -277,4 +291,26 @@ export function registrarRecepcionOrden(
 		fecha_recepcion: fechaRecepcion,
 		items
 	});
+}
+
+// CU-59: validación en vivo del NS para la salida de bodega (la validación de
+// verdad la re-ejecuta el backend en la transacción de la salida)
+export function verificarSerie(numeroSerie: string, idBodega?: number): Promise<VerificacionSerie> {
+	const qs = idBodega !== undefined ? `?id_bodega=${idBodega}` : '';
+	return api.get<VerificacionSerie>(`/unidades/serie/${encodeURIComponent(numeroSerie)}${qs}`);
+}
+
+// CU-57/CU-60: registrar salida de bodega a técnico (transacción atómica)
+export function crearSalida(data: { id_tecnico: number; id_bodega_origen: number; items: ItemSalida[] }) {
+	return api.post<{ success: boolean; id_salida: number; message: string }>('/salidas', data);
+}
+
+export function listarSalidas(): Promise<SalidaResumen[]> {
+	return api.get<SalidaResumen[]>('/salidas');
+}
+
+// CU-58: inventario personal del técnico (NS asignados + saldos de consumibles)
+export function getInventarioTecnico(id: number, empresa?: number): Promise<InventarioTecnico> {
+	const qs = empresa !== undefined ? `?empresa=${empresa}` : '';
+	return api.get<InventarioTecnico>(`/tecnicos/${id}/inventario${qs}`);
 }

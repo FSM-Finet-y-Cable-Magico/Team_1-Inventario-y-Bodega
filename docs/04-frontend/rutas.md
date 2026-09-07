@@ -74,6 +74,8 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
   `createUnit()`, `ingresarConsumible()`, `updateConsumible()`.
 - El tipo seleccionado decide el formulario (serializado vs. consumible). Consumibles marcados
   `es_consumible`. TECNICO_TERRENO es solo lectura.
+- Botón "Equipos en revisión" (visible para `SUPERUSUARIO`/`ADMIN`/`ADMIN_BODEGA`) navega a
+  `/unidades/en-revision` (CU-77).
 
 ### `/unidades/[id]`
 - **CUs:** CU-33 (ficha), CU-34 (editar datos), CU-35 (cambio de estado), CU-36 (historial + observaciones),
@@ -85,6 +87,28 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
 - **CU-47:** en el modal de cambio de estado, si el destino es `'En bodega'` aparece el campo
   opcional "Ubicación física en bodega" (≤60); si se deja vacío se muestra el aviso de trazabilidad
   sin bloquear el envío. La ficha muestra la ubicación actual cuando la unidad está en bodega.
+
+### `/unidades/en-revision`
+- **CU:** CU-77 (listado de equipos en revisión, solo consulta).
+- **Endpoints:** `getUnidadesEnRevision()`.
+- Tabla ordenable por cualquier columna (clic en cabecera, `$state` de columna+dirección).
+  Filas con `dias_en_revision > 30` se resaltan con `bg-amber-50`. Sin ítem propio en el
+  Sidebar; se llega desde el botón "Equipos en revisión" de `/unidades`.
+- `EmptyState` con el mensaje exacto de la Excepción 1: "No hay equipos en revisión actualmente."
+
+### `/salidas`
+- **CUs:** CU-57 (salida de equipos/consumibles a técnico), CU-58 (inventario personal del técnico,
+  sección de consulta), CU-59 (validación en vivo de NS), CU-60 (consumibles con 2 decimales),
+  CU-62 (stock insuficiente como banner).
+- **Endpoints:** `getUsers({rol:'TECNICO_TERRENO'})`, `getWarehouses({activa:true})`,
+  `getCatalog({activo:true})`, `getUnits({estado:'En bodega'})`, `getWarehouseStock(id)`,
+  `verificarSerie(ns, id_bodega)`, `crearSalida()`, `listarSalidas()`, `getInventarioTecnico(id)`.
+- Los NS se eligen de un **datalist** con las unidades disponibles de la bodega elegida
+  (escribir para filtrar); igual pasa por la validación en vivo (CU-59). Junto al consumible
+  se muestra el saldo en vivo de la bodega (CU-62, pre-validación). Confirmar deshabilitado
+  mientras haya NS inválidos o sin ítems. Ítem "Salidas" agregado al
+  Sidebar (roles `SUPERUSUARIO`, `ADMIN`, `ADMIN_BODEGA`, `TECNICO_TERRENO` — el técnico solo
+  consulta su inventario; el backend lo valida igual).
 
 ### `/bodegas`
 - **CUs:** CU-41 (crear con responsable), CU-42 (desactivar), CU-44 (listado con stock).

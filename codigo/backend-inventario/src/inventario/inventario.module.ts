@@ -7,11 +7,17 @@ import { UnitsService } from './units.service';
 import { TipoEquipo } from './entities/tipo-equipo.entity';
 import { UnidadEquipo } from './entities/unidad-equipo.entity';
 import { HistorialEstado } from './entities/historial-estado.entity';
+import { PrestamoExterno } from './entities/prestamo-externo.entity';
 import { AuditoriaModule } from 'src/auditoria/auditoria.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([TipoEquipo, UnidadEquipo, HistorialEstado]),
+    TypeOrmModule.forFeature([
+      TipoEquipo,
+      UnidadEquipo,
+      HistorialEstado,
+      PrestamoExterno,
+    ]),
     AuditoriaModule,
   ],
   controllers: [CatalogController, UnitsController],

@@ -117,12 +117,12 @@ no esté reflejado aquí.
 
 | CU | Nombre | Estado | Notas |
 |----|--------|--------|-------|
-| CU-57 | Registrando salida de equipos de bodega a técnico | [ ] Pendiente | |
-| CU-58 | Manteniendo inventario personal del técnico | [ ] Pendiente | |
-| CU-59 | Validando número de serie en salida de bodega | [ ] Pendiente | |
-| CU-60 | Registrando salida de consumibles de bodega a técnico | [ ] Pendiente | |
+| CU-57 | Registrando salida de equipos de bodega a técnico | [~] En progreso | Implementado, pendiente de merge (PR #15, rama `feat/CU-47-ubicacion-fisica`) |
+| CU-58 | Manteniendo inventario personal del técnico | [~] En progreso | Implementado, pendiente de merge (PR #15, rama `feat/CU-47-ubicacion-fisica`) |
+| CU-59 | Validando número de serie en salida de bodega | [~] En progreso | Implementado, pendiente de merge (PR #15, rama `feat/CU-47-ubicacion-fisica`) |
+| CU-60 | Registrando salida de consumibles de bodega a técnico | [~] En progreso | Implementado, pendiente de merge (PR #15, rama `feat/CU-47-ubicacion-fisica`) |
 | CU-61 | Consultando vista móvil de trabajos e inventario del técnico | [ ] Pendiente | |
-| CU-62 | Validando stock disponible en bodega para consumibles | [ ] Pendiente | |
+| CU-62 | Validando stock disponible en bodega para consumibles | [~] En progreso | Implementado, pendiente de merge (PR #15, rama `feat/CU-47-ubicacion-fisica`) |
 
 ### Cierre de trabajo e instalación en cliente
 
@@ -142,17 +142,17 @@ no esté reflejado aquí.
 | CU | Nombre | Estado | Notas |
 |----|--------|--------|-------|
 | CU-71 | Registrando devolución de equipo desde cliente | [ ] Pendiente | |
-| CU-72 | Registrando resultado de revisión de equipo | [ ] Pendiente | |
+| CU-72 | Registrando resultado de revisión de equipo | [x] Implementado | |
 | CU-73 | Mostrando información de equipo en devolución | [ ] Pendiente | |
 
 ### Reacondicionamiento y equipos defectuosos
 
 | CU | Nombre | Estado | Notas |
 |----|--------|--------|-------|
-| CU-74 | Reacondicionando equipo operativo desde revisión a bodega | [ ] Pendiente | |
+| CU-74 | Reacondicionando equipo operativo desde revisión a bodega | [x] Implementado | |
 | CU-75 | Enviando equipo a reparación externa | [ ] Pendiente | |
 | CU-76 | Reingresando equipo desde reparación externa | [ ] Pendiente | |
-| CU-77 | Consultando listado de equipos en revisión | [ ] Pendiente | |
+| CU-77 | Consultando listado de equipos en revisión | [x] Implementado | |
 
 ### Baja definitiva de equipos
 

@@ -69,7 +69,8 @@ FK → `unidad_equipo` con `ON DELETE CASCADE`.
 `id_movimiento` PK · `id_tipo_equipo` · `id_unidad` · `id_empresa_origen` · `id_empresa_destino` ·
 `id_bodega_origen` · `id_bodega_destino` · `id_usuario` · `tipo_movimiento` varchar(30) ·
 `cantidad` numeric(10,2) default 1 · `fecha` · `referencia_id` (→ `transferencia_equipo.id_transferencia`)
-Valores de `tipo_movimiento`: `TRANSFERENCIA_PENDIENTE`, `TRANSFERENCIA_APROBADA`, `TRANSFERENCIA_RECHAZADA`.
+Valores de `tipo_movimiento`: `TRANSFERENCIA_PENDIENTE`, `TRANSFERENCIA_APROBADA`, `TRANSFERENCIA_RECHAZADA`,
+`SALIDA_A_TECNICO` (CU-57/60, `referencia_id` → `salida_bodega.id_salida`).
 
 ### `stock_consumible` — stock por cantidad de consumibles
 `id_stock` PK · `id_tipo_equipo` NOT NULL · `id_bodega` NOT NULL · `cantidad_disponible` numeric(10,2) default 0 ·
@@ -98,6 +99,20 @@ UNIQUE en `(id_proveedor, id_tipo_equipo)`.
 `id_detalle` PK · `id_orden` FK → `orden_ingreso` (ON DELETE CASCADE) ·
 `id_tipo_equipo` FK → `tipo_equipo` · `cantidad_esperada` INT > 0 ·
 `garantia_dias` INT 0–3650 · `cantidad_recibida` INT DEFAULT 0
+
+### `salida_bodega` + `salida_detalle` — salidas de bodega a técnico (CU-57/59/60/62)
+`salida_bodega`: `id_salida` PK · `id_tecnico` · `id_bodega_origen` · `fecha_hora` timestamptz (auto) ·
+`id_empresa` · `id_usuario_registro`.
+`salida_detalle`: `id_detalle` PK · `id_salida` FK CASCADE · **o bien** `id_unidad` (equipo individualizable)
+**o bien** `id_tipo_equipo` + `cantidad` numeric(10,2) (consumible).
+
+### `inventario_personal_tecnico` — inventario personal del técnico (CU-58)
+`id_inventario` PK · `id_tecnico` · `id_tipo_equipo` · `cantidad` numeric(10,2) · `fecha_actualizacion`.
+**UNIQUE(id_tecnico, id_tipo_equipo)**. Solo consumibles (los individualizables se leen de
+`unidad_equipo WHERE estado='Asignado a técnico' AND id_tecnico_asignado=:id`).
+
+> `unidad_equipo` suma la columna `id_tecnico_asignado` (integer, nullable) desde CU-57.
+
 
 ---
 

@@ -75,6 +75,15 @@
 | 54 | Registrar recepción total o parcial de orden de ingreso (CU-54) | `ordenes-ingreso` | `/ordenes-ingreso/[id]` |
 | 55 | Ingresar números de serie en recepción de equipos (CU-55) | `ordenes-ingreso`, `inventario` | `/ordenes-ingreso/[id]` |
 | 56 | Registrar fecha de adquisición real en recepción (CU-56) | `ordenes-ingreso`, `inventario` | `/ordenes-ingreso/[id]`, `/unidades/[id]` |
+| 57 | Salida de bodega a técnico (mixta, atómica) | `salidas` | `/salidas` |
+| 58 | Inventario personal del técnico (consulta) | `salidas` | `/salidas` (sección) |
+| 59 | Validación de NS en salida (en vivo + transacción) | `salidas`, `inventario/units` | `/salidas` |
+| 60 | Salida de consumibles a técnico | `salidas` | `/salidas` |
+| 62 | Validación de stock con bloqueo de fila | `salidas` | `/salidas` (banner) |
+| 72 | Registrando resultado de revisión (Operativo/Reparación externa/Baja) | `inventario/units` | `/unidades/[id]` |
+| 74 | Reacondicionando equipo operativo desde revisión a bodega | `inventario/units` | `/unidades/[id]` |
+| 77 | Consultando listado de equipos en revisión | `inventario/units` | `/unidades/en-revision` |
+
 
 ## 3. Diagramas disponibles (referencia para CUs pendientes)
 

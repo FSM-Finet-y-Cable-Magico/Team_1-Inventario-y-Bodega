@@ -1,0 +1,29 @@
+@startuml CU62-exc-stock-insuficiente
+title CU-62 — Excepción 1: stock insuficiente (no permite continuar)
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 30 } actor { Margin 12 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+participant "Sistema" as sys #lightgrey
+participant "C_SalidasService" as svc
+participant "C_TypeORM (transacción)" as orm
+database "postgres" as db
+participant "Vista" as view
+
+sys -> svc : salida con consumible x100
+activate svc
+svc -> orm : SELECT stock_consumible FOR UPDATE\nWHERE (id_bodega, id_tipo_equipo)
+db --> orm : cantidad_disponible = 74.5 | sin filas → disponible = 0
+svc -> svc : disponible < solicitado → BLOQUEA la operación
+svc --> view : 400 BadRequestException\n'Stock insuficiente de [Fibra drop QA] en [Bodega Central QA].\nDisponible: 74.5 Metro.'
+svc -> orm : ROLLBACK (nada queda aplicado)
+deactivate svc
+view --> user : Banner con los valores reales interpolados;\nel stock resultante nunca queda negativo
+@enduml
