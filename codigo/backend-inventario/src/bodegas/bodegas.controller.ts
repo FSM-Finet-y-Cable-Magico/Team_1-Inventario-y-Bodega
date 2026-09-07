@@ -30,8 +30,12 @@ export class BodegasController {
     // CU-17/CU-41: la bodega pertenece a la empresa del actor;
     // solo un Superusuario puede crearla en otra empresa
     const isSuperuser = req.user.roles?.includes('SUPERUSUARIO');
-    const idEmpresa = isSuperuser && dto.id_empresa ? dto.id_empresa : req.user.id_empresa;
-    return this.bodegasService.create({ ...dto, id_empresa: idEmpresa }, actorId);
+    const idEmpresa =
+      isSuperuser && dto.id_empresa ? dto.id_empresa : req.user.id_empresa;
+    return this.bodegasService.create(
+      { ...dto, id_empresa: idEmpresa },
+      actorId,
+    );
   }
 
   @Patch(':id')
@@ -40,7 +44,13 @@ export class BodegasController {
     const actorId = req.user.id_usuario ?? req.user.sub;
     // CU-18: solo se editan bodegas de la propia empresa
     const isSuperuser = req.user.roles?.includes('SUPERUSUARIO');
-    return this.bodegasService.update(+id, dto, actorId, req.user.id_empresa, isSuperuser);
+    return this.bodegasService.update(
+      +id,
+      dto,
+      actorId,
+      req.user.id_empresa,
+      isSuperuser,
+    );
   }
 
   @Delete(':id/desactivar')
@@ -49,7 +59,12 @@ export class BodegasController {
     const actorId = req.user.id_usuario ?? req.user.sub;
     // CU-19: solo se desactivan bodegas de la propia empresa
     const isSuperuser = req.user.roles?.includes('SUPERUSUARIO');
-    return this.bodegasService.deactivate(+id, actorId, req.user.id_empresa, isSuperuser);
+    return this.bodegasService.deactivate(
+      +id,
+      actorId,
+      req.user.id_empresa,
+      isSuperuser,
+    );
   }
 
   @Get()
@@ -86,7 +101,12 @@ export class BodegasController {
     const userEmpresaId = req.user.id_empresa ?? 1;
     const isSuperuser = req.user.roles?.includes('SUPERUSUARIO');
     const actorId = req.user.id_usuario ?? req.user.sub;
-    return this.bodegasService.findOne(+id, userEmpresaId, isSuperuser, actorId);
+    return this.bodegasService.findOne(
+      +id,
+      userEmpresaId,
+      isSuperuser,
+      actorId,
+    );
   }
 
   @Get(':id/stock')
@@ -95,7 +115,12 @@ export class BodegasController {
     const userEmpresaId = req.user.id_empresa ?? 1;
     const isSuperuser = req.user.roles?.includes('SUPERUSUARIO');
     const actorId = req.user.id_usuario ?? req.user.sub;
-    return this.bodegasService.getStock(+id, userEmpresaId, isSuperuser, actorId);
+    return this.bodegasService.getStock(
+      +id,
+      userEmpresaId,
+      isSuperuser,
+      actorId,
+    );
   }
 
   @Post(':id/umbral')
@@ -108,6 +133,12 @@ export class BodegasController {
     const actorId = req.user.id_usuario ?? req.user.sub;
     // CU-18: el umbral solo se configura en bodegas de la propia empresa
     const isSuperuser = req.user.roles?.includes('SUPERUSUARIO');
-    return this.bodegasService.configurarUmbral(+id, dto, actorId, req.user.id_empresa, isSuperuser);
+    return this.bodegasService.configurarUmbral(
+      +id,
+      dto,
+      actorId,
+      req.user.id_empresa,
+      isSuperuser,
+    );
   }
 }

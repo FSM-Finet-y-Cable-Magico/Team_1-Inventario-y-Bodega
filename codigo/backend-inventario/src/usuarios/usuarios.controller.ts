@@ -41,7 +41,11 @@ export class UsuariosController {
     if (activo !== undefined) filtros.activo = activo === 'true';
     if (buscar) filtros.buscar = buscar;
     if (rol) filtros.rol = rol;
-    return this.usuariosService.findAll(filtros, req.user.id_empresa, req.user.roles ?? []);
+    return this.usuariosService.findAll(
+      filtros,
+      req.user.id_empresa,
+      req.user.roles ?? [],
+    );
   }
 
   @Get(':id')
@@ -59,12 +63,21 @@ export class UsuariosController {
   ) {
     // JwtStrategy expone id_usuario (no sub); con sub el actor llegaba
     // undefined y se saltaba la validación de cuenta propia y la auditoría
-    return this.usuariosService.update(+id, updateUsuarioDto, req.user.id_usuario, req.user.roles ?? []);
+    return this.usuariosService.update(
+      +id,
+      updateUsuarioDto,
+      req.user.id_usuario,
+      req.user.roles ?? [],
+    );
   }
 
   @Delete(':id')
   @Roles('ADMIN', 'SUPERUSUARIO')
   remove(@Param('id') id: string, @Req() req) {
-    return this.usuariosService.remove(+id, req.user.id_usuario, req.user.roles ?? []);
+    return this.usuariosService.remove(
+      +id,
+      req.user.id_usuario,
+      req.user.roles ?? [],
+    );
   }
 }

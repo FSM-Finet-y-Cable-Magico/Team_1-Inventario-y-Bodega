@@ -12,7 +12,14 @@ import { AuditoriaModule } from '../auditoria/auditoria.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Bodega, StockConsumible, UnidadEquipo, TipoEquipo, Auditoria, Usuario]),
+    TypeOrmModule.forFeature([
+      Bodega,
+      StockConsumible,
+      UnidadEquipo,
+      TipoEquipo,
+      Auditoria,
+      Usuario,
+    ]),
     AuditoriaModule,
   ],
   controllers: [BodegasController],

@@ -230,6 +230,69 @@ export function getAuditLog(filters?: Record<string, string | number | undefined
 	return api.get<any>(`/auditoria${query ? '?' + query : ''}`);
 }
 
+// CU-49: proveedores
+export function getProveedores(params?: { buscar?: string; activa?: boolean }) {
+	const qs = new URLSearchParams();
+	if (params?.buscar) qs.set('buscar', params.buscar);
+	if (params?.activa !== undefined) qs.set('activa', String(params.activa));
+	const query = qs.toString();
+	return api.get<any[]>(`/proveedores${query ? '?' + query : ''}`);
+}
+
+export function createProveedor(data: Record<string, unknown>) {
+	return api.post<any>('/proveedores', data);
+}
+
+// CU-50: editar proveedor
+export function editProveedor(id: number, data: Record<string, unknown>) {
+	return api.patch<any>(`/proveedores/${id}`, data);
+}
+
+// CU-52/CU-53: órdenes de ingreso desde proveedor
+export function getOrdenesIngreso(params?: {
+	buscar?: string;
+	estado?: string;
+	proveedor?: string;
+	id_proveedor?: number;
+	fecha_desde?: string;
+	fecha_hasta?: string;
+	id_empresa?: number;
+}) {
+	const qs = new URLSearchParams();
+	if (params?.buscar) qs.set('buscar', params.buscar);
+	if (params?.estado) qs.set('estado', params.estado);
+	if (params?.proveedor) qs.set('proveedor', params.proveedor);
+	if (params?.id_proveedor) qs.set('id_proveedor', String(params.id_proveedor));
+	if (params?.fecha_desde) qs.set('fecha_desde', params.fecha_desde);
+	if (params?.fecha_hasta) qs.set('fecha_hasta', params.fecha_hasta);
+	if (params?.id_empresa) qs.set('id_empresa', String(params.id_empresa));
+	const query = qs.toString();
+	return api.get<any[]>(`/ordenes-ingreso${query ? '?' + query : ''}`);
+}
+
+// CU-53: detalle de una orden con sus ítems
+export function getOrdenIngreso(id: number) {
+	return api.get<any>(`/ordenes-ingreso/${id}`);
+}
+
+export function createOrdenIngreso(data: Record<string, unknown>) {
+	return api.post<any>('/ordenes-ingreso', data);
+}
+
+// CU-54/CU-55/CU-56: registrar la recepción total o parcial de una orden de ingreso.
+// `numeros_serie` solo viaja en los ítems individualizables (CU-55) y `fecha_recepcion`
+// es la fecha de recepción efectiva, obligatoria (CU-56).
+export function registrarRecepcionOrden(
+	id: number,
+	fechaRecepcion: string,
+	items: { id_detalle: number; cantidad_recibida: number; numeros_serie?: string[] }[]
+) {
+	return api.post<any>(`/ordenes-ingreso/${id}/recepcion`, {
+		fecha_recepcion: fechaRecepcion,
+		items
+	});
+}
+
 // CU-59: validación en vivo del NS para la salida de bodega (la validación de
 // verdad la re-ejecuta el backend en la transacción de la salida)
 export function verificarSerie(numeroSerie: string, idBodega?: number): Promise<VerificacionSerie> {

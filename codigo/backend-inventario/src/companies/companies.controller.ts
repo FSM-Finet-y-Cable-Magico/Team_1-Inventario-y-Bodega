@@ -7,25 +7,25 @@ import { Roles } from '../auth/decorators/roles.decorator';
 @Controller('empresas')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class CompaniesController {
-    constructor(private readonly companiesService: CompaniesService) {}
+  constructor(private readonly companiesService: CompaniesService) {}
 
-    // CU-06: listado de empresas (selector en gestión de usuarios)
-    @Get()
-    @Roles('ADMIN', 'SUPERUSUARIO')
-    findAll() {
-        return this.companiesService.findAll();
-    }
+  // CU-06: listado de empresas (selector en gestión de usuarios)
+  @Get()
+  @Roles('ADMIN', 'SUPERUSUARIO')
+  findAll() {
+    return this.companiesService.findAll();
+  }
 
-    // CU-15: consolidado de ambas empresas, exclusivo SUPERUSUARIO
-    @Get('dashboard')
-    @Roles('SUPERUSUARIO')
-    getDashboard() {
-        return this.companiesService.getDashboard();
-    }
+  // CU-15: consolidado de ambas empresas, exclusivo SUPERUSUARIO
+  @Get('dashboard')
+  @Roles('SUPERUSUARIO')
+  getDashboard() {
+    return this.companiesService.getDashboard();
+  }
 
-    @Get('mi-dashboard')
-    @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
-    getMiDashboard(@Req() req) {
-        return this.companiesService.getMiDashboard(req.user);
-    }
+  @Get('mi-dashboard')
+  @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
+  getMiDashboard(@Req() req) {
+    return this.companiesService.getMiDashboard(req.user);
+  }
 }

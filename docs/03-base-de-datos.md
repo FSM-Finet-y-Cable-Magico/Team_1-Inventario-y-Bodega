@@ -77,6 +77,29 @@ Valores de `tipo_movimiento`: `TRANSFERENCIA_PENDIENTE`, `TRANSFERENCIA_APROBADA
 `umbral_minimo` numeric(10,2)
 FKs → `bodega`, `tipo_equipo`. Fila única por `(id_bodega, id_tipo_equipo)`.
 
+### `proveedor` — proveedores (CU-49)
+`id_proveedor` PK · `nombre_comercial` VARCHAR(100) NOT NULL · `rut` VARCHAR(12) UNIQUE NOT NULL ·
+`nombre_contacto` VARCHAR(80) · `telefono` VARCHAR(15) · `email` VARCHAR(150) ·
+`activa` BOOLEAN DEFAULT TRUE · `fecha_creacion` TIMESTAMPTZ
+> Sin `id_empresa`: el proveedor es global (compartido entre ambas empresas).
+
+### `proveedor_tipo_equipo` — relación N:M proveedor ↔ tipo_equipo (CU-49)
+`id` PK · `id_proveedor` FK → `proveedor` (ON DELETE CASCADE) · `id_tipo_equipo` FK → `tipo_equipo` (ON DELETE CASCADE)
+UNIQUE en `(id_proveedor, id_tipo_equipo)`.
+
+### `orden_ingreso` — órdenes de ingreso desde proveedor (CU-52)
+`id_orden` PK · `correlativo` VARCHAR(10) UNIQUE NOT NULL (OI-%04d) ·
+`id_proveedor` FK → `proveedor` · `numero_documento` VARCHAR(30) NOT NULL ·
+`fecha_documento` DATE NOT NULL · `id_empresa_destino` INTEGER NOT NULL ·
+`id_bodega_destino` FK → `bodega` · `estado` VARCHAR(30) DEFAULT 'Pendiente de recepción'
+(valores: `Pendiente de recepción` | `Recepción parcial` | `Completada`) ·
+`id_usuario_registro` INTEGER NOT NULL · `fecha_creacion` TIMESTAMPTZ
+
+### `orden_ingreso_detalle` — ítems de una orden de ingreso (CU-52)
+`id_detalle` PK · `id_orden` FK → `orden_ingreso` (ON DELETE CASCADE) ·
+`id_tipo_equipo` FK → `tipo_equipo` · `cantidad_esperada` INT > 0 ·
+`garantia_dias` INT 0–3650 · `cantidad_recibida` INT DEFAULT 0
+
 ### `salida_bodega` + `salida_detalle` — salidas de bodega a técnico (CU-57/59/60/62)
 `salida_bodega`: `id_salida` PK · `id_tecnico` · `id_bodega_origen` · `fecha_hora` timestamptz (auto) ·
 `id_empresa` · `id_usuario_registro`.
@@ -89,6 +112,7 @@ FKs → `bodega`, `tipo_equipo`. Fila única por `(id_bodega, id_tipo_equipo)`.
 `unidad_equipo WHERE estado='Asignado a técnico' AND id_tecnico_asignado=:id`).
 
 > `unidad_equipo` suma la columna `id_tecnico_asignado` (integer, nullable) desde CU-57.
+
 
 ---
 

@@ -12,6 +12,7 @@ Todas en `codigo/frontend/src/routes/`. Sin loaders SSR; carga client-side con `
 | Unidades | `/unidades` | todos |
 | Bodegas | `/bodegas` | SUPERUSUARIO, ADMIN, ADMIN_BODEGA |
 | Transferencias | `/transferencias` | SUPERUSUARIO, ADMIN |
+| Órdenes de ingreso | `/ordenes-ingreso` | SUPERUSUARIO, ADMIN, ADMIN_BODEGA |
 | Auditoría | `/auditoria` | SUPERUSUARIO, ADMIN |
 
 > La protección real está en el backend. El menú solo oculta ítems por rol.
@@ -127,6 +128,62 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
   `rejectTransfer()`.
 - Aprobar/rechazar: botones solo para `SUPERUSUARIO`. Empresa origen = empresa del usuario (inmutable).
 - Estados backend `TRANSFERENCIA_PENDIENTE | _APROBADA | _RECHAZADA` → labels Pendiente/Aprobada/Rechazada.
+
+### `/ordenes-ingreso`
+- **CUs:** CU-52 (registrar orden de ingreso desde proveedor), CU-53 (consultar listado con filtros).
+- **Endpoints:** `getOrdenesIngreso()`, `createOrdenIngreso()`, `getProveedores()`, `getCatalog()`,
+  `getWarehouses()`, `getWarehousesByEmpresa()`, `getEmpresas()`.
+- **CU-53:** columnas correlativo, proveedor, N.º documento, fecha del documento (**DD/MM/YYYY**),
+  empresa destinataria, bodega de destino, estado y total de ítems. Filtros con `$effect` de
+  recarga: buscador (correlativo / N.º documento), nombre del proveedor, estado, rango de fechas
+  y empresa destinataria — este último **solo para el Superusuario**, porque al resto el backend
+  ya le acota el listado a su empresa. Al hacer clic en una fila se navega a la ficha de detalle.
+- **CU-53 Excepción 1:** si los filtros no arrojan coincidencias, `EmptyState` con el mensaje
+  exacto `No se encontraron órdenes con los filtros seleccionados.` (sin filtros aplicados el
+  mensaje es el genérico de listado vacío, que no es la excepción del CU).
+- **CU-52:** el modal "Nueva orden de ingreso" arma la cabecera (proveedor, N.º documento
+  alfanumérico ≤30, fecha no futura vía `max` del `input[type=date]`, bodega activa) más un
+  sub-formulario dinámico de ítems (agregar/quitar filas: tipo de equipo + cantidad esperada +
+  garantía en días, precargada con la `garantiaDias` del tipo elegido). Tras crear muestra un
+  banner con el correlativo asignado (`OI-XXXX`).
+- La **empresa destinataria** solo la elige el `SUPERUSUARIO`; para el resto de roles se
+  preselecciona la propia y no se envía en el payload (la fija el backend), igual que en CU-41.
+- **CU-52 Excepción 1:** validación en cliente antes de enviar (proveedor, documento, fecha,
+  bodega, ≥1 ítem y cada ítem completo) que indica el error específico y no envía la petición;
+  el `ValidationPipe` del backend la repite como red de seguridad.
+
+### `/ordenes-ingreso/[id]`
+- **CUs:** CU-53 (ficha de detalle de una orden de ingreso), CU-54 (registrar recepción),
+  CU-55 (números de serie en la recepción), CU-56 (fecha de recepción efectiva).
+- **Endpoints:** `getOrdenIngreso(id)`, `registrarRecepcionOrden(id, items)`.
+- Cabecera con correlativo, badge de estado, proveedor, N.º documento, fecha (DD/MM/YYYY),
+  empresa destinataria, bodega de destino y total de ítems. Tabla de ítems con cantidad
+  esperada, recibida, pendiente (esperada − recibida) y garantía, más una fila de totales.
+- Si la orden no existe o es de otra empresa, el backend responde el mismo 404 y la página
+  muestra `Orden de ingreso no encontrada`.
+- **CU-54:** el botón "Registrar recepción" abre un modal con un input por ítem (`0..pendiente`),
+  acotado a lo que falta y deshabilitado en los ítems ya completos. Tras guardar, la ficha se
+  actualiza en el sitio con las cantidades y el estado nuevos, y muestra un banner con el
+  estado resultante. El botón queda **deshabilitado** cuando la orden está `Completada`.
+- **CU-54 Excepción 1:** el formulario del modal lleva `novalidate` a propósito. Con la
+  validación nativa activa, el navegador bloquea el submit por el `max` del input y muestra su
+  propio tooltip, tapando el mensaje exacto del CU
+  (`La cantidad no puede superar la cantidad pendiente del ítem.`). El `max` se conserva para
+  acotar las flechas del spinner.
+- **CU-55:** dentro del modal, los ítems con `requiere_serie_individual` muestran una sección de
+  números de serie: input + botón "Agregar", validación en vivo del formato con la misma regex
+  que el backend, listado de los NS ya ingresados con botón para quitarlos, y contador
+  `N / esperados ingresados`. Los ítems consumibles no muestran la sección.
+- **CU-55 Excepción 3:** "Guardar recepción" queda **deshabilitado** mientras algún ítem
+  serializado tenga menos NS que su cantidad recibida; `guardarRecepcion` lo revalida antes de
+  enviar por si el estado quedara inconsistente.
+- **CU-56:** campo "Fecha de recepción efectiva" (`input[type=date]`, obligatorio, `max` = hoy),
+  precargado con la fecha del día. Si difiere de la fecha del documento de la orden, se muestra
+  un aviso ámbar recordando que ambas quedan registradas.
+- **CU-56 Excepciones 1 y 2:** sin fecha el botón queda deshabilitado
+  (*"Debe indicar la fecha de recepción efectiva."*); con fecha futura el campo muestra
+  *"La fecha de recepción no puede ser futura."* El backend revalida contra su propio reloj,
+  que es la referencia real.
 
 ### `/auditoria`
 - **CUs:** CU-08 (visualizar log), CU-09 (filtrar).
