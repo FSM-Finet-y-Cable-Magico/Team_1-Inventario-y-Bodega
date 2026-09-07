@@ -39,7 +39,9 @@ export class BodegasService {
       where: { nombre: dto.nombre, id_empresa: dto.id_empresa },
     });
     if (existing) {
-      throw new BadRequestException('Ya existe una bodega con ese nombre en esta empresa.');
+      throw new BadRequestException(
+        'Ya existe una bodega con ese nombre en esta empresa.',
+      );
     }
 
     const bodega = this.bodegaRepository.create({ ...dto, activa: true });
@@ -95,9 +97,17 @@ export class BodegasService {
     userEmpresaId: number,
     isSuperuser: boolean,
   ): Promise<Bodega> {
-    const bodega = await this.bodegaRepository.findOne({ where: { id_bodega: id } });
+    const bodega = await this.bodegaRepository.findOne({
+      where: { id_bodega: id },
+    });
     if (!bodega) throw new NotFoundException('Bodega no encontrada');
-    await this.verificarPertenencia(bodega, userEmpresaId, isSuperuser, actorId, 'MODIFICAR');
+    await this.verificarPertenencia(
+      bodega,
+      userEmpresaId,
+      isSuperuser,
+      actorId,
+      'MODIFICAR',
+    );
 
     const anterior = { ...bodega };
 
@@ -106,14 +116,17 @@ export class BodegasService {
         where: { nombre: dto.nombre, id_empresa: bodega.id_empresa },
       });
       if (existing) {
-        throw new BadRequestException('Ya existe una bodega con ese nombre en esta empresa.');
+        throw new BadRequestException(
+          'Ya existe una bodega con ese nombre en esta empresa.',
+        );
       }
       bodega.nombre = dto.nombre;
     }
 
     if (dto.direccion !== undefined) bodega.direccion = dto.direccion;
     // CU-42: el responsable es editable
-    if (dto.id_usuario_responsable !== undefined) bodega.id_usuario_responsable = dto.id_usuario_responsable;
+    if (dto.id_usuario_responsable !== undefined)
+      bodega.id_usuario_responsable = dto.id_usuario_responsable;
 
     const bodegaActualizada = await this.bodegaRepository.save(bodega);
 
@@ -137,9 +150,17 @@ export class BodegasService {
     userEmpresaId: number,
     isSuperuser: boolean,
   ): Promise<Bodega> {
-    const bodega = await this.bodegaRepository.findOne({ where: { id_bodega: id } });
+    const bodega = await this.bodegaRepository.findOne({
+      where: { id_bodega: id },
+    });
     if (!bodega) throw new NotFoundException('Bodega no encontrada');
-    await this.verificarPertenencia(bodega, userEmpresaId, isSuperuser, actorId, 'DESACTIVAR');
+    await this.verificarPertenencia(
+      bodega,
+      userEmpresaId,
+      isSuperuser,
+      actorId,
+      'DESACTIVAR',
+    );
 
     if (!bodega.activa) return bodega;
 
@@ -147,7 +168,9 @@ export class BodegasService {
       where: { id_empresa: bodega.id_empresa, activa: true },
     });
     if (activeCount <= 1) {
-      throw new BadRequestException('No es posible desactivar la última bodega activa de la empresa.');
+      throw new BadRequestException(
+        'No es posible desactivar la última bodega activa de la empresa.',
+      );
     }
 
     const anterior = { ...bodega };
@@ -184,7 +207,9 @@ export class BodegasService {
     }
 
     if (filtros.nombre) {
-      query.andWhere('bodega.nombre ILIKE :nombre', { nombre: `%${filtros.nombre}%` });
+      query.andWhere('bodega.nombre ILIKE :nombre', {
+        nombre: `%${filtros.nombre}%`,
+      });
     }
 
     const bodegas = await query.getMany();
@@ -193,24 +218,41 @@ export class BodegasService {
     const idsBodegas = bodegas.map((b) => b.id_bodega);
 
     // Para cada bodega: buscamos quién la creó en el log de auditoría
-    const logsCreacion = idsBodegas.length > 0
-      ? await this.auditoriaRepository
-          .createQueryBuilder('log')
-          .where('log.entidad_afectada = :entidad', { entidad: 'bodega' })
-          .andWhere('log.accion = :accion', { accion: 'CREAR' })
-          .andWhere('log.id_entidad_afectada IN (:...ids)', { ids: idsBodegas })
-          .getMany()
-      : [];
+    const logsCreacion =
+      idsBodegas.length > 0
+        ? await this.auditoriaRepository
+            .createQueryBuilder('log')
+            .where('log.entidad_afectada = :entidad', { entidad: 'bodega' })
+            .andWhere('log.accion = :accion', { accion: 'CREAR' })
+            .andWhere('log.id_entidad_afectada IN (:...ids)', {
+              ids: idsBodegas,
+            })
+            .getMany()
+        : [];
 
     // Resolvemos los nombres de los responsables en una sola query
     // (responsable explícito CU-41 o, como respaldo, el creador según auditoría)
-    const idsResponsables = bodegas.map((b) => b.id_usuario_responsable).filter(Boolean) as number[];
-    const idsUsuarios = [...new Set([...logsCreacion.map((l) => l.id_usuario), ...idsResponsables])];
-    const usuarios = idsUsuarios.length > 0
-      ? await this.usuarioRepository.findBy({ id_usuario: In(idsUsuarios) as any })
-      : [];
-    const mapaUsuarios = new Map(usuarios.map((u) => [u.id_usuario, u.nombre_completo]));
-    const mapaCreadores = new Map(logsCreacion.map((l) => [l.id_entidad_afectada, l.id_usuario]));
+    const idsResponsables = bodegas
+      .map((b) => b.id_usuario_responsable)
+      .filter(Boolean) as number[];
+    const idsUsuarios = [
+      ...new Set([
+        ...logsCreacion.map((l) => l.id_usuario),
+        ...idsResponsables,
+      ]),
+    ];
+    const usuarios =
+      idsUsuarios.length > 0
+        ? await this.usuarioRepository.findBy({
+            id_usuario: In(idsUsuarios) as any,
+          })
+        : [];
+    const mapaUsuarios = new Map(
+      usuarios.map((u) => [u.id_usuario, u.nombre_completo]),
+    );
+    const mapaCreadores = new Map(
+      logsCreacion.map((l) => [l.id_entidad_afectada, l.id_usuario]),
+    );
 
     const result: any[] = [];
     for (const b of bodegas) {
@@ -222,8 +264,11 @@ export class BodegasService {
         where: { id_bodega_actual: b.id_bodega },
       });
 
-      const idResponsable = b.id_usuario_responsable ?? mapaCreadores.get(b.id_bodega);
-      const nombreResponsable = idResponsable ? (mapaUsuarios.get(idResponsable) ?? null) : null;
+      const idResponsable =
+        b.id_usuario_responsable ?? mapaCreadores.get(b.id_bodega);
+      const nombreResponsable = idResponsable
+        ? (mapaUsuarios.get(idResponsable) ?? null)
+        : null;
 
       result.push({
         id_bodega: b.id_bodega,
@@ -242,7 +287,9 @@ export class BodegasService {
 
   // CU-20: bodegas activas de otra empresa, usadas como destino de una
   // transferencia inter-empresa; expone solo id y nombre
-  async findActivasByEmpresa(idEmpresa: number): Promise<Pick<Bodega, 'id_bodega' | 'nombre'>[]> {
+  async findActivasByEmpresa(
+    idEmpresa: number,
+  ): Promise<Pick<Bodega, 'id_bodega' | 'nombre'>[]> {
     return this.bodegaRepository.find({
       where: { id_empresa: idEmpresa, activa: true },
       select: { id_bodega: true, nombre: true },
@@ -256,9 +303,17 @@ export class BodegasService {
     isSuperuser: boolean,
     actorId?: number,
   ): Promise<Bodega> {
-    const bodega = await this.bodegaRepository.findOne({ where: { id_bodega: id } });
+    const bodega = await this.bodegaRepository.findOne({
+      where: { id_bodega: id },
+    });
     if (!bodega) throw new NotFoundException('Bodega no encontrada');
-    await this.verificarPertenencia(bodega, userEmpresaId, isSuperuser, actorId ?? 0, 'CONSULTAR');
+    await this.verificarPertenencia(
+      bodega,
+      userEmpresaId,
+      isSuperuser,
+      actorId ?? 0,
+      'CONSULTAR',
+    );
 
     return bodega;
   }
@@ -269,9 +324,17 @@ export class BodegasService {
     isSuperuser: boolean,
     actorId?: number,
   ): Promise<any> {
-    const bodega = await this.bodegaRepository.findOne({ where: { id_bodega: id } });
+    const bodega = await this.bodegaRepository.findOne({
+      where: { id_bodega: id },
+    });
     if (!bodega) throw new NotFoundException('Bodega no encontrada');
-    await this.verificarPertenencia(bodega, userEmpresaId, isSuperuser, actorId ?? 0, 'CONSULTAR_STOCK');
+    await this.verificarPertenencia(
+      bodega,
+      userEmpresaId,
+      isSuperuser,
+      actorId ?? 0,
+      'CONSULTAR_STOCK',
+    );
 
     const unidades = await this.unidadEquipoRepository.find({
       where: { id_bodega_actual: id },
@@ -294,7 +357,12 @@ export class BodegasService {
           requiere_serie: te.requiereSerialNumber,
           cantidad_disponible: 0,
           umbral_minimo: null,
-          desglose_estados: { 'En bodega': 0, 'Asignado a técnico': 0, 'En revisión': 0, 'En préstamo externo': 0 },
+          desglose_estados: {
+            'En bodega': 0,
+            'Asignado a técnico': 0,
+            'En revisión': 0,
+            'En préstamo externo': 0,
+          },
         };
       }
       const registro = stockPorTipo[te.id_tipo_equipo];
@@ -309,9 +377,10 @@ export class BodegasService {
 
     for (const c of consumibles) {
       const te = c.tipoEquipo;
-      const umbral = c.umbral_minimo === null || c.umbral_minimo === undefined
-        ? null
-        : Number(c.umbral_minimo);
+      const umbral =
+        c.umbral_minimo === null || c.umbral_minimo === undefined
+          ? null
+          : Number(c.umbral_minimo);
 
       // CU-46: para tipos serializados la fila de stock_consumible solo
       // almacena el umbral; el stock real es el conteo de unidades en bodega
@@ -323,7 +392,12 @@ export class BodegasService {
             requiere_serie: true,
             cantidad_disponible: 0,
             umbral_minimo: null,
-            desglose_estados: { 'En bodega': 0, 'Asignado a técnico': 0, 'En revisión': 0, 'En préstamo externo': 0 },
+            desglose_estados: {
+              'En bodega': 0,
+              'Asignado a técnico': 0,
+              'En revisión': 0,
+              'En préstamo externo': 0,
+            },
           };
         }
         stockPorTipo[te.id_tipo_equipo].umbral_minimo = umbral;
@@ -353,14 +427,23 @@ export class BodegasService {
     userEmpresaId: number,
     isSuperuser: boolean,
   ): Promise<any> {
-    const bodega = await this.bodegaRepository.findOne({ where: { id_bodega: id } });
+    const bodega = await this.bodegaRepository.findOne({
+      where: { id_bodega: id },
+    });
     if (!bodega) throw new NotFoundException('Bodega no encontrada');
-    await this.verificarPertenencia(bodega, userEmpresaId, isSuperuser, actorId, 'CONFIGURAR_UMBRAL');
+    await this.verificarPertenencia(
+      bodega,
+      userEmpresaId,
+      isSuperuser,
+      actorId,
+      'CONFIGURAR_UMBRAL',
+    );
 
     const tipoEquipo = await this.tipoEquipoRepository.findOne({
       where: { id_tipo_equipo: dto.id_tipo_equipo },
     });
-    if (!tipoEquipo) throw new NotFoundException('Tipo de equipo no encontrado');
+    if (!tipoEquipo)
+      throw new NotFoundException('Tipo de equipo no encontrado');
 
     let record = await this.stockConsumibleRepository.findOne({
       where: { id_bodega: id, id_tipo_equipo: dto.id_tipo_equipo },
@@ -393,11 +476,16 @@ export class BodegasService {
     }
 
     // CU-46: si el stock actual está bajo el nuevo umbral, se genera la alerta inmediata
-    const stockActual = tipoEquipo.requiereSerialNumber === true
-      ? await this.unidadEquipoRepository.count({
-          where: { id_bodega_actual: id, id_tipo_equipo: dto.id_tipo_equipo, estado: 'En bodega' },
-        })
-      : Number(guardado.cantidad_disponible);
+    const stockActual =
+      tipoEquipo.requiereSerialNumber === true
+        ? await this.unidadEquipoRepository.count({
+            where: {
+              id_bodega_actual: id,
+              id_tipo_equipo: dto.id_tipo_equipo,
+              estado: 'En bodega',
+            },
+          })
+        : Number(guardado.cantidad_disponible);
     const alertaGenerada = dto.umbral > 0 && stockActual < dto.umbral;
 
     return {

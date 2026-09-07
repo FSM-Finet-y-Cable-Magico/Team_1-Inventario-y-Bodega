@@ -34,15 +34,17 @@ docs/08-roadmap.md               ← estado de los 96 CUs (implementado/en progr
 
 ## 3. Reglas de trabajo (NO NEGOCIABLES)
 
-1. **Siempre se trabaja sobre `dev`.** Cada tarea usa una rama propia desde `dev`
-   (nombre libre, se recomienda `feat/CU-XX-descripcion`).
+1. **Siempre se trabaja sobre `dev`.** Cada desarrollador mantiene **UNA sola rama de trabajo
+   propia** desde `dev` donde acumula sus CUs (p. ej. `feat/javier-cus`); NO se crea una rama
+   por ticket/CU.
 2. **Nunca push directo a `dev`.** Todo llega vía **Pull Request** revisada por el jefe de grupo.
 3. **Un CU se implementa completo** (backend + frontend + BDD si aplica) en la misma rama.
    No hay división front/back entre personas.
 4. **Un desarrollador solo trabaja en casos de uso.** Trabajar en otra cosa solo para
    arreglar bugs, o cambios del cliente que gestione el jefe de grupo.
 5. **El diseño UI está cerrado.** Pantallas nuevas = mismos patrones; NO rediseñar.
-6. **Los diagramas y documentación se actualizan a la par del código** del CU.
+6. **Los diagramas y documentación se actualizan a la par del código** del CU. Todo `.puml`
+   se **renderiza a PNG** (`plantuml -tpng`) y se commitean juntos (.puml + .png).
 7. **CU + sus restricciones/excepciones se implementan juntos.**
 8. **El roadmap (`docs/08-roadmap.md`) se actualiza en cada avance.** Al empezar o terminar un
    CU, marca su estado ahí (pendiente → en progreso → implementado).

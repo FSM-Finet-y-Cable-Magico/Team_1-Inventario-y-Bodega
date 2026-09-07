@@ -1,0 +1,5 @@
+# Fuerza LF en scripts shell independientemente del core.autocrlf del sistema
+# operativo del desarrollador. Sin esto, un checkout en Windows (autocrlf=true)
+# convierte estos archivos a CRLF y rompe su shebang (#!/bin/sh) dentro de los
+# contenedores Linux: "exec ...: no such file or directory".
+*.sh text eol=lf

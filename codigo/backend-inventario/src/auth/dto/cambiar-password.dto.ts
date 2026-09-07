@@ -1,4 +1,10 @@
-import { IsNotEmpty, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 // CU-10: la nueva contraseña debe cumplir las reglas de RF-01
 export class CambiarPasswordDto {

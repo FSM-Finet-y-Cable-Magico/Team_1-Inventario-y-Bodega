@@ -147,6 +147,7 @@ export class ReportesService {
     for (const unidad of unidades) {
       if (
         unidad.id_bodega_actual === undefined ||
+        unidad.id_bodega_actual === null ||
         unidad.id_tipo_equipo === undefined
       )
         continue;

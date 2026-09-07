@@ -1,0 +1,29 @@
+@startuml CU59-exc-otra-bodega-o-estado
+title CU-59 — Excepción 2: existe pero no disponible en la bodega seleccionada
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 30 } actor { Margin 12 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega" as user
+participant "V_Salidas" as view
+participant "C_UnitsController" as uctrl
+participant "C_UnitsService" as usvc
+database "postgres" as db
+
+user -> view : Agrega NS de un equipo en otra bodega\no en otro estado ('Instalado en cliente', etc.)
+view -> uctrl : GET /api/unidades/serie/{ns}?id_bodega=N
+uctrl -> usvc : verificarSerie(ns, id_empresa, id_bodega=N)
+usvc -> db : SELECT unidad_equipo WHERE numero_serie AND id_empresa
+db --> usvc : unidad (estado 'Instalado en cliente', id_bodega_actual = NULL)
+usvc -> usvc : estado ≠ 'En bodega' O id_bodega_actual ≠ N → disponible = false
+usvc --> uctrl : 200 { existe: true, estado, id_bodega_actual, disponible: false }
+uctrl --> view : 200
+view --> user : NS en rojo con el mensaje exacto:\n'El equipo [NS] no está disponible en esta bodega.\nEstado actual: [ESTADO].'\nConfirmar sigue deshabilitado
+@enduml

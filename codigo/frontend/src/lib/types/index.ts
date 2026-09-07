@@ -156,6 +156,18 @@ export interface CambioEstadoDto {
 	motivoPayload?: string;
 }
 
+export interface ResultadoRevisionDto {
+	resultado: 'OPERATIVO' | 'REPARACION_EXTERNA' | 'BAJA';
+	id_bodega_actual?: number;
+	ubicacion_fisica?: string;
+	nombre_receptor?: string;
+	fecha_retorno_estimada?: string;
+	descripcion_falla?: string;
+	motivo?: string;
+	confirmar_garantia?: boolean;
+}
+
+
 export interface HistorialEstado {
 	id_historial: number;
 	id_unidad?: number;
@@ -167,6 +179,17 @@ export interface HistorialEstado {
 	// CU-36/CU-37: nombre del usuario responsable y empresa del movimiento
 	usuario?: string | null;
 	empresa?: string | null;
+}
+
+export interface EquipoEnRevision {
+	id_unidad: number;
+	numero_serie: string;
+	tipo_equipo: { nombre: string } | null;
+	empresa: string | null;
+	bodega: string | null;
+	fecha_ingreso_revision: string | null;
+	dias_en_revision: number | null;
+	diagnostico_tecnico: string | null;
 }
 
 export interface Bodega {
@@ -271,6 +294,73 @@ export interface MovimientoInventario {
 	referencia_id: number | null;
 }
 
+// CU-49: proveedores
+export interface Proveedor {
+	id_proveedor: number;
+	nombre_comercial: string;
+	rut: string;
+	nombre_contacto: string | null;
+	telefono: string | null;
+	email: string | null;
+	activa: boolean;
+	fecha_creacion: string;
+	tipos_equipo: { id_tipo_equipo: number; nombre: string }[];
+}
+
+export interface CreateProveedorDto {
+	nombre_comercial: string;
+	rut: string;
+	nombre_contacto?: string;
+	telefono?: string;
+	email?: string;
+	ids_tipos_equipo?: number[];
+}
+
+// CU-52: órdenes de ingreso desde proveedor
+export interface OrdenIngresoDetalle {
+	id_detalle: number;
+	id_orden: number;
+	id_tipo_equipo: number;
+	cantidad_esperada: number;
+	garantia_dias: number;
+	cantidad_recibida: number;
+	nombre_tipo_equipo: string | null;
+	// CU-55: los ítems individualizables piden un número de serie por unidad recibida
+	requiere_serie_individual: boolean;
+}
+
+export interface OrdenIngreso {
+	id_orden: number;
+	correlativo: string;
+	id_proveedor: number;
+	numero_documento: string;
+	fecha_documento: string;
+	id_empresa_destino: number;
+	id_bodega_destino: number;
+	estado: string;
+	id_usuario_registro: number;
+	fecha_creacion: string;
+	nombre_proveedor: string | null;
+	nombre_bodega: string | null;
+	nombre_empresa: string | null;
+	detalles: OrdenIngresoDetalle[];
+}
+
+export interface ItemOrdenIngresoDto {
+	id_tipo_equipo: number;
+	cantidad_esperada: number;
+	garantia_dias: number;
+}
+
+export interface CreateOrdenIngresoDto {
+	id_proveedor: number;
+	numero_documento: string;
+	fecha_documento: string;
+	id_empresa_destino: number;
+	id_bodega_destino: number;
+	items: ItemOrdenIngresoDto[];
+}
+
 export interface LogAuditoria {
 	id_log: number;
 	id_usuario: number;
@@ -317,4 +407,54 @@ export interface DecodedToken {
 	roles: RolNombre[];
 	iat: number;
 	exp: number;
+}
+
+// CU-57/59/60/62: salidas de bodega a técnico
+export interface VerificacionSerie {
+	existe: boolean;
+	numero_serie?: string;
+	estado?: EstadoUnidad;
+	id_bodega_actual?: number | null;
+	disponible: boolean;
+}
+
+export interface ItemSalida {
+	tipo: 'UNIDAD' | 'CONSUMIBLE';
+	numero_serie?: string;
+	id_tipo_equipo?: number;
+	cantidad?: number;
+}
+
+export interface SalidaResumen {
+	id_salida: number;
+	tecnico: string;
+	bodega: string;
+	fecha_hora: string;
+	items: {
+		id_detalle: number;
+		id_unidad: number | null;
+		id_tipo_equipo: number | null;
+		cantidad: number | null;
+	}[];
+}
+
+export interface InventarioTecnico {
+	tecnico: {
+		id_usuario: number;
+		nombre_completo: string;
+		nombre_usuario: string | null;
+		empresa: string | null;
+	};
+	ns_asignados: {
+		numero_serie: string;
+		id_unidad: number;
+		tipo: string | null;
+		estado: string;
+	}[];
+	saldos: {
+		id_tipo_equipo: number;
+		tipo: string | null;
+		saldo: number;
+		unidad_medida: string | null;
+	}[];
 }
