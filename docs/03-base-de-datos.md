@@ -69,17 +69,35 @@ FK → `unidad_equipo` con `ON DELETE CASCADE`.
 `id_movimiento` PK · `id_tipo_equipo` · `id_unidad` · `id_empresa_origen` · `id_empresa_destino` ·
 `id_bodega_origen` · `id_bodega_destino` · `id_usuario` · `tipo_movimiento` varchar(30) ·
 `cantidad` numeric(10,2) default 1 · `fecha` · `referencia_id` (→ `transferencia_equipo.id_transferencia`)
-<<<<<<< HEAD
-Valores de `tipo_movimiento` vigentes para reportes: `INGRESO`, `ASIGNACION`, `SALIDA_A_TECNICO`, `DEVOLUCION`, `BAJA`, `TRANSFERENCIA`, `PRESTAMO`, `TRANSFERENCIA_PENDIENTE`, `TRANSFERENCIA_APROBADA`, `TRANSFERENCIA_RECHAZADA`. Los tres últimos son los estados de transferencia implementados actualmente; los demás quedan disponibles para los módulos de Incremento 2 que registren esos movimientos.
-=======
-Valores de `tipo_movimiento`: `TRANSFERENCIA_PENDIENTE`, `TRANSFERENCIA_APROBADA`, `TRANSFERENCIA_RECHAZADA`,
-`SALIDA_A_TECNICO` (CU-57/60, `referencia_id` → `salida_bodega.id_salida`).
->>>>>>> origin/dev
+Valores de `tipo_movimiento` vigentes para reportes: `INGRESO`, `ASIGNACION`, `SALIDA_A_TECNICO`, `DEVOLUCION`, `BAJA`, `TRANSFERENCIA`, `PRESTAMO`, `TRANSFERENCIA_PENDIENTE`, `TRANSFERENCIA_APROBADA`, `TRANSFERENCIA_RECHAZADA`. Los tres últimos son los estados de transferencia implementados actualmente; `SALIDA_A_TECNICO` (CU-57/60, `referencia_id` → `salida_bodega.id_salida`); los demás quedan disponibles para los módulos de Incremento 2 que registren esos movimientos.
 
 ### `stock_consumible` — stock por cantidad de consumibles
 `id_stock` PK · `id_tipo_equipo` NOT NULL · `id_bodega` NOT NULL · `cantidad_disponible` numeric(10,2) default 0 ·
 `umbral_minimo` numeric(10,2)
 FKs → `bodega`, `tipo_equipo`. Fila única por `(id_bodega, id_tipo_equipo)`.
+
+### `proveedor` — proveedores (CU-49)
+`id_proveedor` PK · `nombre_comercial` VARCHAR(100) NOT NULL · `rut` VARCHAR(12) UNIQUE NOT NULL ·
+`nombre_contacto` VARCHAR(80) · `telefono` VARCHAR(15) · `email` VARCHAR(150) ·
+`activa` BOOLEAN DEFAULT TRUE · `fecha_creacion` TIMESTAMPTZ
+> Sin `id_empresa`: el proveedor es global (compartido entre ambas empresas).
+
+### `proveedor_tipo_equipo` — relación N:M proveedor ↔ tipo_equipo (CU-49)
+`id` PK · `id_proveedor` FK → `proveedor` (ON DELETE CASCADE) · `id_tipo_equipo` FK → `tipo_equipo` (ON DELETE CASCADE)
+UNIQUE en `(id_proveedor, id_tipo_equipo)`.
+
+### `orden_ingreso` — órdenes de ingreso desde proveedor (CU-52)
+`id_orden` PK · `correlativo` VARCHAR(10) UNIQUE NOT NULL (OI-%04d) ·
+`id_proveedor` FK → `proveedor` · `numero_documento` VARCHAR(30) NOT NULL ·
+`fecha_documento` DATE NOT NULL · `id_empresa_destino` INTEGER NOT NULL ·
+`id_bodega_destino` FK → `bodega` · `estado` VARCHAR(30) DEFAULT 'Pendiente de recepción'
+(valores: `Pendiente de recepción` | `Recepción parcial` | `Completada`) ·
+`id_usuario_registro` INTEGER NOT NULL · `fecha_creacion` TIMESTAMPTZ
+
+### `orden_ingreso_detalle` — ítems de una orden de ingreso (CU-52)
+`id_detalle` PK · `id_orden` FK → `orden_ingreso` (ON DELETE CASCADE) ·
+`id_tipo_equipo` FK → `tipo_equipo` · `cantidad_esperada` INT > 0 ·
+`garantia_dias` INT 0–3650 · `cantidad_recibida` INT DEFAULT 0
 
 ### `salida_bodega` + `salida_detalle` — salidas de bodega a técnico (CU-57/59/60/62)
 `salida_bodega`: `id_salida` PK · `id_tecnico` · `id_bodega_origen` · `fecha_hora` timestamptz (auto) ·
@@ -93,6 +111,7 @@ FKs → `bodega`, `tipo_equipo`. Fila única por `(id_bodega, id_tipo_equipo)`.
 `unidad_equipo WHERE estado='Asignado a técnico' AND id_tecnico_asignado=:id`).
 
 > `unidad_equipo` suma la columna `id_tecnico_asignado` (integer, nullable) desde CU-57.
+
 
 ---
 

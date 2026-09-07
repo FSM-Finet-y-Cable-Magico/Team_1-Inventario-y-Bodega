@@ -34,6 +34,13 @@ export class UnitsController {
     );
   }
 
+  // CU-77: listado de equipos en revisión (solo consulta, sin auditoría)
+  @Get('en-revision')
+  @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
+  async listarEnRevision(@CurrentUser() actor: any) {
+    return this.unitsService.listarEnRevision(actor);
+  }
+
   @Post()
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
   async registrarNuevaUnidad(@Body() body: any, @CurrentUser() actor: any) {
@@ -63,6 +70,7 @@ export class UnitsController {
     );
   }
 
+  // CU-59: validación en vivo de número de serie para salida de bodega
   @Get('serie/:numeroSerie')
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
   async verificarSerieParaSalida(
@@ -109,6 +117,7 @@ export class UnitsController {
     @Body('diagnostico') diagnostico: string,
     @Body('descripcionOtro') descripcionOtro: string,
     @Body('simularErrorHistorial') simularErrorHistorial: boolean,
+    @Body('ubicacion_fisica') ubicacionFisica: string,
     @CurrentUser() actor: any,
   ) {
     return this.unitsService.transicionarEstado(
@@ -119,7 +128,34 @@ export class UnitsController {
       diagnostico,
       descripcionOtro,
       simularErrorHistorial,
+      ubicacionFisica,
     );
+  }
+
+  // CU-72: registrar el resultado de la revisión (Operativo / Reparación externa / Baja)
+  @Post(':id/resultado-revision')
+  @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
+  async registrarResultadoRevision(
+    @Param('id') id: string,
+    @Body() body: any,
+    @CurrentUser() actor: any,
+  ) {
+    return this.unitsService.registrarResultadoRevision(
+      parseInt(id),
+      body,
+      actor,
+    );
+  }
+
+  // CU-74: reacondicionar equipo "En revisión" directo a "En bodega" (Operativo)
+  @Post(':id/reacondicionar')
+  @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
+  async reacondicionarEquipo(
+    @Param('id') id: string,
+    @Body() body: any,
+    @CurrentUser() actor: any,
+  ) {
+    return this.unitsService.reacondicionarEquipo(parseInt(id), body, actor);
   }
 
   @Patch(':id')

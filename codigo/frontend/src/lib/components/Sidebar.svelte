@@ -7,12 +7,13 @@
 		Warehouse,
 		Truck,
 		ArrowLeftRight,
-		BarChart3,
 		ScrollText,
 		LogOut,
 		PanelLeftClose,
 		PanelLeft,
-		Building2
+		Building2,
+		BarChart3,
+		ClipboardList
 	} from '@lucide/svelte';
 	import { authStore, userRoles } from '$lib/stores/auth';
 	import { goto } from '$app/navigation';
@@ -36,8 +37,10 @@
 		{ label: 'Bodegas', icon: Warehouse, path: '/bodegas', roles: ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'] },
 		{ label: 'Salidas', icon: Truck, path: '/salidas', roles: ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA', 'TECNICO_TERRENO'] },
 		{ label: 'Transferencias', icon: ArrowLeftRight, path: '/transferencias', roles: ['SUPERUSUARIO', 'ADMIN'] },
-		{ label: 'Reportes', icon: BarChart3, path: '/reportes', roles: ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'] },
-		{ label: 'Auditoría', icon: ScrollText, path: '/auditoria', roles: ['SUPERUSUARIO', 'ADMIN'] }
+		{ label: 'Proveedores', icon: Truck, path: '/proveedores', roles: ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'] },
+		{ label: 'Órdenes de ingreso', icon: ClipboardList, path: '/ordenes-ingreso', roles: ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'] },
+		{ label: 'Auditoría', icon: ScrollText, path: '/auditoria', roles: ['SUPERUSUARIO', 'ADMIN'] },
+		{ label: 'Reportes', icon: BarChart3, path: '/reportes', roles: ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'] }
 	];
 
 	let collapsed = $state(false);

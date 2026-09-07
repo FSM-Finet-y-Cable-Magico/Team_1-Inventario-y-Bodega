@@ -56,6 +56,10 @@ export class UnidadEquipo {
   @Column({ type: 'integer', name: 'id_caja_nap', nullable: true })
   id_caja_nap?: number;
 
+  // CU-57: técnico que tiene la unidad asignada (estado 'Asignado a técnico')
+  @Column({ type: 'integer', name: 'id_tecnico_asignado', nullable: true })
+  idTecnicoAsignado?: number | null;
+
   @Column({
     type: 'varchar',
     length: 17,
@@ -64,10 +68,6 @@ export class UnidadEquipo {
     unique: true,
   })
   macAddress?: string | null;
-
-  // CU-57: técnico que tiene la unidad asignada (estado 'Asignado a técnico')
-  @Column({ type: 'integer', name: 'id_tecnico_asignado', nullable: true })
-  idTecnicoAsignado?: number | null;
 
   // CU-32/CU-33/CU-34: proveedor, observaciones y ubicación física.
   // Requieren migración: npm run migrar

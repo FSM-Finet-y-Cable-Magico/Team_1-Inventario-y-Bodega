@@ -87,6 +87,8 @@ Ambos usan `@UseGuards(AuthGuard('jwt'), CompanyIsolationGuard, RolesGuard)`.
 | GET | `/api/unidades/:serialNumber/historial` | 4 roles | CU-36/CU-37 ver historial |
 | PATCH | `/api/unidades/:id/cambiar-estado` | 4 roles | CU-35/36/40/47 cambio de estado |
 | PATCH | `/api/unidades/:id` | `ADMIN`, `SUPERUSUARIO`, `ADMIN_BODEGA` | CU-34 editar datos |
+| POST | `/api/unidades/:id/resultado-revision` | `ADMIN_BODEGA`, `ADMIN`, `SUPERUSUARIO` | CU-72 registrar resultado de revisión |
+
 
 ### 2. Lógica (`units.service.ts`)
 
@@ -146,6 +148,17 @@ Constante: `MAC_REGEX = /^([0-9A-Fa-f]{2}[:\\-]){5}[0-9A-Fa-f]{2}$/`.
   resuelve nombres de usuarios y empresa. Sin historial: unidad inexistente → **CU-33/CU-37 Excepción
   1** `'Número de serie no encontrado.'`; existente → `'El dispositivo se encuentra en su estado
   inicial de fábrica...'`.
+- **`registrarResultadoRevision` (CU-72):** precondición estado `'En revisión'` (mensaje
+  `'Transición de estado no permitida para este equipo. Estado actual: [ESTADO].'`, distinto al de
+  CU-35). Tres resultados: (A) `OPERATIVO` → bodega destino activa + ubicación física (≤60,
+  CU-47) → `'En bodega'`. (B) `REPARACION_EXTERNA` → nombre receptor (3-80), fecha estimada de
+  retorno (posterior a hoy), descripción de falla (5-300) → `'En préstamo externo'` + crea registro
+  en `prestamo_externo` (`tipo: 'REPARACION_EXTERNA'`, entidad compartida con CU-75/81). (C) `BAJA`
+  → motivo (obligatorio, ≤200); **Excepción 1:** si la garantía está vigente exige
+  `confirmar_garantia: true` en el body (el front ya preguntó) → `'Dado de baja'`. Transacción
+  `QueryRunner` (estado + historial + efecto del resultado). Audita `CAMBIAR_ESTADO` sobre
+  `unidad_equipo`.
+
 
 ### 3. Entidades
 
@@ -163,6 +176,14 @@ Constante: `MAC_REGEX = /^([0-9A-Fa-f]{2}[:\\-]){5}[0-9A-Fa-f]{2}$/`.
 - **`historial_estado_equipo`** → `historial-estado.entity.ts`: `id_historial`, `id_unidad`,
   `id_usuario`, `estadoAnterior`, `estadoNuevo`, `motivo`, `fechaHora`. `ManyToOne UnidadEquipo`
   con `onDelete: CASCADE`.
+- **`prestamo_externo`** → `prestamo-externo.entity.ts`: `id_prestamo`, `tipo`
+  (`REPARACION_EXTERNA`/`PRESTAMO_EXTERNO`), `id_empresa`, `id_unidad` (nullable, `ManyToOne`
+  `UnidadEquipo`), `nombreReceptor`/`nombre_receptor`, `rutReceptor`/`rut_receptor` (nullable),
+  `fechaSalida`/`fecha_salida`, `fechaRetornoEstimada`/`fecha_retorno_estimada`,
+  `fechaRetornoReal`/`fecha_retorno_real` (nullable), `detalle`, `estado`
+  (`ACTIVO`/`CERRADO`), `idUsuarioRegistro`/`id_usuario_registro`. Entidad mínima, compartida y
+  extensible por CU-75/CU-81.
+
 
 ### 4. DTOs
 - `editar-datos-unidad.dto.ts`: `observaciones` (≤300, CU-34), `ubicacion_fisica` (≤60, CU-34),
@@ -175,3 +196,5 @@ Constante: `MAC_REGEX = /^([0-9A-Fa-f]{2}[:\\-]){5}[0-9A-Fa-f]{2}$/`.
 CU-24..CU-31 (catálogo y ficha técnica), CU-32..CU-40 (unidades, estados, garantía, historial,
 diagnóstico). Detalle exacto de cada restricción en los diagramas de secuencia
 (`diagramas/diagramas-secuencia/CU24/` … `CU40/`).
+
+CU-72 (resultado de revisión de equipo: operativo/reparación externa/baja).

@@ -13,8 +13,8 @@ no esté reflejado aquí.
 ## Resumen
 
 - **Total de casos de uso:** 96
-- **Implementados:** 49 (CU-01 a CU-46, CU-85, CU-86, CU-88)
-- **Pendientes:** 47 (CU-47 a CU-84, CU-87, CU-89 a CU-96)
+- **Implementados:** 67 (CU-01 a CU-46, CU-49 a CU-62, CU-72, CU-74, CU-77, CU-85, CU-86, CU-88, CU-89, CU-91)
+- **Pendientes:** 29 (CU-47, CU-48, CU-61, CU-63 a CU-71, CU-73, CU-75, CU-76, CU-78 a CU-84, CU-87, CU-90, CU-92 a CU-96)
 
 ## Leyenda
 
@@ -103,14 +103,14 @@ no esté reflejado aquí.
 
 | CU | Nombre | Estado | Notas |
 |----|--------|--------|-------|
-| CU-49 | Creando proveedor | [ ] Pendiente | |
-| CU-50 | Editando proveedor | [ ] Pendiente | |
-| CU-51 | Consultando listado de proveedores | [ ] Pendiente | |
-| CU-52 | Registrando orden de ingreso desde proveedor | [ ] Pendiente | |
-| CU-53 | Consultando órdenes de ingreso | [ ] Pendiente | |
-| CU-54 | Registrando recepción total o parcial de orden de ingreso | [ ] Pendiente | |
-| CU-55 | Ingresando números de serie en recepción de equipos | [ ] Pendiente | |
-| CU-56 | Registrando fecha de adquisición real en recepción | [ ] Pendiente | |
+| CU-49 | Creando proveedor | [x] Implementado | Módulo `proveedores` (back + front + BDD) |
+| CU-50 | Editando proveedor | [x] Implementado | Módulo `proveedores` (PATCH + modal edición) |
+| CU-51 | Consultando listado de proveedores | [x] Implementado | GET con ADMIN_BODEGA + búsqueda + EmptyState |
+| CU-52 | Registrando orden de ingreso desde proveedor | [x] Implementado | Módulo `ordenes-ingreso` (back + front + BDD + docs + diagramas). Rama `feat/CU-49-crear-proveedor` (Javier) — pendiente render PNG de los `.puml` y capturas en `Casos de uso/CU-52/` |
+| CU-53 | Consultando órdenes de ingreso | [x] Implementado | Filtros (estado, proveedor, rango de fechas, empresa) + ficha `/ordenes-ingreso/[id]`. Rama `feat/CU-49-crear-proveedor` (Javier) — pendiente render PNG de los `.puml` y capturas en `Casos de uso/CU-53/` |
+| CU-54 | Registrando recepción total o parcial de orden de ingreso | [x] Implementado | `POST /ordenes-ingreso/:id/recepcion` + modal en la ficha. Rama `feat/CU-49-crear-proveedor` (Javier) — pendiente render PNG de los `.puml` y capturas en `Casos de uso/CU-54/` |
+| CU-55 | Ingresando números de serie en recepción de equipos | [x] Implementado | NS por unidad en la recepción, reusa la validación de CU-28 y crea `unidad_equipo` 'En bodega'. Rama `feat/CU-49-crear-proveedor` (Javier) — pendiente render PNG de los `.puml` y capturas en `Casos de uso/CU-55/` |
+| CU-56 | Registrando fecha de adquisición real en recepción | [x] Implementado | `fecha_recepcion` obligatoria en la recepción; base de `fecha_adquisicion` y de la garantía (CU-38/39). Rama `feat/CU-49-crear-proveedor` (Javier) — pendiente render PNG de los `.puml` y capturas en `Casos de uso/CU-56/` |
 
 ### Asignación de equipos a técnicos
 
@@ -141,17 +141,17 @@ no esté reflejado aquí.
 | CU | Nombre | Estado | Notas |
 |----|--------|--------|-------|
 | CU-71 | Registrando devolución de equipo desde cliente | [ ] Pendiente | |
-| CU-72 | Registrando resultado de revisión de equipo | [ ] Pendiente | |
+| CU-72 | Registrando resultado de revisión de equipo | [x] Implementado | |
 | CU-73 | Mostrando información de equipo en devolución | [ ] Pendiente | |
 
 ### Reacondicionamiento y equipos defectuosos
 
 | CU | Nombre | Estado | Notas |
 |----|--------|--------|-------|
-| CU-74 | Reacondicionando equipo operativo desde revisión a bodega | [ ] Pendiente | |
+| CU-74 | Reacondicionando equipo operativo desde revisión a bodega | [x] Implementado | |
 | CU-75 | Enviando equipo a reparación externa | [ ] Pendiente | |
 | CU-76 | Reingresando equipo desde reparación externa | [ ] Pendiente | |
-| CU-77 | Consultando listado de equipos en revisión | [ ] Pendiente | |
+| CU-77 | Consultando listado de equipos en revisión | [x] Implementado | |
 
 ### Baja definitiva de equipos
 
@@ -178,9 +178,9 @@ no esté reflejado aquí.
 | CU-86 | Generando reporte de movimientos de inventario | [x] Implementado | Grupo 5 · RF-61 · `/reportes` · filtros, rango máximo 365 días, aislamiento y auditoría |
 | CU-87 | Generando reporte de equipos instalados por cliente | [ ] Pendiente | |
 | CU-88 | Generando reporte de garantías | [x] Implementado | Grupo 5 · RF-63 · `/api/reportes/garantias` · filtro por empresa, tipo y período, empty state y auditoría |
-| CU-89 | Generando reporte de inventario actual de técnicos | [~] En progreso | Grupo 5 · RF-64 · endpoint `/api/reportes/tecnicos/inventario` y pestaña en `/reportes`; pendiente resolver conflicto heredado de `units.service` para validación global |
+| CU-89 | Generando reporte de inventario actual de técnicos | [x] Implementado | Grupo 5 · RF-64 · endpoint `/api/reportes/tecnicos/inventario` y pestaña en `/reportes` |
 | CU-90 | Generando reporte de productividad de técnicos | [ ] Pendiente | |
-| CU-91 | Generando reporte de consumo de consumibles | [~] En progreso | Grupo 5 · RF-66 · endpoint `/api/reportes/consumo` y pestaña Consumo de consumibles |
+| CU-91 | Generando reporte de consumo de consumibles | [x] Implementado | Grupo 5 · RF-66 · endpoint `/api/reportes/consumo` y pestaña Consumo de consumibles |
 | CU-92 | Exportando reporte a Excel | [ ] Pendiente | |
 | CU-93 | Exportando reporte a PDF | [ ] Pendiente | |
 
