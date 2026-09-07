@@ -69,6 +69,7 @@
 | 47 | Ubicación física al ingresar/reingresar a bodega | `inventario/units` | `/unidades/[id]` |
 | 72 | Registrando resultado de revisión (Operativo/Reparación externa/Baja) | `inventario/units` | `/unidades/[id]` |
 | 74 | Reacondicionando equipo operativo desde revisión a bodega | `inventario/units` | `/unidades/[id]` |
+| 75 | Enviando equipo a reparación externa | `inventario/units` | `/unidades/[id]` |
 | 77 | Consultando listado de equipos en revisión | `inventario/units` | `/unidades/en-revision` |
 
 

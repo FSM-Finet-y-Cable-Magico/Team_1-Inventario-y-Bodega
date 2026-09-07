@@ -149,7 +149,7 @@ no esté reflejado aquí.
 | CU | Nombre | Estado | Notas |
 |----|--------|--------|-------|
 | CU-74 | Reacondicionando equipo operativo desde revisión a bodega | [x] Implementado | |
-| CU-75 | Enviando equipo a reparación externa | [ ] Pendiente | |
+| CU-75 | Enviando equipo a reparación externa | [x] Implementado | |
 | CU-76 | Reingresando equipo desde reparación externa | [ ] Pendiente | |
 | CU-77 | Consultando listado de equipos en revisión | [x] Implementado | |
 

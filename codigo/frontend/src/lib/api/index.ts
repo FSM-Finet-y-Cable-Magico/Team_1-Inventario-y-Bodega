@@ -140,6 +140,10 @@ export function reacondicionarUnidad(id: number, data: Record<string, unknown>) 
 	return api.post<any>(`/unidades/${id}/reacondicionar`, data);
 }
 
+// CU-75: enviar equipo "En revisión" a reparación externa
+export function enviarAReparacionExterna(id: number, data: Record<string, unknown>) {
+	return api.post<any>(`/unidades/${id}/reparacion-externa`, data);
+}
 
 export function getUnitHistory(serialNumber: string) {
 	return api.get<any[]>(`/unidades/${serialNumber}/historial`);

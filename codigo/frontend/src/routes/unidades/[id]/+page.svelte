@@ -2,14 +2,14 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { getUnit, changeUnitState, getUnitHistory, getWarehouses, updateUnit, registrarResultadoRevision, reacondicionarUnidad } from '$lib/api/index';
+	import { getUnit, changeUnitState, getUnitHistory, getWarehouses, updateUnit, registrarResultadoRevision, reacondicionarUnidad, enviarAReparacionExterna } from '$lib/api/index';
 	import { userRoles } from '$lib/stores/auth';
 	import type { UnidadEquipo, HistorialEstado, EstadoUnidad, Bodega } from '$lib/types';
 	import Button from '$lib/components/Button.svelte';
 	import Modal from '$lib/components/Modal.svelte';
 	import FormField from '$lib/components/FormField.svelte';
 	import Badge from '$lib/components/Badge.svelte';
-	import { ArrowLeft, RotateCw, Pencil, ClipboardCheck, PackageCheck } from '@lucide/svelte';
+	import { ArrowLeft, RotateCw, Pencil, ClipboardCheck, PackageCheck, Wrench } from '@lucide/svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	
 
@@ -52,6 +52,12 @@
 	let reacondicionarForm = $state({ id_bodega_destino: 0, ubicacion_fisica: '', observacion: '' });
 	let reacondicionarError = $state('');
 	let reacondicionando = $state(false);
+
+	// CU-75: enviar equipo "En revisión" a reparación externa (atajo del mismo resultado de CU-72)
+	let showReparacionExterna = $state(false);
+	let reparacionExternaForm = $state({ nombre_receptor: '', rut_receptor: '', fecha_retorno_estimada: '', descripcion_falla: '' });
+	let reparacionExternaError = $state('');
+	let enviandoReparacion = $state(false);
 
 
 	// CU-18: edición de los datos de la unidad
@@ -280,6 +286,30 @@ async function handleReacondicionar() {
 	}
 }
 
+// CU-75: enviar equipo "En revisión" a reparación externa
+async function handleEnviarReparacionExterna() {
+	if (!unit) return;
+	reparacionExternaError = '';
+	enviandoReparacion = true;
+	try {
+		const payload: Record<string, unknown> = {
+			nombre_receptor: reparacionExternaForm.nombre_receptor.trim(),
+			fecha_retorno_estimada: reparacionExternaForm.fecha_retorno_estimada,
+			descripcion_falla: reparacionExternaForm.descripcion_falla.trim()
+		};
+		if (reparacionExternaForm.rut_receptor.trim()) payload.rut_receptor = reparacionExternaForm.rut_receptor.trim();
+		await enviarAReparacionExterna(unit.id_unidad, payload);
+		showReparacionExterna = false;
+		success = 'Equipo enviado a reparación externa correctamente';
+		reparacionExternaForm = { nombre_receptor: '', rut_receptor: '', fecha_retorno_estimada: '', descripcion_falla: '' };
+		await load();
+	} catch (err: unknown) {
+		reparacionExternaError = err instanceof Error ? err.message : 'Error al enviar a reparación externa';
+	} finally {
+		enviandoReparacion = false;
+	}
+}
+
 </script>
 
 <div class="max-w-4xl mx-auto">
@@ -384,7 +414,7 @@ async function handleReacondicionar() {
 						</div>
 					</div>
 
-					<div class="mt-6 pt-4 border-t border-border flex items-center gap-3">
+					<div class="mt-6 pt-4 border-t border-border flex flex-wrap items-center gap-3">
 						<!-- CU-35: el botón siempre está disponible; el sistema valida la transición -->
 						<Button onclick={() => {
 							changeForm.estado_nuevo = '';
@@ -411,6 +441,15 @@ async function handleReacondicionar() {
 							}}>
 								<PackageCheck class="h-4 w-4" />
 								Operativo - enviar a bodega
+							</Button>
+							<!-- CU-75: atajo directo para el caso Reparación externa (misma transición que CU-72) -->
+							<Button variant="secondary" onclick={() => {
+								reparacionExternaForm = { nombre_receptor: '', rut_receptor: '', fecha_retorno_estimada: '', descripcion_falla: '' };
+								reparacionExternaError = '';
+								showReparacionExterna = true;
+							}}>
+								<Wrench class="h-4 w-4" />
+								Enviar a reparación externa
 							</Button>
 						{/if}
 					<!-- CU-18: edición de los datos de la unidad -->
@@ -736,6 +775,48 @@ async function handleReacondicionar() {
 			<!-- E1: no se deshabilita por falta de bodega, para que el clic dispare el
 			     mensaje exacto en handleReacondicionar() en vez de bloquear el botón -->
 			<Button type="submit" loading={reacondicionando} disabled={reacondicionando}>Confirmar</Button>
+		</div>
+	</form>
+</Modal>
+
+<!-- CU-75: enviar equipo "En revisión" a reparación externa -->
+<Modal title="Enviar a reparación externa" open={showReparacionExterna} onclose={() => (showReparacionExterna = false)}>
+	<form onsubmit={(e: Event) => { e.preventDefault(); handleEnviarReparacionExterna(); }} class="space-y-4">
+		{#if reparacionExternaError}
+			<div class="bg-red-50 border border-red-200 text-destructive text-sm rounded-md px-3 py-2">{reparacionExternaError}</div>
+		{/if}
+		{#if unit}
+			<p class="text-sm text-muted">
+				El equipo pasará de <strong>{unit.estado}</strong> a <strong>En préstamo externo</strong>.
+			</p>
+
+			<FormField label="Nombre del receptor" name="rep_recep" required
+				helper="3-80 caracteres ({reparacionExternaForm.nombre_receptor.length}/80)">
+				<input id="rep_recep" type="text" required minlength={3} bind:value={reparacionExternaForm.nombre_receptor} maxlength={80}
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+			</FormField>
+
+			<FormField label="RUT del receptor" name="rep_rut" helper="Opcional, formato XXXXXXXX-X">
+				<input id="rep_rut" type="text" bind:value={reparacionExternaForm.rut_receptor} maxlength={10}
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary font-mono"
+					placeholder="12345678-9" />
+			</FormField>
+
+			<FormField label="Fecha estimada de retorno" name="rep_fecha" required>
+				<input id="rep_fecha" type="date" required bind:value={reparacionExternaForm.fecha_retorno_estimada}
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+			</FormField>
+
+			<FormField label="Descripción de la falla" name="rep_falla" required
+				helper="5-300 caracteres ({reparacionExternaForm.descripcion_falla.length}/300)">
+				<textarea id="rep_falla" required bind:value={reparacionExternaForm.descripcion_falla} maxlength={300} rows="3"
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
+			</FormField>
+		{/if}
+
+		<div class="flex justify-end gap-3 pt-2">
+			<Button variant="secondary" onclick={() => (showReparacionExterna = false)} type="button">Cancelar</Button>
+			<Button type="submit" loading={enviandoReparacion}>Confirmar</Button>
 		</div>
 	</form>
 </Modal>
