@@ -95,6 +95,20 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
   Sidebar; se llega desde el botón "Equipos en revisión" de `/unidades`.
 - `EmptyState` con el mensaje exacto de la Excepción 1: "No hay equipos en revisión actualmente."
 
+### `/salidas`
+- **CUs:** CU-57 (salida de equipos/consumibles a técnico), CU-58 (inventario personal del técnico,
+  sección de consulta), CU-59 (validación en vivo de NS), CU-60 (consumibles con 2 decimales),
+  CU-62 (stock insuficiente como banner).
+- **Endpoints:** `getUsers({rol:'TECNICO_TERRENO'})`, `getWarehouses({activa:true})`,
+  `getCatalog({activo:true})`, `getUnits({estado:'En bodega'})`, `getWarehouseStock(id)`,
+  `verificarSerie(ns, id_bodega)`, `crearSalida()`, `listarSalidas()`, `getInventarioTecnico(id)`.
+- Los NS se eligen de un **datalist** con las unidades disponibles de la bodega elegida
+  (escribir para filtrar); igual pasa por la validación en vivo (CU-59). Junto al consumible
+  se muestra el saldo en vivo de la bodega (CU-62, pre-validación). Confirmar deshabilitado
+  mientras haya NS inválidos o sin ítems. Ítem "Salidas" agregado al
+  Sidebar (roles `SUPERUSUARIO`, `ADMIN`, `ADMIN_BODEGA`, `TECNICO_TERRENO` — el técnico solo
+  consulta su inventario; el backend lo valida igual).
+
 ### `/bodegas`
 - **CUs:** CU-41 (crear con responsable), CU-42 (desactivar), CU-44 (listado con stock).
 - **Endpoints:** `getWarehouses()`, `getUsers({activo:true})`, `getEmpresas()`, `createWarehouse()`,

@@ -1,0 +1,44 @@
+@startuml CU58-normal
+title CU-58 — Manteniendo inventario personal del técnico (flujo normal)
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 30 } actor { Margin 12 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Sistema" as sys #lightgrey
+participant "C_SalidasService" as svc
+participant "C_InventarioPersonalService" as ips
+participant "C_TypeORM" as orm
+database "postgres" as db
+actor "Administrador / Técnico" as user
+
+note over sys : Automático: se ejecuta con cada movimiento (CU-57/60 hoy;\nusos en cierres CU-64/68 y devoluciones CU-82 mañana)
+
+sys -> svc : registrarSalida (ítem CONSUMIBLE, cantidad 25.5)
+activate svc
+svc -> ips : sumar(manager, id_tecnico, id_tipo_equipo, 25.5)
+activate ips
+ips -> orm : SELECT inventario_personal_tecnico FOR UPDATE\nWHERE (id_tecnico, id_tipo_equipo)
+db --> orm : fila existente (saldo 10) | sin filas
+alt fila existente
+    ips -> orm : UPDATE cantidad = 10 + 25.5 = 35.5
+else sin filas
+    ips -> orm : INSERT (id_tecnico, id_tipo_equipo, cantidad=25.5) [UNIQUE tecnico+tipo]
+end
+ips --> svc : saldo actualizado
+deactivate ips
+svc -> orm : commitTransaction()
+svc --> user : (B) NS listado de unidad_equipo WHERE estado='Asignado a técnico'\nAND id_tecnico_asignado=:id — (A) saldos por tipo
+
+user -> user : Consulta (GET /api/tecnicos/:id/inventario)
+activate user
+user -> orm : SELECT técnico + roles · NS asignados · saldos (join tipo → unidad_medida)
+orm --> user : { tecnico, ns_asignados[], saldos[] { tipo, saldo, unidad_medida } }
+deactivate user
+@enduml

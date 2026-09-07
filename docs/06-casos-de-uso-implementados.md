@@ -67,6 +67,11 @@
 | 45 | Stock por tipo/estado/unidad de medida | `bodegas` | `/bodegas/[id]` |
 | 46 | Umbral mínimo de stock + alertas | `bodegas`, `companies` | `/bodegas/[id]`, `/dashboard`, `Header` |
 | 47 | Ubicación física al ingresar/reingresar a bodega | `inventario/units` | `/unidades/[id]` |
+| 57 | Salida de bodega a técnico (mixta, atómica) | `salidas` | `/salidas` |
+| 58 | Inventario personal del técnico (consulta) | `salidas` | `/salidas` (sección) |
+| 59 | Validación de NS en salida (en vivo + transacción) | `salidas`, `inventario/units` | `/salidas` |
+| 60 | Salida de consumibles a técnico | `salidas` | `/salidas` |
+| 62 | Validación de stock con bloqueo de fila | `salidas` | `/salidas` (banner) |
 | 72 | Registrando resultado de revisión (Operativo/Reparación externa/Baja) | `inventario/units` | `/unidades/[id]` |
 | 74 | Reacondicionando equipo operativo desde revisión a bodega | `inventario/units` | `/unidades/[id]` |
 | 77 | Consultando listado de equipos en revisión | `inventario/units` | `/unidades/en-revision` |
