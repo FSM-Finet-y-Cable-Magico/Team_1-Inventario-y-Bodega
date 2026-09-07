@@ -17,6 +17,7 @@ import { HistorialEstado } from './entities/historial-estado.entity';
 import { EditarDatosUnidadDto } from './dto/editar-datos-unidad.dto';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { PrestamoExterno } from './entities/prestamo-externo.entity';
+import { ProveedoresService } from '../proveedores/proveedores.service';
 
 const MAC_REGEX = /^([0-9A-Fa-f]{2}[:\-]){5}[0-9A-Fa-f]{2}$/;
 
@@ -30,6 +31,7 @@ export class UnitsService {
     private readonly catalogService: CatalogService,
     private readonly dataSource: DataSource,
     private readonly auditoriaService: AuditoriaService,
+    private readonly proveedoresService: ProveedoresService,
   ) {}
 
   async listarUnidades(
@@ -536,7 +538,9 @@ export class UnitsService {
       ],
       'Instalado en cliente': ['En revisión'],
       'En revisión': ['En bodega', 'En préstamo externo', 'Dado de baja'],
-      'En préstamo externo': ['En bodega'],
+      // CU-76: ratificado por el jefe de grupo (2026-09-07) — el retorno de
+      // reparación externa deja el equipo "En revisión" para reevaluación.
+      'En préstamo externo': ['En bodega', 'En revisión'],
       'Dado de baja': [],
     };
 
@@ -739,6 +743,69 @@ export class UnitsService {
     return { bodega, ubicacionFisica };
   }
 
+  // CU-75: RUT opcional; si viene, valida formato (XXXXXXXX-X) y DV
+  // reutilizando ProveedoresService (CU-49), sin duplicar el algoritmo.
+  private validarRutOpcional(rut: string | undefined): string | null {
+    if (!rut || !rut.trim()) return null;
+    const rutNormalizado = rut.trim().toUpperCase();
+    if (!/^\d{7,8}-[0-9K]$/.test(rutNormalizado)) {
+      throw new BadRequestException('El RUT debe tener el formato XXXXXXXX-X.');
+    }
+    if (!this.proveedoresService.validarRut(rutNormalizado)) {
+      throw new BadRequestException(
+        'El dígito verificador del RUT no es válido.',
+      );
+    }
+    return rutNormalizado;
+  }
+
+  // CU-72/CU-75: valida los datos comunes del envío a reparación externa
+  // (nombre receptor, RUT opcional con DV, fecha de retorno, descripción de falla).
+  private validarDatosReparacionExterna(
+    dto: {
+      nombre_receptor?: string;
+      rut_receptor?: string;
+      fecha_retorno_estimada?: string;
+      descripcion_falla?: string;
+    },
+    hoy: Date,
+  ): {
+    nombreReceptor: string;
+    rutReceptor: string | null;
+    fechaRetorno: Date;
+    descripcionFalla: string;
+  } {
+    const nombreReceptor = dto.nombre_receptor?.trim() ?? '';
+    if (nombreReceptor.length < 3 || nombreReceptor.length > 80) {
+      throw new BadRequestException(
+        'El nombre del receptor debe tener entre 3 y 80 caracteres.',
+      );
+    }
+
+    const rutReceptor = this.validarRutOpcional(dto.rut_receptor);
+
+    if (!dto.fecha_retorno_estimada) {
+      throw new BadRequestException(
+        'La fecha estimada de retorno es obligatoria.',
+      );
+    }
+    const fechaRetorno = new Date(dto.fecha_retorno_estimada);
+    if (isNaN(fechaRetorno.getTime()) || fechaRetorno <= hoy) {
+      throw new BadRequestException(
+        'La fecha estimada de retorno debe ser posterior a la fecha actual.',
+      );
+    }
+
+    const descripcionFalla = dto.descripcion_falla?.trim() ?? '';
+    if (descripcionFalla.length < 5 || descripcionFalla.length > 300) {
+      throw new BadRequestException(
+        'La descripción de la falla debe tener entre 5 y 300 caracteres.',
+      );
+    }
+
+    return { nombreReceptor, rutReceptor, fechaRetorno, descripcionFalla };
+  }
+
   // CU-74: reacondicionamiento directo de un equipo "En revisión" a "En bodega"
   // (atajo del resultado "Operativo" de CU-72, con observación propia opcional).
   async reacondicionarEquipo(
@@ -847,6 +914,215 @@ export class UnitsService {
     };
   }
 
+  // CU-75: envío directo de un equipo "En revisión" a reparación externa
+  // (atajo del resultado "Requiere reparación externa" de CU-72).
+  async enviarAReparacionExterna(
+    idUnidad: number,
+    dto: {
+      nombre_receptor?: string;
+      rut_receptor?: string;
+      fecha_retorno_estimada?: string;
+      descripcion_falla?: string;
+    },
+    actor: any,
+  ) {
+    if (!idUnidad || isNaN(idUnidad)) {
+      throw new BadRequestException('El ID de la unidad es inválido.');
+    }
+
+    const unidad = await this.unitRepository.findOne({
+      where: { id_unidad: idUnidad, id_empresa: actor.id_empresa },
+    });
+    if (!unidad) throw new NotFoundException('El equipo solicitado no existe.');
+
+    // Precondición del CU-75: solo se puede enviar a reparación externa desde 'En revisión'
+    if (unidad.estado !== 'En revisión') {
+      throw new BadRequestException(
+        'Transición de estado no permitida para este equipo.',
+      );
+    }
+
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const { nombreReceptor, rutReceptor, fechaRetorno, descripcionFalla } =
+      this.validarDatosReparacionExterna(dto, hoy);
+
+    const estadoOrigen = unidad.estado;
+    const motivoHistorial = `Envío a reparación externa. Receptor: ${nombreReceptor}. Retorno estimado: ${dto.fecha_retorno_estimada}.`;
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      unidad.estado = 'En préstamo externo';
+      await queryRunner.manager.save(unidad);
+
+      const prestamo = queryRunner.manager.create(PrestamoExterno, {
+        tipo: 'REPARACION_EXTERNA',
+        id_empresa: actor.id_empresa,
+        id_unidad: unidad.id_unidad,
+        nombreReceptor,
+        rutReceptor,
+        fechaRetornoEstimada: fechaRetorno,
+        detalle: descripcionFalla,
+        estado: 'ACTIVO',
+        idUsuarioRegistro: actor.id_usuario,
+      });
+      await queryRunner.manager.save(prestamo);
+
+      const fechaChile = new Date(
+        new Date().toLocaleString('en-US', { timeZone: 'America/Santiago' }),
+      );
+      const nuevoHistorial = this.historyRepository.create({
+        id_unidad: unidad.id_unidad,
+        id_usuario: actor.id_usuario,
+        estadoAnterior: estadoOrigen,
+        estadoNuevo: 'En préstamo externo',
+        motivo: motivoHistorial,
+        fechaHora: fechaChile,
+      });
+      await queryRunner.manager.save(nuevoHistorial);
+
+      await queryRunner.commitTransaction();
+    } catch {
+      await queryRunner.rollbackTransaction();
+      throw new BadRequestException(
+        'Error al registrar el envío a reparación externa. Intente nuevamente.',
+      );
+    } finally {
+      await queryRunner.release();
+    }
+
+    await this.auditoriaService.create({
+      id_usuario: actor.id_usuario,
+      accion: 'CAMBIAR_ESTADO',
+      entidad_afectada: 'unidad_equipo',
+      id_entidad_afectada: unidad.id_unidad,
+      valor_anterior: { estado: estadoOrigen },
+      valor_nuevo: { estado: 'En préstamo externo' },
+    });
+
+    return {
+      success: true,
+      estadoActual: unidad.estado,
+      message: 'El equipo fue enviado a reparación externa correctamente.',
+    };
+  }
+
+  // CU-76: registrar el retorno de un equipo desde reparación externa.
+  // El equipo pasa a "En revisión" siempre (reparado o no), el préstamo se cierra.
+  async registrarRetornoReparacion(
+    idUnidad: number,
+    dto: {
+      resultado?: 'REPARADO' | 'NO_REPARADO';
+      observacion?: string;
+    },
+    actor: any,
+  ) {
+    if (!idUnidad || isNaN(idUnidad)) {
+      throw new BadRequestException('El ID de la unidad es inválido.');
+    }
+
+    const unidad = await this.unitRepository.findOne({
+      where: { id_unidad: idUnidad, id_empresa: actor.id_empresa },
+    });
+    if (!unidad) throw new NotFoundException('El equipo solicitado no existe.');
+
+    // Precondición del CU-76: 'En préstamo externo' con préstamo de
+    // reparación externa activo
+    if (unidad.estado !== 'En préstamo externo') {
+      throw new BadRequestException(
+        'Transición de estado no permitida para este equipo.',
+      );
+    }
+
+    const prestamoRepo = this.dataSource.getRepository(PrestamoExterno);
+    const prestamo = await prestamoRepo.findOne({
+      where: {
+        id_unidad: unidad.id_unidad,
+        tipo: 'REPARACION_EXTERNA',
+        estado: 'ACTIVO',
+      },
+    });
+    if (!prestamo) {
+      throw new BadRequestException(
+        'Transición de estado no permitida para este equipo.',
+      );
+    }
+
+    if (!['REPARADO', 'NO_REPARADO'].includes(dto.resultado ?? '')) {
+      throw new BadRequestException(
+        'Debe seleccionar el resultado del servicio (Reparado o No reparado).',
+      );
+    }
+
+    // CU-76 Excepción: mensaje exacto del caso de uso
+    const observacion = dto.observacion?.trim() ?? '';
+    if (observacion.length < 5) {
+      throw new BadRequestException(
+        'La observación debe tener al menos 5 caracteres.',
+      );
+    }
+    if (observacion.length > 300) {
+      throw new BadRequestException(
+        'La observación no puede superar los 300 caracteres.',
+      );
+    }
+
+    const estadoOrigen = unidad.estado;
+    const motivoHistorial = `Retorno de reparación externa: ${dto.resultado === 'REPARADO' ? 'Reparado' : 'No reparado'}. ${observacion}`;
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      unidad.estado = 'En revisión';
+      await queryRunner.manager.save(unidad);
+
+      prestamo.estado = 'CERRADO';
+      prestamo.fechaRetornoReal = new Date();
+      prestamo.resultado = dto.resultado;
+      await queryRunner.manager.save(prestamo);
+
+      const fechaChile = new Date(
+        new Date().toLocaleString('en-US', { timeZone: 'America/Santiago' }),
+      );
+      const nuevoHistorial = this.historyRepository.create({
+        id_unidad: unidad.id_unidad,
+        id_usuario: actor.id_usuario,
+        estadoAnterior: estadoOrigen,
+        estadoNuevo: 'En revisión',
+        motivo: motivoHistorial,
+        fechaHora: fechaChile,
+      });
+      await queryRunner.manager.save(nuevoHistorial);
+
+      await queryRunner.commitTransaction();
+    } catch {
+      await queryRunner.rollbackTransaction();
+      throw new BadRequestException(
+        'Error al registrar el retorno de reparación externa. Intente nuevamente.',
+      );
+    } finally {
+      await queryRunner.release();
+    }
+
+    await this.auditoriaService.create({
+      id_usuario: actor.id_usuario,
+      accion: 'CAMBIAR_ESTADO',
+      entidad_afectada: 'unidad_equipo',
+      id_entidad_afectada: unidad.id_unidad,
+      valor_anterior: { estado: estadoOrigen },
+      valor_nuevo: { estado: 'En revisión', resultado: dto.resultado },
+    });
+
+    return {
+      success: true,
+      estadoActual: unidad.estado,
+      message: 'El retorno de reparación externa fue registrado correctamente.',
+    };
+  }
+
   async registrarResultadoRevision(
     unitId: number,
     dto: {
@@ -854,6 +1130,7 @@ export class UnitsService {
       id_bodega_actual?: number;
       ubicacion_fisica?: string;
       nombre_receptor?: string;
+      rut_receptor?: string;
       fecha_retorno_estimada?: string;
       descripcion_falla?: string;
       motivo?: string;
@@ -903,36 +1180,16 @@ export class UnitsService {
       unidad.ubicacionFisica = ubicacion;
       motivoHistorial = `Resultado de revisión: Operativo. Ubicación física: ${ubicacion ?? 'no registrada'}.`;
     } else if (dto.resultado === 'REPARACION_EXTERNA') {
-      // (B)
-      const nombreReceptor = dto.nombre_receptor?.trim() ?? '';
-      if (nombreReceptor.length < 3 || nombreReceptor.length > 80) {
-        throw new BadRequestException(
-          'El nombre del receptor debe tener entre 3 y 80 caracteres.',
-        );
-      }
-      if (!dto.fecha_retorno_estimada) {
-        throw new BadRequestException(
-          'La fecha estimada de retorno es obligatoria.',
-        );
-      }
-      const fechaRetorno = new Date(dto.fecha_retorno_estimada);
-      if (isNaN(fechaRetorno.getTime()) || fechaRetorno <= hoy) {
-        throw new BadRequestException(
-          'La fecha estimada de retorno debe ser posterior a la fecha actual.',
-        );
-      }
-      const descripcionFalla = dto.descripcion_falla?.trim() ?? '';
-      if (descripcionFalla.length < 5 || descripcionFalla.length > 300) {
-        throw new BadRequestException(
-          'La descripción de la falla debe tener entre 5 y 300 caracteres.',
-        );
-      }
+      // CU-75: misma validación (+ RUT opcional) que usa el envío directo a reparación externa
+      const { nombreReceptor, rutReceptor, fechaRetorno, descripcionFalla } =
+        this.validarDatosReparacionExterna(dto, hoy);
       nuevoEstado = 'En préstamo externo';
       prestamoData = {
         tipo: 'REPARACION_EXTERNA',
         id_empresa: actor.id_empresa,
         id_unidad: unidad.id_unidad,
         nombreReceptor,
+        rutReceptor,
         fechaRetornoEstimada: fechaRetorno,
         detalle: descripcionFalla,
         estado: 'ACTIVO',

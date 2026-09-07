@@ -50,6 +50,10 @@ export class PrestamoExterno {
   @Column({ type: 'varchar', length: 20, name: 'estado', default: 'ACTIVO' })
   estado!: 'ACTIVO' | 'CERRADO';
 
+  // CU-76: resultado del servicio al registrar el retorno de reparación externa
+  @Column({ type: 'varchar', length: 20, name: 'resultado', nullable: true })
+  resultado?: 'REPARADO' | 'NO_REPARADO' | null;
+
   @Column({ type: 'integer', name: 'id_usuario_registro' })
   idUsuarioRegistro!: number;
 }

@@ -1,0 +1,107 @@
+@startuml CU75-normal
+title CU-75 — Enviando equipo a reparación externa (flujo normal)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega" as user
+participant "V_FichaUnidad" as view
+participant "C_RolesGuard" as guard
+participant "C_UnitsController" as ctrl
+participant "C_UnitsService" as svc
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as uent
+participant "prestamo_externo" as pent
+participant "historial_estado_equipo" as hent
+participant "log_auditoria" as aent
+
+user -> view : Abre unidad en estado\n"En revisión" y elige\n"Enviar a reparación externa"
+activate view
+
+view -> guard : POST /unidades/:id/reparacion-externa\n{ nombre_receptor, rut_receptor?,\nfecha_retorno_estimada, descripcion_falla }
+activate guard
+guard --> view : Autorizado\n(ADMIN_BODEGA / ADMIN / SUPERUSUARIO)
+deactivate guard
+
+view -> ctrl : enviarAReparacionExterna(id, body, actor)
+activate ctrl
+
+ctrl -> svc : enviarAReparacionExterna(idUnidad, dto, actor)
+activate svc
+
+svc -> orm : findOne(id_unidad, id_empresa)
+activate orm
+orm -> uent : SELECT unidad_equipo\nWHERE id_unidad = :id AND id_empresa = :idEmpresa
+activate uent
+uent --> orm : Datos unidad (estado = 'En revisión')
+deactivate uent
+orm --> svc : unidad (existe)
+deactivate orm
+
+svc -> svc : Precondición: estado === 'En revisión'\n(si no → 400 'Transición de estado no\npermitida para este equipo.')
+activate svc
+deactivate svc
+
+svc -> svc : validarDatosReparacionExterna(dto, hoy):\nnombre receptor (3-80), RUT opcional\n(formato + DV, helper duplicado de CU-49),\nfecha retorno (> hoy), descripción falla (5-300)
+activate svc
+deactivate svc
+
+svc -> orm : queryRunner.startTransaction()\nmanager.save(unidad { estado: 'En préstamo externo' })
+activate orm
+orm -> uent : UPDATE unidad_equipo\nSET estado = 'En préstamo externo'\nWHERE id_unidad = :id
+activate uent
+uent --> orm : Unidad actualizada
+deactivate uent
+orm --> svc : unidad guardada
+deactivate orm
+
+svc -> orm : manager.create+save(PrestamoExterno\n{ tipo: 'REPARACION_EXTERNA', nombreReceptor,\nrutReceptor, fechaRetornoEstimada, detalle,\nestado: 'ACTIVO', idUsuarioRegistro })
+activate orm
+orm -> pent : INSERT prestamo_externo
+activate pent
+pent --> orm : Registro insertado
+deactivate pent
+orm --> svc : préstamo guardado
+deactivate orm
+
+svc -> orm : manager.save(historial\n{ estadoAnterior: 'En revisión',\nestadoNuevo: 'En préstamo externo',\nmotivo: 'Envío a reparación externa: ...' })
+activate orm
+orm -> hent : INSERT historial_estado_equipo
+activate hent
+hent --> orm : Registro insertado
+deactivate hent
+orm --> svc : historial guardado
+deactivate orm
+
+svc -> orm : queryRunner.commitTransaction()
+activate orm
+orm --> svc : Transacción confirmada
+deactivate orm
+
+svc -> orm : auditoriaService.create({ accion:\n'CAMBIAR_ESTADO', entidad: 'unidad_equipo',\nvalor_anterior: { estado: 'En revisión' },\nvalor_nuevo: { estado: 'En préstamo externo' } })
+activate orm
+orm -> aent : INSERT log_auditoria
+activate aent
+aent --> orm : Registro insertado
+deactivate aent
+orm --> svc : auditoría guardada
+deactivate orm
+
+svc --> ctrl : 201 Created { success: true,\nestadoActual: 'En préstamo externo' }
+deactivate svc
+
+ctrl --> view : 201 Created
+deactivate ctrl
+
+view --> user : Ficha actualizada: estado\n"En préstamo externo", historial actualizado
+deactivate view
+
+@enduml

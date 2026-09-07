@@ -158,6 +158,36 @@ export class UnitsController {
     return this.unitsService.reacondicionarEquipo(parseInt(id), body, actor);
   }
 
+  // CU-75: enviar equipo "En revisión" a reparación externa
+  @Post(':id/reparacion-externa')
+  @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
+  async enviarAReparacionExterna(
+    @Param('id') id: string,
+    @Body() body: any,
+    @CurrentUser() actor: any,
+  ) {
+    return this.unitsService.enviarAReparacionExterna(
+      parseInt(id),
+      body,
+      actor,
+    );
+  }
+
+  // CU-76: registrar retorno de reparación externa (equipo → "En revisión")
+  @Post(':id/retorno-reparacion')
+  @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
+  async registrarRetornoReparacion(
+    @Param('id') id: string,
+    @Body() body: any,
+    @CurrentUser() actor: any,
+  ) {
+    return this.unitsService.registrarRetornoReparacion(
+      parseInt(id),
+      body,
+      actor,
+    );
+  }
+
   @Patch(':id')
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
   async editarDatosUnidad(
