@@ -1,0 +1,56 @@
+@startuml CU49-exc-rut-duplicado
+title CU-49 — Creando proveedor (excepción: RUT ya existe)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 25
+skinparam ActorPadding 20
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Admin/Superusuario" as user
+participant "V_Proveedores" as view
+participant "C_ProveedoresController" as ctrl
+participant "C_ProveedoresService" as svc
+participant "C_TypeORM" as orm
+participant "proveedor" as pent
+
+user -> view : Completa formulario\ncon RUT existente
+activate view
+
+view -> ctrl : POST /api/proveedores\n{ nombre_comercial, rut, ... }
+activate ctrl
+
+ctrl -> svc : create(dto, actorId)
+activate svc
+
+svc -> svc : validarRut(rut)\n(DV correcto)
+activate svc
+deactivate svc
+
+svc -> orm : findOne(proveedor\npor rut)
+activate orm
+
+orm -> pent : SELECT proveedor\nWHERE rut = ?
+activate pent
+pent --> orm : Proveedor existente
+deactivate pent
+
+orm --> svc : Proveedor (ya existe)
+deactivate orm
+
+svc --> ctrl : throw ConflictException\n('Ya existe un proveedor con ese RUT.')
+deactivate svc
+
+ctrl --> view : 409 Conflict\n'Ya existe un proveedor con ese RUT.'
+deactivate ctrl
+
+view --> user : Muestra error:\n"Ya existe un proveedor con ese RUT."
+deactivate view
+
+@enduml
