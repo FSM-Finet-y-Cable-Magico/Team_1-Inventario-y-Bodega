@@ -16,7 +16,7 @@ const ACCIONES_G3: Record<string, { estado: string; origenes: string[] }> = {
     'BAJA_EN_TERRENO': { estado: 'Dado de baja', origenes: ['En bodega', 'En revisión'] },
 };
 
-// Acuerdo con G3 (06-sept-2026): el diagnóstico del retiro para revisión es la
+// Acuerdo con G3 (08-sept-2026): el diagnóstico del retiro para revisión es la
 // categoria_falla declarada en el cierre; si no viene, queda este valor.
 const DIAGNOSTICO_FALLBACK_G3 = 'Causa desconocida';
 
