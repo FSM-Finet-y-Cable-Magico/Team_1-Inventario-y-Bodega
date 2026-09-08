@@ -68,7 +68,10 @@ export class DonacionesService {
   }
 
   // CU-80: validaciones del formulario con mensajes acumulados (estilo catálogo)
-  private validarFormulario(dto: CreateDonacionDto): {
+  private validarFormulario(
+    dto: CreateDonacionDto,
+    exigirUnidades = true,
+  ): {
     nombre: string;
     rut: string;
     fecha: string;
@@ -113,7 +116,10 @@ export class DonacionesService {
       );
     }
 
-    if (!Array.isArray(dto.ids_unidades) || dto.ids_unidades.length === 0) {
+    if (
+      exigirUnidades &&
+      (!Array.isArray(dto.ids_unidades) || dto.ids_unidades.length === 0)
+    ) {
       errores.push(
         'Debe seleccionar al menos un equipo para incluir en la donación.',
       );
@@ -172,6 +178,14 @@ export class DonacionesService {
       motivo_baja: u.motivoBaja ?? null,
       estado: u.estado,
     };
+  }
+
+  // CU-80: valida solo los datos de la institución, sin registrar nada. La usa el
+  // flujo encadenado de la baja por donación (CU-78 → CU-80) para comprobarlos
+  // ANTES de dar de baja el equipo, porque la baja es irreversible.
+  validarDatos(dto: CreateDonacionDto): { valido: true } {
+    this.validarFormulario(dto, false);
+    return { valido: true };
   }
 
   async registrar(

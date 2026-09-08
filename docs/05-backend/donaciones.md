@@ -10,6 +10,7 @@ Aislamiento por empresa manual en el service (patrón de `transferencias`/`bajas
 | Método | Ruta | Descripción |
 |--------|------|-------------|
 | POST | `/api/donaciones` | Registra la donación (cabecera + detalles + auditoría en una transacción). |
+| POST | `/api/donaciones/validar` | Comprueba los datos de la institución **sin registrar nada** (lo usa el flujo encadenado de la baja). |
 | GET | `/api/donaciones` | Donaciones de la empresa del actor (el Superusuario ve ambas). |
 | GET | `/api/donaciones/candidatas` | Unidades elegibles: `Dado de baja` con `motivo_baja = 'Donación a institución'` y sin donación previa. |
 | GET | `/api/donaciones/:id/pdf` | Resumen descargable (`application/pdf`, `Content-Disposition: attachment`). |
@@ -67,8 +68,13 @@ registró, fecha de emisión y la tabla de equipos (NS, tipo, marca, modelo, fec
 
 Ambos llaman a `POST /api/donaciones`; la validación es la misma, porque el endpoint exige que las
 unidades ya estén `Dado de baja` con motivo `Donación a institución`. Por eso el flujo encadenado
-**registra primero la baja** y después la donación: si la segunda llamada falla, el frontend avisa
-de que el equipo ya quedó dado de baja y que la donación puede completarse desde la pestaña.
+**registra primero la baja** y después la donación.
+
+Como la baja es irreversible, antes de ejecutarla el frontend llama a **`POST /api/donaciones/validar`**
+con los datos de la institución: si el RUT tiene un dígito verificador incorrecto, la fecha es futura
+o el nombre no cumple el largo, el error se muestra en el formulario y **el equipo no se da de baja**.
+Sin esa comprobación previa el cliente solo validaba el formato del RUT y una baja irreversible podía
+quedar registrada con una donación que después fallaba.
 
 ## 5. Auditoría
 

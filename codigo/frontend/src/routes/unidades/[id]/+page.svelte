@@ -4,7 +4,7 @@
 	import { page } from '$app/stores';
 	import {
 		getUnit, changeUnitState, getUnitHistory, getWarehouses, updateUnit,
-		registrarBaja, registrarDonacion,
+		registrarBaja, registrarDonacion, validarDatosDonacion,
 		registrarResultadoRevision, reacondicionarUnidad, enviarAReparacionExterna, registrarRetornoReparacion
 	} from '$lib/api/index';
 	import { userRoles } from '$lib/stores/auth';
@@ -230,7 +230,7 @@
 	// CU-78 Excepción 3: la descripción es obligatoria (5-200) cuando el motivo es 'Otro'.
 	// CU-78 Excepción 2: si el equipo tiene garantía vigente, la confirmación avisa
 	// y permite continuar de todas formas o cancelar.
-	function solicitarConfirmacionBaja() {
+	async function solicitarConfirmacionBaja() {
 		bajaError = '';
 		if (!bajaForm.motivo) {
 			bajaError = 'Debe seleccionar un motivo de baja.';
@@ -249,19 +249,23 @@
 			return;
 		}
 
+		// CU-80: la baja es irreversible, así que los datos de la donación se validan
+		// contra el backend ANTES de ejecutarla (el dígito verificador del RUT y el
+		// resto de reglas solo las conoce el servidor)
 		if (pasoDonacion) {
-			const institucion = donacionForm.nombre_institucion.trim();
-			if (institucion.length < 3 || institucion.length > 100) {
-				bajaError = 'El nombre de la institución receptora debe tener entre 3 y 100 caracteres.';
+			registrandoBaja = true;
+			try {
+				await validarDatosDonacion({
+					nombre_institucion: donacionForm.nombre_institucion.trim(),
+					rut_institucion: donacionForm.rut_institucion.trim(),
+					fecha_donacion: donacionForm.fecha_donacion,
+					numero_resolucion: donacionForm.numero_resolucion.trim() || undefined
+				});
+			} catch (err: unknown) {
+				bajaError = err instanceof Error ? err.message : 'Los datos de la donación no son válidos.';
 				return;
-			}
-			if (!/^\d{7,8}-[\dkK]$/.test(donacionForm.rut_institucion.trim())) {
-				bajaError = 'El RUT de la institución debe tener el formato XXXXXXXX-X.';
-				return;
-			}
-			if (!donacionForm.fecha_donacion) {
-				bajaError = 'La fecha de donación es obligatoria.';
-				return;
+			} finally {
+				registrandoBaja = false;
 			}
 		}
 

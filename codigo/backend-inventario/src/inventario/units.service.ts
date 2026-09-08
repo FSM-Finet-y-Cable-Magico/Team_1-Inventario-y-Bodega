@@ -1435,6 +1435,9 @@ export class UnitsService {
       fecha_venc_garantia: unidad.fechaVencGarantia ?? null,
       garantia: alertaGarantia,
       ubicacion_fisica: unidad.ubicacionFisica ?? null,
+      // CU-78: motivo con el que se registró la baja definitiva (si aplica)
+      motivo_baja: unidad.motivoBaja ?? null,
+      motivo_baja_detalle: unidad.motivoBajaDetalle ?? null,
       observaciones: unidad.observaciones ?? null,
       numero_poste: unidad.numeroPoste ?? null,
       id_cliente_instalado: unidad.id_cliente_instalado ?? null,

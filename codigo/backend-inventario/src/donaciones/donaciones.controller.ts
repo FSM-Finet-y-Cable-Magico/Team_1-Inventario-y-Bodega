@@ -29,6 +29,13 @@ export class DonacionesController {
     return this.donacionesService.registrar(dto, actor);
   }
 
+  // CU-80: comprobación previa de los datos de la institución (no registra nada)
+  @Post('validar')
+  @Roles('ADMIN', 'SUPERUSUARIO')
+  validar(@Body() dto: CreateDonacionDto) {
+    return this.donacionesService.validarDatos(dto);
+  }
+
   @Get()
   @Roles('ADMIN', 'SUPERUSUARIO')
   listar(@CurrentUser() actor: ActorJwt) {

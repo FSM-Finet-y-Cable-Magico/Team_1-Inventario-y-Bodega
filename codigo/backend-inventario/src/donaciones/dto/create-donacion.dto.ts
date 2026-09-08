@@ -16,6 +16,10 @@ export class CreateDonacionDto {
   @IsString()
   numero_resolucion?: string;
 
+  // Opcional en el DTO para que la validación previa (POST /donaciones/validar)
+  // pueda comprobar solo los datos de la institución; al registrar, el service
+  // exige al menos un equipo con el mensaje del caso de uso.
+  @IsOptional()
   @IsArray()
   ids_unidades: number[];
 }

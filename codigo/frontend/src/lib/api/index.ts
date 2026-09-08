@@ -191,6 +191,17 @@ export function registrarDonacion(data: {
 	return api.post<any>('/donaciones', data);
 }
 
+// CU-80: comprueba los datos de la institución sin registrar nada. El flujo
+// encadenado de la baja por donación la usa antes de dar de baja el equipo.
+export function validarDatosDonacion(data: {
+	nombre_institucion: string;
+	rut_institucion: string;
+	fecha_donacion: string;
+	numero_resolucion?: string;
+}) {
+	return api.post<{ valido: true }>('/donaciones/validar', data);
+}
+
 // CU-80: el PDF viaja autenticado, por eso usa la descarga del cliente (no <a href>)
 export function descargarPdfDonacion(id: number) {
 	return api.download(`/donaciones/${id}/pdf`, `donacion-${id}.pdf`);
