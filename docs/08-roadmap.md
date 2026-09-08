@@ -13,11 +13,8 @@ no esté reflejado aquí.
 ## Resumen
 
 - **Total de casos de uso:** 96
-- **Implementados:** 69 (CU-01 a CU-46, CU-49 a CU-62, CU-72, CU-74, CU-75, CU-76, CU-77, CU-85, CU-86, CU-88, CU-89, CU-91)
-- **Pendientes:** 27 (CU-47, CU-48, CU-61, CU-63 a CU-71, CU-73, CU-78 a CU-84, CU-87, CU-90, CU-92 a CU-96)
-- **Implementados (Incremento 1):** 46 (CU-01 a CU-46)
-- **Implementados (Incremento 2):** CU-47, CU-78 a CU-84
-- **Pendientes:** 42
+- **Implementados:** 76 (CU-01 a CU-46, CU-49 a CU-62, CU-72, CU-74 a CU-77, CU-78 a CU-84, CU-85, CU-86, CU-88, CU-89, CU-91)
+- **Pendientes:** 20 (CU-47, CU-48, CU-61, CU-63 a CU-71, CU-73, CU-87, CU-90, CU-92 a CU-96)
 
 ## Leyenda
 
