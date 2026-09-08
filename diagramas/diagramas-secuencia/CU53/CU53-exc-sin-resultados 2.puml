@@ -1,0 +1,52 @@
+@startuml CU53-ConsultarOrdenesIngreso-Exc-SinResultados
+title CU-53 — Consultando órdenes de ingreso (excepción: sin coincidencias con los filtros)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+skinparam sequence { MessageAlign center  LifeLineBorderColor black }
+hide footbox
+
+actor "Admin/AdminBodega/\nSuperusuario" as user
+participant "V_OrdenesIngreso" as view
+participant "C_OrdenesIngresoController" as ctrl
+participant "C_OrdenesIngresoService" as svc
+participant "C_TypeORM" as orm
+database "postgres" as db
+
+user -> view : Aplica filtros que no\ncoinciden con ninguna orden\n(p. ej. estado = 'Completada')
+activate view
+
+view -> view : $effect detecta el cambio\nde filtro y recarga el listado
+
+view -> ctrl : GET /api/ordenes-ingreso\n?estado=Completada
+activate ctrl
+
+ctrl -> svc : findAll(actor, { estado })
+activate svc
+
+svc -> orm : createQueryBuilder + andWhere(estado)
+activate orm
+orm -> db : SELECT * FROM orden_ingreso o\nWHERE o.id_empresa_destino = ?\nAND o.estado = 'Completada'\nORDER BY o.id_orden DESC
+db --> orm : [] (sin filas)
+orm --> svc : []
+deactivate orm
+
+svc --> ctrl : []
+deactivate svc
+
+ctrl --> view : 200 OK\n[]
+deactivate ctrl
+
+note right of view
+  No es un error: el CU solo consulta,
+  así que la respuesta es 200 con
+  listado vacío, no un 404
+end note
+
+view --> user : EmptyState:\n"No se encontraron órdenes\ncon los filtros seleccionados."
+deactivate view
+
+@enduml

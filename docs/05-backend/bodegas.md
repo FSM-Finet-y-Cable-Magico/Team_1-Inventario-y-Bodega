@@ -47,7 +47,8 @@ el aislamiento se hace manualmente en el service con `isSuperuser` y `verificarP
 - Resuelve responsable: explícito (`id_usuario_responsable`, CU-41) o respaldo = creador según
   log de auditoría `CREAR`.
 - `resumen_stock_total` = `SUM(cantidad_disponible)` de consumibles + `COUNT` de unidades
-  `'En bodega'`.
+  asignadas a la bodega. **CU-79:** el conteo excluye las unidades `'Dado de baja'`
+  (`estado <> 'Dado de baja'`), que quedan fuera del inventario activo.
 - Nombre de empresa hardcodeado: `id_empresa === 1 ? 'Finet' : 'Cable Mágico'`.
 
 ### `findActivasByEmpresa` (CU-20)
@@ -55,7 +56,8 @@ el aislamiento se hace manualmente en el service con `isSuperuser` y `verificarP
   (para elegir destino de transferencia).
 
 ### `getStock` (CU-45)
-- Verifica pertenencia. `stockPorTipo`:
+- Verifica pertenencia. **CU-79:** la consulta de unidades excluye las `'Dado de baja'`.
+  `stockPorTipo`:
   - **Unidades serializadas:** `desglose_estados` (contadores por estado) y
     `cantidad_disponible` = unidades físicas `'En bodega'`.
   - **Consumibles:** si el tipo es serializado, la fila `stock_consumible` solo guarda el umbral

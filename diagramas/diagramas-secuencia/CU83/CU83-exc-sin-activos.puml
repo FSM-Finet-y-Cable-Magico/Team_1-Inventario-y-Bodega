@@ -1,0 +1,50 @@
+@startuml CU83-exc-sin-activos
+title CU-83 — Excepción 1: no hay préstamos externos activos
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador" as user
+participant "V_Prestamos" as view
+participant "C_PrestamosController" as ctrl
+participant "C_PrestamosService" as svc
+participant "C_TypeORM" as orm
+participant "prestamo_externo" as pent
+
+user -> view : Abre /prestamos en una empresa\nsin préstamos activos
+activate view
+
+view -> ctrl : GET /api/prestamos?estado=Activo
+activate ctrl
+ctrl -> svc : listar({ estado: 'Activo' }, actor)
+activate svc
+
+svc -> orm : find({ estado: 'Activo', id_empresa })
+activate orm
+orm -> pent : SELECT prestamo_externo\nWHERE estado = 'Activo'\nAND id_empresa = :empresa
+activate pent
+pent --> orm : Sin resultados
+deactivate pent
+orm --> svc : []
+deactivate orm
+
+svc --> ctrl : 200 [] (lista vacía, no es error)
+deactivate svc
+ctrl --> view : 200 OK
+deactivate ctrl
+
+view -> view : filtro = 'Activo' && lista vacía
+activate view
+view --> user : EmptyState:\n'No hay préstamos externos activos actualmente.'
+deactivate view
+deactivate view
+
+@enduml

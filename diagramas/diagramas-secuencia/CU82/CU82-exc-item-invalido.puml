@@ -1,0 +1,49 @@
+@startuml CU82-exc-item-invalido
+title CU-82 — Excepción: ítem de otro préstamo o ya retornado (rollback completo)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega" as user
+participant "V_Prestamos" as view
+participant "C_PrestamosService" as svc
+participant "C_TypeORM" as orm
+participant "prestamo_detalle" as dent
+participant "unidad_equipo" as uent
+participant "stock_consumible" as sent
+
+user -> view : Confirma un retorno con un ítem válido\ny otro que no pertenece al préstamo
+activate view
+
+view -> svc : POST /api/prestamos/2/retorno\n{ items: [{ id_detalle: 4 },\n{ id_detalle: 9999 }] }
+activate svc
+
+svc -> orm : findBy({ id_prestamo: 2 })
+activate orm
+orm -> dent : SELECT prestamo_detalle WHERE id_prestamo = 2
+activate dent
+dent --> orm : Ítems reales del préstamo
+deactivate dent
+orm --> svc : el ítem 9999 no está
+deactivate orm
+
+svc -> svc : (CU-84) trazabilidad: se acumulan los errores\nde todos los ítems antes de tocar la base
+activate svc
+svc --> view : 400 BadRequestException\n'El ítem #9999 no pertenece al préstamo PE-00002.'
+deactivate svc
+deactivate svc
+
+note over uent, sent : Ningún cambio: la unidad sigue 'En préstamo externo',\ncantidad_retornada sigue en 0 y el stock no se toca
+
+view --> user : Error y listado sin registrar
+deactivate view
+
+@enduml

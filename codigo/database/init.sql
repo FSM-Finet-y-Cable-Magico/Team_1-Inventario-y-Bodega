@@ -89,6 +89,8 @@ CREATE TABLE IF NOT EXISTS unidad_equipo (
     proveedor              VARCHAR(80),
     observaciones          VARCHAR(300),
     ubicacion_fisica       VARCHAR(60),
+    motivo_baja            VARCHAR(40),
+    motivo_baja_detalle    VARCHAR(200),
     CONSTRAINT fk_unidad_tipo_equipo FOREIGN KEY (id_tipo_equipo) REFERENCES tipo_equipo (id_tipo_equipo)
 );
 
@@ -143,6 +145,112 @@ CREATE TABLE IF NOT EXISTS movimiento_inventario (
     referencia_id         INTEGER
 );
 
+-- Proveedores (CU-49) — globales, sin id_empresa (compartidos entre ambas empresas)
+CREATE TABLE IF NOT EXISTS proveedor (
+    id_proveedor     SERIAL PRIMARY KEY,
+    nombre_comercial VARCHAR(100) NOT NULL,
+    rut              VARCHAR(12) NOT NULL UNIQUE,
+    nombre_contacto  VARCHAR(80),
+    telefono         VARCHAR(15),
+    email            VARCHAR(150),
+    activa           BOOLEAN DEFAULT TRUE,
+    fecha_creacion   TIMESTAMPTZ DEFAULT now()
+);
+
+-- Tabla puente N:M proveedor ↔ tipo_equipo (CU-49)
+CREATE TABLE IF NOT EXISTS proveedor_tipo_equipo (
+    id               SERIAL PRIMARY KEY,
+    id_proveedor     INTEGER NOT NULL,
+    id_tipo_equipo   INTEGER NOT NULL,
+    CONSTRAINT fk_pte_proveedor   FOREIGN KEY (id_proveedor)   REFERENCES proveedor (id_proveedor) ON DELETE CASCADE,
+    CONSTRAINT fk_pte_tipo_equipo FOREIGN KEY (id_tipo_equipo) REFERENCES tipo_equipo (id_tipo_equipo) ON DELETE CASCADE,
+    CONSTRAINT uq_pte             UNIQUE (id_proveedor, id_tipo_equipo)
+);
+
+-- Órdenes de ingreso desde proveedor (CU-52)
+CREATE TABLE IF NOT EXISTS orden_ingreso (
+    id_orden             SERIAL PRIMARY KEY,
+    correlativo          VARCHAR(10) NOT NULL UNIQUE,
+    id_proveedor         INTEGER NOT NULL,
+    numero_documento     VARCHAR(30) NOT NULL,
+    fecha_documento      DATE NOT NULL,
+    id_empresa_destino   INTEGER NOT NULL,
+    id_bodega_destino    INTEGER NOT NULL,
+    estado               VARCHAR(30) NOT NULL DEFAULT 'Pendiente de recepción',
+    id_usuario_registro  INTEGER NOT NULL,
+    fecha_creacion       TIMESTAMPTZ DEFAULT now(),
+    CONSTRAINT fk_oi_proveedor FOREIGN KEY (id_proveedor) REFERENCES proveedor (id_proveedor),
+    CONSTRAINT fk_oi_bodega    FOREIGN KEY (id_bodega_destino) REFERENCES bodega (id_bodega)
+);
+
+-- Detalle de ítems de una orden de ingreso (CU-52)
+CREATE TABLE IF NOT EXISTS orden_ingreso_detalle (
+    id_detalle           SERIAL PRIMARY KEY,
+    id_orden             INTEGER NOT NULL,
+    id_tipo_equipo       INTEGER NOT NULL,
+    cantidad_esperada    INTEGER NOT NULL CHECK (cantidad_esperada > 0),
+    garantia_dias        INTEGER NOT NULL DEFAULT 0 CHECK (garantia_dias >= 0 AND garantia_dias <= 3650),
+    cantidad_recibida    INTEGER NOT NULL DEFAULT 0,
+    CONSTRAINT fk_oid_orden       FOREIGN KEY (id_orden)       REFERENCES orden_ingreso (id_orden) ON DELETE CASCADE,
+    CONSTRAINT fk_oid_tipo_equipo FOREIGN KEY (id_tipo_equipo) REFERENCES tipo_equipo (id_tipo_equipo)
+);
+
+-- CU-78: solicitudes de baja definitiva generadas por técnicos de terreno
+CREATE TABLE IF NOT EXISTS solicitud_baja (
+    id_solicitud            SERIAL PRIMARY KEY,
+    id_unidad               INTEGER NOT NULL,
+    id_empresa              INTEGER,
+    id_usuario_solicitante  INTEGER NOT NULL,
+    motivo                  VARCHAR(40) NOT NULL,
+    motivo_otro             VARCHAR(200),
+    estado                  VARCHAR(30) NOT NULL,
+    id_usuario_aprobador    INTEGER,
+    fecha_solicitud         TIMESTAMPTZ DEFAULT now(),
+    fecha_resolucion        TIMESTAMPTZ,
+    motivo_rechazo          VARCHAR(200),
+    CONSTRAINT fk_solicitud_baja_unidad FOREIGN KEY (id_unidad) REFERENCES unidad_equipo (id_unidad)
+);
+
+-- CU-80: donaciones de equipos dados de baja
+CREATE TABLE IF NOT EXISTS donacion (
+    id_donacion        SERIAL PRIMARY KEY,
+    nombre_institucion VARCHAR(100) NOT NULL,
+    rut_institucion    VARCHAR(12) NOT NULL,
+    fecha_donacion     DATE NOT NULL,
+    numero_resolucion  VARCHAR(30),
+    id_usuario         INTEGER NOT NULL,
+    id_empresa         INTEGER,
+    fecha_creacion     TIMESTAMPTZ DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS donacion_detalle (
+    id_detalle   SERIAL PRIMARY KEY,
+    id_donacion  INTEGER NOT NULL,
+    id_unidad    INTEGER NOT NULL,
+    CONSTRAINT fk_donacion_detalle_donacion FOREIGN KEY (id_donacion) REFERENCES donacion (id_donacion),
+    CONSTRAINT fk_donacion_detalle_unidad   FOREIGN KEY (id_unidad)   REFERENCES unidad_equipo (id_unidad)
+);
+
+-- CU-81/CU-82: ítems y retornos de los préstamos externos por lote
+CREATE TABLE IF NOT EXISTS prestamo_detalle (
+    id_detalle         SERIAL PRIMARY KEY,
+    id_prestamo        INTEGER NOT NULL,
+    id_unidad          INTEGER,
+    id_tipo_equipo     INTEGER,
+    cantidad           NUMERIC(10,2),
+    cantidad_retornada NUMERIC(10,2) DEFAULT 0,
+    CONSTRAINT fk_prestamo_detalle_prestamo FOREIGN KEY (id_prestamo) REFERENCES prestamo_externo (id_prestamo) ON DELETE CASCADE,
+    CONSTRAINT fk_prestamo_detalle_unidad   FOREIGN KEY (id_unidad)   REFERENCES unidad_equipo (id_unidad)
+);
+CREATE TABLE IF NOT EXISTS prestamo_retorno (
+    id_retorno     SERIAL PRIMARY KEY,
+    id_detalle     INTEGER NOT NULL,
+    cantidad       NUMERIC(10,2),
+    fecha_retorno  TIMESTAMPTZ NOT NULL,
+    observacion    VARCHAR(300),
+    id_usuario     INTEGER NOT NULL,
+    CONSTRAINT fk_prestamo_retorno_detalle FOREIGN KEY (id_detalle) REFERENCES prestamo_detalle (id_detalle) ON DELETE CASCADE
+);
+
 -- Stock de consumibles por bodega
 CREATE TABLE IF NOT EXISTS stock_consumible (
     id_stock             SERIAL PRIMARY KEY,
@@ -152,6 +260,26 @@ CREATE TABLE IF NOT EXISTS stock_consumible (
     umbral_minimo        NUMERIC(10,2),
     CONSTRAINT fk_stock_bodega      FOREIGN KEY (id_bodega)      REFERENCES bodega (id_bodega),
     CONSTRAINT fk_stock_tipo_equipo FOREIGN KEY (id_tipo_equipo) REFERENCES tipo_equipo (id_tipo_equipo)
+);
+
+-- Reparación externa y préstamos externos
+CREATE TABLE IF NOT EXISTS prestamo_externo (
+    id_prestamo             SERIAL PRIMARY KEY,
+    tipo                    VARCHAR(30) NOT NULL,
+    id_empresa              INTEGER NOT NULL,
+    id_unidad               INTEGER REFERENCES unidad_equipo (id_unidad),
+    nombre_receptor         VARCHAR(80) NOT NULL,
+    rut_receptor            VARCHAR(12),
+    fecha_salida            TIMESTAMPTZ NOT NULL DEFAULT now(),
+    fecha_retorno_estimada  DATE NOT NULL,
+    fecha_retorno_real      DATE,
+    detalle                 TEXT NOT NULL,
+    estado                  VARCHAR(20) NOT NULL DEFAULT 'ACTIVO',
+    resultado               VARCHAR(20),
+    id_usuario_registro     INTEGER NOT NULL,
+    -- CU-81: préstamos por lote sobre la misma cabecera
+    correlativo             VARCHAR(12) UNIQUE,
+    id_bodega_origen        INTEGER
 );
 
 -- Cierres de OT recibidos por integración (webhook de G3) — sc-113

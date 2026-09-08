@@ -1,0 +1,73 @@
+@startuml CU72-exc-garantia-vigente
+title CU-72 — Registrando resultado de revisión de equipo\n(excepción 1: garantía vigente al dar de baja)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega" as user
+participant "V_FichaUnidad" as view
+participant "C_UnitsController" as ctrl
+participant "C_UnitsService" as svc
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as uent
+participant "historial_estado_equipo" as hent
+
+user -> view : En unidad "En revisión" con\ngarantía vigente, elige "Dado de baja"\ne ingresa motivo
+activate view
+
+view -> view : unit.garantia.garantia_vigente === true\n→ muestra ConfirmDialog\n"El equipo tiene garantía vigente.\n¿Desea continuar de todas formas?"
+activate view
+deactivate view
+
+alt Usuario cancela
+  view --> user : Cierra el diálogo,\nno se envía ninguna petición\n(la unidad sigue en "En revisión")
+else Usuario confirma "Continuar"
+  view -> ctrl : POST /unidades/:id/resultado-revision\n{ resultado: "BAJA", motivo,\nconfirmar_garantia: true }
+  activate ctrl
+
+  ctrl -> svc : registrarResultadoRevision(unitId, dto, actor)
+  activate svc
+
+  svc -> orm : findOne(id_unidad, id_empresa,\nrelations: tipoEquipo)
+  activate orm
+  orm -> uent : SELECT unidad_equipo\nWHERE id_unidad = :id
+  activate uent
+  uent --> orm : Datos unidad\n(fechaVencGarantia >= hoy)
+  deactivate uent
+  orm --> svc : unidad (existe, estado 'En revisión')
+  deactivate orm
+
+  svc -> svc : motivo válido (≤ 200)\ngarantiaVigente = true\ndto.confirmar_garantia === true\n→ NO bloquea, continúa
+  activate svc
+  deactivate svc
+
+  svc -> orm : queryRunner.startTransaction()\nmanager.save(unidad { estado: 'Dado de baja' })
+  activate orm
+  orm -> uent : UPDATE unidad_equipo\nSET estado = 'Dado de baja'\nWHERE id_unidad = :id
+  activate uent
+  uent --> orm : Unidad actualizada
+  deactivate uent
+  orm -> hent : INSERT historial_estado_equipo\n(motivo: 'Resultado de revisión:\nDado de baja. Motivo: ...')
+  activate hent
+  hent --> orm : Registro insertado
+  deactivate hent
+  orm --> svc : commitTransaction()
+  deactivate orm
+
+  svc --> ctrl : 201 Created { success: true,\nestadoActual: 'Dado de baja' }
+  deactivate svc
+  ctrl --> view : 201 Created
+  deactivate ctrl
+  view --> user : Ficha actualizada:\nunidad "Dado de baja"
+end
+deactivate view
+
+@enduml

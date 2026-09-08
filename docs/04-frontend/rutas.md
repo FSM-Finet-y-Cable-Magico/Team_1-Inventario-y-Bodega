@@ -12,7 +12,11 @@ Todas en `codigo/frontend/src/routes/`. Sin loaders SSR; carga client-side con `
 | Unidades | `/unidades` | todos |
 | Bodegas | `/bodegas` | SUPERUSUARIO, ADMIN, ADMIN_BODEGA |
 | Transferencias | `/transferencias` | SUPERUSUARIO, ADMIN |
+| Órdenes de ingreso | `/ordenes-ingreso` | SUPERUSUARIO, ADMIN, ADMIN_BODEGA |
+| Préstamos | `/prestamos` | SUPERUSUARIO, ADMIN, ADMIN_BODEGA |
+| Bajas | `/bajas` | todos (aprobar/rechazar y pestaña Donaciones solo SUPERUSUARIO, ADMIN) |
 | Auditoría | `/auditoria` | SUPERUSUARIO, ADMIN |
+| Reportes | `/reportes` | SUPERUSUARIO, ADMIN, ADMIN_BODEGA |
 
 > La protección real está en el backend. El menú solo oculta ítems por rol.
 
@@ -73,6 +77,8 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
   `createUnit()`, `ingresarConsumible()`, `updateConsumible()`.
 - El tipo seleccionado decide el formulario (serializado vs. consumible). Consumibles marcados
   `es_consumible`. TECNICO_TERRENO es solo lectura.
+- Botón "Equipos en revisión" (visible para `SUPERUSUARIO`/`ADMIN`/`ADMIN_BODEGA`) navega a
+  `/unidades/en-revision` (CU-77).
 
 ### `/unidades/[id]`
 - **CUs:** CU-33 (ficha), CU-34 (editar datos), CU-35 (cambio de estado), CU-36 (historial + observaciones),
@@ -84,6 +90,14 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
 - **CU-47:** en el modal de cambio de estado, si el destino es `'En bodega'` aparece el campo
   opcional "Ubicación física en bodega" (≤60); si se deja vacío se muestra el aviso de trazabilidad
   sin bloquear el envío. La ficha muestra la ubicación actual cuando la unidad está en bodega.
+
+### `/unidades/en-revision`
+- **CU:** CU-77 (listado de equipos en revisión, solo consulta).
+- **Endpoints:** `getUnidadesEnRevision()`.
+- Tabla ordenable por cualquier columna (clic en cabecera, `$state` de columna+dirección).
+  Filas con `dias_en_revision > 30` se resaltan con `bg-amber-50`. Sin ítem propio en el
+  Sidebar; se llega desde el botón "Equipos en revisión" de `/unidades`.
+- `EmptyState` con el mensaje exacto de la Excepción 1: "No hay equipos en revisión actualmente."
 
 ### `/salidas`
 - **CUs:** CU-57 (salida de equipos/consumibles a técnico), CU-58 (inventario personal del técnico,
@@ -110,6 +124,20 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
 - **Endpoints:** `getWarehouse(id)`, `getWarehouseStock(id)`, `getCatalog()`, `getUsers()`,
   `updateWarehouse()`, `setStockThreshold()`.
 
+### `/unidades/[id]` — baja definitiva (CU-78) y donación (CU-80)
+- Botón **Registrar baja definitiva** (oculto solo si la unidad ya está `Dado de baja`), disponible
+  también para `TECNICO_TERRENO`, que genera una solicitud en vez de aplicar la baja.
+- Modal con motivo (lista cerrada de 6) + descripción obligatoria (5-200) si el motivo es `Otro`,
+  aviso de garantía vigente y `ConfirmDialog` de confirmación fuerte.
+- **Endpoints:** `registrarBaja()`, `registrarDonacion()`.
+- **CU-80 encadenado:** si el motivo es `Donación a institución` y el actor aplica la baja directa
+  (ADMIN / SUPERUSUARIO / ADMIN_BODEGA), "Continuar" abre un **segundo paso** en el mismo modal con
+  los datos de la institución (nombre, RUT, fecha no futura y resolución). Al confirmar se registra
+  la baja y, acto seguido, la donación de ese equipo. El técnico de terreno no ve este paso: su
+  solicitud queda pendiente y la unidad todavía no está dada de baja.
+- Registrar la donación de **varios** equipos ya dados de baja sigue estando en
+  `/bajas` → pestaña Donaciones.
+
 ### `/transferencias`
 - **CUs:** CU-20 (crear transferencia + notificación), CU-21 (detalle), CU-22 (rechazar), CU-23 (listar/filtrar).
 - **Endpoints:** `getTransfers()`, `getWarehouses()`, `getUnits()`, `getEmpresas()`,
@@ -118,10 +146,111 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
 - Aprobar/rechazar: botones solo para `SUPERUSUARIO`. Empresa origen = empresa del usuario (inmutable).
 - Estados backend `TRANSFERENCIA_PENDIENTE | _APROBADA | _RECHAZADA` → labels Pendiente/Aprobada/Rechazada.
 
+### `/ordenes-ingreso`
+- **CUs:** CU-52 (registrar orden de ingreso desde proveedor), CU-53 (consultar listado con filtros).
+- **Endpoints:** `getOrdenesIngreso()`, `createOrdenIngreso()`, `getProveedores()`, `getCatalog()`,
+  `getWarehouses()`, `getWarehousesByEmpresa()`, `getEmpresas()`.
+- **CU-53:** columnas correlativo, proveedor, N.º documento, fecha del documento (**DD/MM/YYYY**),
+  empresa destinataria, bodega de destino, estado y total de ítems. Filtros con `$effect` de
+  recarga: buscador (correlativo / N.º documento), nombre del proveedor, estado, rango de fechas
+  y empresa destinataria — este último **solo para el Superusuario**, porque al resto el backend
+  ya le acota el listado a su empresa. Al hacer clic en una fila se navega a la ficha de detalle.
+- **CU-53 Excepción 1:** si los filtros no arrojan coincidencias, `EmptyState` con el mensaje
+  exacto `No se encontraron órdenes con los filtros seleccionados.` (sin filtros aplicados el
+  mensaje es el genérico de listado vacío, que no es la excepción del CU).
+- **CU-52:** el modal "Nueva orden de ingreso" arma la cabecera (proveedor, N.º documento
+  alfanumérico ≤30, fecha no futura vía `max` del `input[type=date]`, bodega activa) más un
+  sub-formulario dinámico de ítems (agregar/quitar filas: tipo de equipo + cantidad esperada +
+  garantía en días, precargada con la `garantiaDias` del tipo elegido). Tras crear muestra un
+  banner con el correlativo asignado (`OI-XXXX`).
+- La **empresa destinataria** solo la elige el `SUPERUSUARIO`; para el resto de roles se
+  preselecciona la propia y no se envía en el payload (la fija el backend), igual que en CU-41.
+- **CU-52 Excepción 1:** validación en cliente antes de enviar (proveedor, documento, fecha,
+  bodega, ≥1 ítem y cada ítem completo) que indica el error específico y no envía la petición;
+  el `ValidationPipe` del backend la repite como red de seguridad.
+
+### `/ordenes-ingreso/[id]`
+- **CUs:** CU-53 (ficha de detalle de una orden de ingreso), CU-54 (registrar recepción),
+  CU-55 (números de serie en la recepción), CU-56 (fecha de recepción efectiva).
+- **Endpoints:** `getOrdenIngreso(id)`, `registrarRecepcionOrden(id, items)`.
+- Cabecera con correlativo, badge de estado, proveedor, N.º documento, fecha (DD/MM/YYYY),
+  empresa destinataria, bodega de destino y total de ítems. Tabla de ítems con cantidad
+  esperada, recibida, pendiente (esperada − recibida) y garantía, más una fila de totales.
+- Si la orden no existe o es de otra empresa, el backend responde el mismo 404 y la página
+  muestra `Orden de ingreso no encontrada`.
+- **CU-54:** el botón "Registrar recepción" abre un modal con un input por ítem (`0..pendiente`),
+  acotado a lo que falta y deshabilitado en los ítems ya completos. Tras guardar, la ficha se
+  actualiza en el sitio con las cantidades y el estado nuevos, y muestra un banner con el
+  estado resultante. El botón queda **deshabilitado** cuando la orden está `Completada`.
+- **CU-54 Excepción 1:** el formulario del modal lleva `novalidate` a propósito. Con la
+  validación nativa activa, el navegador bloquea el submit por el `max` del input y muestra su
+  propio tooltip, tapando el mensaje exacto del CU
+  (`La cantidad no puede superar la cantidad pendiente del ítem.`). El `max` se conserva para
+  acotar las flechas del spinner.
+- **CU-55:** dentro del modal, los ítems con `requiere_serie_individual` muestran una sección de
+  números de serie: input + botón "Agregar", validación en vivo del formato con la misma regex
+  que el backend, listado de los NS ya ingresados con botón para quitarlos, y contador
+  `N / esperados ingresados`. Los ítems consumibles no muestran la sección.
+- **CU-55 Excepción 3:** "Guardar recepción" queda **deshabilitado** mientras algún ítem
+  serializado tenga menos NS que su cantidad recibida; `guardarRecepcion` lo revalida antes de
+  enviar por si el estado quedara inconsistente.
+- **CU-56:** campo "Fecha de recepción efectiva" (`input[type=date]`, obligatorio, `max` = hoy),
+  precargado con la fecha del día. Si difiere de la fecha del documento de la orden, se muestra
+  un aviso ámbar recordando que ambas quedan registradas.
+- **CU-56 Excepciones 1 y 2:** sin fecha el botón queda deshabilitado
+  (*"Debe indicar la fecha de recepción efectiva."*); con fecha futura el campo muestra
+  *"La fecha de recepción no puede ser futura."* El backend revalida contra su propio reloj,
+  que es la referencia real.
+### `/bajas`
+- **CUs:** CU-78 (bandeja de solicitudes de baja definitiva).
+- **Endpoints:** `getBajas()`, `approveBaja()`, `rejectBaja()`.
+- Filtro por estado (`Pendiente de aprobación | Aprobada | Rechazada`); por defecto muestra las pendientes.
+- Aprobar/rechazar: botones solo para `SUPERUSUARIO` y `ADMIN`. Aprobar pide `ConfirmDialog`
+  (la baja es irreversible); rechazar exige motivo (máx. 200).
+
+### `/bajas` — pestaña Donaciones (CU-80)
+- **Endpoints:** `getDonaciones()`, `getUnidadesDonables()`, `registrarDonacion()`, `descargarPdfDonacion()`.
+- Formulario: institución (3-100), RUT `XXXXXXXX-X` (con dígito verificador), fecha no futura
+  (`max` = hoy), número de resolución opcional y selector de equipos donables.
+- **Excepción 1:** los NS que el backend rechaza se resaltan en rojo en el selector.
+- El PDF se descarga con `api.download` (el enlace directo no sirve: la ruta exige token).
+
+### `/prestamos`
+- **CUs:** CU-81 (registrar préstamo externo), CU-82 (retorno total o parcial),
+  CU-83 (tabla de activos), CU-84 (trazabilidad del retorno).
+- **Endpoints:** `getPrestamos()`, `getPrestamoDetalle()`, `registrarPrestamo()`, más
+  `getUnits()`, `getWarehouses()` y `getWarehouseStock()` para los selectores.
+- Los equipos se agregan por NS (solo unidades `En bodega` de la bodega de origen) y los
+  consumibles por tipo + cantidad, mostrando el saldo disponible.
+- Validación en vivo de los mensajes de CU-59 antes de enviar; el backend los repite.
+- **CU-83:** por defecto muestra los `Activo`; filtros de estado y de empresa (este último solo
+  para `SUPERUSUARIO`), columna de días restantes con `Vencido hace N días` en rojo y `EmptyState`
+  con el mensaje exacto del caso de uso. La tabla **no** muestra el tipo: el sistema solo registra
+  préstamos (ver `05-backend/prestamos.md` §2).
+- **CU-84:** cuando el backend rechaza ítems, el modal reparte las frases del mensaje entre los
+  ítems que nombran y marca cada uno en rojo con su motivo.
+- **CU-82:** modal "Registrar retorno" (solo en préstamos `Activo`) con fecha limitada a hoy
+  (`max`), selección de ítems respetando lo ya devuelto, cantidad por consumible, observación
+  con contador y el historial de retornos previos de cada ítem.
+
 ### `/auditoria`
 - **CUs:** CU-08 (visualizar log), CU-09 (filtrar).
 - **Endpoints:** `getAuditLog()` (paginado), `getEmpresas()`.
 - Listas fijas de acciones y entidades (ver código). `limit = 30`.
+
+### `/reportes/stock`
+- **CU:** CU-85 (reporte de stock actual).
+- **Endpoint:** `generarReporteStock()` → `GET /reportes/stock`.
+- Filtros opcionales por empresa (solo SUPERUSUARIO), bodega y tipo de equipo.
+- Tabla por tipo y bodega con estados, total activo, umbral y alerta visual bajo umbral.
+
+### `/reportes`
+- **CUs:** CU-86 (movimientos), CU-88 (garantías), CU-89 (inventario de técnicos),
+  CU-91 (consumo de consumibles) — pestañas dentro del mismo hub de reportes.
+- **Endpoints:** `generarReporteMovimientos()`, `generarReporteGarantias()`,
+  `generarReporteInventarioTecnicos()`, `generarReporteConsumo()`.
+- Filtros por empresa, bodega, tipo, fechas, tipo de movimiento y usuario; el rango máximo de 365 días se valida en vivo.
+- Tabla con fecha/hora, movimiento, NS o consumible, cantidad, empresa, bodega, usuario y referencia.
 
 ---
 

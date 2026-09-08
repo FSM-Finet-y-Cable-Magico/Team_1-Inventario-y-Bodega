@@ -1,0 +1,54 @@
+@startuml CU78-exc-otro-sin-descripcion
+title CU-78 — Excepción 3: motivo 'Otro' sin descripción (5-200 caracteres)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador" as user
+participant "V_FichaUnidad" as view
+participant "C_BajasController" as ctrl
+participant "C_BajasService" as svc
+participant "unidad_equipo" as uent
+
+user -> view : Elige "Registrar baja definitiva",\nmotivo 'Otro' y deja la descripción vacía
+activate view
+
+view -> view : Validación de la vista:\nmotivo === 'Otro' && descripción < 5
+activate view
+view --> user : 'Debe ingresar una descripción\ncuando selecciona Otro.'\n(no permite continuar)
+deactivate view
+
+note over view : El backend repite la validación\npara peticiones fuera de la UI
+
+user -> view : Reintenta con descripción de 3 caracteres
+activate view
+view -> ctrl : POST /api/bajas\n{ id_unidad: 5, motivo: "Otro",\ndescripcion_otro: "abc" }
+activate ctrl
+
+ctrl -> svc : registrar(dto, actor)
+activate svc
+
+svc -> svc : validarMotivo('Otro', 'abc')\nlength = 3 ∉ [5, 200]
+activate svc
+svc --> ctrl : 400 BadRequestException\n'Debe ingresar una descripción\ncuando selecciona Otro.'
+deactivate svc
+deactivate svc
+
+note over uent : No se modifica la unidad\nni se crea solicitud_baja
+
+ctrl --> view : 400 Bad Request
+deactivate ctrl
+
+view --> user : Mensaje de error:\n'Debe ingresar una descripción\ncuando selecciona Otro.'
+deactivate view
+deactivate view
+
+@enduml

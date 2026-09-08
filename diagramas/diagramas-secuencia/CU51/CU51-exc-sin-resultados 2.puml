@@ -1,0 +1,52 @@
+@startuml CU51-exc-sin-resultados
+title CU-51 — Consultando listado de proveedores (excepción: sin resultados)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 25
+skinparam ActorPadding 20
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Admin/AdminBodega/\nSuperusuario" as user
+participant "V_Proveedores" as view
+participant "C_ProveedoresController" as ctrl
+participant "C_ProveedoresService" as svc
+participant "C_TypeORM" as orm
+participant "proveedor" as pent
+
+user -> view : Escribe término de búsqueda\nen campo "Buscar proveedor..."
+activate view
+
+view -> ctrl : GET /api/proveedores\n?buscar=xyz&activa=true
+activate ctrl
+
+ctrl -> svc : findAll('xyz', true)
+activate svc
+
+svc -> orm : find(proveedor\ncon filtro buscar)
+activate orm
+
+orm -> pent : SELECT proveedor\nWHERE (nombre_comercial ILIKE '%xyz%'\nOR rut ILIKE '%xyz%')\nAND activa = true
+activate pent
+pent --> orm : [] (vacío)
+deactivate pent
+
+orm --> svc : []
+deactivate orm
+
+svc --> ctrl : []
+deactivate svc
+
+ctrl --> view : 200 OK\n[]
+deactivate ctrl
+
+view --> user : Muestra EmptyState:\n"No se encontraron proveedores\ncon ese criterio."
+deactivate view
+
+@enduml

@@ -6,8 +6,8 @@ import { IntegracionCierre } from './entities/cierre-integracion.entity';
 import { UnidadEquipo } from '../inventario/entities/unidad-equipo.entity';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([IntegracionCierre, UnidadEquipo])],
-    controllers: [IntegracionesController],
-    providers: [IntegracionesService],
+  imports: [TypeOrmModule.forFeature([IntegracionCierre, UnidadEquipo])],
+  controllers: [IntegracionesController],
+  providers: [IntegracionesService],
 })
 export class IntegracionesModule {}

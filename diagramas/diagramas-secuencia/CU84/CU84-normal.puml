@@ -1,0 +1,80 @@
+@startuml CU84-normal
+title CU-84 — Validando trazabilidad de devolución (flujo normal, automático)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+participant "C_PrestamosController" as ctrl
+participant "C_PrestamosService" as svc
+participant "C_TypeORM" as orm
+participant "prestamo_externo" as pent
+participant "prestamo_detalle" as dent
+participant "unidad_equipo" as uent
+participant "prestamo_retorno" as rent
+
+ctrl -> svc : (CU-82) registrarRetorno(id, dto, actor)
+activate svc
+
+svc -> orm : findOne({ id_prestamo })
+activate orm
+orm -> pent : SELECT prestamo_externo WHERE id_prestamo = :id
+activate pent
+pent --> orm : Préstamo 'Activo' de la empresa del actor
+deactivate pent
+orm --> svc : cabecera
+deactivate orm
+
+svc -> svc : Fecha de retorno no futura\ny observación ≤ 300
+activate svc
+deactivate svc
+
+svc -> orm : findBy({ id_prestamo })
+activate orm
+orm -> dent : SELECT prestamo_detalle WHERE id_prestamo = :id
+activate dent
+dent --> orm : Ítems del préstamo (unidades y consumibles)
+deactivate dent
+orm -> uent : SELECT unidad_equipo WHERE id_unidad IN (...)
+activate uent
+uent --> orm : Estado actual de cada unidad
+deactivate uent
+orm -> rent : SELECT prestamo_retorno WHERE id_detalle IN (...)
+activate rent
+rent --> orm : Retornos ya registrados
+deactivate rent
+orm --> svc : datos para validar
+deactivate orm
+
+group Validaciones por cada ítem del body
+  svc -> svc : (A) el NS pertenece al listado\ndel préstamo seleccionado
+  activate svc
+  deactivate svc
+  svc -> svc : (B) la unidad está 'En préstamo externo'\ny no tiene retorno registrado
+  activate svc
+  deactivate svc
+  svc -> svc : (C) cantidad_retornada + lo pedido\n(incluido lo repetido en el mismo envío)\n≤ cantidad prestada
+  activate svc
+  deactivate svc
+end
+
+svc -> svc : Sin errores → continúa el registro\ndel retorno (CU-82)
+activate svc
+deactivate svc
+
+svc -> orm : queryRunner.startTransaction()\n(unidades a 'En revisión', consumibles al stock,\ncantidad_retornada y prestamo_retorno)
+activate orm
+orm --> svc : Retorno procesado
+deactivate orm
+
+svc --> ctrl : 201 { estado: 'Activo' | 'Cerrado' }
+deactivate svc
+
+@enduml
