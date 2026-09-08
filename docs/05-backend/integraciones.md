@@ -45,8 +45,10 @@ Respuestas envueltas `{ success, data }`.
   - `BAJA_EN_TERRENO` → `Dado de baja` (desde `En bodega`, `En revisión`)
 - Aplica las mismas reglas de la máquina de estados que `UnitsService.transicionarEstado`
   (al salir de bodega limpia bodega/ubicación; al reingresar la ubicación queda vacía).
-- **Diagnóstico en `En revisión`:** mientras G3 no envíe el dato (pregunta enviada 04-sept),
-  se registra `'Causa desconocida'` (constante `DIAGNOSTICO_PENDIENTE_G3`).
+- **Diagnóstico en `En revisión` (acuerdo G3 del 08-sept):** el diagnóstico registrado es la
+  `categoria_falla` del payload del cierre (`payload.categoria_falla.nombre`); si no viene,
+  queda `'Causa desconocida'` (`DIAGNOSTICO_FALLBACK_G3`). El motivo del historial incluye
+  `Categoría de falla: ...` cuando existe.
 - Cada transición escribe en `historial_estado_equipo` con `id_usuario: null` y motivo
   `Cierre OT #N (integración G3). Acción: X.` + motivo/observación del ítem.
 - **Materiales:** quedan registrados en el payload (`materiales_pendientes_descuento: true`);
