@@ -13,6 +13,8 @@ no esté reflejado aquí.
 ## Resumen
 
 - **Total de casos de uso:** 96
+- **Implementados:** 69 (CU-01 a CU-46, CU-49 a CU-62, CU-72, CU-74, CU-75, CU-76, CU-77, CU-85, CU-86, CU-88, CU-89, CU-91)
+- **Pendientes:** 27 (CU-47, CU-48, CU-61, CU-63 a CU-71, CU-73, CU-78 a CU-84, CU-87, CU-90, CU-92 a CU-96)
 - **Implementados (Incremento 1):** 46 (CU-01 a CU-46)
 - **Implementados (Incremento 2):** CU-47, CU-78 a CU-84
 - **Pendientes:** 42
@@ -104,25 +106,25 @@ no esté reflejado aquí.
 
 | CU | Nombre | Estado | Notas |
 |----|--------|--------|-------|
-| CU-49 | Creando proveedor | [ ] Pendiente | |
-| CU-50 | Editando proveedor | [ ] Pendiente | |
-| CU-51 | Consultando listado de proveedores | [ ] Pendiente | |
-| CU-52 | Registrando orden de ingreso desde proveedor | [ ] Pendiente | |
-| CU-53 | Consultando órdenes de ingreso | [ ] Pendiente | |
-| CU-54 | Registrando recepción total o parcial de orden de ingreso | [ ] Pendiente | |
-| CU-55 | Ingresando números de serie en recepción de equipos | [ ] Pendiente | |
-| CU-56 | Registrando fecha de adquisición real en recepción | [ ] Pendiente | |
+| CU-49 | Creando proveedor | [x] Implementado | Módulo `proveedores` (back + front + BDD) |
+| CU-50 | Editando proveedor | [x] Implementado | Módulo `proveedores` (PATCH + modal edición) |
+| CU-51 | Consultando listado de proveedores | [x] Implementado | GET con ADMIN_BODEGA + búsqueda + EmptyState |
+| CU-52 | Registrando orden de ingreso desde proveedor | [x] Implementado | Módulo `ordenes-ingreso` (back + front + BDD + docs + diagramas). Rama `feat/CU-49-crear-proveedor` (Javier) — pendiente render PNG de los `.puml` y capturas en `Casos de uso/CU-52/` |
+| CU-53 | Consultando órdenes de ingreso | [x] Implementado | Filtros (estado, proveedor, rango de fechas, empresa) + ficha `/ordenes-ingreso/[id]`. Rama `feat/CU-49-crear-proveedor` (Javier) — pendiente render PNG de los `.puml` y capturas en `Casos de uso/CU-53/` |
+| CU-54 | Registrando recepción total o parcial de orden de ingreso | [x] Implementado | `POST /ordenes-ingreso/:id/recepcion` + modal en la ficha. Rama `feat/CU-49-crear-proveedor` (Javier) — pendiente render PNG de los `.puml` y capturas en `Casos de uso/CU-54/` |
+| CU-55 | Ingresando números de serie en recepción de equipos | [x] Implementado | NS por unidad en la recepción, reusa la validación de CU-28 y crea `unidad_equipo` 'En bodega'. Rama `feat/CU-49-crear-proveedor` (Javier) — pendiente render PNG de los `.puml` y capturas en `Casos de uso/CU-55/` |
+| CU-56 | Registrando fecha de adquisición real en recepción | [x] Implementado | `fecha_recepcion` obligatoria en la recepción; base de `fecha_adquisicion` y de la garantía (CU-38/39). Rama `feat/CU-49-crear-proveedor` (Javier) — pendiente render PNG de los `.puml` y capturas en `Casos de uso/CU-56/` |
 
 ### Asignación de equipos a técnicos
 
 | CU | Nombre | Estado | Notas |
 |----|--------|--------|-------|
-| CU-57 | Registrando salida de equipos de bodega a técnico | [ ] Pendiente | |
-| CU-58 | Manteniendo inventario personal del técnico | [ ] Pendiente | |
-| CU-59 | Validando número de serie en salida de bodega | [ ] Pendiente | |
-| CU-60 | Registrando salida de consumibles de bodega a técnico | [ ] Pendiente | |
+| CU-57 | Registrando salida de equipos de bodega a técnico | [~] En progreso | Implementado, pendiente de merge (PR #15, rama `feat/CU-47-ubicacion-fisica`) |
+| CU-58 | Manteniendo inventario personal del técnico | [~] En progreso | Implementado, pendiente de merge (PR #15, rama `feat/CU-47-ubicacion-fisica`) |
+| CU-59 | Validando número de serie en salida de bodega | [~] En progreso | Implementado, pendiente de merge (PR #15, rama `feat/CU-47-ubicacion-fisica`) |
+| CU-60 | Registrando salida de consumibles de bodega a técnico | [~] En progreso | Implementado, pendiente de merge (PR #15, rama `feat/CU-47-ubicacion-fisica`) |
 | CU-61 | Consultando vista móvil de trabajos e inventario del técnico | [ ] Pendiente | |
-| CU-62 | Validando stock disponible en bodega para consumibles | [ ] Pendiente | |
+| CU-62 | Validando stock disponible en bodega para consumibles | [~] En progreso | Implementado, pendiente de merge (PR #15, rama `feat/CU-47-ubicacion-fisica`) |
 
 ### Cierre de trabajo e instalación en cliente
 
@@ -142,17 +144,17 @@ no esté reflejado aquí.
 | CU | Nombre | Estado | Notas |
 |----|--------|--------|-------|
 | CU-71 | Registrando devolución de equipo desde cliente | [ ] Pendiente | |
-| CU-72 | Registrando resultado de revisión de equipo | [ ] Pendiente | |
+| CU-72 | Registrando resultado de revisión de equipo | [x] Implementado | |
 | CU-73 | Mostrando información de equipo en devolución | [ ] Pendiente | |
 
 ### Reacondicionamiento y equipos defectuosos
 
 | CU | Nombre | Estado | Notas |
 |----|--------|--------|-------|
-| CU-74 | Reacondicionando equipo operativo desde revisión a bodega | [ ] Pendiente | |
-| CU-75 | Enviando equipo a reparación externa | [ ] Pendiente | |
-| CU-76 | Reingresando equipo desde reparación externa | [ ] Pendiente | |
-| CU-77 | Consultando listado de equipos en revisión | [ ] Pendiente | |
+| CU-74 | Reacondicionando equipo operativo desde revisión a bodega | [x] Implementado | |
+| CU-75 | Enviando equipo a reparación externa | [x] Implementado | |
+| CU-76 | Reingresando equipo desde reparación externa | [x] Implementado | |
+| CU-77 | Consultando listado de equipos en revisión | [x] Implementado | |
 
 ### Baja definitiva de equipos
 
@@ -175,13 +177,13 @@ no esté reflejado aquí.
 
 | CU | Nombre | Estado | Notas |
 |----|--------|--------|-------|
-| CU-85 | Generando reporte de stock actual | [ ] Pendiente | |
-| CU-86 | Generando reporte de movimientos de inventario | [ ] Pendiente | |
+| CU-85 | Generando reporte de stock actual | [x] Implementado | Grupo 5 · RF-60 · `/reportes/stock` · filtros, estados, umbral y auditoría |
+| CU-86 | Generando reporte de movimientos de inventario | [x] Implementado | Grupo 5 · RF-61 · `/reportes` · filtros, rango máximo 365 días, aislamiento y auditoría |
 | CU-87 | Generando reporte de equipos instalados por cliente | [ ] Pendiente | |
-| CU-88 | Generando reporte de garantías | [ ] Pendiente | |
-| CU-89 | Generando reporte de inventario actual de técnicos | [ ] Pendiente | |
+| CU-88 | Generando reporte de garantías | [x] Implementado | Grupo 5 · RF-63 · `/api/reportes/garantias` · filtro por empresa, tipo y período, empty state y auditoría |
+| CU-89 | Generando reporte de inventario actual de técnicos | [x] Implementado | Grupo 5 · RF-64 · endpoint `/api/reportes/tecnicos/inventario` y pestaña en `/reportes` |
 | CU-90 | Generando reporte de productividad de técnicos | [ ] Pendiente | |
-| CU-91 | Generando reporte de consumo de consumibles | [ ] Pendiente | |
+| CU-91 | Generando reporte de consumo de consumibles | [x] Implementado | Grupo 5 · RF-66 · endpoint `/api/reportes/consumo` y pestaña Consumo de consumibles |
 | CU-92 | Exportando reporte a Excel | [ ] Pendiente | |
 | CU-93 | Exportando reporte a PDF | [ ] Pendiente | |
 

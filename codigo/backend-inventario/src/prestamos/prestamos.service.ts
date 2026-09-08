@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, In, QueryRunner } from 'typeorm';
-import { PrestamoExterno } from './entities/prestamo-externo.entity';
+import { PrestamoExterno } from '../inventario/entities/prestamo-externo.entity';
 import { PrestamoDetalle } from './entities/prestamo-detalle.entity';
 import { PrestamoRetorno } from './entities/prestamo-retorno.entity';
 import { CreatePrestamoDto } from './dto/create-prestamo.dto';
@@ -24,13 +24,13 @@ const ESTADO_EN_BODEGA = 'En bodega';
 const ESTADO_PRESTAMO = 'En préstamo externo';
 // CU-82: destino de las unidades retornadas (transición ampliada y ratificada)
 const ESTADO_REVISION = 'En revisión';
-export const PRESTAMO_ACTIVO = 'Activo';
-export const PRESTAMO_CERRADO = 'Cerrado';
-// Único tipo que registra el sistema hoy. La columna existe porque el acuerdo de
-// integración (CU-81) reserva esta tabla para la reparación externa de CU-75
-// (Grupo 3), pero mientras ese CU no exista no se crea ni se muestra otro tipo:
-// sin CU-76 un registro de reparación no se podría cerrar.
-export const TIPO_PRESTAMO = 'PRESTAMO';
+// Estados y tipo tal como los define la cabecera compartida con CU-75/CU-76
+export const PRESTAMO_ACTIVO = 'ACTIVO';
+export const PRESTAMO_CERRADO = 'CERRADO';
+// Tipo que registra este módulo. La misma tabla guarda las reparaciones externas
+// de CU-75 ('REPARACION_EXTERNA'), que tienen su propio flujo de reingreso
+// (CU-76) y por eso quedan fuera de este listado y de su retorno.
+export const TIPO_PRESTAMO = 'PRESTAMO_EXTERNO';
 
 const RUT_REGEX = /^\d{7,8}-[\dkK]$/;
 
@@ -248,8 +248,12 @@ export class PrestamosService {
     await queryRunner.query(
       `SELECT pg_advisory_xact_lock(hashtext('prestamo_externo_correlativo'))`,
     );
+    // Solo los préstamos por lote llevan correlativo: las reparaciones externas
+    // (CU-75) comparten la tabla con correlativo NULL y hay que excluirlas.
+    // El formato PE-00000 tiene ancho fijo, así que ordenar por texto basta.
     const filas = (await queryRunner.query(
-      `SELECT correlativo FROM prestamo_externo ORDER BY id_prestamo DESC LIMIT 1`,
+      `SELECT correlativo FROM prestamo_externo
+       WHERE correlativo IS NOT NULL ORDER BY correlativo DESC LIMIT 1`,
     )) as { correlativo: string }[];
     const ultimo =
       filas.length > 0 ? Number(filas[0].correlativo.replace('PE-', '')) : 0;
@@ -292,18 +296,20 @@ export class PrestamosService {
         this.prestamoRepository.create({
           correlativo,
           tipo: TIPO_PRESTAMO,
-          nombre_receptor: nombre,
-          rut_receptor: rut,
-          fecha_salida: fechaSalida,
-          fecha_estimada_retorno: fechaEstimada,
-          motivo,
-          descripcion_falla: null,
+          nombreReceptor: nombre,
+          rutReceptor: rut,
+          fechaSalida,
+          fechaRetornoEstimada: new Date(`${fechaEstimada}T00:00:00`),
+          // La cabecera compartida guarda el motivo en `detalle`
+          detalle: motivo,
           estado: PRESTAMO_ACTIVO,
           id_empresa: bodega.id_empresa,
-          id_bodega_origen: bodega.id_bodega,
-          id_usuario: actor.id_usuario,
-          fecha_retorno_real: null,
-          resultado_retorno: null,
+          // Los préstamos por lote no fijan una unidad: sus ítems van en prestamo_detalle
+          id_unidad: null,
+          idBodegaOrigen: bodega.id_bodega,
+          idUsuarioRegistro: actor.id_usuario,
+          fechaRetornoReal: null,
+          resultado: null,
         }),
       );
 
@@ -430,7 +436,9 @@ export class PrestamosService {
     filtros: { estado?: string; id_empresa?: number },
     actor: ActorJwt,
   ): Promise<Record<string, unknown>[]> {
-    const where: Record<string, unknown> = {};
+    // CU-83: este listado cubre los préstamos por lote; las reparaciones
+    // externas (CU-75) se gestionan desde la ficha de la unidad con CU-76
+    const where: Record<string, unknown> = { tipo: TIPO_PRESTAMO };
     if (filtros.estado) where.estado = filtros.estado;
     // Aislamiento: solo el Superusuario puede filtrar por otra empresa
     if (!this.esSuperusuario(actor)) {
@@ -449,7 +457,7 @@ export class PrestamosService {
       id_prestamo: In(prestamos.map((p) => p.id_prestamo)),
     });
     const usuarios = await this.usuarioRepository.findBy({
-      id_usuario: In([...new Set(prestamos.map((p) => p.id_usuario))]),
+      id_usuario: In([...new Set(prestamos.map((p) => p.idUsuarioRegistro))]),
     });
     const mapaUsuarios = new Map(
       usuarios.map((u) => [u.id_usuario, u.nombre_completo]),
@@ -476,7 +484,7 @@ export class PrestamosService {
     return prestamos.map((p) => {
       const propios = detalles.filter((d) => d.id_prestamo === p.id_prestamo);
       const vencimiento = new Date(
-        `${String(p.fecha_estimada_retorno).slice(0, 10)}T00:00:00`,
+        `${String(p.fechaRetornoEstimada).slice(0, 10)}T00:00:00`,
       );
       const diasRestantes = Math.round(
         (vencimiento.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24),
@@ -485,14 +493,14 @@ export class PrestamosService {
         id_prestamo: p.id_prestamo,
         correlativo: p.correlativo,
         tipo: p.tipo,
-        nombre_receptor: p.nombre_receptor,
-        rut_receptor: p.rut_receptor,
-        fecha_salida: p.fecha_salida,
-        fecha_estimada_retorno: p.fecha_estimada_retorno,
-        motivo: p.motivo,
+        nombre_receptor: p.nombreReceptor,
+        rut_receptor: p.rutReceptor ?? null,
+        fecha_salida: p.fechaSalida,
+        fecha_estimada_retorno: p.fechaRetornoEstimada,
+        motivo: p.detalle,
         estado: p.estado,
         empresa: mapaEmpresas.get(p.id_empresa) ?? null,
-        registrado_por: mapaUsuarios.get(p.id_usuario) ?? null,
+        registrado_por: mapaUsuarios.get(p.idUsuarioRegistro) ?? null,
         equipos: propios.filter((d) => d.id_unidad !== null).length,
         consumibles: propios.filter((d) => d.id_unidad === null).length,
         // CU-83: negativo cuando ya pasó la fecha estimada de retorno.
@@ -745,14 +753,14 @@ export class PrestamosService {
           const filas = (await queryRunner.query(
             `UPDATE stock_consumible SET cantidad_disponible = cantidad_disponible + $1
              WHERE id_bodega = $2 AND id_tipo_equipo = $3 RETURNING id_stock`,
-            [cantidad, prestamo.id_bodega_origen, detalle.id_tipo_equipo],
+            [cantidad, prestamo.idBodegaOrigen, detalle.id_tipo_equipo],
           )) as unknown[];
           if (filas.length === 0) {
             // La fila de stock puede no existir si se eliminó tras el préstamo
             await queryRunner.query(
               `INSERT INTO stock_consumible (id_tipo_equipo, id_bodega, cantidad_disponible)
                VALUES ($1, $2, $3)`,
-              [detalle.id_tipo_equipo, prestamo.id_bodega_origen, cantidad],
+              [detalle.id_tipo_equipo, prestamo.idBodegaOrigen, cantidad],
             );
           }
           consumiblesRetornados.push({
@@ -791,8 +799,7 @@ export class PrestamosService {
 
       if (!pendiente) {
         prestamo.estado = PRESTAMO_CERRADO;
-        prestamo.fecha_retorno_real = fechaHoraRetorno;
-        prestamo.resultado_retorno = observacion || null;
+        prestamo.fechaRetornoReal = fechaHoraRetorno;
         await queryRunner.manager.save(prestamo);
       }
 
@@ -879,21 +886,21 @@ export class PrestamosService {
         })
       : [];
     const bodega = await this.bodegaRepository.findOne({
-      where: { id_bodega: prestamo.id_bodega_origen },
+      where: { id_bodega: prestamo.idBodegaOrigen ?? 0 },
     });
     const usuario = await this.usuarioRepository.findOne({
-      where: { id_usuario: prestamo.id_usuario },
+      where: { id_usuario: prestamo.idUsuarioRegistro },
     });
 
     return {
       id_prestamo: prestamo.id_prestamo,
       correlativo: prestamo.correlativo,
       tipo: prestamo.tipo,
-      nombre_receptor: prestamo.nombre_receptor,
-      rut_receptor: prestamo.rut_receptor,
-      fecha_salida: prestamo.fecha_salida,
-      fecha_estimada_retorno: prestamo.fecha_estimada_retorno,
-      motivo: prestamo.motivo,
+      nombre_receptor: prestamo.nombreReceptor,
+      rut_receptor: prestamo.rutReceptor ?? null,
+      fecha_salida: prestamo.fechaSalida,
+      fecha_estimada_retorno: prestamo.fechaRetornoEstimada,
+      motivo: prestamo.detalle,
       estado: prestamo.estado,
       bodega_origen: bodega?.nombre ?? null,
       empresa:

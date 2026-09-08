@@ -1,0 +1,53 @@
+@startuml CU77-exc-sin-resultados
+title CU-77 — Consultando listado de equipos en revisión\n(excepción 1: no hay equipos en revisión)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega" as user
+participant "V_EnRevision" as view
+participant "C_UnitsController" as ctrl
+participant "C_UnitsService" as svc
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as uent
+
+user -> view : Desde /unidades, elige\n"Equipos en revisión"\n(su empresa no tiene ninguno)
+activate view
+
+view -> ctrl : GET /unidades/en-revision
+activate ctrl
+
+ctrl -> svc : listarEnRevision(actor)
+activate svc
+
+svc -> orm : createQueryBuilder('unidad')\nWHERE estado = 'En revisión'\nAND id_empresa = :idEmpresa
+activate orm
+orm -> uent : SELECT unidad_equipo\nWHERE estado = 'En revisión' AND id_empresa = :idEmpresa
+activate uent
+uent --> orm : sin filas
+deactivate uent
+orm --> svc : unidades = []
+deactivate orm
+
+svc -> svc : unidades.length === 0\n→ retorna [] sin consultar historial/bodegas
+activate svc
+deactivate svc
+
+svc --> ctrl : 200 OK []
+deactivate svc
+
+ctrl --> view : 200 OK []
+deactivate ctrl
+
+view --> user : EmptyState:\n'No hay equipos en revisión actualmente.'
+deactivate view
+
+@enduml

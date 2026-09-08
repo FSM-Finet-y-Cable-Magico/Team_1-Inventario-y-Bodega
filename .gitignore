@@ -1,6 +1,11 @@
 # Dependencias
 node_modules/
 
+# Entornos y credenciales (nunca subir)
+.env
+.env.*
+codigo/.env
+
 # Comprimidos de trabajo (no subir)
 diagramas-secuencia.zip
 *.zip

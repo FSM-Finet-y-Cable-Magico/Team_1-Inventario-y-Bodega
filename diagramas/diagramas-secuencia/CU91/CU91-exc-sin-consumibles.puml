@@ -1,0 +1,41 @@
+@startuml CU91-Consumo-Consumibles-Excepcion
+title CU-91 - Reporte de consumo de consumibles (sin resultados)
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style>
+sequenceDiagram {
+	participant { Margin 35 }
+	actor { Margin 15 }
+}
+</style>
+skinparam sequence {
+	MessageAlign center
+	LifeLineBorderColor black
+}
+hide footbox
+
+actor Administrador as Usuario
+participant "Vista /reportes" as V
+participant "ReportesController" as C
+participant "ReportesService" as SVC
+database "PostgreSQL" as DB
+
+Usuario -> V : Configura filtros y selecciona Generar
+activate V
+V -> C : GET /api/reportes/consumo?...filtros
+activate C
+C -> SVC : getConsumoReport(filtros, req.user)
+activate SVC
+SVC -> DB : SELECT consumibles y agregados dentro del rango
+DB --> SVC : sin ingresos, entregas ni devoluciones
+SVC -> DB : INSERT log_auditoria (GENERAR_REPORTE)
+DB --> SVC : confirmado
+SVC --> C : [] con HTTP 200
+C --> V : reporte vacio
+V --> Usuario : No se encontraron consumibles con los filtros seleccionados.
+deactivate SVC
+deactivate C
+deactivate V
+@enduml

@@ -1,0 +1,28 @@
+@startuml CU59-exc-ns-no-existe
+title CU-59 — Excepción 1: el NS no existe
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 30 } actor { Margin 12 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega" as user
+participant "V_Salidas" as view
+participant "C_UnitsController" as uctrl
+participant "C_UnitsService" as usvc
+database "postgres" as db
+
+user -> view : Agrega NS 'X-999' (no existe)
+view -> uctrl : GET /api/unidades/serie/X-999?id_bodega=N
+uctrl -> usvc : verificarSerie(ns, id_empresa, id_bodega)
+usvc -> db : SELECT unidad_equipo WHERE numero_serie AND id_empresa
+db --> usvc : sin filas (o pertenece a otra empresa → 404 genérico)
+usvc --> uctrl : 200 { existe: false, disponible: false }
+uctrl --> view : 200
+view --> user : NS en rojo: 'Número de serie no encontrado.'\nBotón Confirmar deshabilitado mientras exista un NS inválido
+@enduml

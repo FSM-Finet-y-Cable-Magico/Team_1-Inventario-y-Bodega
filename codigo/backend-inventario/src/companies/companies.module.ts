@@ -10,17 +10,17 @@ import { MovimientoInventario } from '../transferencias/entities/movimiento-inve
 import { SolicitudBaja } from '../bajas/entities/solicitud-baja.entity';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([
-            UnidadEquipo,
-            Bodega,
-            StockConsumible,
-            Transferencia,
-            MovimientoInventario,
-            SolicitudBaja,
-        ]),
-    ],
-    controllers: [CompaniesController],
-    providers: [CompaniesService],
+  imports: [
+    TypeOrmModule.forFeature([
+      UnidadEquipo,
+      Bodega,
+      StockConsumible,
+      Transferencia,
+      MovimientoInventario,
+      SolicitudBaja,
+    ]),
+  ],
+  controllers: [CompaniesController],
+  providers: [CompaniesService],
 })
 export class CompaniesModule {}

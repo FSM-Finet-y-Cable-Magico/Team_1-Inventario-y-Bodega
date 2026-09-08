@@ -14,17 +14,27 @@ service (patrón de `transferencias`/`bajas`).
 | GET | `/api/prestamos/:id` | idem | Detalle con los ítems prestados y sus retornos previos. |
 | POST | `/api/prestamos/:id/retorno` | idem | CU-82: retorno total o parcial. |
 
-## 2. Hoy solo existe el tipo `PRESTAMO`
+## 2. Tabla compartida con CU-75/CU-76
 
-`prestamo_externo.tipo` está siempre en `PRESTAMO`: **el sistema no crea ni muestra otro tipo**.
-La columna existe porque el acuerdo de integración de CU-81 reserva esta tabla para la reparación
-externa de CU-75 (Grupo 3), junto con `descripcion_falla`; mientras ese CU y su reingreso (CU-76)
-no estén implementados, un registro `REPARACION_EXTERNA` quedaría **sin forma de cerrarse**, así que
-no se ofrece en la UI ni en la API.
+`prestamo_externo` es **una sola tabla con dos flujos**, y su entidad vive en
+`src/inventario/entities/prestamo-externo.entity.ts` (la definió CU-75):
 
-Cuando el Grupo 3 implemente CU-75/CU-76 se retoma la variante (la columna ya está); si el jefe de
-grupo decide que la reparación externa vivirá en otra entidad, la columna se puede eliminar sin
-tocar el resto del módulo.
+| `tipo` | Flujo | Ítems | Cierre |
+|--------|-------|-------|--------|
+| `REPARACION_EXTERNA` | CU-75 desde la ficha de la unidad | `id_unidad` (una unidad) | CU-76 (reingreso) |
+| `PRESTAMO_EXTERNO` | CU-81 desde `/prestamos` | `prestamo_detalle` (varios equipos y consumibles) | CU-82 (retorno total o parcial) |
+
+Columnas que agregó CU-81 sobre esa cabecera: `correlativo` (`PE-00001`, único) e
+`id_bodega_origen`; ambas quedan **NULL** en los registros de reparación. El motivo del préstamo se
+guarda en `detalle`, que es la columna que ya usaba CU-75.
+
+Consecuencias que hay que respetar al tocar este módulo:
+
+- El listado de `/prestamos` y el retorno de CU-82 filtran por `tipo = 'PRESTAMO_EXTERNO'`: las
+  reparaciones tienen su propio flujo y no deben aparecer ni cerrarse desde aquí.
+- El generador del correlativo ignora las filas con `correlativo IS NULL` (si no, revienta al
+  encontrar una reparación).
+- Los estados son los de la cabecera compartida: **`ACTIVO` / `CERRADO`** en mayúsculas.
 
 ## 3. Validaciones (mensajes acumulados)
 

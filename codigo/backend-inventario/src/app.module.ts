@@ -17,6 +17,11 @@ import { CompaniesModule } from './companies/companies.module';
 import { BajasModule } from './bajas/bajas.module';
 import { DonacionesModule } from './donaciones/donaciones.module';
 import { PrestamosModule } from './prestamos/prestamos.module';
+import { ReportesModule } from './reportes/reportes.module';
+import { ProveedoresModule } from './proveedores/proveedores.module';
+import { OrdenesIngresoModule } from './ordenes-ingreso/ordenes-ingreso.module';
+import { IntegracionesModule } from './integraciones/integraciones.module';
+import { SalidasModule } from './salidas/salidas.module';
 
 @Module({
   imports: [
@@ -50,6 +55,11 @@ import { PrestamosModule } from './prestamos/prestamos.module';
     BajasModule,
     DonacionesModule,
     PrestamosModule,
+    ReportesModule,
+    ProveedoresModule,
+    OrdenesIngresoModule,
+    IntegracionesModule,
+    SalidasModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],

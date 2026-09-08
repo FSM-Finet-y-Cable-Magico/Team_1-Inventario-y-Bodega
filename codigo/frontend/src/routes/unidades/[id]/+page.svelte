@@ -2,7 +2,11 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { getUnit, changeUnitState, getUnitHistory, getWarehouses, updateUnit, registrarBaja, registrarDonacion } from '$lib/api/index';
+	import {
+		getUnit, changeUnitState, getUnitHistory, getWarehouses, updateUnit,
+		registrarBaja, registrarDonacion,
+		registrarResultadoRevision, reacondicionarUnidad, enviarAReparacionExterna, registrarRetornoReparacion
+	} from '$lib/api/index';
 	import { userRoles } from '$lib/stores/auth';
 	import type { UnidadEquipo, HistorialEstado, EstadoUnidad, Bodega } from '$lib/types';
 	import { MOTIVOS_BAJA } from '$lib/types';
@@ -11,7 +15,7 @@
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import FormField from '$lib/components/FormField.svelte';
 	import Badge from '$lib/components/Badge.svelte';
-	import { ArrowLeft, RotateCw, Pencil, Ban } from '@lucide/svelte';
+	import { ArrowLeft, RotateCw, Pencil, Ban, ClipboardCheck, PackageCheck, Wrench, PackageOpen } from '@lucide/svelte';
 
 	let unit = $state<UnidadEquipo | null>(null);
 	let history = $state<HistorialEstado[]>([]);
@@ -55,6 +59,40 @@
 	// dada de baja, así que la donación no puede registrarse en ese momento
 	const aplicaBajaDirecta = $derived(roles.some((r) => ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'].includes(r)));
 	const requiereDatosDonacion = $derived(bajaForm.motivo === MOTIVO_DONACION && aplicaBajaDirecta);
+
+	// CU-72: registrar resultado de revisión (Operativo / Reparación externa / Baja)
+	let showResultado = $state(false);
+	let resultadoForm = $state({
+		resultado: '' as 'OPERATIVO' | 'REPARACION_EXTERNA' | 'BAJA' | '',
+		id_bodega_actual: 0,
+		ubicacion_fisica: '',
+		nombre_receptor: '',
+		fecha_retorno_estimada: '',
+		descripcion_falla: '',
+		motivo: ''
+	});
+	let resultadoError = $state('');
+	let resultadoGuardando = $state(false);
+	// E1: aviso de garantía vigente al intentar dar de baja
+	let showConfirmGarantia = $state(false);
+
+	// CU-74: reacondicionar equipo "En revisión" directo a "En bodega" (atajo del resultado Operativo de CU-72)
+	let showReacondicionar = $state(false);
+	let reacondicionarForm = $state({ id_bodega_destino: 0, ubicacion_fisica: '', observacion: '' });
+	let reacondicionarError = $state('');
+	let reacondicionando = $state(false);
+
+	// CU-75: enviar equipo "En revisión" a reparación externa (atajo del mismo resultado de CU-72)
+	let showReparacionExterna = $state(false);
+	let reparacionExternaForm = $state({ nombre_receptor: '', rut_receptor: '', fecha_retorno_estimada: '', descripcion_falla: '' });
+	let reparacionExternaError = $state('');
+	let enviandoReparacion = $state(false);
+
+	// CU-76: registrar retorno de reparación externa (equipo → "En revisión")
+	let showRetorno = $state(false);
+	let retornoForm = $state({ resultado: '' as 'REPARADO' | 'NO_REPARADO' | '', observacion: '' });
+	let retornoError = $state('');
+	let registrandoRetorno = $state(false);
 
 	// CU-18: edición de los datos de la unidad
 	let showEdit = $state(false);
@@ -100,6 +138,8 @@
 		'Instalado en cliente': ['En revisión'],
 		'En revisión': ['En bodega', 'En préstamo externo', 'Dado de baja'],
 		// CU-82: transición ampliada (retorno de préstamo externo a revisión)
+
+		// CU-76: ratificado por el jefe de grupo — retorno de reparación externa
 		'En préstamo externo': ['En bodega', 'En revisión'],
 		'Dado de baja': []
 	};
@@ -305,6 +345,125 @@
 			changing = false;
 		}
 	}
+
+	async function enviarResultadoRevision(confirmarGarantia = false) {
+		if (!unit || !resultadoForm.resultado) return;
+		resultadoError = '';
+		resultadoGuardando = true;
+		try {
+			const payload: Record<string, unknown> = { resultado: resultadoForm.resultado };
+			if (resultadoForm.resultado === 'OPERATIVO') {
+				payload.id_bodega_actual = resultadoForm.id_bodega_actual;
+				payload.ubicacion_fisica = resultadoForm.ubicacion_fisica.trim();
+			} else if (resultadoForm.resultado === 'REPARACION_EXTERNA') {
+				payload.nombre_receptor = resultadoForm.nombre_receptor.trim();
+				payload.fecha_retorno_estimada = resultadoForm.fecha_retorno_estimada;
+				payload.descripcion_falla = resultadoForm.descripcion_falla.trim();
+			} else if (resultadoForm.resultado === 'BAJA') {
+				payload.motivo = resultadoForm.motivo.trim();
+				if (confirmarGarantia) payload.confirmar_garantia = true;
+			}
+			await registrarResultadoRevision(unit.id_unidad, payload);
+			showResultado = false;
+			showConfirmGarantia = false;
+			success = 'Resultado de revisión registrado correctamente';
+			resultadoForm = { resultado: '', id_bodega_actual: 0, ubicacion_fisica: '', nombre_receptor: '', fecha_retorno_estimada: '', descripcion_falla: '', motivo: '' };
+			await load();
+		} catch (err: unknown) {
+			showConfirmGarantia = false;
+			resultadoError = err instanceof Error ? err.message : 'Error al registrar el resultado';
+		} finally {
+			resultadoGuardando = false;
+	}
+}
+
+function handleSubmitResultado() {
+	// E1: si es Baja y el equipo tiene garantía vigente, primero se pide confirmación
+	if (resultadoForm.resultado === 'BAJA' && unit?.garantia?.garantia_vigente) {
+		showConfirmGarantia = true;
+		return;
+	}
+	enviarResultadoRevision(false);
+}
+
+// CU-74: reacondicionar equipo operativo desde revisión a bodega
+async function handleReacondicionar() {
+	if (!unit) return;
+	// E1: mismo mensaje exacto que el backend, para no dejar avanzar sin bodega
+	if (!reacondicionarForm.id_bodega_destino) {
+		reacondicionarError = 'Debe seleccionar una bodega de destino para continuar.';
+		return;
+	}
+	reacondicionarError = '';
+	reacondicionando = true;
+	try {
+		const payload: Record<string, unknown> = {
+			id_bodega_destino: reacondicionarForm.id_bodega_destino
+		};
+		if (reacondicionarForm.ubicacion_fisica.trim()) payload.ubicacion_fisica = reacondicionarForm.ubicacion_fisica.trim();
+		if (reacondicionarForm.observacion.trim()) payload.observacion = reacondicionarForm.observacion.trim();
+		await reacondicionarUnidad(unit.id_unidad, payload);
+		showReacondicionar = false;
+		success = 'Equipo reacondicionado y enviado a bodega correctamente';
+		reacondicionarForm = { id_bodega_destino: 0, ubicacion_fisica: '', observacion: '' };
+		await load();
+	} catch (err: unknown) {
+		reacondicionarError = err instanceof Error ? err.message : 'Error al reacondicionar el equipo';
+	} finally {
+		reacondicionando = false;
+	}
+}
+
+// CU-75: enviar equipo "En revisión" a reparación externa
+async function handleEnviarReparacionExterna() {
+	if (!unit) return;
+	reparacionExternaError = '';
+	enviandoReparacion = true;
+	try {
+		const payload: Record<string, unknown> = {
+			nombre_receptor: reparacionExternaForm.nombre_receptor.trim(),
+			fecha_retorno_estimada: reparacionExternaForm.fecha_retorno_estimada,
+			descripcion_falla: reparacionExternaForm.descripcion_falla.trim()
+		};
+		if (reparacionExternaForm.rut_receptor.trim()) payload.rut_receptor = reparacionExternaForm.rut_receptor.trim();
+		await enviarAReparacionExterna(unit.id_unidad, payload);
+		showReparacionExterna = false;
+		success = 'Equipo enviado a reparación externa correctamente';
+		reparacionExternaForm = { nombre_receptor: '', rut_receptor: '', fecha_retorno_estimada: '', descripcion_falla: '' };
+		await load();
+	} catch (err: unknown) {
+		reparacionExternaError = err instanceof Error ? err.message : 'Error al enviar a reparación externa';
+	} finally {
+		enviandoReparacion = false;
+	}
+}
+
+// CU-76: registrar retorno de reparación externa
+async function handleRegistrarRetorno() {
+	if (!unit) return;
+	// E1: mensaje exacto del CU, no permite confirmar con observación corta
+	if (retornoForm.observacion.trim().length < 5) {
+		retornoError = 'La observación debe tener al menos 5 caracteres.';
+		return;
+	}
+	retornoError = '';
+	registrandoRetorno = true;
+	try {
+		await registrarRetornoReparacion(unit.id_unidad, {
+			resultado: retornoForm.resultado,
+			observacion: retornoForm.observacion.trim()
+		});
+		showRetorno = false;
+		success = 'Retorno de reparación externa registrado correctamente';
+		retornoForm = { resultado: '', observacion: '' };
+		await load();
+	} catch (err: unknown) {
+		retornoError = err instanceof Error ? err.message : 'Error al registrar el retorno';
+	} finally {
+		registrandoRetorno = false;
+	}
+}
+
 </script>
 
 <div class="max-w-4xl mx-auto">
@@ -416,7 +575,7 @@
 						</div>
 					</div>
 
-					<div class="mt-6 pt-4 border-t border-border flex items-center gap-3">
+					<div class="mt-6 pt-4 border-t border-border flex flex-wrap items-center gap-3">
 						<!-- CU-35: el botón siempre está disponible; el sistema valida la transición -->
 						<Button onclick={() => {
 							changeForm.estado_nuevo = '';
@@ -433,6 +592,47 @@
 							Registrar baja definitiva
 						</Button>
 					{/if}
+
+						<!-- CU-72: solo disponible cuando la unidad está en revisión -->
+						{#if unit.estado === 'En revisión'}
+							<Button onclick={() => {
+								resultadoForm = { resultado: '', id_bodega_actual: 0, ubicacion_fisica: '', nombre_receptor: '', fecha_retorno_estimada: '', descripcion_falla: '', motivo: '' };
+								resultadoError = '';
+								showResultado = true;
+							}}>
+								<ClipboardCheck class="h-4 w-4" />
+								Registrar resultado
+							</Button>
+							<!-- CU-74: atajo directo para el caso Operativo (misma transición que CU-72) -->
+							<Button variant="secondary" onclick={() => {
+								reacondicionarForm = { id_bodega_destino: 0, ubicacion_fisica: '', observacion: '' };
+								reacondicionarError = '';
+								showReacondicionar = true;
+							}}>
+								<PackageCheck class="h-4 w-4" />
+								Operativo - enviar a bodega
+							</Button>
+							<!-- CU-75: atajo directo para el caso Reparación externa (misma transición que CU-72) -->
+							<Button variant="secondary" onclick={() => {
+								reparacionExternaForm = { nombre_receptor: '', rut_receptor: '', fecha_retorno_estimada: '', descripcion_falla: '' };
+								reparacionExternaError = '';
+								showReparacionExterna = true;
+							}}>
+								<Wrench class="h-4 w-4" />
+								Enviar a reparación externa
+							</Button>
+						{/if}
+						<!-- CU-76: solo disponible cuando la unidad está en préstamo externo -->
+						{#if unit.estado === 'En préstamo externo'}
+							<Button variant="secondary" onclick={() => {
+								retornoForm = { resultado: '', observacion: '' };
+								retornoError = '';
+								showRetorno = true;
+							}}>
+								<PackageOpen class="h-4 w-4" />
+								Registrar retorno
+							</Button>
+						{/if}
 					<!-- CU-18: edición de los datos de la unidad -->
 					{#if puedeEditarUnidad}
 						<Button variant="secondary" onclick={abrirEdicion}>
@@ -759,3 +959,219 @@
 		</div>
 	</form>
 </Modal>
+
+<!-- CU-72: registrar resultado de la revisión de un equipo en 'En revisión' -->
+<Modal title="Registrar resultado de revisión" open={showResultado} onclose={() => (showResultado = false)}>
+	<form onsubmit={(e: Event) => { e.preventDefault(); handleSubmitResultado(); }} class="space-y-4">
+		{#if resultadoError}
+			<div class="bg-red-50 border border-red-200 text-destructive text-sm rounded-md px-3 py-2">{resultadoError}</div>
+		{/if}
+		{#if unit}
+			<p class="text-sm text-muted">
+				Diagnóstico registrado en el ingreso a revisión: <strong>{unit.diagnostico_tecnico || 'No registrado'}</strong>
+			</p>
+
+			<FormField label="Resultado" name="resultado" required>
+				<select id="resultado" required bind:value={resultadoForm.resultado}
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+					<option value="">Seleccionar...</option>
+					<option value="OPERATIVO">Operativo</option>
+					<option value="REPARACION_EXTERNA">Requiere reparación externa</option>
+					<option value="BAJA">Dado de baja</option>
+				</select>
+			</FormField>
+
+			{#if resultadoForm.resultado === 'OPERATIVO'}
+				<FormField label="Bodega de destino" name="res_bod" required>
+					<select id="res_bod" required bind:value={resultadoForm.id_bodega_actual}
+						class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+						<option value={0} disabled>Seleccionar...</option>
+						{#each warehouses as wh}
+							<option value={wh.id_bodega}>{wh.nombre}</option>
+						{/each}
+					</select>
+				</FormField>
+				<FormField label="Ubicación física en bodega" name="res_ubi"
+					helper="Opcional, máximo 60 caracteres ({resultadoForm.ubicacion_fisica.length}/60)">
+					<input id="res_ubi" type="text" bind:value={resultadoForm.ubicacion_fisica} maxlength={60}
+						class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+				</FormField>
+			{/if}
+
+			{#if resultadoForm.resultado === 'REPARACION_EXTERNA'}
+				<FormField label="Nombre del receptor" name="res_recep" required
+					helper="3-80 caracteres ({resultadoForm.nombre_receptor.length}/80)">
+					<input id="res_recep" type="text" required bind:value={resultadoForm.nombre_receptor} maxlength={80}
+						class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+				</FormField>
+				<FormField label="Fecha estimada de retorno" name="res_fecha" required>
+					<input id="res_fecha" type="date" required bind:value={resultadoForm.fecha_retorno_estimada}
+						class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+				</FormField>
+				<FormField label="Descripción de la falla" name="res_falla" required
+					helper="5-300 caracteres ({resultadoForm.descripcion_falla.length}/300)">
+					<textarea id="res_falla" required bind:value={resultadoForm.descripcion_falla} rows="3"
+						class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
+				</FormField>
+			{/if}
+
+			{#if resultadoForm.resultado === 'BAJA'}
+				<FormField label="Motivo de baja" name="res_motivo" required
+					helper="Máximo 200 caracteres ({resultadoForm.motivo.length}/200)">
+					<textarea id="res_motivo" required bind:value={resultadoForm.motivo} maxlength={200} rows="3"
+						class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
+				</FormField>
+				{#if unit.garantia?.garantia_vigente}
+					<div class="bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-md px-3 py-2">
+						Este equipo tiene garantía vigente. Al confirmar, el sistema pedirá una segunda confirmación.
+					</div>
+				{/if}
+			{/if}
+		{/if}
+
+		<div class="flex justify-end gap-3 pt-2">
+			<Button variant="secondary" onclick={() => (showResultado = false)} type="button">Cancelar</Button>
+			<Button type="submit" loading={resultadoGuardando} disabled={!resultadoForm.resultado}>Confirmar</Button>
+		</div>
+	</form>
+</Modal>
+
+<!-- CU-74: reacondicionar equipo operativo desde revisión a bodega -->
+<Modal title="Operativo - enviar a bodega" open={showReacondicionar} onclose={() => (showReacondicionar = false)}>
+	<form onsubmit={(e: Event) => { e.preventDefault(); handleReacondicionar(); }} class="space-y-4">
+		{#if reacondicionarError}
+			<div class="bg-red-50 border border-red-200 text-destructive text-sm rounded-md px-3 py-2">{reacondicionarError}</div>
+		{/if}
+		{#if unit}
+			<p class="text-sm text-muted">
+				El equipo pasará de <strong>{unit.estado}</strong> a <strong>En bodega</strong>.
+			</p>
+
+			<!-- E1: bodega de destino activa y obligatoria; sin "required" nativo para que
+			     el envío llegue a handleReacondicionar() y muestre el mensaje exacto del CU -->
+			<FormField label="Bodega de destino" name="reac_bod" required>
+				<select id="reac_bod" bind:value={reacondicionarForm.id_bodega_destino}
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+					<option value={0} disabled>Seleccionar...</option>
+					{#each warehouses as wh}
+						<option value={wh.id_bodega}>{wh.nombre}</option>
+					{/each}
+				</select>
+			</FormField>
+
+			<FormField label="Ubicación física en bodega" name="reac_ubi"
+				helper="Opcional, máximo 60 caracteres ({reacondicionarForm.ubicacion_fisica.length}/60)">
+				<input id="reac_ubi" type="text" bind:value={reacondicionarForm.ubicacion_fisica} maxlength={60}
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+					placeholder="Ej: Estante B, Fila 3" />
+			</FormField>
+
+			<FormField label="Observación" name="reac_obs"
+				helper="Opcional, máximo 300 caracteres ({reacondicionarForm.observacion.length}/300)">
+				<textarea id="reac_obs" bind:value={reacondicionarForm.observacion} maxlength={300} rows="2"
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
+			</FormField>
+		{/if}
+
+		<div class="flex justify-end gap-3 pt-2">
+			<Button variant="secondary" onclick={() => (showReacondicionar = false)} type="button">Cancelar</Button>
+			<!-- E1: no se deshabilita por falta de bodega, para que el clic dispare el
+			     mensaje exacto en handleReacondicionar() en vez de bloquear el botón -->
+			<Button type="submit" loading={reacondicionando} disabled={reacondicionando}>Confirmar</Button>
+		</div>
+	</form>
+</Modal>
+
+<!-- CU-75: enviar equipo "En revisión" a reparación externa -->
+<Modal title="Enviar a reparación externa" open={showReparacionExterna} onclose={() => (showReparacionExterna = false)}>
+	<form onsubmit={(e: Event) => { e.preventDefault(); handleEnviarReparacionExterna(); }} class="space-y-4">
+		{#if reparacionExternaError}
+			<div class="bg-red-50 border border-red-200 text-destructive text-sm rounded-md px-3 py-2">{reparacionExternaError}</div>
+		{/if}
+		{#if unit}
+			<p class="text-sm text-muted">
+				El equipo pasará de <strong>{unit.estado}</strong> a <strong>En préstamo externo</strong>.
+			</p>
+
+			<FormField label="Nombre del receptor" name="rep_recep" required
+				helper="3-80 caracteres ({reparacionExternaForm.nombre_receptor.length}/80)">
+				<input id="rep_recep" type="text" required minlength={3} bind:value={reparacionExternaForm.nombre_receptor} maxlength={80}
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+			</FormField>
+
+			<FormField label="RUT del receptor" name="rep_rut" helper="Opcional, formato XXXXXXXX-X">
+				<input id="rep_rut" type="text" bind:value={reparacionExternaForm.rut_receptor} maxlength={10}
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary font-mono"
+					placeholder="12345678-9" />
+			</FormField>
+
+			<FormField label="Fecha estimada de retorno" name="rep_fecha" required>
+				<input id="rep_fecha" type="date" required bind:value={reparacionExternaForm.fecha_retorno_estimada}
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+			</FormField>
+
+			<FormField label="Descripción de la falla" name="rep_falla" required
+				helper="5-300 caracteres ({reparacionExternaForm.descripcion_falla.length}/300)">
+				<textarea id="rep_falla" required bind:value={reparacionExternaForm.descripcion_falla} maxlength={300} rows="3"
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
+			</FormField>
+		{/if}
+
+		<div class="flex justify-end gap-3 pt-2">
+			<Button variant="secondary" onclick={() => (showReparacionExterna = false)} type="button">Cancelar</Button>
+			<Button type="submit" loading={enviandoReparacion}>Confirmar</Button>
+		</div>
+	</form>
+</Modal>
+
+<!-- CU-76: registrar retorno de reparación externa -->
+<Modal title="Registrar retorno" open={showRetorno} onclose={() => (showRetorno = false)}>
+	<form onsubmit={(e: Event) => { e.preventDefault(); handleRegistrarRetorno(); }} class="space-y-4">
+		{#if retornoError}
+			<div class="bg-red-50 border border-red-200 text-destructive text-sm rounded-md px-3 py-2">{retornoError}</div>
+		{/if}
+		{#if unit}
+			<p class="text-sm text-muted">
+				El equipo pasará de <strong>{unit.estado}</strong> a <strong>En revisión</strong>.
+			</p>
+
+			<FormField label="Resultado del servicio" name="ret_resultado" required>
+				<div class="flex gap-4">
+					<label class="flex items-center gap-2 text-sm cursor-pointer">
+						<input type="radio" name="ret_resultado" required bind:group={retornoForm.resultado} value="REPARADO" class="text-accent" />
+						Reparado
+					</label>
+					<label class="flex items-center gap-2 text-sm cursor-pointer">
+						<input type="radio" name="ret_resultado" required bind:group={retornoForm.resultado} value="NO_REPARADO" class="text-accent" />
+						No reparado
+					</label>
+				</div>
+			</FormField>
+
+			<!-- E1: sin "minlength" nativo para que el envío llegue a
+			     handleRegistrarRetorno() y muestre el mensaje exacto del CU -->
+			<FormField label="Observación" name="ret_obs" required
+				helper="Mínimo 5, máximo 300 caracteres ({retornoForm.observacion.length}/300)">
+				<textarea id="ret_obs" required bind:value={retornoForm.observacion} maxlength={300} rows="3"
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
+			</FormField>
+		{/if}
+
+		<div class="flex justify-end gap-3 pt-2">
+			<Button variant="secondary" onclick={() => (showRetorno = false)} type="button">Cancelar</Button>
+			<Button type="submit" loading={registrandoRetorno} disabled={registrandoRetorno}>Confirmar</Button>
+		</div>
+	</form>
+</Modal>
+
+<!-- CU-72 Excepción 1: aviso de garantía vigente antes de dar de baja -->
+<ConfirmDialog
+	open={showConfirmGarantia}
+	title="Garantía vigente"
+	message="El equipo tiene garantía vigente. ¿Desea continuar de todas formas con la baja?"
+	confirmlabel="Continuar"
+	cancellabel="Cancelar"
+	variant="destructive"
+	onconfirm={() => enviarResultadoRevision(true)}
+	oncancel={() => (showConfirmGarantia = false)}
+/>

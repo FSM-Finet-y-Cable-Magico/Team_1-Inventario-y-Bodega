@@ -1,0 +1,42 @@
+@startuml CU88-Reporte-Garantias-Normal
+title CU-88 — Generando reporte de garantías (flujo normal)
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style>
+sequenceDiagram {
+	participant { Margin 35 }
+	actor { Margin 15 }
+}
+</style>
+skinparam sequence {
+	MessageAlign center
+	LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega" as U
+participant "Vista reportes" as V
+participant "Controlador reportes" as C
+participant "Servicio reportes" as S
+participant "postgres" as DB
+
+U -> V : Selecciona filtros de empresa, tipo y período
+activate V
+V -> C : GET /api/reportes/garantias?id_empresa=...&id_tipo_equipo=...&periodo=30
+activate C
+C -> S : getGarantiasReport(filtros, req.user)
+activate S
+S -> S : Valida permisos + aislamiento por empresa
+S -> DB : SELECT u.*, t.garantia_dias, DATE_ADDED...
+DB --> S : filas con fecha_vencimiento, días calculados
+S -> S : Calcula dias_restantes / dias_vencidos
+S -> C : Resultado con equipos y estados
+C --> V : HTTP 200 + array JSON
+V --> U : Tabla de garantías con badges y empty state
+
+deactivate V
+deactivate C
+deactivate S
+@enduml

@@ -19,3 +19,17 @@ body {
 	color: var(--color-foreground);
 	font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
+
+/* La UI es clara: sin esto, en macOS con modo oscuro el navegador renderiza
+   los popups nativos de los <select>/<datalist> con colores del sistema y el
+   texto queda invisible. */
+:root {
+	color-scheme: light;
+}
+
+select option,
+select optgroup,
+datalist option {
+	background-color: #ffffff;
+	color: var(--color-foreground);
+}
