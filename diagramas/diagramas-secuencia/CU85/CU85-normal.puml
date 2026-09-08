@@ -1,47 +1,75 @@
-@startuml CU85-ReporteStockActual-Normal
+@startuml CU85-normal
 title CU-85 — Generando reporte de stock actual (flujo normal)
+
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
-skinparam sequenceMessageAlign center
 <style>
 sequenceDiagram {
-	participant { Margin 35 }
-	actor { Margin 15 }
+  participant { Margin 25 }
+  actor { Margin 20 }
 }
 </style>
 skinparam sequence {
-	MessageAlign center
-	LifeLineBorderColor black
+  MessageAlign center
+  LifeLineBorderColor black
 }
 hide footbox
 
-actor "Administrador de bodega / Administrador / Superusuario" as Usuario
-participant "Vista /reportes/stock" as V
-participant "C_ReportesController" as C
-participant "C_ReportesService" as SVC
-participant "postgres" as DB
+actor "Administrador de bodega / Administrador / Superusuario" as user
+participant "V_ReportesStock" as view
+participant "C_ReportesController" as ctrl
+participant "C_ReportesService" as svc
+participant "C_TypeORM" as orm
+participant "bodega" as bent
+participant "tipo_equipo" as tent
+participant "unidad_equipo" as uent
+participant "stock_consumible" as sent
+participant "log_auditoria" as aent
 
-Usuario -> V : Selecciona filtros opcionales y Generar
-activate V
-V -> C : GET /api/reportes/stock?id_empresa=&id_bodega=&id_tipo_equipo=
-activate C
-C -> SVC : getStockReport(filtros, req.user)
-activate SVC
-SVC -> DB : SELECT bodegas y tipos filtrados
-DB --> SVC : bodegas, tipos
-SVC -> DB : SELECT unidad_equipo por bodega/tipo
-DB --> SVC : unidades agrupables por estado
-SVC -> DB : SELECT stock_consumible por bodega/tipo
-DB --> SVC : cantidad_disponible y umbral_minimo
-SVC -> SVC : Construye filas tipo x bodega y calcula total_activo/bajo_umbral
-SVC -> DB : INSERT log_auditoria(GENERAR_REPORTE, filtros)
-DB --> SVC : auditoría registrada
-SVC --> C : filas del reporte
-C --> V : 200 OK + JSON
-V --> Usuario : Tabla con estados, total, umbral y alerta roja
+user -> view : Selecciona filtros opcionales y Generar
+activate view
+view -> ctrl : GET /api/reportes/stock\n?id_empresa=&id_bodega=&id_tipo_equipo=
+activate ctrl
+ctrl -> svc : getStockReport(filtros, req.user)
+activate svc
+svc -> svc : Valida rol y aislamiento por empresa
+svc -> orm : find bodegas y tipos filtrados
+activate orm
+orm -> bent : SELECT bodegas por filtros
+activate bent
+bent --> orm : Bodegas
+deactivate bent
+orm -> tent : SELECT tipos por filtros
+activate tent
+tent --> orm : Tipos de equipo
+deactivate tent
+orm --> svc : Catálogos filtrados
+deactivate orm
 
-deactivate SVC
-deactivate C
-deactivate V
+svc -> orm : Consulta stock serializado y consumible
+activate orm
+orm -> uent : SELECT unidades agrupadas por estado
+activate uent
+uent --> orm : Cantidades por estado
+deactivate uent
+orm -> sent : SELECT cantidad_disponible, umbral_minimo
+activate sent
+sent --> orm : Stock consumible y umbral
+deactivate sent
+orm --> svc : Datos de stock
+deactivate orm
+
+svc -> svc : Construye filas y calcula total_activo\ny bajo_umbral
+svc -> aent : INSERT log_auditoria\n(GENERAR_REPORTE, filtros)
+activate aent
+aent --> svc : Auditoría registrada
+deactivate aent
+svc --> ctrl : Filas del reporte
+deactivate svc
+ctrl --> view : 200 OK: Datos del reporte
+deactivate ctrl
+view --> user : Tabla con estados, total, umbral y alerta
+deactivate view
+
 @enduml

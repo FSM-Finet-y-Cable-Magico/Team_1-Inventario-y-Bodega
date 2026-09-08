@@ -1,13 +1,13 @@
-@startuml CU91-Consumo-Consumibles-Excepcion
-title CU-91 - Reporte de consumo de consumibles (sin resultados)
+@startuml CU91-exc-sin-consumibles
+title CU-91 — Generando reporte de consumo de consumibles (excepción: sin resultados)
+
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
-skinparam sequenceMessageAlign center
 <style>
 sequenceDiagram {
-	participant { Margin 35 }
-	actor { Margin 15 }
+  participant { Margin 25 }
+  actor { Margin 20 }
 }
 </style>
 skinparam sequence {
@@ -16,26 +16,33 @@ skinparam sequence {
 }
 hide footbox
 
-actor Administrador as Usuario
-participant "Vista /reportes" as V
-participant "ReportesController" as C
-participant "ReportesService" as SVC
-participant "PostgreSQL" as DB
+actor "Administrador de bodega / Administrador / Superusuario" as user
+participant "V_ReportesConsumo" as view
+participant "C_ReportesController" as ctrl
+participant "C_ReportesService" as svc
+participant "C_TypeORM" as orm
+participant "log_auditoria" as aent
 
-Usuario -> V : Configura filtros y selecciona Generar
-activate V
-V -> C : GET /api/reportes/consumo?...filtros
-activate C
-C -> SVC : getConsumoReport(filtros, req.user)
-activate SVC
-SVC -> DB : SELECT consumibles y agregados dentro del rango
-DB --> SVC : sin ingresos, entregas ni devoluciones
-SVC -> DB : INSERT log_auditoria (GENERAR_REPORTE)
-DB --> SVC : confirmado
-SVC --> C : [] con HTTP 200
-C --> V : reporte vacio
-V --> Usuario : No se encontraron consumibles con los filtros seleccionados.
-deactivate SVC
-deactivate C
-deactivate V
+user -> view : Configura filtros y selecciona Generar
+activate view
+view -> ctrl : GET /api/reportes/consumo?filtros
+activate ctrl
+ctrl -> svc : getConsumoReport(filtros, req.user)
+activate svc
+svc -> svc : Valida rango máximo 365 días\ny aislamiento por empresa
+svc -> orm : SELECT consumibles y agregados dentro del rango
+activate orm
+orm --> svc : Sin ingresos, entregas ni devoluciones
+deactivate orm
+svc -> aent : INSERT log_auditoria\n(GENERAR_REPORTE, reporte_consumo)
+activate aent
+aent --> svc : Auditoría registrada
+deactivate aent
+svc --> ctrl : Sin resultados
+deactivate svc
+ctrl --> view : 200 OK: Sin resultados
+deactivate ctrl
+view --> user : No se encontraron consumibles con los filtros seleccionados.
+deactivate view
+
 @enduml
