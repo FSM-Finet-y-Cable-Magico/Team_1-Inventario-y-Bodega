@@ -1,0 +1,48 @@
+@startuml CU82-exc-fecha-futura
+title CU-82 — Excepción 1: la fecha de retorno es futura
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega" as user
+participant "V_Prestamos" as view
+participant "C_PrestamosController" as ctrl
+participant "C_PrestamosService" as svc
+participant "prestamo_externo" as pent
+participant "unidad_equipo" as uent
+
+user -> view : Indica una fecha de retorno posterior a hoy
+activate view
+
+view -> view : El date picker limita con max = hoy,\npero el sistema revalida en el backend
+activate view
+deactivate view
+
+view -> ctrl : POST /api/prestamos/1/retorno\n{ fecha_retorno: "2027-01-01", items: [...] }
+activate ctrl
+
+ctrl -> svc : registrarRetorno(id, dto, actor)
+activate svc
+
+svc -> svc : fecha_retorno > hoy (America/Santiago)
+activate svc
+svc --> ctrl : 400 BadRequestException\n'La fecha de retorno no puede ser futura.'
+deactivate svc
+deactivate svc
+
+note over pent, uent : No se abre transacción: el préstamo sigue Activo,\nlas unidades siguen en préstamo y el stock no cambia
+
+ctrl --> view : 400 Bad Request
+deactivate ctrl
+view --> user : 'La fecha de retorno no puede ser futura.'\nNo permite registrar
+deactivate view
+
+@enduml

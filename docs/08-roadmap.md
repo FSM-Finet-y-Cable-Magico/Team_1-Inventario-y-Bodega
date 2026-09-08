@@ -15,6 +15,9 @@ no esté reflejado aquí.
 - **Total de casos de uso:** 96
 - **Implementados:** 69 (CU-01 a CU-46, CU-49 a CU-62, CU-72, CU-74, CU-75, CU-76, CU-77, CU-85, CU-86, CU-88, CU-89, CU-91)
 - **Pendientes:** 27 (CU-47, CU-48, CU-61, CU-63 a CU-71, CU-73, CU-78 a CU-84, CU-87, CU-90, CU-92 a CU-96)
+- **Implementados (Incremento 1):** 46 (CU-01 a CU-46)
+- **Implementados (Incremento 2):** CU-47, CU-78 a CU-84
+- **Pendientes:** 42
 
 ## Leyenda
 
@@ -157,18 +160,18 @@ no esté reflejado aquí.
 
 | CU | Nombre | Estado | Notas |
 |----|--------|--------|-------|
-| CU-78 | Registrando baja definitiva de equipo | [ ] Pendiente | |
-| CU-79 | Ejecutando acciones posteriores a baja definitiva | [ ] Pendiente | |
-| CU-80 | Registrando donación de equipos dados de baja | [ ] Pendiente | |
+| CU-78 | Registrando baja definitiva de equipo | [x] Implementado | Rama `tomas`. Módulo backend `bajas` + `/bajas` y `/unidades/[id]`. |
+| CU-79 | Ejecutando acciones posteriores a baja definitiva | [x] Implementado | Rama `tomas`. Sin endpoint nuevo: exclusión del inventario activo en `bodegas`/`companies` + fix de `id_bodega_actual`. Checklist en `05-backend/bajas.md` §10. |
+| CU-80 | Registrando donación de equipos dados de baja | [x] Implementado | Rama `tomas`. Módulo backend `donaciones` (+ PDF sin dependencias) y pestaña Donaciones en `/bajas`. |
 
 ### Préstamos a externos
 
 | CU | Nombre | Estado | Notas |
 |----|--------|--------|-------|
-| CU-81 | Registrando préstamo externo de equipos | [ ] Pendiente | |
-| CU-82 | Registrando retorno de préstamo externo | [ ] Pendiente | |
-| CU-83 | Consultando tabla de préstamos externos activos | [ ] Pendiente | |
-| CU-84 | Validando trazabilidad de devolución de préstamo externo | [ ] Pendiente | |
+| CU-81 | Registrando préstamo externo de equipos | [x] Implementado | Rama `tomas`. Módulo backend `prestamos` (tabla compartida con CU-75 de G3) y página `/prestamos`. |
+| CU-82 | Registrando retorno de préstamo externo | [x] Implementado | Rama `tomas`. Retorno total/parcial en `prestamos`. Incluye la **transición ampliada** `En préstamo externo → En revisión` (ratificada). |
+| CU-83 | Consultando tabla de préstamos externos activos | [x] Implementado | Rama `tomas`. Días restantes server-side, filtros por estado/empresa y badge por tipo en `/prestamos`. |
+| CU-84 | Validando trazabilidad de devolución de préstamo externo | [x] Implementado | Rama `tomas`. Validaciones (A)(B)(C) del retorno en `prestamos` + 7 tests en `prestamos.service.spec.ts`. |
 
 ### Reportes y estadísticas
 

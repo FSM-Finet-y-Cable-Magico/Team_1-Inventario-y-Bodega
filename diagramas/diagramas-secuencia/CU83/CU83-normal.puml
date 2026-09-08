@@ -1,0 +1,106 @@
+@startuml CU83-normal
+title CU-83 — Consultando tabla de préstamos externos activos (flujo normal)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega" as user
+participant "V_Prestamos" as view
+participant "C_RolesGuard" as guard
+participant "C_PrestamosController" as ctrl
+participant "C_PrestamosService" as svc
+participant "C_TypeORM" as orm
+participant "prestamo_externo" as pent
+participant "prestamo_detalle" as dent
+participant "usuario" as uent
+
+user -> view : Abre /prestamos (filtro por defecto: Activos)
+activate view
+
+view -> guard : GET /api/prestamos?estado=Activo\n(&id_empresa= si es Superusuario)
+activate guard
+guard --> view : Autorizado\n(ADMIN_BODEGA / ADMIN / SUPERUSUARIO)
+deactivate guard
+
+view -> ctrl : listar(estado, id_empresa, actor)
+activate ctrl
+ctrl -> svc : listar({ estado, id_empresa }, actor)
+activate svc
+
+svc -> svc : Aislamiento: el no-superusuario\nqueda fijado a su empresa;\nel Superusuario puede filtrar
+activate svc
+deactivate svc
+
+svc -> orm : find({ estado, id_empresa }, order: id DESC)
+activate orm
+orm -> pent : SELECT prestamo_externo\nWHERE estado = 'Activo'\n[AND id_empresa = :empresa]
+activate pent
+pent --> orm : Préstamos activos\n(tipo PRESTAMO y REPARACION_EXTERNA)
+deactivate pent
+orm --> svc : cabeceras
+deactivate orm
+
+svc -> orm : findBy({ id_prestamo: In(ids) })
+activate orm
+orm -> dent : SELECT prestamo_detalle
+activate dent
+dent --> orm : Ítems de cada préstamo
+deactivate dent
+orm --> svc : detalles
+deactivate orm
+
+svc -> orm : findBy({ id_usuario: In(ids) })
+activate orm
+orm -> uent : SELECT usuario
+activate uent
+uent --> orm : Nombres de quienes registraron
+deactivate uent
+orm --> svc : usuarios
+deactivate orm
+
+svc -> svc : dias_restantes = fecha_estimada_retorno - hoy\n(America/Santiago); null si el préstamo está cerrado.\nResumen de ítems por fila
+activate svc
+deactivate svc
+
+svc --> ctrl : 200 [{ correlativo, tipo, receptor,\nfecha_salida, fecha_estimada_retorno,\ndias_restantes, equipos, consumibles,\nitems_resumen, registrado_por }]
+deactivate svc
+ctrl --> view : 200 OK
+deactivate ctrl
+
+view --> user : Tabla con badge por tipo y\ndías restantes ('Vencido hace N días' en rojo)
+deactivate view
+
+user -> view : Selecciona un préstamo
+activate view
+view -> ctrl : GET /api/prestamos/:id
+activate ctrl
+ctrl -> svc : obtenerDetalle(id, actor)
+activate svc
+svc -> orm : cabecera + ítems + retornos previos
+activate orm
+orm -> pent : SELECT prestamo_externo WHERE id_prestamo = :id
+activate pent
+pent --> orm : Cabecera (404 genérico si es de otra empresa)
+deactivate pent
+orm -> dent : SELECT prestamo_detalle WHERE id_prestamo = :id
+activate dent
+dent --> orm : Ítems individuales
+deactivate dent
+orm --> svc : detalle
+deactivate orm
+svc --> ctrl : 200 { items con NS, tipo, cantidad,\ncantidad_retornada y retornos_previos }
+deactivate svc
+ctrl --> view : 200 OK
+deactivate ctrl
+view --> user : Modal con el detalle completo del préstamo
+deactivate view
+
+@enduml

@@ -118,6 +118,9 @@ export interface UnidadEquipo {
 	proveedor?: string | null;
 	observaciones?: string | null;
 	ubicacion_fisica?: string | null;
+	// CU-78: motivo con el que se registró la baja definitiva
+	motivo_baja?: string | null;
+	motivo_baja_detalle?: string | null;
 	marca?: string | null;
 	empresa?: string | null;
 	bodega?: string | null;
@@ -148,6 +151,99 @@ export interface CreateUnidadDto {
 	fecha_venc_garantia?: string;
 	id_bodega_actual?: number;
 	numero_poste?: string;
+}
+
+// CU-78: motivos de baja definitiva (lista cerrada, debe coincidir con el backend)
+export const MOTIVOS_BAJA = [
+	'Pérdida no recuperable',
+	'Robo confirmado',
+	'Falla irreparable',
+	'Obsolescencia',
+	'Donación a institución',
+	'Otro'
+] as const;
+
+export type EstadoSolicitudBaja = 'Pendiente de aprobación' | 'Aprobada' | 'Rechazada';
+
+export interface SolicitudBaja {
+	id_solicitud: number;
+	id_unidad: number;
+	numero_serie: string | null;
+	estado_unidad: string | null;
+	empresa: string | null;
+	motivo: string;
+	motivo_otro: string | null;
+	estado: EstadoSolicitudBaja;
+	solicitante: string | null;
+	aprobador: string | null;
+	fecha_solicitud: string | null;
+	fecha_resolucion: string | null;
+	motivo_rechazo: string | null;
+}
+
+// CU-80: donación de equipos dados de baja
+export interface Donacion {
+	id_donacion: number;
+	nombre_institucion: string;
+	rut_institucion: string;
+	fecha_donacion: string;
+	numero_resolucion: string | null;
+	empresa: string | null;
+	registrada_por: string | null;
+	fecha_creacion: string | null;
+	equipos: number;
+}
+
+export interface UnidadDonable {
+	id_unidad: number;
+	numero_serie: string;
+	tipo_equipo: string | null;
+	categoria: string | null;
+	marca: string | null;
+	modelo: string | null;
+	fecha_adquisicion: string | null;
+	motivo_baja: string | null;
+	estado: string;
+}
+
+// CU-81: préstamo externo de equipos
+export interface PrestamoExterno {
+	id_prestamo: number;
+	correlativo: string;
+	tipo: string;
+	nombre_receptor: string;
+	rut_receptor: string | null;
+	fecha_salida: string;
+	fecha_estimada_retorno: string;
+	motivo: string;
+	estado: string;
+	empresa: string | null;
+	registrado_por: string | null;
+	equipos: number;
+	consumibles: number;
+	// CU-83: negativo si ya venció; null cuando el préstamo está cerrado
+	dias_restantes?: number | null;
+	items_resumen?: { tipo: string; descripcion: string | null; cantidad: number }[];
+}
+
+export interface PrestamoItem {
+	id_detalle: number;
+	es_consumible: boolean;
+	numero_serie: string | null;
+	tipo_equipo: string | null;
+	marca: string | null;
+	modelo: string | null;
+	unidad_medida: string | null;
+	cantidad: number | null;
+	cantidad_retornada: number;
+	estado_unidad: string | null;
+	// CU-82: retornos ya registrados para este ítem
+	retornos_previos?: { fecha_retorno: string; cantidad: number | null; observacion: string | null }[];
+}
+
+export interface PrestamoDetalleCompleto extends Omit<PrestamoExterno, 'equipos' | 'consumibles'> {
+	bodega_origen: string | null;
+	items: PrestamoItem[];
 }
 
 export interface CambioEstadoDto {

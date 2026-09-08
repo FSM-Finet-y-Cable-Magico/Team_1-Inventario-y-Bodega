@@ -70,6 +70,26 @@ Todas tipadas `<T>`. Nombre de endpoint backend en comentario:
 - `approveTransfer(id)` → `PATCH /transferencias/:id/aprobar` (solo SUPERUSUARIO)
 - `rejectTransfer(id, {observaciones})` → `PATCH /transferencias/:id/rechazar` (CU-22)
 
+### Bajas definitivas (CU-78)
+- `registrarBaja({id_unidad, motivo, descripcion_otro?})` → `POST /bajas`
+  (ADMIN/SUPERUSUARIO/ADMIN_BODEGA aplican la baja; TECNICO_TERRENO genera una solicitud)
+- `getBajas({estado?})` → `GET /bajas`
+- `approveBaja(id)` → `POST /bajas/:id/aprobar` (ADMIN, SUPERUSUARIO)
+- `rejectBaja(id, {motivo_rechazo})` → `POST /bajas/:id/rechazar` (ADMIN, SUPERUSUARIO)
+
+### Donaciones (CU-80)
+- `getDonaciones()` → `GET /donaciones` (ADMIN, SUPERUSUARIO)
+- `getUnidadesDonables()` → `GET /donaciones/candidatas` (unidades dadas de baja por donación)
+- `validarDatosDonacion({nombre_institucion, rut_institucion, fecha_donacion, numero_resolucion?})` → `POST /donaciones/validar` (comprobación previa a la baja; no registra nada)
+- `registrarDonacion({nombre_institucion, rut_institucion, fecha_donacion, numero_resolucion?, ids_unidades})` → `POST /donaciones`
+- `descargarPdfDonacion(id)` → `GET /donaciones/:id/pdf` vía `api.download` (el token va en el header)
+
+### Préstamos externos (CU-81)
+- `getPrestamos({estado?, id_empresa?})` → `GET /prestamos` (CU-83: `id_empresa` solo lo aplica el backend para SUPERUSUARIO)
+- `getPrestamoDetalle(id)` → `GET /prestamos/:id`
+- `registrarPrestamo(data)` → `POST /prestamos` (ADMIN_BODEGA, ADMIN, SUPERUSUARIO)
+- `registrarRetornoPrestamo(id, {fecha_retorno, observacion?, items})` → `POST /prestamos/:id/retorno` (CU-82)
+
 ### Dashboards
 - `getDashboard()` → `GET /empresas/dashboard` (consolidado, SUPERUSUARIO) (CU-15)
 - `getMyDashboard()` → `GET /empresas/mi-dashboard` (CU-16)

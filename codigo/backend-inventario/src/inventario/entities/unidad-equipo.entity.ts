@@ -51,7 +51,7 @@ export class UnidadEquipo {
   id_bodega_actual?: number | null;
 
   @Column({ type: 'varchar', length: 30, name: 'numero_poste', nullable: true })
-  numeroPoste?: string;
+  numeroPoste?: string | null;
 
   @Column({ type: 'integer', name: 'id_caja_nap', nullable: true })
   id_caja_nap?: number;
@@ -84,6 +84,19 @@ export class UnidadEquipo {
     nullable: true,
   })
   ubicacionFisica?: string | null;
+
+  // CU-78/CU-80: motivo de la baja definitiva (lista cerrada) y su descripción
+  // cuando el motivo es 'Otro'. Requieren migración: npm run migrar
+  @Column({ type: 'varchar', length: 40, name: 'motivo_baja', nullable: true })
+  motivoBaja?: string | null;
+
+  @Column({
+    type: 'varchar',
+    length: 200,
+    name: 'motivo_baja_detalle',
+    nullable: true,
+  })
+  motivoBajaDetalle?: string | null;
 
   // Relaciones tipadas de TypeORM mapeadas a tus llaves foráneas reales
   @ManyToOne(() => TipoEquipo, (tipo) => tipo.unidades, { eager: true })

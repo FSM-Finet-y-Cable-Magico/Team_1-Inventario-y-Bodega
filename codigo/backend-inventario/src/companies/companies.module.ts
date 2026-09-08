@@ -7,6 +7,7 @@ import { Bodega } from '../bodegas/entities/bodega.entity';
 import { StockConsumible } from '../bodegas/entities/stock-consumible.entity';
 import { Transferencia } from '../transferencias/entities/transferencia.entity';
 import { MovimientoInventario } from '../transferencias/entities/movimiento-inventario.entity';
+import { SolicitudBaja } from '../bajas/entities/solicitud-baja.entity';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { MovimientoInventario } from '../transferencias/entities/movimiento-inve
       StockConsumible,
       Transferencia,
       MovimientoInventario,
+      SolicitudBaja,
     ]),
   ],
   controllers: [CompaniesController],

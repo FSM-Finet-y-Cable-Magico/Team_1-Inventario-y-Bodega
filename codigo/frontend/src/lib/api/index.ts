@@ -150,6 +150,97 @@ export function registrarRetornoReparacion(id: number, data: Record<string, unkn
 	return api.post<any>(`/unidades/${id}/retorno-reparacion`, data);
 }
 
+// CU-78: registrar baja definitiva (ADMIN/SUPERUSUARIO/ADMIN_BODEGA la aplican
+// directo; el técnico de terreno genera una solicitud pendiente de aprobación)
+export function registrarBaja(data: { id_unidad: number; motivo: string; descripcion_otro?: string }) {
+	return api.post<any>('/bajas', data);
+}
+
+// CU-78: bandeja de solicitudes de baja
+export function getBajas(params?: { estado?: string }) {
+	const qs = new URLSearchParams();
+	if (params?.estado) qs.set('estado', params.estado);
+	const query = qs.toString();
+	return api.get<import('$lib/types').SolicitudBaja[]>(`/bajas${query ? '?' + query : ''}`);
+}
+
+export function approveBaja(id: number) {
+	return api.post<any>(`/bajas/${id}/aprobar`);
+}
+
+export function rejectBaja(id: number, data: { motivo_rechazo: string }) {
+	return api.post<any>(`/bajas/${id}/rechazar`, data);
+}
+
+// CU-80: donaciones de equipos dados de baja con motivo 'Donación a institución'
+export function getDonaciones() {
+	return api.get<import('$lib/types').Donacion[]>('/donaciones');
+}
+
+export function getUnidadesDonables() {
+	return api.get<import('$lib/types').UnidadDonable[]>('/donaciones/candidatas');
+}
+
+export function registrarDonacion(data: {
+	nombre_institucion: string;
+	rut_institucion: string;
+	fecha_donacion: string;
+	numero_resolucion?: string;
+	ids_unidades: number[];
+}) {
+	return api.post<any>('/donaciones', data);
+}
+
+// CU-80: comprueba los datos de la institución sin registrar nada. El flujo
+// encadenado de la baja por donación la usa antes de dar de baja el equipo.
+export function validarDatosDonacion(data: {
+	nombre_institucion: string;
+	rut_institucion: string;
+	fecha_donacion: string;
+	numero_resolucion?: string;
+}) {
+	return api.post<{ valido: true }>('/donaciones/validar', data);
+}
+
+// CU-80: el PDF viaja autenticado, por eso usa la descarga del cliente (no <a href>)
+export function descargarPdfDonacion(id: number) {
+	return api.download(`/donaciones/${id}/pdf`, `donacion-${id}.pdf`);
+}
+
+// CU-81: préstamos externos de equipos y consumibles
+export function getPrestamos(params?: { estado?: string; id_empresa?: string }) {
+	const qs = new URLSearchParams();
+	if (params?.estado) qs.set('estado', params.estado);
+	// CU-83: filtro por empresa (solo lo aplica el backend para SUPERUSUARIO)
+	if (params?.id_empresa) qs.set('id_empresa', params.id_empresa);
+	const query = qs.toString();
+	return api.get<import('$lib/types').PrestamoExterno[]>(`/prestamos${query ? '?' + query : ''}`);
+}
+
+export function getPrestamoDetalle(id: number) {
+	return api.get<import('$lib/types').PrestamoDetalleCompleto>(`/prestamos/${id}`);
+}
+
+export function registrarPrestamo(data: {
+	nombre_receptor: string;
+	rut_receptor?: string;
+	fecha_estimada_retorno: string;
+	motivo: string;
+	id_bodega_origen: number;
+	numeros_serie?: string[];
+	consumibles?: { id_tipo_equipo: number; cantidad: number }[];
+}) {
+	return api.post<any>('/prestamos', data);
+}
+
+// CU-82: retorno total o parcial de un préstamo externo
+export function registrarRetornoPrestamo(
+	id: number,
+	data: { fecha_retorno: string; observacion?: string; items: { id_detalle?: number; numero_serie?: string; cantidad?: number }[] }
+) {
+	return api.post<any>(`/prestamos/${id}/retorno`, data);
+}
+
 export function getUnitHistory(serialNumber: string) {
 	return api.get<any[]>(`/unidades/${serialNumber}/historial`);
 }

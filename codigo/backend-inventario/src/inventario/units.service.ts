@@ -21,6 +21,20 @@ import { ProveedoresService } from '../proveedores/proveedores.service';
 
 const MAC_REGEX = /^([0-9A-Fa-f]{2}[:\-]){5}[0-9A-Fa-f]{2}$/;
 
+// CU-35: máquina de estados de las unidades. Se exporta para que los módulos que
+// hacen su propia transacción (CU-81 préstamos) validen con la misma tabla en vez
+// de duplicarla. Los literales llevan tilde y deben coincidir exacto con el front.
+export const TRANSICIONES_PERMITIDAS: Record<string, string[]> = {
+  'En bodega': ['Asignado a técnico', 'En préstamo externo', 'Dado de baja'],
+  'Asignado a técnico': ['Instalado en cliente', 'En bodega', 'En revisión'],
+  'Instalado en cliente': ['En revisión'],
+  'En revisión': ['En bodega', 'En préstamo externo', 'Dado de baja'],
+  // CU-76: ratificado por el jefe de grupo (2026-09-07) — el retorno de
+  // reparación externa deja el equipo "En revisión" para reevaluación.
+  'En préstamo externo': ['En bodega', 'En revisión'],
+  'Dado de baja': [],
+};
+
 @Injectable()
 export class UnitsService {
   constructor(
@@ -500,6 +514,7 @@ export class UnitsService {
     descripcionOtroPayload?: string,
     simularErrorHistorial?: boolean,
     ubicacionFisicaPayload?: string,
+    bajaPayload?: { motivo: string; descripcion?: string | null },
   ) {
     // CU-36: la observación es opcional, con máximo 300 caracteres
     const observacion = motivoPayload?.trim() || undefined;
@@ -525,27 +540,8 @@ export class UnitsService {
 
     const estadoOrigen = unidad.estado;
 
-    const transicionesPermitidas: Record<string, string[]> = {
-      'En bodega': [
-        'Asignado a técnico',
-        'En préstamo externo',
-        'Dado de baja',
-      ],
-      'Asignado a técnico': [
-        'Instalado en cliente',
-        'En bodega',
-        'En revisión',
-      ],
-      'Instalado en cliente': ['En revisión'],
-      'En revisión': ['En bodega', 'En préstamo externo', 'Dado de baja'],
-      // CU-76: ratificado por el jefe de grupo (2026-09-07) — el retorno de
-      // reparación externa deja el equipo "En revisión" para reevaluación.
-      'En préstamo externo': ['En bodega', 'En revisión'],
-      'Dado de baja': [],
-    };
-
     // CU-35 Excepción 1: mensaje exacto del caso de uso
-    if (!transicionesPermitidas[estadoOrigen]?.includes(nuevoEstado)) {
+    if (!TRANSICIONES_PERMITIDAS[estadoOrigen]?.includes(nuevoEstado)) {
       throw new BadRequestException(
         'Transición de estado no permitida para este equipo.',
       );
@@ -594,6 +590,13 @@ export class UnitsService {
       }
     }
 
+    // CU-78: motivo de la baja definitiva (lo valida BajasService, aquí solo se
+    // persiste junto al cambio de estado para que quede en la misma transacción)
+    if (nuevoEstado === 'Dado de baja' && bajaPayload) {
+      unidad.motivoBaja = bajaPayload.motivo;
+      unidad.motivoBajaDetalle = bajaPayload.descripcion ?? null;
+    }
+
     // CU-47: ubicación física actual antes de la transición (para auditoría)
     const ubicacionOrigen = unidad.ubicacionFisica ?? null;
 
@@ -604,8 +607,11 @@ export class UnitsService {
     }
 
     if (estadoOrigen === 'En bodega' && nuevoEstado !== 'En bodega') {
-      unidad.id_bodega_actual = undefined;
-      unidad.numeroPoste = undefined;
+      // CU-79 (B): se limpia con null explícito — TypeORM ignora las propiedades
+      // undefined al guardar, por lo que la unidad seguía asociada a la bodega y
+      // se contaba en su stock después de salir de ella (p. ej. tras una baja).
+      unidad.id_bodega_actual = null;
+      unidad.numeroPoste = null;
       // CU-47: al salir de la bodega el sistema vacía automáticamente la ubicación física
       unidad.ubicacionFisica = null;
     }
@@ -640,6 +646,13 @@ export class UnitsService {
           if (nuevoEstado === 'En bodega' && ubicacionFisica) {
             motivoHistorial += `. Ubicación física: ${ubicacionFisica}`;
           }
+          // CU-78/CU-79: el historial deja constancia del motivo de la baja
+          if (nuevoEstado === 'Dado de baja' && unidad.motivoBaja) {
+            motivoHistorial = `Baja definitiva. Motivo: ${unidad.motivoBaja}`;
+            if (unidad.motivoBajaDetalle)
+              motivoHistorial += ` (${unidad.motivoBajaDetalle})`;
+            if (observacion) motivoHistorial += `. Observación: ${observacion}`;
+          }
           if (nuevoEstado === 'En revisión') {
             motivoHistorial = `Ingreso a taller técnico. Diagnóstico: ${unidad.diagnosticoTecnico}`;
             // si la descripción de "Otro" vino en el campo de observación
@@ -673,17 +686,31 @@ export class UnitsService {
           // CU-47: auditoría de la transición; valor_nuevo incluye la ubicación física
           await this.auditoriaService.create({
             id_usuario: actor.id_usuario,
-            accion: 'CAMBIAR_ESTADO',
+            // CU-78/CU-79 (D): la baja definitiva se audita con su propia acción e
+            // incluye número de serie, motivo y empresa además del usuario y la fecha
+            accion:
+              nuevoEstado === 'Dado de baja'
+                ? 'BAJA_DEFINITIVA'
+                : 'CAMBIAR_ESTADO',
             entidad_afectada: 'unidad_equipo',
             id_entidad_afectada: unidad.id_unidad,
             valor_anterior: {
               estado: estadoOrigen,
               ubicacion_fisica: ubicacionOrigen,
             },
-            valor_nuevo: {
-              estado: nuevoEstado,
-              ubicacion_fisica: unidad.ubicacionFisica ?? null,
-            },
+            valor_nuevo:
+              nuevoEstado === 'Dado de baja'
+                ? {
+                    estado: nuevoEstado,
+                    numero_serie: unidad.serialNumber,
+                    motivo_baja: unidad.motivoBaja ?? null,
+                    motivo_baja_detalle: unidad.motivoBajaDetalle ?? null,
+                    id_empresa: unidad.id_empresa,
+                  }
+                : {
+                    estado: nuevoEstado,
+                    ubicacion_fisica: unidad.ubicacionFisica ?? null,
+                  },
           });
 
           return {
@@ -691,6 +718,8 @@ export class UnitsService {
             estadoActual: unidad.estado,
             diagnostico_registrado: unidad.diagnosticoTecnico ?? 'N/A',
             ubicacion_fisica: unidad.ubicacionFisica ?? null,
+            // CU-78: motivo con el que quedó registrada la baja definitiva
+            motivo_baja: unidad.motivoBaja ?? null,
           };
         } catch (err) {
           ultimoError = err instanceof Error ? err : new Error(String(err));
@@ -1406,6 +1435,9 @@ export class UnitsService {
       fecha_venc_garantia: unidad.fechaVencGarantia ?? null,
       garantia: alertaGarantia,
       ubicacion_fisica: unidad.ubicacionFisica ?? null,
+      // CU-78: motivo con el que se registró la baja definitiva (si aplica)
+      motivo_baja: unidad.motivoBaja ?? null,
+      motivo_baja_detalle: unidad.motivoBajaDetalle ?? null,
       observaciones: unidad.observaciones ?? null,
       numero_poste: unidad.numeroPoste ?? null,
       id_cliente_instalado: unidad.id_cliente_instalado ?? null,

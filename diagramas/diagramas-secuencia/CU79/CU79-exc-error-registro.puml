@@ -1,0 +1,68 @@
+@startuml CU79-exc-error-registro
+title CU-79 — Excepción 1: error al registrar la baja (rollback y reintento)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador" as user
+participant "V_FichaUnidad" as view
+participant "C_BajasService" as bsvc
+participant "C_UnitsService" as svc
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as uent
+participant "historial_estado_equipo" as hent
+
+user -> view : Confirma la baja definitiva
+activate view
+view -> bsvc : POST /api/bajas
+activate bsvc
+bsvc -> svc : transicionarEstado(id, 'Dado de baja', ...)
+activate svc
+
+loop hasta 3 intentos (backoff 100ms × intento)
+    svc -> orm : queryRunner.startTransaction()\nsave(unidad)
+    activate orm
+    orm -> uent : UPDATE unidad_equipo\nSET estado = 'Dado de baja'
+    activate uent
+    uent --> orm : Unidad actualizada (aún sin commit)
+    deactivate uent
+    orm --> svc : ok
+    deactivate orm
+
+    svc -> orm : save(historial)
+    activate orm
+    orm -> hent : INSERT historial_estado_equipo
+    activate hent
+    hent --> orm : ERROR al escribir el historial
+    deactivate hent
+    orm --> svc : Excepción
+    deactivate orm
+
+    svc -> orm : queryRunner.rollbackTransaction()
+    activate orm
+    orm -> uent : ROLLBACK
+    activate uent
+    uent --> orm : La unidad conserva su estado anterior\n(la baja NO queda a medias)
+    deactivate uent
+    orm --> svc : Transacción revertida
+    deactivate orm
+end
+
+svc --> bsvc : 400 BadRequestException\n'Error al registrar el cambio en el historial.\nEl sistema reintentó la escritura\npero el error persiste.'
+deactivate svc
+
+bsvc --> view : 400 Bad Request
+deactivate bsvc
+
+view --> user : Mensaje de error y opción de reintentar.\nLa unidad mantiene su estado y su bodega.
+deactivate view
+
+@enduml

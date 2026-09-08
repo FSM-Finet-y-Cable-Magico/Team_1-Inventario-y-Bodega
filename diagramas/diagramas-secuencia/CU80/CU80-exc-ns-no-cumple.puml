@@ -1,0 +1,62 @@
+@startuml CU80-exc-ns-no-cumple
+title CU-80 — Excepción 1: un NS no está dado de baja por donación
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador" as user
+participant "V_Bajas (Donaciones)" as view
+participant "C_DonacionesController" as ctrl
+participant "C_DonacionesService" as svc
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as uent
+participant "donacion" as dent
+
+user -> view : Completa el formulario e incluye un NS\nque no cumple la condición
+activate view
+
+view -> ctrl : POST /api/donaciones\n{ ..., ids_unidades: [5, 9] }
+activate ctrl
+
+ctrl -> svc : registrar(dto, actor)
+activate svc
+
+svc -> svc : validarFormulario() → OK
+activate svc
+deactivate svc
+
+svc -> orm : findBy({ id_unidad: In([5, 9]) })
+activate orm
+orm -> uent : SELECT unidad_equipo\nWHERE id_unidad IN (5, 9)
+activate uent
+uent --> orm : #5 'Dado de baja' (Donación a institución)\n#9 'En bodega'
+deactivate uent
+orm --> svc : unidades
+deactivate orm
+
+svc -> svc : Revisa cada NS:\n#9 no está 'Dado de baja'\ncon motivo 'Donación a institución'
+activate svc
+svc --> ctrl : 400 BadRequestException\n'Los siguientes equipos no están dados de baja\ncon motivo Donación a institución y deben\nquitarse del listado: SN-0009 (estado actual:\nEn bodega).'
+deactivate svc
+deactivate svc
+
+note over dent : No se crea la donación\nni sus detalles (sin transacción abierta)
+
+ctrl --> view : 400 Bad Request
+deactivate ctrl
+
+view -> view : Marca en rojo los NS nombrados\nen el mensaje del backend
+activate view
+view --> user : Mensaje de error con los NS que no cumplen;\nno permite continuar hasta corregir el listado
+deactivate view
+deactivate view
+
+@enduml

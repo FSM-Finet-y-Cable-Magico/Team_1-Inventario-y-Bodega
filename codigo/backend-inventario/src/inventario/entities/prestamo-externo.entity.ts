@@ -56,4 +56,13 @@ export class PrestamoExterno {
 
   @Column({ type: 'integer', name: 'id_usuario_registro' })
   idUsuarioRegistro!: number;
+
+  // CU-81: los préstamos por lote (módulo `prestamos`) comparten esta cabecera y
+  // agregan su correlativo PE-XXXXX y la bodega de origen. Quedan en null en los
+  // registros de reparación externa (CU-75), que van por unidad.
+  @Column({ type: 'varchar', length: 12, name: 'correlativo', nullable: true })
+  correlativo?: string | null;
+
+  @Column({ type: 'integer', name: 'id_bodega_origen', nullable: true })
+  idBodegaOrigen?: number | null;
 }

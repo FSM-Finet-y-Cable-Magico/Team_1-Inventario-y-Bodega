@@ -2,16 +2,20 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { getUnit, changeUnitState, getUnitHistory, getWarehouses, updateUnit, registrarResultadoRevision, reacondicionarUnidad, enviarAReparacionExterna, registrarRetornoReparacion } from '$lib/api/index';
+	import {
+		getUnit, changeUnitState, getUnitHistory, getWarehouses, updateUnit,
+		registrarBaja, registrarDonacion, validarDatosDonacion,
+		registrarResultadoRevision, reacondicionarUnidad, enviarAReparacionExterna, registrarRetornoReparacion
+	} from '$lib/api/index';
 	import { userRoles } from '$lib/stores/auth';
 	import type { UnidadEquipo, HistorialEstado, EstadoUnidad, Bodega } from '$lib/types';
+	import { MOTIVOS_BAJA } from '$lib/types';
 	import Button from '$lib/components/Button.svelte';
 	import Modal from '$lib/components/Modal.svelte';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import FormField from '$lib/components/FormField.svelte';
 	import Badge from '$lib/components/Badge.svelte';
-	import { ArrowLeft, RotateCw, Pencil, ClipboardCheck, PackageCheck, Wrench, PackageOpen } from '@lucide/svelte';
-	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
-	
+	import { ArrowLeft, RotateCw, Pencil, Ban, ClipboardCheck, PackageCheck, Wrench, PackageOpen } from '@lucide/svelte';
 
 	let unit = $state<UnidadEquipo | null>(null);
 	let history = $state<HistorialEstado[]>([]);
@@ -30,6 +34,31 @@
 	const puedeEditarUnidad = $derived(roles.some((r) => ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'].includes(r)));
 	let changeError = $state('');
 	let changing = $state(false);
+
+	// CU-78: baja definitiva (el técnico de terreno genera una solicitud;
+	// ADMIN/SUPERUSUARIO/ADMIN_BODEGA la aplican directamente)
+	let showBaja = $state(false);
+	let bajaForm = $state({ motivo: '', descripcion_otro: '' });
+	let bajaError = $state('');
+	let registrandoBaja = $state(false);
+	let showConfirmBaja = $state(false);
+	const motivosBaja = MOTIVOS_BAJA;
+
+	// CU-80: cuando el motivo es la donación, la baja continúa con el formulario
+	// de la donación en el mismo flujo (paso 2 del modal)
+	const MOTIVO_DONACION = 'Donación a institución';
+	let pasoDonacion = $state(false);
+	let donacionForm = $state({
+		nombre_institucion: '',
+		rut_institucion: '',
+		fecha_donacion: '',
+		numero_resolucion: ''
+	});
+	const hoyISO = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
+	// El técnico de terreno solo genera una solicitud: la unidad todavía no queda
+	// dada de baja, así que la donación no puede registrarse en ese momento
+	const aplicaBajaDirecta = $derived(roles.some((r) => ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'].includes(r)));
+	const requiereDatosDonacion = $derived(bajaForm.motivo === MOTIVO_DONACION && aplicaBajaDirecta);
 
 	// CU-72: registrar resultado de revisión (Operativo / Reparación externa / Baja)
 	let showResultado = $state(false);
@@ -64,7 +93,6 @@
 	let retornoForm = $state({ resultado: '' as 'REPARADO' | 'NO_REPARADO' | '', observacion: '' });
 	let retornoError = $state('');
 	let registrandoRetorno = $state(false);
-
 
 	// CU-18: edición de los datos de la unidad
 	let showEdit = $state(false);
@@ -109,6 +137,8 @@
 		'Asignado a técnico': ['Instalado en cliente', 'En bodega', 'En revisión'],
 		'Instalado en cliente': ['En revisión'],
 		'En revisión': ['En bodega', 'En préstamo externo', 'Dado de baja'],
+		// CU-82: transición ampliada (retorno de préstamo externo a revisión)
+
 		// CU-76: ratificado por el jefe de grupo — retorno de reparación externa
 		'En préstamo externo': ['En bodega', 'En revisión'],
 		'Dado de baja': []
@@ -186,6 +216,101 @@
 			editError = err instanceof Error ? err.message : 'Error al actualizar unidad';
 		} finally {
 			savingEdit = false;
+		}
+	}
+
+	function abrirBaja() {
+		bajaForm = { motivo: '', descripcion_otro: '' };
+		donacionForm = { nombre_institucion: '', rut_institucion: '', fecha_donacion: hoyISO, numero_resolucion: '' };
+		pasoDonacion = false;
+		bajaError = '';
+		showBaja = true;
+	}
+
+	// CU-78 Excepción 3: la descripción es obligatoria (5-200) cuando el motivo es 'Otro'.
+	// CU-78 Excepción 2: si el equipo tiene garantía vigente, la confirmación avisa
+	// y permite continuar de todas formas o cancelar.
+	async function solicitarConfirmacionBaja() {
+		bajaError = '';
+		if (!bajaForm.motivo) {
+			bajaError = 'Debe seleccionar un motivo de baja.';
+			return;
+		}
+		const descripcion = bajaForm.descripcion_otro.trim();
+		if (bajaForm.motivo === 'Otro' && (descripcion.length < 5 || descripcion.length > 200)) {
+			bajaError = 'Debe ingresar una descripción cuando selecciona Otro.';
+			return;
+		}
+
+		// CU-80: con motivo de donación, "Continuar" despliega el formulario de la
+		// donación; la confirmación llega después de completarlo
+		if (requiereDatosDonacion && !pasoDonacion) {
+			pasoDonacion = true;
+			return;
+		}
+
+		// CU-80: la baja es irreversible, así que los datos de la donación se validan
+		// contra el backend ANTES de ejecutarla (el dígito verificador del RUT y el
+		// resto de reglas solo las conoce el servidor)
+		if (pasoDonacion) {
+			registrandoBaja = true;
+			try {
+				await validarDatosDonacion({
+					nombre_institucion: donacionForm.nombre_institucion.trim(),
+					rut_institucion: donacionForm.rut_institucion.trim(),
+					fecha_donacion: donacionForm.fecha_donacion,
+					numero_resolucion: donacionForm.numero_resolucion.trim() || undefined
+				});
+			} catch (err: unknown) {
+				bajaError = err instanceof Error ? err.message : 'Los datos de la donación no son válidos.';
+				return;
+			} finally {
+				registrandoBaja = false;
+			}
+		}
+
+		showConfirmBaja = true;
+	}
+
+	async function handleBaja() {
+		if (!unit) return;
+		showConfirmBaja = false;
+		registrandoBaja = true;
+		try {
+			const resultado = await registrarBaja({
+				id_unidad: unit.id_unidad,
+				motivo: bajaForm.motivo,
+				descripcion_otro: bajaForm.motivo === 'Otro' ? bajaForm.descripcion_otro.trim() : undefined
+			});
+			// CU-80: con el motivo de donación, la baja continúa registrando la
+			// donación del equipo recién dado de baja (el backend exige que ya lo esté)
+			let mensajeDonacion = '';
+			if (pasoDonacion && resultado?.requiere_aprobacion === false) {
+				const donacion = await registrarDonacion({
+					nombre_institucion: donacionForm.nombre_institucion.trim(),
+					rut_institucion: donacionForm.rut_institucion.trim(),
+					fecha_donacion: donacionForm.fecha_donacion,
+					numero_resolucion: donacionForm.numero_resolucion.trim() || undefined,
+					ids_unidades: [unit.id_unidad]
+				});
+				mensajeDonacion = ` ${donacion?.message ?? 'Donación registrada.'}`;
+			}
+
+			showBaja = false;
+			pasoDonacion = false;
+			// CU-78: el mensaje distingue la baja aplicada de la solicitud pendiente
+			success = (resultado?.message ?? 'Baja definitiva registrada correctamente') + mensajeDonacion;
+			await load();
+		} catch (err: unknown) {
+			const mensaje = err instanceof Error ? err.message : 'Error al registrar la baja definitiva';
+			// La baja es irreversible: si falló el registro de la donación hay que
+			// avisar que el equipo ya quedó dado de baja
+			bajaError = pasoDonacion
+				? `${mensaje} Si el equipo ya quedó dado de baja, registre la donación desde Bajas → Donaciones.`
+				: mensaje;
+			await load();
+		} finally {
+			registrandoBaja = false;
 		}
 	}
 
@@ -441,6 +566,13 @@ async function handleRegistrarRetorno() {
 								<p class="text-foreground">{unit.estado}{unit.estado === 'Instalado en cliente' && unit.id_cliente_instalado ? ` (cliente #${unit.id_cliente_instalado})` : ''}</p>
 							</div>
 						{/if}
+						{#if unit.estado === 'Dado de baja' && unit.motivo_baja}
+							<!-- CU-78/CU-79: el motivo de la baja queda visible en la ficha -->
+							<div class="col-span-2">
+								<span class="text-muted">Motivo de la baja definitiva:</span>
+								<p class="text-foreground">{unit.motivo_baja}{unit.motivo_baja_detalle ? `: ${unit.motivo_baja_detalle}` : ''}</p>
+							</div>
+						{/if}
 						<div class="col-span-2">
 							<span class="text-muted">Observaciones:</span>
 							<p class="text-foreground">{unit.observaciones || '-'}</p>
@@ -456,6 +588,15 @@ async function handleRegistrarRetorno() {
 							<RotateCw class="h-4 w-4" />
 							Cambiar estado
 						</Button>
+					<!-- CU-78: baja definitiva; el sistema valida el estado (Excepción 1).
+					     Disponible también para el técnico de terreno, que genera una solicitud -->
+					{#if unit.estado !== 'Dado de baja'}
+						<Button variant="destructive" onclick={abrirBaja}>
+							<Ban class="h-4 w-4" />
+							Registrar baja definitiva
+						</Button>
+					{/if}
+
 						<!-- CU-72: solo disponible cuando la unidad está en revisión -->
 						{#if unit.estado === 'En revisión'}
 							<Button onclick={() => {
@@ -560,6 +701,128 @@ async function handleRegistrarRetorno() {
 		</div>
 	{/if}
 </div>
+
+<!-- CU-78: registro de la baja definitiva del equipo -->
+<Modal title={pasoDonacion ? 'Datos de la donación' : 'Registrar baja definitiva'} open={showBaja} onclose={() => (showBaja = false)}>
+	<form onsubmit={(e: Event) => { e.preventDefault(); solicitarConfirmacionBaja(); }} class="space-y-4">
+		{#if bajaError}
+			<div class="bg-red-50 border border-red-200 text-destructive text-sm rounded-md px-3 py-2">{bajaError}</div>
+		{/if}
+		{#if unit}
+			<p class="text-sm text-muted">
+				Equipo <strong>{unit.numero_serie}</strong> · Estado actual: <strong>{unit.estado}</strong>
+			</p>
+
+			<!-- CU-78: la baja es irreversible -->
+			<div class="bg-red-50 border border-red-200 text-destructive text-sm rounded-md px-3 py-2">
+				La baja definitiva es irreversible: el equipo quedará en estado [Dado de baja] y no podrá volver a ningún otro estado.
+			</div>
+
+			<!-- CU-78 Excepción 2: aviso de garantía vigente -->
+			{#if unit.garantia?.garantia_vigente}
+				<div class="bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-md px-3 py-2">
+					AVISO: Este equipo tiene garantía vigente hasta {fmtFecha(unit.fecha_venc_garantia)}.
+					Considere su devolución al proveedor antes de darlo de baja.
+				</div>
+			{/if}
+
+			<!-- CU-78: solo el técnico de terreno genera una solicitud de aprobación -->
+			{#if !roles.some((r) => ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'].includes(r))}
+				<div class="bg-sky-50 border border-sky-200 text-sky-800 text-sm rounded-md px-3 py-2">
+					Su solicitud quedará pendiente de aprobación de un Administrador o Superusuario.
+				</div>
+			{/if}
+
+			{#if !pasoDonacion}
+			<FormField label="Motivo de la baja" name="motivo_baja" required>
+				<select id="motivo_baja" required bind:value={bajaForm.motivo}
+					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+					<option value="">Seleccionar motivo...</option>
+					{#each motivosBaja as m}
+						<option value={m}>{m}</option>
+					{/each}
+				</select>
+			</FormField>
+
+			<!-- CU-78 Excepción 3: descripción obligatoria (5-200) cuando el motivo es 'Otro' -->
+			{#if bajaForm.motivo === 'Otro'}
+				<FormField label="Descripción del motivo" name="baja_otro" required
+					helper="5-200 caracteres ({bajaForm.descripcion_otro.length}/200)">
+					<textarea id="baja_otro" bind:value={bajaForm.descripcion_otro} rows="3" maxlength={200}
+						class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
+				</FormField>
+			{/if}
+
+			{#if requiereDatosDonacion}
+				<p class="text-xs text-muted">
+					Al continuar se pedirán los datos de la institución receptora para registrar la donación.
+				</p>
+			{/if}
+			{:else}
+				<!-- CU-80: datos de la donación del equipo que se está dando de baja -->
+				<div class="bg-sky-50 border border-sky-200 text-sky-800 text-sm rounded-md px-3 py-2">
+					El equipo {unit.numero_serie} quedará dado de baja con motivo "{MOTIVO_DONACION}" y se
+					registrará la donación a la institución indicada.
+				</div>
+
+				<FormField label="Institución receptora" name="don_inst" required helper="Entre 3 y 100 caracteres">
+					<input id="don_inst" type="text" required bind:value={donacionForm.nombre_institucion} maxlength={100}
+						class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+						placeholder="Ej: Fundación Educación Técnica" />
+				</FormField>
+
+				<FormField label="RUT de la institución" name="don_rut" required helper="Formato XXXXXXXX-X">
+					<input id="don_rut" type="text" required bind:value={donacionForm.rut_institucion} maxlength={12}
+						class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+						placeholder="76543210-3" />
+				</FormField>
+
+				<!-- CU-80: la fecha de donación no puede ser futura -->
+				<FormField label="Fecha de donación" name="don_fecha" required>
+					<input id="don_fecha" type="date" required bind:value={donacionForm.fecha_donacion} max={hoyISO}
+						class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+				</FormField>
+
+				<FormField label="Número de resolución" name="don_res" helper="Opcional, hasta 30 caracteres alfanuméricos">
+					<input id="don_res" type="text" bind:value={donacionForm.numero_resolucion} maxlength={30}
+						class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+						placeholder="RES-2026-014" />
+				</FormField>
+			{/if}
+		{/if}
+
+		<div class="flex justify-end gap-3 pt-2">
+			{#if pasoDonacion}
+				<Button variant="secondary" onclick={() => { pasoDonacion = false; bajaError = ''; }} type="button">Volver</Button>
+			{:else}
+				<Button variant="secondary" onclick={() => (showBaja = false)} type="button">Cancelar</Button>
+			{/if}
+			<Button type="submit" loading={registrandoBaja}>
+				{pasoDonacion ? 'Registrar baja y donación' : 'Continuar'}
+			</Button>
+		</div>
+	</form>
+</Modal>
+
+<!-- CU-78: confirmación fuerte de una operación irreversible; con garantía vigente
+     (Excepción 2) el aviso permite continuar de todas formas o cancelar -->
+<ConfirmDialog
+	open={showConfirmBaja}
+	title={unit?.garantia?.garantia_vigente ? 'Equipo con garantía vigente' : 'Confirmar baja definitiva'}
+	message={unit?.garantia?.garantia_vigente
+		? `El equipo ${unit?.numero_serie} tiene garantía vigente hasta ${fmtFecha(unit?.fecha_venc_garantia)}. La baja definitiva es irreversible. ¿Desea continuar de todas formas?`
+		: pasoDonacion
+			? `El equipo ${unit?.numero_serie} quedará dado de baja de forma irreversible y se registrará su donación a ${donacionForm.nombre_institucion.trim()}. ¿Confirma la operación?`
+			: `El equipo ${unit?.numero_serie} quedará dado de baja de forma irreversible. ¿Confirma la operación?`}
+	confirmlabel={unit?.garantia?.garantia_vigente
+		? 'Continuar de todas formas'
+		: pasoDonacion
+			? 'Registrar baja y donación'
+			: 'Registrar baja'}
+	cancellabel="Cancelar"
+	onconfirm={handleBaja}
+	oncancel={() => (showConfirmBaja = false)}
+/>
 
 <!-- CU-18: edición de datos de la unidad -->
 <Modal title="Editar unidad" open={showEdit} onclose={() => (showEdit = false)}>

@@ -23,21 +23,34 @@
 		unidades: number;
 		fecha: string | null;
 	};
+	// CU-78: solicitudes de baja definitiva pendientes de aprobación
+	type BajaPendiente = {
+		id_solicitud: number;
+		numero_serie: string | null;
+		motivo: string;
+		fecha: string | null;
+	};
 	let alertas = $state<AlertaStock[]>([]);
 	let transferenciasPendientes = $state<TransferenciaPendiente[]>([]);
+	let bajasPendientes = $state<BajaPendiente[]>([]);
 	let showNotificaciones = $state(false);
 	// total para el badge: alertas de stock (CU-46) + transferencias pendientes (CU-20)
-	const totalNotificaciones = $derived(alertas.length + transferenciasPendientes.length);
+	// + solicitudes de baja pendientes (CU-78)
+	const totalNotificaciones = $derived(
+		alertas.length + transferenciasPendientes.length + bajasPendientes.length
+	);
 
 	async function cargarAlertas() {
 		try {
 			const data = await getMyDashboard();
 			alertas = data?.alertas_stock_minimo ?? [];
 			transferenciasPendientes = data?.transferencias_pendientes ?? [];
+			bajasPendientes = data?.bajas_pendientes ?? [];
 		} catch {
 			// sin permiso o sin sesión: la campana queda sin alertas
 			alertas = [];
 			transferenciasPendientes = [];
+			bajasPendientes = [];
 		}
 	}
 
@@ -98,6 +111,15 @@
 									<p class="text-xs text-muted mt-0.5">
 										{t.unidades} {t.unidades === 1 ? 'unidad' : 'unidades'}
 									</p>
+								</a>
+							{/each}
+							<!-- CU-78: solicitudes de baja pendientes de aprobación -->
+							{#each bajasPendientes as b}
+								<a href="/bajas" onclick={() => (showNotificaciones = false)}
+									class="block px-4 py-3 border-b border-border last:border-0 text-sm hover:bg-surface-alt transition-colors">
+									<p class="font-medium text-destructive">⛔ Solicitud de baja pendiente de aprobación</p>
+									<p class="text-foreground mt-0.5">#{b.id_solicitud} · {b.numero_serie ?? 'Equipo sin número de serie'}</p>
+									<p class="text-xs text-muted mt-0.5">{b.motivo}</p>
 								</a>
 							{/each}
 							<!-- CU-46: alertas de stock bajo el umbral mínimo -->

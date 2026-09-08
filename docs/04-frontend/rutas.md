@@ -13,6 +13,8 @@ Todas en `codigo/frontend/src/routes/`. Sin loaders SSR; carga client-side con `
 | Bodegas | `/bodegas` | SUPERUSUARIO, ADMIN, ADMIN_BODEGA |
 | Transferencias | `/transferencias` | SUPERUSUARIO, ADMIN |
 | Órdenes de ingreso | `/ordenes-ingreso` | SUPERUSUARIO, ADMIN, ADMIN_BODEGA |
+| Préstamos | `/prestamos` | SUPERUSUARIO, ADMIN, ADMIN_BODEGA |
+| Bajas | `/bajas` | todos (aprobar/rechazar y pestaña Donaciones solo SUPERUSUARIO, ADMIN) |
 | Auditoría | `/auditoria` | SUPERUSUARIO, ADMIN |
 | Reportes | `/reportes` | SUPERUSUARIO, ADMIN, ADMIN_BODEGA |
 
@@ -122,6 +124,20 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
 - **Endpoints:** `getWarehouse(id)`, `getWarehouseStock(id)`, `getCatalog()`, `getUsers()`,
   `updateWarehouse()`, `setStockThreshold()`.
 
+### `/unidades/[id]` — baja definitiva (CU-78) y donación (CU-80)
+- Botón **Registrar baja definitiva** (oculto solo si la unidad ya está `Dado de baja`), disponible
+  también para `TECNICO_TERRENO`, que genera una solicitud en vez de aplicar la baja.
+- Modal con motivo (lista cerrada de 6) + descripción obligatoria (5-200) si el motivo es `Otro`,
+  aviso de garantía vigente y `ConfirmDialog` de confirmación fuerte.
+- **Endpoints:** `registrarBaja()`, `registrarDonacion()`.
+- **CU-80 encadenado:** si el motivo es `Donación a institución` y el actor aplica la baja directa
+  (ADMIN / SUPERUSUARIO / ADMIN_BODEGA), "Continuar" abre un **segundo paso** en el mismo modal con
+  los datos de la institución (nombre, RUT, fecha no futura y resolución). Al confirmar se registra
+  la baja y, acto seguido, la donación de ese equipo. El técnico de terreno no ve este paso: su
+  solicitud queda pendiente y la unidad todavía no está dada de baja.
+- Registrar la donación de **varios** equipos ya dados de baja sigue estando en
+  `/bajas` → pestaña Donaciones.
+
 ### `/transferencias`
 - **CUs:** CU-20 (crear transferencia + notificación), CU-21 (detalle), CU-22 (rechazar), CU-23 (listar/filtrar).
 - **Endpoints:** `getTransfers()`, `getWarehouses()`, `getUnits()`, `getEmpresas()`,
@@ -185,6 +201,37 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
   (*"Debe indicar la fecha de recepción efectiva."*); con fecha futura el campo muestra
   *"La fecha de recepción no puede ser futura."* El backend revalida contra su propio reloj,
   que es la referencia real.
+### `/bajas`
+- **CUs:** CU-78 (bandeja de solicitudes de baja definitiva).
+- **Endpoints:** `getBajas()`, `approveBaja()`, `rejectBaja()`.
+- Filtro por estado (`Pendiente de aprobación | Aprobada | Rechazada`); por defecto muestra las pendientes.
+- Aprobar/rechazar: botones solo para `SUPERUSUARIO` y `ADMIN`. Aprobar pide `ConfirmDialog`
+  (la baja es irreversible); rechazar exige motivo (máx. 200).
+
+### `/bajas` — pestaña Donaciones (CU-80)
+- **Endpoints:** `getDonaciones()`, `getUnidadesDonables()`, `registrarDonacion()`, `descargarPdfDonacion()`.
+- Formulario: institución (3-100), RUT `XXXXXXXX-X` (con dígito verificador), fecha no futura
+  (`max` = hoy), número de resolución opcional y selector de equipos donables.
+- **Excepción 1:** los NS que el backend rechaza se resaltan en rojo en el selector.
+- El PDF se descarga con `api.download` (el enlace directo no sirve: la ruta exige token).
+
+### `/prestamos`
+- **CUs:** CU-81 (registrar préstamo externo), CU-82 (retorno total o parcial),
+  CU-83 (tabla de activos), CU-84 (trazabilidad del retorno).
+- **Endpoints:** `getPrestamos()`, `getPrestamoDetalle()`, `registrarPrestamo()`, más
+  `getUnits()`, `getWarehouses()` y `getWarehouseStock()` para los selectores.
+- Los equipos se agregan por NS (solo unidades `En bodega` de la bodega de origen) y los
+  consumibles por tipo + cantidad, mostrando el saldo disponible.
+- Validación en vivo de los mensajes de CU-59 antes de enviar; el backend los repite.
+- **CU-83:** por defecto muestra los `Activo`; filtros de estado y de empresa (este último solo
+  para `SUPERUSUARIO`), columna de días restantes con `Vencido hace N días` en rojo y `EmptyState`
+  con el mensaje exacto del caso de uso. La tabla **no** muestra el tipo: el sistema solo registra
+  préstamos (ver `05-backend/prestamos.md` §2).
+- **CU-84:** cuando el backend rechaza ítems, el modal reparte las frases del mensaje entre los
+  ítems que nombran y marca cada uno en rojo con su motivo.
+- **CU-82:** modal "Registrar retorno" (solo en préstamos `Activo`) con fecha limitada a hoy
+  (`max`), selección de ítems respetando lo ya devuelto, cantidad por consumible, observación
+  con contador y el historial de retornos previos de cada ítem.
 
 ### `/auditoria`
 - **CUs:** CU-08 (visualizar log), CU-09 (filtrar).

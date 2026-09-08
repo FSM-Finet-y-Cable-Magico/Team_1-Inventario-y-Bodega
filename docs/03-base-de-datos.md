@@ -48,8 +48,41 @@ FKs → `usuario`, `rol`.
 `id_unidad` PK · `id_tipo_equipo` · `id_empresa` · `numero_serie` UNIQUE NOT NULL · `modelo` ·
 `estado` NOT NULL · `fecha_adquisicion` date · `fecha_venc_garantia` date · `diagnostico_tecnico` text ·
 `id_cliente_instalado` · `id_bodega_actual` · `numero_poste` · `id_caja_nap` · `mac_address` UNIQUE ·
-`proveedor` · `observaciones` (300) · `ubicacion_fisica` (60)
+`proveedor` · `observaciones` (300) · `ubicacion_fisica` (60) · `motivo_baja` (40) ·
+`motivo_baja_detalle` (200)
 FK → `tipo_equipo`.
+
+### `solicitud_baja` — solicitudes de baja definitiva (CU-78)
+`id_solicitud` PK · `id_unidad` NOT NULL · `id_empresa` · `id_usuario_solicitante` NOT NULL ·
+`motivo` (40) NOT NULL · `motivo_otro` (200) · `estado` (30) NOT NULL · `id_usuario_aprobador` ·
+`fecha_solicitud` · `fecha_resolucion` · `motivo_rechazo` (200)
+FK → `unidad_equipo`. Estados: `Pendiente de aprobación | Aprobada | Rechazada`.
+Solo la generan los técnicos de terreno: ADMIN/SUPERUSUARIO/ADMIN_BODEGA aplican la baja directa
+y no crean fila aquí.
+
+### `donacion` / `donacion_detalle` — donaciones de equipos dados de baja (CU-80)
+`donacion`: `id_donacion` PK · `nombre_institucion` (100) NOT NULL · `rut_institucion` (12) NOT NULL ·
+`fecha_donacion` date NOT NULL · `numero_resolucion` (30) · `id_usuario` NOT NULL · `id_empresa` ·
+`fecha_creacion`
+`donacion_detalle`: `id_detalle` PK · `id_donacion` FK → `donacion` · `id_unidad` FK → `unidad_equipo`
+Solo se incluyen unidades en estado `Dado de baja` con `motivo_baja = 'Donación a institución'`,
+y una unidad no puede repetirse en dos donaciones.
+
+### `prestamo_externo` / `prestamo_detalle` / `prestamo_retorno` — préstamos a externos (CU-81)
+`prestamo_externo`: `id_prestamo` PK · `correlativo` (12) **UNIQUE** (`PE-00001`) · `tipo`
+(`PRESTAMO` | `REPARACION_EXTERNA`) · `nombre_receptor` (80) · `rut_receptor` (12) ·
+`fecha_salida` timestamptz · `fecha_estimada_retorno` date · `motivo` (200) ·
+`descripcion_falla` (300, solo reparación) · `estado` (`Activo` | `Cerrado`) · `id_empresa` ·
+`id_bodega_origen` FK → `bodega` · `id_usuario` · `fecha_retorno_real` · `resultado_retorno`
+`prestamo_detalle`: `id_detalle` PK · `id_prestamo` FK CASCADE · `id_unidad` FK (individualizable) ·
+`id_tipo_equipo` + `cantidad` (consumible) · `cantidad_retornada` (CU-82)
+`prestamo_retorno`: `id_retorno` PK · `id_detalle` FK CASCADE · `cantidad` · `fecha_retorno` ·
+`observacion` (300) · `id_usuario` — la usa CU-82 para los retornos parciales.
+
+> **Una tabla, dos flujos.** `tipo = 'REPARACION_EXTERNA'` son los envíos por unidad de CU-75 (los
+> cierra CU-76) y `tipo = 'PRESTAMO_EXTERNO'` los préstamos por lote de CU-81 (los cierra CU-82).
+> `correlativo` e `id_bodega_origen` solo los usan los segundos; el motivo del préstamo va en
+> `detalle`. Estados: `ACTIVO` / `CERRADO`.
 
 ### `historial_estado_equipo` — historial de transiciones de estado
 `id_historial` PK · `id_unidad` · `id_usuario` · `estado_anterior` · `estado_nuevo` · `motivo` text ·
@@ -158,6 +191,22 @@ Reglas asociadas:
 - **CU-76 (ratificado por el jefe de grupo, 2026-09-07):** `En préstamo externo → En revisión`
   se agregó a la máquina para que el retorno de un equipo enviado a reparación externa
   (reparado o no) quede siempre en revisión para reevaluación interna. Aplica también a CU-82.
+- Al pasar a `Dado de baja` (CU-78) el **motivo es obligatorio** cuando la baja se registra por el
+  módulo `bajas` (lista cerrada: `Pérdida no recuperable`, `Robo confirmado`, `Falla irreparable`,
+  `Obsolescencia`, `Donación a institución`, `Otro`; con `Otro` exige descripción de 5–200). Queda
+  en `unidad_equipo.motivo_baja` / `motivo_baja_detalle` y se audita como `BAJA_DEFINITIVA`.
+  `Dado de baja` es **terminal e irreversible**: no se agregan transiciones de salida.
+- **CU-82 (transición ampliada, ratificada por el jefe de grupo):** `En préstamo externo` admite
+  ahora `En revisión`, porque el retorno de un préstamo externo deja el equipo en revisión (el JSON
+  del CU lo exige, y CU-76 usa la misma salida). Antes solo permitía `En bodega`. El retorno **no**
+  pide diagnóstico técnico: la obligación de CU-40 aplica al cambio de estado manual, no a este flujo.
+- **CU-81:** el paso a `En préstamo externo` lo hace `PrestamosService` dentro de su propia
+  transacción, validando con la constante **`TRANSICIONES_PERMITIDAS`** que exporta
+  `UnitsService` (la máquina de estados tiene un solo dueño). Las unidades se releen con
+  `FOR UPDATE` antes de cambiarlas para que dos préstamos simultáneos no tomen la misma.
+- **CU-79:** al salir de `En bodega` la unidad pierde `id_bodega_actual`, `numero_poste` y
+  `ubicacion_fisica`. Las unidades `Dado de baja` quedan fuera de los conteos de stock activo
+  (`bodegas`, `companies`) pero conservan su fila y su historial completo, consultables por NS.
 
 ### 2.3 Transferencias y estado de inventario
 - La solicitud de transferencia crea `transferencia_equipo` + un `movimiento_inventario` por unidad

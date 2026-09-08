@@ -81,12 +81,16 @@ Controller-level: `@UseGuards(AuthGuard('jwt'), RolesGuard)`.
   `auditoria.service`, `transferencias.service`). **No convertirla en tabla sin consultar al jefe.**
 - **`findAll()`**: devuelve el array para selectores (CU-06).
 - **`getDashboard()`** (CU-15): consolida `getEstadisticasEmpresa` de ambas empresas.
-- **`getMiDashboard(actor)`** (CU-16): estadísticas de la empresa del actor + `transferencias_pendientes`.
+- **`getMiDashboard(actor)`** (CU-16): estadísticas de la empresa del actor +
+  `transferencias_pendientes` (CU-20) + `bajas_pendientes` (CU-78, solo ADMIN/SUPERUSUARIO).
 - **`getTransferenciasPendientes(actor)`** (CU-20): movimientos `TRANSFERENCIA_PENDIENTE`,
   agrupados por `referencia_id`; aislamiento por rol: SUPERUSUARIO ve todas, Admin solo las de su
   empresa (origen o destino). Se expone en la **campana de notificaciones** del Header.
 - **`getEstadisticasEmpresa(id, nombre)`**:
-  - `unidades_por_estado` (conteo por `estado`).
+  - **CU-79:** `total_unidades` es el **inventario activo** (excluye `'Dado de baja'`) y
+    `unidades_dadas_de_baja` expone ese conteo por separado.
+  - `unidades_por_estado` (conteo por `estado`, **incluye** `'Dado de baja'`: el histórico
+    sigue siendo consultable).
   - `bodegas_activas` (conteo).
   - `stock_consumible_total` (suma de `cantidad_disponible` de la empresa).
   - **CU-46:** `alertas_stock_minimo` — para tipos serializados el stock = conteo de unidades

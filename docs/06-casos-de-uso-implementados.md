@@ -1,4 +1,4 @@
-# Casos de uso — Estado de implementación (CU-01 a CU-47)
+# Casos de uso — Estado de implementación (CU-01 a CU-47, CU-78 a CU-84)
 
 > **Contexto:** el proyecto tiene **96 casos de uso totales**. En el **Incremento 1** se implementaron
 > **46** (CU-01 a CU-46), superando el 30% mínimo exigido por la rúbrica. Los restantes (50) se
@@ -90,7 +90,13 @@
 | 88 | Reporte de garantías | `reportes`, `inventario`, `auditoria` | `/reportes` (pestaña Garantías) |
 | 89 | Reporte de inventario actual de técnicos | `reportes`, `salidas`, `inventario`, `auditoria` | `/reportes` (pestaña Inventario de técnicos) |
 | 91 | Reporte de consumo de consumibles | `reportes`, `salidas`, `auditoria` | `/reportes` (pestaña Consumo de consumibles) |
-
+| 78 | Baja definitiva de equipo (directa o por solicitud del técnico) | `bajas`, `inventario/units`, `companies` | `/unidades/[id]`, `/bajas`, `Header` (campana) |
+| 79 | Acciones automáticas posteriores a la baja (exclusión del inventario activo) | `inventario/units`, `bodegas`, `companies` | `/dashboard`, `/bodegas`, `/unidades` (sin UI propia) |
+| 80 | Donación de equipos dados de baja + resumen en PDF | `donaciones` | `/bajas` (pestaña Donaciones) |
+| 81 | Préstamo externo de equipos y consumibles (PE-XXXXX) | `prestamos`, `inventario/units`, `bodegas` | `/prestamos` |
+| 82 | Retorno total o parcial de préstamo externo | `prestamos`, `inventario/units`, `bodegas` | `/prestamos` |
+| 83 | Tabla de préstamos externos activos (días restantes, filtros) | `prestamos` | `/prestamos` |
+| 84 | Trazabilidad de la devolución (validaciones del retorno) | `prestamos` | `/prestamos` (errores por ítem en el modal) |
 
 ## 3. Diagramas disponibles (referencia para CUs pendientes)
 

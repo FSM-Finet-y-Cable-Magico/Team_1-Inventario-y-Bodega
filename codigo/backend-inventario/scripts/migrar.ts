@@ -258,7 +258,74 @@ const SENTENCIAS = [
   )`,
   // CU-76: resultado del servicio (REPARADO/NO_REPARADO) al cerrar el préstamo
   `ALTER TABLE prestamo_externo ADD COLUMN IF NOT EXISTS resultado varchar(20)`,
+  // CU-78/CU-80: motivo de la baja definitiva y su descripción cuando es 'Otro'
+  `ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS motivo_baja varchar(40)`,
+  `ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS motivo_baja_detalle varchar(200)`,
+  // CU-81: los préstamos por lote agregan correlativo y bodega de origen sobre la
+  // cabecera que ya define CU-75 (misma tabla, un solo dueño de la entidad)
+  `ALTER TABLE prestamo_externo ADD COLUMN IF NOT EXISTS correlativo varchar(12)`,
+  `ALTER TABLE prestamo_externo ADD COLUMN IF NOT EXISTS id_bodega_origen integer`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS ux_prestamo_externo_correlativo ON prestamo_externo (correlativo)`,
+  // CU-81: la cabecera de CU-75 exige detalle e id_empresa; los préstamos por lote
+  // no fijan una sola unidad, así que id_unidad debe admitir null
+  `ALTER TABLE prestamo_externo ALTER COLUMN id_unidad DROP NOT NULL`,
 ];
+
+// CU-78/CU-80/CU-81: tablas de bajas, donaciones y detalle de préstamos externos.
+// La cabecera prestamo_externo la define TABLAS_BASE_SQL (CU-75): este módulo la
+// reutiliza y solo agrega las columnas que necesitan los préstamos por lote.
+const TABLAS_G4_SQL = `
+CREATE TABLE IF NOT EXISTS solicitud_baja (
+    id_solicitud            SERIAL PRIMARY KEY,
+    id_unidad               INTEGER NOT NULL,
+    id_empresa              INTEGER,
+    id_usuario_solicitante  INTEGER NOT NULL,
+    motivo                  VARCHAR(40) NOT NULL,
+    motivo_otro             VARCHAR(200),
+    estado                  VARCHAR(30) NOT NULL,
+    id_usuario_aprobador    INTEGER,
+    fecha_solicitud         TIMESTAMPTZ DEFAULT now(),
+    fecha_resolucion        TIMESTAMPTZ,
+    motivo_rechazo          VARCHAR(200),
+    CONSTRAINT fk_solicitud_baja_unidad FOREIGN KEY (id_unidad) REFERENCES unidad_equipo (id_unidad)
+);
+CREATE TABLE IF NOT EXISTS donacion (
+    id_donacion        SERIAL PRIMARY KEY,
+    nombre_institucion VARCHAR(100) NOT NULL,
+    rut_institucion    VARCHAR(12) NOT NULL,
+    fecha_donacion     DATE NOT NULL,
+    numero_resolucion  VARCHAR(30),
+    id_usuario         INTEGER NOT NULL,
+    id_empresa         INTEGER,
+    fecha_creacion     TIMESTAMPTZ DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS donacion_detalle (
+    id_detalle   SERIAL PRIMARY KEY,
+    id_donacion  INTEGER NOT NULL,
+    id_unidad    INTEGER NOT NULL,
+    CONSTRAINT fk_donacion_detalle_donacion FOREIGN KEY (id_donacion) REFERENCES donacion (id_donacion),
+    CONSTRAINT fk_donacion_detalle_unidad   FOREIGN KEY (id_unidad)   REFERENCES unidad_equipo (id_unidad)
+);
+CREATE TABLE IF NOT EXISTS prestamo_detalle (
+    id_detalle         SERIAL PRIMARY KEY,
+    id_prestamo        INTEGER NOT NULL,
+    id_unidad          INTEGER,
+    id_tipo_equipo     INTEGER,
+    cantidad           NUMERIC(10,2),
+    cantidad_retornada NUMERIC(10,2) DEFAULT 0,
+    CONSTRAINT fk_prestamo_detalle_prestamo FOREIGN KEY (id_prestamo) REFERENCES prestamo_externo (id_prestamo) ON DELETE CASCADE,
+    CONSTRAINT fk_prestamo_detalle_unidad   FOREIGN KEY (id_unidad)   REFERENCES unidad_equipo (id_unidad)
+);
+CREATE TABLE IF NOT EXISTS prestamo_retorno (
+    id_retorno     SERIAL PRIMARY KEY,
+    id_detalle     INTEGER NOT NULL,
+    cantidad       NUMERIC(10,2),
+    fecha_retorno  TIMESTAMPTZ NOT NULL,
+    observacion    VARCHAR(300),
+    id_usuario     INTEGER NOT NULL,
+    CONSTRAINT fk_prestamo_retorno_detalle FOREIGN KEY (id_detalle) REFERENCES prestamo_detalle (id_detalle) ON DELETE CASCADE
+);
+`;
 
 async function main() {
   const ds = new DataSource({ type: 'postgres', url: process.env.DATABASE_URL });
@@ -275,6 +342,10 @@ async function main() {
   // CU-52: tablas de órdenes de ingreso
   await ds.query(TABLAS_CU52_SQL);
   console.log('✓ Tablas orden_ingreso / orden_ingreso_detalle inicializadas / comprobadas.');
+
+  // CU-78/CU-80/CU-81: tablas de bajas, donaciones y detalle de préstamos
+  await ds.query(TABLAS_G4_SQL);
+  console.log('✓ Tablas solicitud_baja / donacion / prestamo_detalle inicializadas / comprobadas.');
 
   for (const sql of SENTENCIAS) {
     await ds.query(sql);
