@@ -22,7 +22,7 @@
 	let success = $state('');
 
 	// CU-83: la tabla muestra los préstamos activos y se filtra por estado y empresa
-	let filtros = $state({ estado: 'Activo', id_empresa: '' });
+	let filtros = $state({ estado: 'ACTIVO', id_empresa: '' });
 	let empresas = $state<Empresa[]>([]);
 	let roles = $state<string[]>([]);
 	userRoles.subscribe((r) => (roles = r));
@@ -61,7 +61,9 @@
 	let showDetalle = $state(false);
 	let loadingDetalle = $state(false);
 
-	const estadoBadge: Record<string, string> = { Activo: 'info', Cerrado: 'default' };
+	// Estados de la cabecera compartida con CU-75/CU-76
+	const estadoBadge: Record<string, string> = { ACTIVO: 'info', CERRADO: 'default' };
+	const estadoLabel: Record<string, string> = { ACTIVO: 'Activo', CERRADO: 'Cerrado' };
 	const hoyISO = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
 
 	// CU-83: texto de días restantes; vencido se muestra en rojo
@@ -348,8 +350,8 @@
 	<div class="flex flex-wrap items-center gap-3 mb-4">
 		<select bind:value={filtros.estado} aria-label="Filtrar por estado"
 			class="px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
-			<option value="Activo">Activos</option>
-			<option value="Cerrado">Cerrados</option>
+			<option value="ACTIVO">Activos</option>
+			<option value="CERRADO">Cerrados</option>
 			<option value="">Todos</option>
 		</select>
 		{#if esSuperusuario && empresas.length > 0}
@@ -376,7 +378,7 @@
 		{:else if prestamos.length === 0}
 			<!-- CU-83 Excepción 1: mensaje exacto cuando no hay préstamos activos -->
 			<EmptyState
-				message={filtros.estado === 'Activo'
+				message={filtros.estado === 'ACTIVO'
 					? 'No hay préstamos externos activos actualmente.'
 					: 'No se encontraron préstamos con los filtros seleccionados.'}
 				action={abrirCreacion} actionlabel="Nuevo préstamo externo" />
@@ -420,7 +422,7 @@
 								</td>
 								<td class="px-4 py-3">
 									<Badge variant={(estadoBadge[p.estado] ?? 'default') as 'default' | 'info' | 'success' | 'warning' | 'danger'}>
-										{p.estado}
+										{estadoLabel[p.estado] ?? p.estado}
 									</Badge>
 								</td>
 								<td class="px-4 py-3 text-muted">{p.registrado_por ?? '-'}</td>
@@ -432,7 +434,7 @@
 											Ver detalle
 										</button>
 										<!-- CU-82: registrar el retorno mientras el préstamo siga activo -->
-										{#if p.estado === 'Activo'}
+										{#if p.estado === 'ACTIVO'}
 											<button onclick={() => abrirRetorno(p.id_prestamo)}
 												class="inline-flex items-center gap-1 text-emerald-700 hover:underline" aria-label="Registrar retorno">
 												<PackageCheck class="h-4 w-4" />
@@ -566,7 +568,7 @@
 		<div class="space-y-4">
 			<div class="grid grid-cols-2 gap-3 text-sm">
 				<div><span class="text-muted">N° préstamo:</span> <span class="font-mono text-foreground">{detalle.correlativo}</span></div>
-				<div><span class="text-muted">Estado:</span> <span class="text-foreground">{detalle.estado}</span></div>
+				<div><span class="text-muted">Estado:</span> <span class="text-foreground">{estadoLabel[detalle.estado] ?? detalle.estado}</span></div>
 				<div><span class="text-muted">Receptor:</span> <span class="text-foreground">{detalle.nombre_receptor}</span></div>
 				<div><span class="text-muted">RUT:</span> <span class="text-foreground">{detalle.rut_receptor ?? '-'}</span></div>
 				<div><span class="text-muted">Fecha de salida:</span> <span class="text-foreground">{fmtFecha(detalle.fecha_salida)}</span></div>
