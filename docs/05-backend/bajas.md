@@ -73,13 +73,32 @@ La constante vive en `bajas.service.ts` (`MOTIVOS_BAJA`) y se replica en el fron
 el Superusuario ve ambas empresas). El `Header.svelte` lo suma al badge junto a las alertas de
 stock (CU-46) y las transferencias pendientes (CU-20).
 
-## 8. Deuda conocida
+## 8. Dos caminos dan de baja un equipo (pendiente de resolver con el jefe de grupo)
+
+Tras integrar `dev` hay **dos formas** de dejar una unidad en `Dado de baja`, y no se comportan igual:
+
+| Camino | Motivo | Efectos |
+|--------|--------|---------|
+| `POST /api/bajas` (CU-78, este módulo) | lista cerrada de 6 motivos | escribe `unidad.motivo_baja`, audita `BAJA_DEFINITIVA` y, si el motivo es `Donación a institución`, el frontend exige y **valida** los datos de la donación antes de ejecutar la baja |
+| `POST /api/unidades/:id/resultado-revision` con `resultado: 'BAJA'` (CU-72) | **texto libre** (≤ 200) | no escribe `motivo_baja` ni pide datos de donación |
+
+Consecuencias del segundo camino:
+
+- Escribir "Donación a institución" en el texto libre **no** convierte al equipo en candidato de CU-80
+  (el filtro busca `motivo_baja = 'Donación a institución'`), así que esa donación nunca se registra.
+- Los conteos y filtros que dependen de `motivo_baja` (CU-79, CU-80) no ven esas bajas.
+
+**Decisión (2026-09-08):** no se modifica CU-72 desde este módulo; queda para que lo resuelva el jefe
+de grupo con quien implementó ese caso de uso. La corrección natural sería que el resultado `BAJA` de
+CU-72 use la misma lista cerrada de motivos y delegue en `BajasService`.
+
+## 9. Deuda conocida
 
 - `aprobar()` ejecuta la baja y luego cierra la solicitud **sin compartir transacción**: si fallara
   el segundo paso, la unidad quedaría de baja y la solicitud pendiente (al reintentar aparecería la
   Excepción 1). Marcado con un comentario `ponytail:` en el código.
 
-## 9. CU-79 — Acciones automáticas posteriores a la baja
+## 10. CU-79 — Acciones automáticas posteriores a la baja
 
 CU-79 no agrega endpoints: son las garantías que deja la transacción de baja y el filtrado
 posterior de las consultas.
@@ -102,7 +121,7 @@ contaba en el stock**. Ahora se limpia con `null` explícito (`id_bodega_actual`
 Las filas anteriores al fix conservan su `id_bodega_actual`; por eso el filtro por estado en los
 conteos es la defensa principal y no se hizo un UPDATE masivo de datos históricos.
 
-## 10. Checklist CU-79 — endpoints que listan o cuentan unidades
+## 11. Checklist CU-79 — endpoints que listan o cuentan unidades
 
 | Endpoint / consulta | Service | ¿Excluye `Dado de baja`? | Motivo |
 |---------------------|---------|--------------------------|--------|
@@ -119,7 +138,7 @@ conteos es la defensa principal y no se hizo un UPDATE masivo de datos históric
 | Conteos de unidades por tipo (CU-26/CU-27) | `CatalogService` (3 consultas) | **No, a propósito** | Integridad referencial: cuentan unidades registradas en cualquier estado. |
 | Select de unidades de `/transferencias` (frontend) | `+page.svelte` | **Sí** (filtra `estado === 'En bodega'`) | Única lista de selección de unidades del sistema hoy. |
 
-## 11. Pruebas
+## 12. Pruebas
 
 `src/bajas/bajas.service.spec.ts` cubre: baja directa de Administrador, solicitud del técnico,
 Excepción 1, Excepción 3, motivo fuera de lista, aprobación y rechazo. Correr con:
