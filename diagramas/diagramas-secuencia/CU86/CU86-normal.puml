@@ -1,33 +1,74 @@
-@startuml CU86-Reporte-Movimientos-Normal
+@startuml CU86-normal
 title CU-86 — Generando reporte de movimientos de inventario (flujo normal)
+
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
-skinparam sequenceMessageAlign center
+<style>
+sequenceDiagram {
+  participant { Margin 25 }
+  actor { Margin 20 }
+}
+</style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
 hide footbox
 
-actor Usuario
-participant "Vista SvelteKit" as V
-participant "ReportesController" as C
-participant "ReportesService" as S
- database "movimiento_inventario" as M
- database "tablas relacionadas" as DB
+actor "Administrador de bodega / Administrador / Superusuario" as user
+participant "V_ReportesMovimientos" as view
+participant "C_ReportesController" as ctrl
+participant "C_ReportesService" as svc
+participant "C_TypeORM" as orm
+participant "movimiento_inventario" as ment
+participant "tipo_equipo" as tent
+participant "unidad_equipo" as uent
+participant "bodega" as bent
+participant "usuario" as userent
+participant "log_auditoria" as aent
 
-Usuario -> V : Configura filtros y pulsa Generar
-activate V
-V -> C : GET /api/reportes/movimientos?id_empresa=...&fecha_desde=...&fecha_hasta=...
-activate C
-C -> S : getMovementsReport(filtros, req.user)
-activate S
-S -> S : valida fechas, máximo 365 días y empresa
-S -> M : SELECT movimientos filtrados por fechas, tipo y usuario
-M -> DB : LEFT JOIN tipo_equipo, unidad_equipo, bodega, usuario
-DB --> S : filas con NS/tipo, empresa, bodega y usuario
-S -> S : resuelve referencia_id y audita GENERAR_REPORTE
-S --> C : filas del reporte
-C --> V : 200 OK, JSON
-V --> Usuario : Tabla con fecha DD/MM/YYYY HH:MM:SS y referencia
- deactivate S
- deactivate C
- deactivate V
+user -> view : Selecciona filtros y Generar
+activate view
+view -> ctrl : GET /api/reportes/movimientos\n?id_empresa=&id_bodega=&id_tipo_equipo=\n&fecha_desde=&fecha_hasta=&tipo_movimiento=&id_usuario=
+activate ctrl
+ctrl -> svc : getMovementsReport(filtros, req.user)
+activate svc
+svc -> svc : Valida rango máximo 365 días\ny aislamiento por empresa
+svc -> orm : Consulta movimientos con filtros
+activate orm
+orm -> ment : SELECT fecha, tipo, cantidad y referencia
+activate ment
+ment --> orm : Movimientos
+deactivate ment
+orm -> tent : JOIN tipo_equipo para consumibles
+activate tent
+tent --> orm : Nombre del tipo
+deactivate tent
+orm -> uent : JOIN unidad_equipo para número de serie
+activate uent
+uent --> orm : Número de serie
+deactivate uent
+orm -> bent : JOIN bodegas origen/destino
+activate bent
+bent --> orm : Bodega
+deactivate bent
+orm -> userent : JOIN usuario que realizó el movimiento
+activate userent
+userent --> orm : Nombre del usuario
+deactivate userent
+orm --> svc : Filas de movimientos
+deactivate orm
+svc -> svc : Completa empresa y tipo de referencia
+svc -> aent : INSERT log_auditoria\n(GENERAR_REPORTE, reporte_movimientos)
+activate aent
+aent --> svc : Auditoría registrada
+deactivate aent
+svc --> ctrl : Filas del reporte
+deactivate svc
+ctrl --> view : 200 OK: Datos del reporte
+deactivate ctrl
+view --> user : Tabla con fecha, movimiento, ítem, cantidad y usuario
+deactivate view
+
 @enduml

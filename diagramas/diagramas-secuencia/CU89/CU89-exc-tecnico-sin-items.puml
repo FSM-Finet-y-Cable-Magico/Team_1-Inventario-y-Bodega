@@ -1,13 +1,13 @@
-@startuml CU89-Inventario-Tecnicos-Excepcion
- title CU-89 - Reporte de inventario actual de tecnicos (tecnico sin items)
+@startuml CU89-exc-tecnico-sin-items
+title CU-89 — Generando reporte de inventario actual de técnicos (excepción: técnico sin ítems)
+
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
-skinparam sequenceMessageAlign center
 <style>
 sequenceDiagram {
-	participant { Margin 35 }
-	actor { Margin 15 }
+  participant { Margin 25 }
+  actor { Margin 20 }
 }
 </style>
 skinparam sequence {
@@ -16,28 +16,37 @@ skinparam sequence {
 }
 hide footbox
 
-actor "Administrador" as Usuario
-participant "Vista /reportes" as V
-participant "ReportesController" as C
-participant "ReportesService" as SVC
-database "PostgreSQL" as DB
+actor "Administrador de bodega / Administrador / Superusuario" as user
+participant "V_ReportesTecnicos" as view
+participant "C_ReportesController" as ctrl
+participant "C_ReportesService" as svc
+participant "C_TypeORM" as orm
+participant "log_auditoria" as aent
 
-Usuario -> V : Selecciona un tecnico y Generar
-activate V
-V -> C : GET /api/reportes/tecnicos/inventario?id_usuario=X
-activate C
-C -> SVC : getInventarioTecnicosReport({id_usuario:X}, req.user)
-activate SVC
-SVC -> DB : SELECT tecnico activo de la empresa
-DB --> SVC : tecnico
-SVC -> DB : SELECT unidades asignadas y saldos > 0
-DB --> SVC : 0 equipos y 0 consumibles
-SVC -> DB : INSERT log_auditoria (GENERAR_REPORTE)
-DB --> SVC : confirmado
-SVC --> C : tarjeta con ambas secciones vacias
-C --> V : 200 OK
-V --> Usuario : Este técnico no tiene ítems en su inventario personal.
-deactivate SVC
-deactivate C
-deactivate V
+user -> view : Selecciona un técnico y Generar
+activate view
+view -> ctrl : GET /api/reportes/tecnicos/inventario\n?id_usuario=X
+activate ctrl
+ctrl -> svc : getInventarioTecnicosReport({ id_usuario: X }, req.user)
+activate svc
+svc -> orm : SELECT técnico activo de la empresa
+activate orm
+orm --> svc : Técnico
+deactivate orm
+svc -> orm : SELECT unidades asignadas y saldos positivos
+activate orm
+orm --> svc : 0 equipos y 0 consumibles
+deactivate orm
+svc -> svc : Conserva la tarjeta con secciones vacías
+svc -> aent : INSERT log_auditoria\n(GENERAR_REPORTE, reporte_inventario_tecnicos)
+activate aent
+aent --> svc : Auditoría registrada
+deactivate aent
+svc --> ctrl : Tarjeta sin ítems
+deactivate svc
+ctrl --> view : 200 OK: Sin ítems asignados
+deactivate ctrl
+view --> user : Este técnico no tiene ítems en su inventario personal.
+deactivate view
+
 @enduml

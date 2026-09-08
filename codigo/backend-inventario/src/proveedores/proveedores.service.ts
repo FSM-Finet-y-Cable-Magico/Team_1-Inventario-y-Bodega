@@ -150,10 +150,8 @@ export class ProveedoresService {
       proveedor.nombre_comercial = dto.nombre_comercial;
     if (dto.nombre_contacto !== undefined)
       proveedor.nombre_contacto = dto.nombre_contacto ?? null;
-    if (dto.telefono !== undefined)
-      proveedor.telefono = dto.telefono ?? null;
-    if (dto.email !== undefined)
-      proveedor.email = dto.email ?? null;
+    if (dto.telefono !== undefined) proveedor.telefono = dto.telefono ?? null;
+    if (dto.email !== undefined) proveedor.email = dto.email ?? null;
 
     await this.proveedorRepository.save(proveedor);
 

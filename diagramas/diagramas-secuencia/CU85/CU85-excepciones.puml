@@ -1,5 +1,5 @@
-@startuml CU88-exc-sin-resultados
-title CU-88 — Generando reporte de garantías (excepción: sin resultados)
+@startuml CU85-excepciones
+title CU-85 — Generando reporte de stock actual (excepción: sin datos)
 
 skinparam style strictuml
 skinparam monochrome true
@@ -11,38 +11,38 @@ sequenceDiagram {
 }
 </style>
 skinparam sequence {
-	MessageAlign center
-	LifeLineBorderColor black
+  MessageAlign center
+  LifeLineBorderColor black
 }
 hide footbox
 
 actor "Administrador de bodega / Administrador / Superusuario" as user
-participant "V_ReportesGarantias" as view
+participant "V_ReportesStock" as view
 participant "C_ReportesController" as ctrl
 participant "C_ReportesService" as svc
 participant "C_TypeORM" as orm
 participant "log_auditoria" as aent
 
-user -> view : Ejecuta filtros sin coincidencias
+user -> view : Selecciona filtros opcionales y Generar
 activate view
-view -> ctrl : GET /api/reportes/garantias\n?id_empresa=2&id_tipo_equipo=15&periodo=60
+view -> ctrl : GET /api/reportes/stock\n?id_empresa=&id_bodega=&id_tipo_equipo=
 activate ctrl
-ctrl -> svc : getGarantiasReport(filtros, req.user)
+ctrl -> svc : getStockReport(filtros, req.user)
 activate svc
-svc -> orm : SELECT equipos por empresa, tipo y período
+svc -> orm : SELECT bodegas y tipos filtrados
 activate orm
-orm --> svc : 0 filas
+orm --> svc : Resultado vacío
 deactivate orm
-svc -> svc : Retorna reporte vacío
+svc -> svc : Construye reporte vacío
 svc -> aent : INSERT log_auditoria\n(GENERAR_REPORTE, filtros)
 activate aent
 aent --> svc : Auditoría registrada
 deactivate aent
-svc --> ctrl : Sin resultados
+svc --> ctrl : Sin datos
 deactivate svc
 ctrl --> view : 200 OK: Sin resultados
 deactivate ctrl
-view --> user : No se encontraron equipos con los filtros seleccionados.
+view --> user : Reporte vacío\nNo se encontraron datos para los filtros seleccionados.
 deactivate view
 
 @enduml

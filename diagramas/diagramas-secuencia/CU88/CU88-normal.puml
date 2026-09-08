@@ -1,13 +1,13 @@
-@startuml CU88-Reporte-Garantias-Normal
+@startuml CU88-normal
 title CU-88 — Generando reporte de garantías (flujo normal)
+
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
-skinparam sequenceMessageAlign center
 <style>
 sequenceDiagram {
-	participant { Margin 35 }
-	actor { Margin 15 }
+  participant { Margin 25 }
+  actor { Margin 20 }
 }
 </style>
 skinparam sequence {
@@ -16,27 +16,44 @@ skinparam sequence {
 }
 hide footbox
 
-actor "Administrador de bodega" as U
-participant "Vista reportes" as V
-participant "Controlador reportes" as C
-participant "Servicio reportes" as S
-participant "postgres" as DB
+actor "Administrador de bodega / Administrador / Superusuario" as user
+participant "V_ReportesGarantias" as view
+participant "C_ReportesController" as ctrl
+participant "C_ReportesService" as svc
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as uent
+participant "tipo_equipo" as tent
+participant "log_auditoria" as aent
 
-U -> V : Selecciona filtros de empresa, tipo y período
-activate V
-V -> C : GET /api/reportes/garantias?id_empresa=...&id_tipo_equipo=...&periodo=30
-activate C
-C -> S : getGarantiasReport(filtros, req.user)
-activate S
-S -> S : Valida permisos + aislamiento por empresa
-S -> DB : SELECT u.*, t.garantia_dias, DATE_ADDED...
-DB --> S : filas con fecha_vencimiento, días calculados
-S -> S : Calcula dias_restantes / dias_vencidos
-S -> C : Resultado con equipos y estados
-C --> V : HTTP 200 + array JSON
-V --> U : Tabla de garantías con badges y empty state
+user -> view : Selecciona empresa, tipo y período
+activate view
+view -> ctrl : GET /api/reportes/garantias\n?id_empresa=&id_tipo_equipo=&periodo=
+activate ctrl
+ctrl -> svc : getGarantiasReport(filtros, req.user)
+activate svc
+svc -> svc : Valida rol y aislamiento por empresa
+svc -> orm : Consulta equipos individualizables y garantías
+activate orm
+orm -> uent : SELECT unidades con número de serie y estado
+activate uent
+uent --> orm : Equipos
+deactivate uent
+orm -> tent : SELECT garantía, marca y modelo
+activate tent
+tent --> orm : Datos de tipo de equipo
+deactivate tent
+orm --> svc : Equipos con fechas de adquisición
+deactivate orm
+svc -> svc : Calcula vencimiento, días restantes\ny estado de garantía
+svc -> aent : INSERT log_auditoria\n(GENERAR_REPORTE, filtros)
+activate aent
+aent --> svc : Auditoría registrada
+deactivate aent
+svc --> ctrl : Filas del reporte
+deactivate svc
+ctrl --> view : 200 OK: Datos del reporte
+deactivate ctrl
+view --> user : Tabla de garantías con estados y fechas
+deactivate view
 
-deactivate V
-deactivate C
-deactivate S
 @enduml
