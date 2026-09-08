@@ -1,4 +1,4 @@
-# Casos de uso — Estado de implementación (CU-01 a CU-46)
+# Casos de uso — Estado de implementación (CU-01 a CU-47, CU-78 a CU-84)
 
 > **Contexto:** el proyecto tiene **96 casos de uso totales**. En el **Incremento 1** se implementaron
 > **46** (CU-01 a CU-46), superando el 30% mínimo exigido por la rúbrica. Los restantes (50) se
@@ -66,6 +66,37 @@
 | 44 | Listado de bodegas con stock | `bodegas` | `/bodegas` |
 | 45 | Stock por tipo/estado/unidad de medida | `bodegas` | `/bodegas/[id]` |
 | 46 | Umbral mínimo de stock + alertas | `bodegas`, `companies` | `/bodegas/[id]`, `/dashboard`, `Header` |
+| 47 | Ubicación física al ingresar/reingresar a bodega | `inventario/units` | `/unidades/[id]` |
+| 49 | Crear proveedor (CU-49) | `proveedores` | `/proveedores` |
+| 50 | Editar proveedor (CU-50) | `proveedores` | `/proveedores` |
+| 51 | Consultar listado de proveedores (CU-51) | `proveedores` | `/proveedores` |
+| 52 | Registrar orden de ingreso desde proveedor (CU-52) | `ordenes-ingreso` | `/ordenes-ingreso` |
+| 53 | Consultar órdenes de ingreso con filtros y detalle (CU-53) | `ordenes-ingreso` | `/ordenes-ingreso`, `/ordenes-ingreso/[id]` |
+| 54 | Registrar recepción total o parcial de orden de ingreso (CU-54) | `ordenes-ingreso` | `/ordenes-ingreso/[id]` |
+| 55 | Ingresar números de serie en recepción de equipos (CU-55) | `ordenes-ingreso`, `inventario` | `/ordenes-ingreso/[id]` |
+| 56 | Registrar fecha de adquisición real en recepción (CU-56) | `ordenes-ingreso`, `inventario` | `/ordenes-ingreso/[id]`, `/unidades/[id]` |
+| 57 | Salida de bodega a técnico (mixta, atómica) | `salidas` | `/salidas` |
+| 58 | Inventario personal del técnico (consulta) | `salidas` | `/salidas` (sección) |
+| 59 | Validación de NS en salida (en vivo + transacción) | `salidas`, `inventario/units` | `/salidas` |
+| 60 | Salida de consumibles a técnico | `salidas` | `/salidas` |
+| 62 | Validación de stock con bloqueo de fila | `salidas` | `/salidas` (banner) |
+| 72 | Registrando resultado de revisión (Operativo/Reparación externa/Baja) | `inventario/units` | `/unidades/[id]` |
+| 74 | Reacondicionando equipo operativo desde revisión a bodega | `inventario/units` | `/unidades/[id]` |
+| 75 | Enviando equipo a reparación externa | `inventario/units` | `/unidades/[id]` |
+| 76 | Reingresando equipo desde reparación externa | `inventario/units` | `/unidades/[id]` |
+| 77 | Consultando listado de equipos en revisión | `inventario/units` | `/unidades/en-revision` |
+| 85 | Reporte de stock actual | `reportes`, `bodegas`, `inventario`, `auditoria` | `/reportes/stock` |
+| 86 | Reporte de movimientos de inventario | `reportes`, `transferencias` | `/reportes` |
+| 88 | Reporte de garantías | `reportes`, `inventario`, `auditoria` | `/reportes` (pestaña Garantías) |
+| 89 | Reporte de inventario actual de técnicos | `reportes`, `salidas`, `inventario`, `auditoria` | `/reportes` (pestaña Inventario de técnicos) |
+| 91 | Reporte de consumo de consumibles | `reportes`, `salidas`, `auditoria` | `/reportes` (pestaña Consumo de consumibles) |
+| 78 | Baja definitiva de equipo (directa o por solicitud del técnico) | `bajas`, `inventario/units`, `companies` | `/unidades/[id]`, `/bajas`, `Header` (campana) |
+| 79 | Acciones automáticas posteriores a la baja (exclusión del inventario activo) | `inventario/units`, `bodegas`, `companies` | `/dashboard`, `/bodegas`, `/unidades` (sin UI propia) |
+| 80 | Donación de equipos dados de baja + resumen en PDF | `donaciones` | `/bajas` (pestaña Donaciones) |
+| 81 | Préstamo externo de equipos y consumibles (PE-XXXXX) | `prestamos`, `inventario/units`, `bodegas` | `/prestamos` |
+| 82 | Retorno total o parcial de préstamo externo | `prestamos`, `inventario/units`, `bodegas` | `/prestamos` |
+| 83 | Tabla de préstamos externos activos (días restantes, filtros) | `prestamos` | `/prestamos` |
+| 84 | Trazabilidad de la devolución (validaciones del retorno) | `prestamos` | `/prestamos` (errores por ítem en el modal) |
 
 ## 3. Diagramas disponibles (referencia para CUs pendientes)
 

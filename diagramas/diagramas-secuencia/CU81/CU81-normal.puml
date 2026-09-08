@@ -1,0 +1,141 @@
+@startuml CU81-normal
+title CU-81 — Registrando préstamo externo de equipos (flujo normal)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega" as user
+participant "V_Prestamos" as view
+participant "C_RolesGuard" as guard
+participant "C_PrestamosController" as ctrl
+participant "C_PrestamosService" as svc
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as uent
+participant "stock_consumible" as sent
+participant "prestamo_externo" as pent
+participant "prestamo_detalle" as dent
+participant "historial_estado_equipo" as hent
+participant "log_auditoria" as aent
+
+user -> view : "Nuevo préstamo externo":\nreceptor, RUT, fecha estimada,\nmotivo, bodega e ítems
+activate view
+
+view -> guard : POST /api/prestamos\n{ nombre_receptor, rut_receptor,\nfecha_estimada_retorno, motivo,\nid_bodega_origen, numeros_serie,\nconsumibles }
+activate guard
+guard --> view : Autorizado\n(ADMIN_BODEGA / ADMIN / SUPERUSUARIO)
+deactivate guard
+
+view -> ctrl : registrar(dto, actor)
+activate ctrl
+ctrl -> svc : registrar(dto, actor)
+activate svc
+
+svc -> svc : validarFormulario()\nreceptor 3-80, RUT opcional XXXXXXXX-X,\nfecha estimada posterior a la salida,\nmotivo 5-200, al menos un ítem
+activate svc
+deactivate svc
+
+svc -> orm : validarNumerosSerie(): find({ serialNumber: In(ns) })
+activate orm
+orm -> uent : SELECT unidad_equipo\nWHERE numero_serie IN (:ns)
+activate uent
+uent --> orm : Unidades (estado 'En bodega')
+deactivate uent
+orm --> svc : unidades válidas
+deactivate orm
+
+svc -> orm : validarStockConsumibles(): find stock de la bodega
+activate orm
+orm -> sent : SELECT stock_consumible\nWHERE id_bodega = :id AND id_tipo_equipo IN (:tipos)
+activate sent
+sent --> orm : Saldos disponibles
+deactivate sent
+orm --> svc : stock suficiente
+deactivate orm
+
+svc -> orm : queryRunner.startTransaction()\npg_advisory_xact_lock('correlativo')
+activate orm
+orm -> pent : SELECT correlativo\nORDER BY id_prestamo DESC LIMIT 1
+activate pent
+pent --> orm : Último correlativo
+deactivate pent
+orm --> svc : correlativo = PE-00001
+deactivate orm
+
+svc -> orm : save(prestamo_externo)
+activate orm
+orm -> pent : INSERT prestamo_externo\n(correlativo, tipo 'PRESTAMO', receptor,\nfecha_salida = now(), fecha_estimada_retorno,\nmotivo, estado 'Activo', id_bodega_origen)
+activate pent
+pent --> orm : id_prestamo
+deactivate pent
+orm --> svc : préstamo creado
+deactivate orm
+
+svc -> orm : find(UnidadEquipo, lock: pessimistic_write)
+activate orm
+orm -> uent : SELECT ... FOR UPDATE\n(relee el estado ya bloqueado)
+activate uent
+uent --> orm : Unidades bloqueadas
+deactivate uent
+orm --> svc : estado revalidado con la máquina\n('En bodega' → 'En préstamo externo')
+deactivate orm
+
+svc -> orm : save(unidad) + save(historial) + save(detalle)
+activate orm
+orm -> uent : UPDATE unidad_equipo\nSET estado = 'En préstamo externo',\nid_bodega_actual = NULL
+activate uent
+uent --> orm : Unidad actualizada
+deactivate uent
+orm -> hent : INSERT historial_estado_equipo\n(motivo: 'Salida por préstamo externo PE-00001')
+activate hent
+hent --> orm : Registro insertado
+deactivate hent
+orm -> dent : INSERT prestamo_detalle (id_unidad)
+activate dent
+dent --> orm : Detalle insertado
+deactivate dent
+orm --> svc : ítems individualizables listos
+deactivate orm
+
+svc -> orm : UPDATE condicional del consumible
+activate orm
+orm -> sent : UPDATE stock_consumible\nSET cantidad_disponible = cantidad_disponible - :cantidad\nWHERE id_stock = :id AND cantidad_disponible >= :cantidad
+activate sent
+sent --> orm : 1 fila (saldo descontado)
+deactivate sent
+orm -> dent : INSERT prestamo_detalle\n(id_tipo_equipo, cantidad)
+activate dent
+dent --> orm : Detalle insertado
+deactivate dent
+orm --> svc : consumibles descontados
+deactivate orm
+
+svc -> orm : queryRunner.commitTransaction()
+activate orm
+orm --> svc : Transacción confirmada
+deactivate orm
+
+svc -> orm : auditoriaService.create({ accion:\n'PRESTAMO_EXTERNO', valor_nuevo: { correlativo,\nreceptor, unidades, consumibles } })
+activate orm
+orm -> aent : INSERT log_auditoria
+activate aent
+aent --> orm : Registro insertado
+deactivate aent
+orm --> svc : auditoría guardada
+deactivate orm
+
+svc --> ctrl : 201 { success: true, correlativo: 'PE-00001',\nequipos, consumibles }
+deactivate svc
+ctrl --> view : 201 Created
+deactivate ctrl
+view --> user : "Préstamo externo PE-00001 registrado\ncon N equipo(s) y M consumible(s)."
+deactivate view
+
+@enduml

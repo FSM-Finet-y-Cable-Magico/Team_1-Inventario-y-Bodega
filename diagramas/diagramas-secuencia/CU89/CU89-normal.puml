@@ -1,0 +1,72 @@
+@startuml CU89-normal
+title CU-89 — Generando reporte de inventario actual de técnicos (flujo normal)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+<style>
+sequenceDiagram {
+  participant { Margin 25 }
+  actor { Margin 20 }
+}
+</style>
+skinparam sequence {
+	MessageAlign center
+	LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega / Administrador / Superusuario" as user
+participant "V_ReportesTecnicos" as view
+participant "C_ReportesController" as ctrl
+participant "C_ReportesService" as svc
+participant "C_TypeORM" as orm
+participant "usuario" as uent
+participant "unidad_equipo" as ient
+participant "inventario_personal_tecnico" as pent
+participant "log_auditoria" as aent
+
+user -> view : Selecciona empresa y técnico/Todos
+activate view
+view -> ctrl : GET /api/reportes/tecnicos/inventario\n?id_empresa=&id_usuario=
+activate ctrl
+ctrl -> svc : getInventarioTecnicosReport(filtros, req.user)
+activate svc
+svc -> svc : Valida rol y aislamiento por empresa
+svc -> orm : SELECT técnicos activos TECNICO_TERRENO
+activate orm
+orm -> uent : SELECT usuarios y roles
+activate uent
+uent --> orm : Técnicos activos
+deactivate uent
+orm --> svc : Técnicos filtrados
+deactivate orm
+svc -> orm : SELECT equipos asignados e historial
+activate orm
+orm -> ient : SELECT unidades en estado Asignado a técnico
+activate ient
+ient --> orm : Números de serie
+deactivate ient
+orm --> svc : Equipos y fechas de asignación
+deactivate orm
+svc -> orm : SELECT saldos de consumibles positivos
+activate orm
+orm -> pent : SELECT inventario personal por técnico
+activate pent
+pent --> orm : Saldos y tipos de equipo
+deactivate pent
+orm --> svc : Consumibles y unidades de medida
+deactivate orm
+svc -> svc : Calcula días transcurridos y arma tarjetas
+svc -> aent : INSERT log_auditoria\n(GENERAR_REPORTE, reporte_inventario_tecnicos)
+activate aent
+aent --> svc : Auditoría registrada
+deactivate aent
+svc --> ctrl : Técnicos con equipos y consumibles
+deactivate svc
+ctrl --> view : 200 OK: Datos del reporte
+deactivate ctrl
+view --> user : Tarjeta por técnico con dos tablas
+deactivate view
+
+@enduml

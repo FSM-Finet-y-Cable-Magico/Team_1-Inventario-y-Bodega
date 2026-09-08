@@ -1,0 +1,48 @@
+@startuml CU85-exc-sin-datos
+title CU-85 — Generando reporte de stock actual (excepción: sin datos)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+<style>
+sequenceDiagram {
+  participant { Margin 25 }
+  actor { Margin 20 }
+}
+</style>
+skinparam sequence {
+	MessageAlign center
+	LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega / Administrador / Superusuario" as user
+participant "V_ReportesStock" as view
+participant "C_ReportesController" as ctrl
+participant "C_ReportesService" as svc
+participant "C_TypeORM" as orm
+participant "log_auditoria" as aent
+
+user -> view : Aplica filtros sin coincidencias
+activate view
+view -> ctrl : GET /api/reportes/stock?filtros
+activate ctrl
+ctrl -> svc : getStockReport(filtros, req.user)
+activate svc
+svc -> orm : SELECT stock por filtros
+activate orm
+orm --> svc : Resultado vacío
+deactivate orm
+svc -> svc : Conserva reporte vacío
+svc -> aent : INSERT log_auditoria\n(GENERAR_REPORTE, filtros)
+activate aent
+aent --> svc : Auditoría registrada
+deactivate aent
+svc --> ctrl : Sin datos
+deactivate svc
+ctrl --> view : 200 OK: Sin resultados
+deactivate ctrl
+view --> user : No se encontraron datos para los filtros seleccionados.
+deactivate view
+
+@enduml

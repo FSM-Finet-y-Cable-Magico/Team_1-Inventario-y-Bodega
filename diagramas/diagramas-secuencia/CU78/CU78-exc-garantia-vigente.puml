@@ -1,0 +1,66 @@
+@startuml CU78-exc-garantia-vigente
+title CU-78 — Excepción 2: el equipo tiene garantía vigente (continuar o cancelar)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador" as user
+participant "V_FichaUnidad" as view
+participant "C_UnitsController" as uctrl
+participant "C_UnitsService" as usvc
+participant "C_BajasController" as ctrl
+participant "C_BajasService" as svc
+participant "unidad_equipo" as uent
+
+user -> view : Abre la ficha de la unidad
+activate view
+
+view -> uctrl : GET /api/unidades/5/ficha
+activate uctrl
+uctrl -> usvc : verFichaDetalle(5, id_empresa)
+activate usvc
+usvc -> uent : SELECT unidad_equipo\nWHERE id_unidad = 5
+activate uent
+uent --> usvc : Unidad (fecha_venc_garantia futura)
+deactivate uent
+usvc --> uctrl : 200 { garantia: { garantia_vigente: true,\ndias_restantes, mensaje_alerta } }
+deactivate usvc
+uctrl --> view : 200 OK
+deactivate uctrl
+
+user -> view : Elige "Registrar baja definitiva"\ny selecciona el motivo
+activate view
+view --> user : AVISO de garantía vigente:\n'Este equipo tiene garantía vigente hasta DD/MM/YYYY.\nLa baja definitiva es irreversible.\n¿Desea continuar de todas formas?'\n[Continuar de todas formas] [Cancelar]
+deactivate view
+
+alt El actor cancela
+    user -> view : Cancelar
+    activate view
+    view --> user : Se cierra el aviso.\nLa unidad mantiene su estado actual\n(no se llama a la API)
+    deactivate view
+else El actor continúa de todas formas
+    user -> view : Continuar de todas formas
+    activate view
+    view -> ctrl : POST /api/bajas\n{ id_unidad: 5, motivo }
+    activate ctrl
+    ctrl -> svc : registrar(dto, actor)
+    activate svc
+    svc --> ctrl : 201 { success: true,\nestado: 'Dado de baja' }
+    deactivate svc
+    ctrl --> view : 201 Created
+    deactivate ctrl
+    view --> user : "El equipo [SN-001] quedó dado de baja\nde forma definitiva."
+    deactivate view
+end
+
+deactivate view
+
+@enduml

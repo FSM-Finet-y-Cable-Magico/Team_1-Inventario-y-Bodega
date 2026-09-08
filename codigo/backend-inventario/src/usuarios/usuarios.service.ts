@@ -67,8 +67,8 @@ export class UsuariosService {
     // CU-05: los usuarios con rol SUPERUSUARIO solo son visibles para otro Superusuario.
     // Un Admin de empresa no debe ver ni editar a los Superusuarios del sistema.
     if (!esSuperusuario) {
-      resultado = resultado.filter((u) =>
-        !u.roles.some((r) => r.nombre_rol === 'SUPERUSUARIO'),
+      resultado = resultado.filter(
+        (u) => !u.roles.some((r) => r.nombre_rol === 'SUPERUSUARIO'),
       );
     }
 
@@ -82,7 +82,7 @@ export class UsuariosService {
 
     // CU-05 Excepción 1: sin coincidencias se retorna el listado vacío;
     // el frontend muestra el mensaje correspondiente
-    return resultado as any;
+    return resultado;
   }
 
   async findOne(id: number): Promise<(Usuario & { roles: Rol[] }) | null> {
@@ -105,7 +105,12 @@ export class UsuariosService {
 
   async create(
     createUsuarioDto: CreateUsuarioDto,
-    actor: { sub?: number; id_usuario?: number; id_empresa: number; roles?: string[] },
+    actor: {
+      sub?: number;
+      id_usuario?: number;
+      id_empresa: number;
+      roles?: string[];
+    },
   ): Promise<Usuario> {
     const actorId = actor.id_usuario ?? actor.sub;
     const actorRoles = actor.roles ?? [];
@@ -134,7 +139,9 @@ export class UsuariosService {
       const idsRoles = [...new Set(createUsuarioDto.roles)];
       rolesAsignar = await this.rolRepository.findBy({ id_rol: In(idsRoles) });
       if (rolesAsignar.length !== idsRoles.length) {
-        throw new BadRequestException('Uno o más roles seleccionados no existen.');
+        throw new BadRequestException(
+          'Uno o más roles seleccionados no existen.',
+        );
       }
       // CU-04 Excepción 2: el Administrador no puede asignar rol Superusuario
       if (
@@ -200,18 +207,29 @@ export class UsuariosService {
     return usuarioSeguro as Usuario;
   }
 
-  async remove(id: number, actorId: number, actorRoles: string[] = []): Promise<void> {
+  async remove(
+    id: number,
+    actorId: number,
+    actorRoles: string[] = [],
+  ): Promise<void> {
     // CU-07 Excepción 1: el actor no puede desactivar su propia cuenta
     if (id === actorId) {
-      throw new BadRequestException('No es posible desactivar su propia cuenta.');
+      throw new BadRequestException(
+        'No es posible desactivar su propia cuenta.',
+      );
     }
 
     const usuario = await this.findOne(id);
     if (!usuario) throw new NotFoundException('Usuario no encontrado.');
 
     // CU-07: solo un Superusuario puede desactivar a otro Superusuario
-    if (usuario.roles.some((r) => r.nombre_rol === 'SUPERUSUARIO') && !actorRoles.includes('SUPERUSUARIO')) {
-      throw new ForbiddenException('No tiene permisos para desactivar a un Superusuario.');
+    if (
+      usuario.roles.some((r) => r.nombre_rol === 'SUPERUSUARIO') &&
+      !actorRoles.includes('SUPERUSUARIO')
+    ) {
+      throw new ForbiddenException(
+        'No tiene permisos para desactivar a un Superusuario.',
+      );
     }
 
     await this.usuarioRepository.update(id, { activo: false });
@@ -238,13 +256,20 @@ export class UsuariosService {
     if (!usuario) throw new NotFoundException('Usuario no encontrado.');
 
     // CU-07: solo un Superusuario puede editar a otro Superusuario
-    if (usuario.roles.some((r) => r.nombre_rol === 'SUPERUSUARIO') && !actorRoles.includes('SUPERUSUARIO')) {
-      throw new ForbiddenException('No tiene permisos para editar a un Superusuario.');
+    if (
+      usuario.roles.some((r) => r.nombre_rol === 'SUPERUSUARIO') &&
+      !actorRoles.includes('SUPERUSUARIO')
+    ) {
+      throw new ForbiddenException(
+        'No tiene permisos para editar a un Superusuario.',
+      );
     }
 
     // CU-07 Excepción 1: tampoco por edición se puede desactivar la cuenta propia
     if (updateUsuarioDto.activo === false && id === actorId) {
-      throw new BadRequestException('No es posible desactivar su propia cuenta.');
+      throw new BadRequestException(
+        'No es posible desactivar su propia cuenta.',
+      );
     }
 
     // password no se actualiza por esta vía; id_empresa solo lo cambia un Superusuario
@@ -270,7 +295,9 @@ export class UsuariosService {
         ? await this.rolRepository.findBy({ id_rol: In(idsRoles) })
         : [];
       if (rolesAsignar.length !== idsRoles.length) {
-        throw new BadRequestException('Uno o más roles seleccionados no existen.');
+        throw new BadRequestException(
+          'Uno o más roles seleccionados no existen.',
+        );
       }
       // CU-06 Excepción 2: el Administrador no puede asignar rol Superusuario
       if (
@@ -284,11 +311,17 @@ export class UsuariosService {
     }
 
     const anterior = { ...usuario };
-    const { usuarioRoles: _ur, roles: _roles, ...datosUsuario } = usuario as any;
+    const {
+      usuarioRoles: _ur,
+      roles: _roles,
+      ...datosUsuario
+    } = usuario as any;
     const usuarioActualizado = await this.usuarioRepository.save({
       ...datosUsuario,
       ...cambios,
-      ...(idEmpresaExplicita !== undefined && idEmpresaExplicita !== null && idEmpresaExplicita !== 0
+      ...(idEmpresaExplicita !== undefined &&
+      idEmpresaExplicita !== null &&
+      idEmpresaExplicita !== 0
         ? { id_empresa: idEmpresaExplicita }
         : {}),
     });
@@ -298,7 +331,10 @@ export class UsuariosService {
       if (rolesAsignar.length) {
         await this.usuarioRolRepository.save(
           rolesAsignar.map((r) =>
-            this.usuarioRolRepository.create({ id_usuario: id, id_rol: r.id_rol }),
+            this.usuarioRolRepository.create({
+              id_usuario: id,
+              id_rol: r.id_rol,
+            }),
           ),
         );
       }

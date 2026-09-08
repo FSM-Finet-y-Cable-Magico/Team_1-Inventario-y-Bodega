@@ -1,0 +1,87 @@
+@startuml CU79-normal
+title CU-79 — Ejecutando acciones posteriores a baja definitiva (flujo normal, automático)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+participant "C_BajasService" as bsvc
+participant "C_UnitsService" as svc
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as uent
+participant "historial_estado_equipo" as hent
+participant "log_auditoria" as aent
+participant "C_BodegasService" as bod
+participant "C_CompaniesService" as comp
+
+bsvc -> svc : (CU-78 confirmado)\ntransicionarEstado(id, 'Dado de baja', actor,\nbajaPayload = { motivo, descripcion })
+activate svc
+
+svc -> svc : (A) transicionesPermitidas['Dado de baja'] = []\n→ estado terminal e irreversible
+activate svc
+deactivate svc
+
+svc -> orm : queryRunner.startTransaction()
+activate orm
+orm --> svc : Transacción iniciada
+deactivate orm
+
+svc -> orm : queryRunner.manager.save(unidad)
+activate orm
+orm -> uent : UPDATE unidad_equipo\nSET estado = 'Dado de baja',\nmotivo_baja = :motivo,\nid_bodega_actual = NULL,\nnumero_poste = NULL,\nubicacion_fisica = NULL\nWHERE id_unidad = :id
+activate uent
+uent --> orm : (B) la unidad deja de estar\nasociada a una bodega
+deactivate uent
+orm --> svc : unidad guardada
+deactivate orm
+
+svc -> orm : queryRunner.manager.save(historial\n{ estadoAnterior, estadoNuevo: 'Dado de baja',\nmotivo: 'Baja definitiva. Motivo: ...' })
+activate orm
+orm -> hent : INSERT historial_estado_equipo
+activate hent
+hent --> orm : (C) el historial queda registrado\ny consultable por NS
+deactivate hent
+orm --> svc : historial guardado
+deactivate orm
+
+svc -> orm : queryRunner.commitTransaction()
+activate orm
+orm --> svc : Transacción confirmada
+deactivate orm
+
+svc -> orm : auditoriaService.create({ accion: 'BAJA_DEFINITIVA',\nvalor_nuevo: { numero_serie, motivo_baja,\nid_empresa }, id_usuario, fecha_hora })
+activate orm
+orm -> aent : INSERT log_auditoria
+activate aent
+aent --> orm : (D) NS, motivo, usuario,\nempresa y fecha/hora
+deactivate aent
+orm --> svc : auditoría guardada
+deactivate orm
+
+svc --> bsvc : { success: true, estadoActual: 'Dado de baja' }
+deactivate svc
+
+note over bod, comp : (B) Consultas posteriores excluyen la unidad del inventario activo
+
+bod -> uent : SELECT count(*) FROM unidad_equipo\nWHERE id_bodega_actual = :id\nAND estado <> 'Dado de baja'
+activate bod
+activate uent
+uent --> bod : Stock de bodega sin las unidades de baja
+deactivate uent
+deactivate bod
+
+comp -> uent : SELECT * FROM unidad_equipo\nWHERE id_empresa = :id
+activate comp
+activate uent
+uent --> comp : total_unidades = activas\n(unidades_dadas_de_baja aparte)
+deactivate uent
+deactivate comp
+
+@enduml

@@ -85,8 +85,10 @@ Ambos usan `@UseGuards(AuthGuard('jwt'), CompanyIsolationGuard, RolesGuard)`.
 | PATCH | `/api/unidades/consumibles/:id_stock` | idem | CU-28/CU-31 editar consumible |
 | GET | `/api/unidades/:id/ficha` | 4 roles | CU-33 ver ficha detalle |
 | GET | `/api/unidades/:serialNumber/historial` | 4 roles | CU-36/CU-37 ver historial |
-| PATCH | `/api/unidades/:id/cambiar-estado` | 4 roles | CU-35/36/40 cambio de estado |
+| PATCH | `/api/unidades/:id/cambiar-estado` | 4 roles | CU-35/36/40/47 cambio de estado |
 | PATCH | `/api/unidades/:id` | `ADMIN`, `SUPERUSUARIO`, `ADMIN_BODEGA` | CU-34 editar datos |
+| POST | `/api/unidades/:id/resultado-revision` | `ADMIN_BODEGA`, `ADMIN`, `SUPERUSUARIO` | CU-72 registrar resultado de revisión |
+
 
 ### 2. Lógica (`units.service.ts`)
 
@@ -117,14 +119,31 @@ Constante: `MAC_REGEX = /^([0-9A-Fa-f]{2}[:\\-]){5}[0-9A-Fa-f]{2}$/`.
     `id_tipo_equipo+id_bodega`, crea con `cantidad_disponible: 0` si no existe).
 - **`editarConsumible`:** stock debe pertenecer a la empresa del actor. `cantidad_disponible` ≥0;
   `umbral_minimo` 0–9999. Audita `MODIFICAR` solo si hubo cambios.
-- **`transicionarEstado` (CU-35/36/40):**
+- **`transicionarEstado` (CU-35/36/40/78):**
   - **CU-36:** observación opcional, ≤300.
   - **Máquina de estados** (ver tabla en `03-base-de-datos.md`); **CU-35 Excepción 1:** transición
-    no permitida → `'Transición de estado no permitida para este equipo.'`.
+    no permitida → `'Transición de estado no permitida para este equipo.'`. La tabla vive en la
+    constante exportada **`TRANSICIONES_PERMITIDAS`** (CU-81): los módulos que hacen su propia
+    transacción (préstamos) la reutilizan en vez de duplicarla. **CU-82** amplió esa tabla:
+    `En préstamo externo` admite `En bodega` y `En revisión` (cambio ratificado por el jefe de grupo).
   - **CU-40 Excepción 1:** al pasar a `'En revisión'` el diagnóstico es obligatorio
     (`DIAGNOSTICOS_PERMITIDOS`); si es `'Otro'`, descripción obligatoria 5–200
     (`'Debe ingresar una descripción cuando selecciona Otro.'`).
-  - Al salir de `'En bodega'` limpia `id_bodega_actual` y `numeroPoste`.
+  - Al salir de `'En bodega'` limpia `id_bodega_actual` y `numeroPoste` **con `null` explícito**
+    (**CU-79**: con `undefined` TypeORM ignoraba la propiedad y la unidad seguía contando en el
+    stock de su bodega incluso después de darse de baja).
+  - **CU-47:** acepta `ubicacion_fisica` opcional (texto libre, ≤60 →
+    `BadRequestException('La ubicación física no puede superar los 60 caracteres.')`). Al pasar a
+    `'En bodega'` la persiste junto a la transición (misma transacción del historial) y la incluye
+    en el `motivo` del historial (`... . Ubicación física: ...`); al **salir** de `'En bodega'`
+    (`Asignado a técnico` / `En préstamo externo` / `Dado de baja`) la vacía automáticamente
+    (`null`). Audita `CAMBIAR_ESTADO` en `log_auditoria` con `ubicacion_fisica` en
+    `valor_anterior`/`valor_nuevo` y la devuelve en la respuesta.
+  - **CU-78:** acepta `bajaPayload = { motivo, descripcion }` (lo valida `BajasService`, ver
+    `bajas.md`). Al pasar a `'Dado de baja'` persiste `motivo_baja` / `motivo_baja_detalle` en la
+    misma transacción, escribe el historial como `'Baja definitiva. Motivo: ...'` y audita con la
+    acción **`BAJA_DEFINITIVA`** (número de serie, motivo, empresa) en vez de `CAMBIAR_ESTADO`.
+    `'Dado de baja'` es terminal: la máquina no define transiciones de salida y no deben agregarse.
   - **CU-36:** transacción con **reintentos (3, backoff 100ms×intento)**; fecha en timezone
     `America/Santiago`; `motivo` = `'Cambio de estado ordinario'` o
     `'Ingreso a taller técnico. Diagnóstico: ...'`. Si falla → `BadRequestException('Error al
@@ -139,6 +158,17 @@ Constante: `MAC_REGEX = /^([0-9A-Fa-f]{2}[:\\-]){5}[0-9A-Fa-f]{2}$/`.
   resuelve nombres de usuarios y empresa. Sin historial: unidad inexistente → **CU-33/CU-37 Excepción
   1** `'Número de serie no encontrado.'`; existente → `'El dispositivo se encuentra en su estado
   inicial de fábrica...'`.
+- **`registrarResultadoRevision` (CU-72):** precondición estado `'En revisión'` (mensaje
+  `'Transición de estado no permitida para este equipo. Estado actual: [ESTADO].'`, distinto al de
+  CU-35). Tres resultados: (A) `OPERATIVO` → bodega destino activa + ubicación física (≤60,
+  CU-47) → `'En bodega'`. (B) `REPARACION_EXTERNA` → nombre receptor (3-80), fecha estimada de
+  retorno (posterior a hoy), descripción de falla (5-300) → `'En préstamo externo'` + crea registro
+  en `prestamo_externo` (`tipo: 'REPARACION_EXTERNA'`, entidad compartida con CU-75/81). (C) `BAJA`
+  → motivo (obligatorio, ≤200); **Excepción 1:** si la garantía está vigente exige
+  `confirmar_garantia: true` en el body (el front ya preguntó) → `'Dado de baja'`. Transacción
+  `QueryRunner` (estado + historial + efecto del resultado). Audita `CAMBIAR_ESTADO` sobre
+  `unidad_equipo`.
+
 
 ### 3. Entidades
 
@@ -156,6 +186,14 @@ Constante: `MAC_REGEX = /^([0-9A-Fa-f]{2}[:\\-]){5}[0-9A-Fa-f]{2}$/`.
 - **`historial_estado_equipo`** → `historial-estado.entity.ts`: `id_historial`, `id_unidad`,
   `id_usuario`, `estadoAnterior`, `estadoNuevo`, `motivo`, `fechaHora`. `ManyToOne UnidadEquipo`
   con `onDelete: CASCADE`.
+- **`prestamo_externo`** → `prestamo-externo.entity.ts`: `id_prestamo`, `tipo`
+  (`REPARACION_EXTERNA`/`PRESTAMO_EXTERNO`), `id_empresa`, `id_unidad` (nullable, `ManyToOne`
+  `UnidadEquipo`), `nombreReceptor`/`nombre_receptor`, `rutReceptor`/`rut_receptor` (nullable),
+  `fechaSalida`/`fecha_salida`, `fechaRetornoEstimada`/`fecha_retorno_estimada`,
+  `fechaRetornoReal`/`fecha_retorno_real` (nullable), `detalle`, `estado`
+  (`ACTIVO`/`CERRADO`), `idUsuarioRegistro`/`id_usuario_registro`. Entidad mínima, compartida y
+  extensible por CU-75/CU-81.
+
 
 ### 4. DTOs
 - `editar-datos-unidad.dto.ts`: `observaciones` (≤300, CU-34), `ubicacion_fisica` (≤60, CU-34),
@@ -168,3 +206,5 @@ Constante: `MAC_REGEX = /^([0-9A-Fa-f]{2}[:\\-]){5}[0-9A-Fa-f]{2}$/`.
 CU-24..CU-31 (catálogo y ficha técnica), CU-32..CU-40 (unidades, estados, garantía, historial,
 diagnóstico). Detalle exacto de cada restricción en los diagramas de secuencia
 (`diagramas/diagramas-secuencia/CU24/` … `CU40/`).
+
+CU-72 (resultado de revisión de equipo: operativo/reparación externa/baja).

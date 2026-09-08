@@ -1,0 +1,77 @@
+@startuml CU91-normal
+title CU-91 — Generando reporte de consumo de consumibles (flujo normal)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+<style>
+sequenceDiagram {
+  participant { Margin 25 }
+  actor { Margin 20 }
+}
+</style>
+skinparam sequence {
+	MessageAlign center
+	LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega / Administrador / Superusuario" as user
+participant "V_ReportesConsumo" as view
+participant "C_ReportesController" as ctrl
+participant "C_ReportesService" as svc
+participant "C_TypeORM" as orm
+participant "tipo_equipo" as tent
+participant "orden_ingreso_detalle" as oent
+participant "salida_detalle" as dent
+participant "prestamo_retorno" as rent
+participant "log_auditoria" as aent
+
+user -> view : Selecciona empresa, consumible y fechas
+activate view
+view -> ctrl : GET /api/reportes/consumo\n?id_empresa=&id_tipo_equipo=&fecha_desde=&fecha_hasta=
+activate ctrl
+ctrl -> svc : getConsumoReport(filtros, req.user)
+activate svc
+svc -> svc : Valida rango máximo 365 días\ny aislamiento por empresa
+svc -> orm : SELECT tipos no serializados
+activate orm
+orm -> tent : SELECT requiere_serial_number=false
+activate tent
+tent --> orm : Tipos consumibles
+deactivate tent
+orm --> svc : Consumibles filtrados
+deactivate orm
+svc -> orm : SUM ingresos dentro del rango
+activate orm
+orm -> oent : SELECT orden_ingreso_detalle y órdenes
+activate oent
+oent --> orm : Cantidad ingresada
+deactivate oent
+orm --> svc : Ingresos
+deactivate orm
+svc -> orm : SUM entregas y devoluciones
+activate orm
+orm -> dent : SELECT salida_detalle + salida_bodega
+activate dent
+dent --> orm : Cantidad entregada
+deactivate dent
+orm -> rent : SELECT prestamo_retorno
+activate rent
+rent --> orm : Cantidad devuelta
+deactivate rent
+orm --> svc : Entregas y devoluciones
+deactivate orm
+svc -> svc : Calcula diferencia y desvío mayor al 15%
+svc -> aent : INSERT log_auditoria\n(GENERAR_REPORTE, reporte_consumo)
+activate aent
+aent --> svc : Auditoría registrada
+deactivate aent
+svc --> ctrl : Filas con indicador de desvío
+deactivate svc
+ctrl --> view : 200 OK: Datos del reporte
+deactivate ctrl
+view --> user : Tabla de consumo visible
+deactivate view
+
+@enduml

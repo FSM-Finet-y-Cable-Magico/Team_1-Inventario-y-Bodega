@@ -1,0 +1,146 @@
+@startuml CU80-normal
+title CU-80 — Registrando donación de equipos dados de baja (flujo normal)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador" as user
+participant "V_Bajas (Donaciones)" as view
+participant "C_RolesGuard" as guard
+participant "C_DonacionesController" as ctrl
+participant "C_DonacionesService" as svc
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as uent
+participant "donacion" as dent
+participant "donacion_detalle" as ddent
+participant "log_auditoria" as aent
+
+user -> view : Abre /bajas → pestaña "Donaciones"\ny elige "Registrar donación"
+activate view
+
+view -> ctrl : GET /api/donaciones/candidatas
+activate ctrl
+ctrl -> svc : listarCandidatas(actor)
+activate svc
+svc -> orm : find({ estado: 'Dado de baja',\nmotivoBaja: 'Donación a institución' })
+activate orm
+orm -> uent : SELECT unidad_equipo\nWHERE estado = 'Dado de baja'\nAND motivo_baja = 'Donación a institución'
+activate uent
+uent --> orm : Unidades elegibles
+deactivate uent
+orm --> svc : unidades (sin las ya donadas)
+deactivate orm
+svc --> ctrl : 200 [ { id_unidad, numero_serie, tipo, marca, modelo } ]
+deactivate svc
+ctrl --> view : 200 OK
+deactivate ctrl
+
+view --> user : Formulario con institución, RUT,\nfecha, resolución y listado de NS
+deactivate view
+
+user -> view : Completa los datos, selecciona los NS\ny confirma
+activate view
+
+view -> guard : POST /api/donaciones\n{ nombre_institucion, rut_institucion,\nfecha_donacion, numero_resolucion, ids_unidades }
+activate guard
+guard --> view : Autorizado (ADMIN / SUPERUSUARIO)
+deactivate guard
+
+view -> ctrl : registrar(dto, actor)
+activate ctrl
+ctrl -> svc : registrar(dto, actor)
+activate svc
+
+svc -> svc : validarFormulario()\nnombre 3-100, RUT XXXXXXXX-X + DV,\nfecha no futura, resolución ≤ 30
+activate svc
+deactivate svc
+
+svc -> orm : findBy({ id_unidad: In(ids) })
+activate orm
+orm -> uent : SELECT unidad_equipo\nWHERE id_unidad IN (:ids)
+activate uent
+uent --> orm : Unidades seleccionadas
+deactivate uent
+orm --> svc : unidades
+deactivate orm
+
+svc -> svc : Cada NS debe estar 'Dado de baja'\ncon motivo 'Donación a institución'\ny sin donación previa → OK
+activate svc
+deactivate svc
+
+svc -> orm : queryRunner.startTransaction()\nsave(donacion)
+activate orm
+orm -> dent : INSERT donacion\n(nombre_institucion, rut_institucion,\nfecha_donacion, numero_resolucion,\nid_usuario, id_empresa)
+activate dent
+dent --> orm : id_donacion
+deactivate dent
+orm --> svc : donación creada
+deactivate orm
+
+svc -> orm : save(detalle) por cada unidad
+activate orm
+orm -> ddent : INSERT donacion_detalle\n(id_donacion, id_unidad)
+activate ddent
+ddent --> orm : Detalles insertados
+deactivate ddent
+orm --> svc : detalles guardados
+deactivate orm
+
+svc -> orm : queryRunner.commitTransaction()
+activate orm
+orm --> svc : Transacción confirmada
+deactivate orm
+
+svc -> orm : auditoriaService.create({ accion: 'DONACION',\nvalor_nuevo: { institucion, rut, fecha,\nnumeros_serie } })
+activate orm
+orm -> aent : INSERT log_auditoria
+activate aent
+aent --> orm : Registro insertado
+deactivate aent
+orm --> svc : auditoría guardada
+deactivate orm
+
+svc --> ctrl : 201 { success: true, id_donacion, equipos }
+deactivate svc
+ctrl --> view : 201 Created
+deactivate ctrl
+view --> user : "Donación registrada con N equipo(s)."
+deactivate view
+
+user -> view : Selecciona "Descargar PDF"
+activate view
+view -> ctrl : GET /api/donaciones/:id/pdf\n(api.download, token en Authorization)
+activate ctrl
+ctrl -> svc : generarPdf(id, actor)
+activate svc
+svc -> orm : Cabecera + detalles + unidades
+activate orm
+orm -> dent : SELECT donacion WHERE id_donacion = :id
+activate dent
+dent --> orm : Cabecera
+deactivate dent
+orm -> ddent : SELECT donacion_detalle WHERE id_donacion = :id
+activate ddent
+ddent --> orm : NS incluidos
+deactivate ddent
+orm --> svc : datos de la donación
+deactivate orm
+svc -> svc : construirPdf(líneas)\n(institución, RUT, fecha, resolución,\nempresa donante y listado de NS)
+activate svc
+deactivate svc
+svc --> ctrl : { nombreArchivo, contenido: Buffer }
+deactivate svc
+ctrl --> view : 200 application/pdf\nContent-Disposition: attachment
+deactivate ctrl
+view --> user : Descarga del resumen donacion-<id>.pdf
+deactivate view
+
+@enduml
