@@ -16,9 +16,9 @@ const ACCIONES_G3: Record<string, { estado: string; origenes: string[] }> = {
     'BAJA_EN_TERRENO': { estado: 'Dado de baja', origenes: ['En bodega', 'En revisión'] },
 };
 
-// Pendiente la respuesta de G3 sobre el dato de diagnóstico del técnico.
-// Mientras tanto, el ingreso a revisión queda con este valor (CU-40 exige diagnóstico).
-const DIAGNOSTICO_PENDIENTE_G3 = 'Causa desconocida';
+// Acuerdo con G3 (06-sept-2026): el diagnóstico del retiro para revisión es la
+// categoria_falla declarada en el cierre; si no viene, queda este valor.
+const DIAGNOSTICO_FALLBACK_G3 = 'Causa desconocida';
 
 @Injectable()
 export class IntegracionesService {
@@ -121,8 +121,14 @@ export class IntegracionesService {
             const accionesAplicadas: any[] = [];
             const discrepancias: any[] = [];
 
+            // Acuerdo G3: el diagnóstico del retiro para revisión es la categoria_falla
+            // del cierre (a nivel payload); si no viene, 'Causa desconocida'.
+            const categoriaFalla = typeof payload.categoria_falla?.nombre === 'string'
+                ? payload.categoria_falla.nombre.trim()
+                : null;
+
             for (const item of equipos) {
-                const resultado = await this.procesarEquipo(queryRunner, item, idOt, idEmpresa);
+                const resultado = await this.procesarEquipo(queryRunner, item, idOt, idEmpresa, categoriaFalla);
                 if (resultado.discrepancia) {
                     discrepancias.push(resultado.discrepancia);
                 } else if (resultado.aplicada) {
@@ -187,6 +193,7 @@ export class IntegracionesService {
         item: any,
         idOt: number,
         idEmpresa: number,
+        categoriaFalla: string | null,
     ): Promise<{ aplicada?: any; discrepancia?: any }> {
         const serie = item.numero_serie.trim();
         const regla = ACCIONES_G3[item.accion];
@@ -232,14 +239,15 @@ export class IntegracionesService {
             unidad.ubicacionFisica = null;
         }
         if (regla.estado === 'En revisión') {
-            // CU-40 exige diagnóstico: mientras G3 no envíe el dato, queda el placeholder acordado.
-            unidad.diagnosticoTecnico = DIAGNOSTICO_PENDIENTE_G3;
+            // Acuerdo G3: diagnóstico = categoria_falla del cierre; sin dato → fallback.
+            unidad.diagnosticoTecnico = categoriaFalla ?? DIAGNOSTICO_FALLBACK_G3;
         }
 
         await queryRunner.manager.save(unidad);
 
         const motivo = [
             `Cierre OT #${idOt} (integración G3). Acción: ${item.accion}.`,
+            regla.estado === 'En revisión' && categoriaFalla ? `Categoría de falla: ${categoriaFalla}.` : null,
             item.motivo ? `Motivo: ${item.motivo}` : null,
             item.observacion_estado_fisico ? `Estado físico: ${item.observacion_estado_fisico}` : null,
         ].filter(Boolean).join(' ');
