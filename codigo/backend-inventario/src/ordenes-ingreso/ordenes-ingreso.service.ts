@@ -137,14 +137,14 @@ export class OrdenesIngresoService {
         CORRELATIVO_LOCK_KEY,
       ]);
 
-      const result = (await queryRunner.query(
-        `SELECT correlativo FROM orden_ingreso ORDER BY id_orden DESC LIMIT 1`,
-      )) as { correlativo: string }[];
+      const ultima = await queryRunner.manager
+        .createQueryBuilder(OrdenIngreso, 'o')
+        .orderBy('o.id_orden', 'DESC')
+        .getOne();
 
       let siguiente = 1;
-      if (result.length > 0) {
-        const ultimo = result[0].correlativo; // OI-0001
-        const num = parseInt(ultimo.replace('OI-', ''), 10);
+      if (ultima?.correlativo) {
+        const num = parseInt(ultima.correlativo.replace('OI-', ''), 10);
         siguiente = num + 1;
       }
 

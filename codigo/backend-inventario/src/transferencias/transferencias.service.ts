@@ -9,6 +9,7 @@ import { Repository, DataSource, In } from 'typeorm';
 import { Transferencia } from './entities/transferencia.entity';
 import { MovimientoInventario } from './entities/movimiento-inventario.entity';
 import { UnidadEquipo } from '../inventario/entities/unidad-equipo.entity';
+import { Bodega } from '../bodegas/entities/bodega.entity';
 import { Usuario } from '../usuarios/entities/usuario.entity';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { CreateTransferenciaDto } from './dto/create-transferencia.dto';
@@ -306,10 +307,9 @@ export class TransferenciasService {
       ),
     ];
     const bodegas = idsBodegas.length
-      ? await this.dataSource.query(
-          'SELECT id_bodega, nombre FROM bodega WHERE id_bodega = ANY($1)',
-          [idsBodegas],
-        )
+      ? await this.dataSource.getRepository(Bodega).find({
+          where: { id_bodega: In(idsBodegas) },
+        })
       : [];
     const mapaBodegas = new Map(
       bodegas.map((b: any) => [b.id_bodega, b.nombre]),

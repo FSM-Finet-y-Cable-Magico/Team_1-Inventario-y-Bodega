@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource, In, QueryRunner } from 'typeorm';
+import { Repository, DataSource, In, QueryRunner, IsNull, Not } from 'typeorm';
 import { PrestamoExterno } from '../inventario/entities/prestamo-externo.entity';
 import { PrestamoDetalle } from './entities/prestamo-detalle.entity';
 import { PrestamoRetorno } from './entities/prestamo-retorno.entity';
@@ -251,12 +251,13 @@ export class PrestamosService {
     // Solo los préstamos por lote llevan correlativo: las reparaciones externas
     // (CU-75) comparten la tabla con correlativo NULL y hay que excluirlas.
     // El formato PE-00000 tiene ancho fijo, así que ordenar por texto basta.
-    const filas = (await queryRunner.query(
-      `SELECT correlativo FROM prestamo_externo
-       WHERE correlativo IS NOT NULL ORDER BY correlativo DESC LIMIT 1`,
-    )) as { correlativo: string }[];
-    const ultimo =
-      filas.length > 0 ? Number(filas[0].correlativo.replace('PE-', '')) : 0;
+    const ultima = await queryRunner.manager.findOne(PrestamoExterno, {
+      where: { correlativo: Not(IsNull()) },
+      order: { correlativo: 'DESC' },
+    });
+    const ultimo = ultima?.correlativo
+      ? Number(ultima.correlativo.replace('PE-', ''))
+      : 0;
     return `PE-${String(ultimo + 1).padStart(5, '0')}`;
   }
 
@@ -368,16 +369,22 @@ export class PrestamosService {
         );
       }
 
-      // CU-81: los consumibles se descuentan con un UPDATE condicional: si otra
-      // transacción consumió el saldo mientras tanto, no afecta filas y el
-      // préstamo completo se revierte (evita el lost update de leer y escribir).
+      // CU-81: los consumibles se descuentan con un UPDATE condicional (TypeORM
+      // QueryBuilder, atómico): si otra transacción consumió el saldo mientras
+      // tanto, no afecta filas y el préstamo completo se revierte (evita el
+      // lost update de leer y escribir).
       for (const item of consumibles) {
-        const filas = (await queryRunner.query(
-          `UPDATE stock_consumible SET cantidad_disponible = cantidad_disponible - $1
-           WHERE id_stock = $2 AND cantidad_disponible >= $1 RETURNING id_stock`,
-          [item.cantidad, item.stock.id_stock],
-        )) as unknown[];
-        if (filas.length === 0) {
+        const resultadoUpdate = await queryRunner.manager
+          .createQueryBuilder()
+          .update(StockConsumible)
+          .set({ cantidad_disponible: () => `cantidad_disponible - ${item.cantidad}` })
+          .where('id_stock = :idStock AND cantidad_disponible >= :cantidad', {
+            idStock: item.stock.id_stock,
+            cantidad: item.cantidad,
+          })
+          .returning('id_stock')
+          .execute();
+        if (resultadoUpdate.raw.length === 0) {
           throw new BadRequestException(
             `Stock insuficiente de [${item.tipo?.nombre ?? 'consumible'}] en la bodega de origen: el saldo cambió mientras se registraba el préstamo.`,
           );
@@ -750,18 +757,23 @@ export class PrestamosService {
           unidadesRetornadas.push(unidad.serialNumber);
         } else {
           // CU-82: el consumible vuelve al stock de la bodega de origen del préstamo
-          const filas = (await queryRunner.query(
-            `UPDATE stock_consumible SET cantidad_disponible = cantidad_disponible + $1
-             WHERE id_bodega = $2 AND id_tipo_equipo = $3 RETURNING id_stock`,
-            [cantidad, prestamo.idBodegaOrigen, detalle.id_tipo_equipo],
-          )) as unknown[];
-          if (filas.length === 0) {
+          const resultadoUpdate = await queryRunner.manager
+            .createQueryBuilder()
+            .update(StockConsumible)
+            .set({ cantidad_disponible: () => `cantidad_disponible + ${cantidad}` })
+            .where('id_bodega = :idBodega AND id_tipo_equipo = :idTipo', {
+              idBodega: prestamo.idBodegaOrigen,
+              idTipo: detalle.id_tipo_equipo,
+            })
+            .returning('id_stock')
+            .execute();
+          if (resultadoUpdate.raw.length === 0) {
             // La fila de stock puede no existir si se eliminó tras el préstamo
-            await queryRunner.query(
-              `INSERT INTO stock_consumible (id_tipo_equipo, id_bodega, cantidad_disponible)
-               VALUES ($1, $2, $3)`,
-              [detalle.id_tipo_equipo, prestamo.idBodegaOrigen, cantidad],
-            );
+            await queryRunner.manager.insert(StockConsumible, {
+              id_tipo_equipo: detalle.id_tipo_equipo!,
+              id_bodega: prestamo.idBodegaOrigen!,
+              cantidad_disponible: cantidad,
+            });
           }
           consumiblesRetornados.push({
             tipo: detalle.id_tipo_equipo,
