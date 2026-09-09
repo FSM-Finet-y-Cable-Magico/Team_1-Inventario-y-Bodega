@@ -46,7 +46,8 @@ Respuestas envueltas `{ success, data }`.
 - Aplica las mismas reglas de la máquina de estados que `UnitsService.transicionarEstado`
   (al salir de bodega limpia bodega/ubicación; al reingresar la ubicación queda vacía).
 - **Diagnóstico en `En revisión` (acuerdo G3 del 08-sept):** el diagnóstico registrado es la
-  `categoria_falla` del payload del cierre (`payload.categoria_falla.nombre`); si no viene,
+  `categoria_falla` del payload del cierre — tolerante a formato: string raíz, `{nombre}` raíz
+  o `reparacion.categoria_falla_otro` (contrato doc-12 §1.3); si no viene nada,
   queda `'Causa desconocida'` (`DIAGNOSTICO_FALLBACK_G3`). El motivo del historial incluye
   `Categoría de falla: ...` cuando existe.
 - Cada transición escribe en `historial_estado_equipo` con `id_usuario: null` y motivo
@@ -67,7 +68,9 @@ Respuestas envueltas `{ success, data }`.
 
 ## 5. Pendientes
 
-- [ ] Definición de G3 sobre el diagnóstico en `RETIRADO_PARA_DIAGNOSTICO`.
+- [x] Diagnóstico en `RETIRADO_PARA_DIAGNOSTICO`: acordado con G3 (08-sept) — `categoria_falla` del cierre.
 - [ ] Descuento/validación de materiales (CU-58/CU-68).
 - [ ] `GET /tecnicos/{id}/inventario-personal` (después de CU-58).
-- [ ] Al mergear: definir la key real en Railway y enviar a G3 la URL pública del backend.
+- [x] Al mergear: definir la key real en Railway y enviar a G3 la URL pública del backend.
+      (La key **T1→G3** es el mismo valor `fd2e2646...` que G3 nos dio para consumir sus
+      endpoints — así se acordó con ellos; si se rota, avisar a ambos lados el mismo día).

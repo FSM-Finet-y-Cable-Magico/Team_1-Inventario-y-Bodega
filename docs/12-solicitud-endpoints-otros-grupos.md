@@ -172,7 +172,7 @@ de un técnico, y consumo de stock por OT. El detalle va en otro documento cuand
 |---|-------|----------|---------------|-----------------|
 | 1 | G3 | `GET /ordenes` con filtros técnico/fecha/estado + cliente y dirección anidados | ✅ Verificado en su código: trae cliente/tecnico/dirección y filtra `id_tecnico`/`fecha_desde`/`fecha_hasta` | CU-61 |
 | 2 | G3 | `GET /ordenes/categorias-falla` | ✅ Existe | CU-70 |
-| 3 | G3 | Webhook `POST /api/integraciones/ordenes/{id_ot}/cierre` (llamado por su cierre) o `GET /ordenes/{id}/cierre` | **Por construir** + extender su `cerrar-ot.dto` con `equipos_instalados[]` y `equipos_retirados[]` | CU-64, CU-68, CU-69 |
+| 3 | G3 | Webhook `POST /api/integraciones/ordenes/{id_ot}/cierre` (llamado por su cierre) o `GET /ordenes/{id}/cierre` | ✅ **Webhook construido por T1** (sc-113, autenticación `X-API-KEY`, idempotencia y discrepancias por ítem). G3 confirmó (09-sept) que su app **sí envía los equipos en el cierre** (`equipos_instalados[]`/`equipos_retirados[]` con la acción acordada). Pendiente: entregar a G3 la URL, la key y un serial de prueba (seed QA `QA-ONT-*-000x`) | CU-64, CU-68, CU-69 |
 | 4 | G3 | `GET /ordenes` rango ≤ 90 días con `materiales[]` incluidos | Existe el listado; su include NO trae materiales → falta agregarlos | CU-90 |
 | 5 | G3 | `GET /clientes/rut/{rut}` con direcciones incluidas | ✅ Verificado en su código: su service ya hace `include: { direcciones }` | CU-48, CU-71, CU-73 |
 | 6 | G3 | `GET /clientes?busqueda=` parcial insensible | Existe; solo confirmar insensibilidad a tildes | CU-87 |
