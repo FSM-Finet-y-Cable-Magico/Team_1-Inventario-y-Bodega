@@ -20,6 +20,19 @@ const ACCIONES_G3: Record<string, { estado: string; origenes: string[] }> = {
 // categoria_falla declarada en el cierre; si no viene, queda este valor.
 const DIAGNOSTICO_FALLBACK_G3 = 'Causa desconocida';
 
+// categoria_falla llega a nivel raíz como string o como {nombre}; si solo viene
+// el bloque reparacion del contrato doc-12, usamos su categoria_falla_otro.
+function extraerCategoriaFalla(payload: any): string | null {
+    const candidatas = [payload.categoria_falla, payload.reparacion?.categoria_falla];
+    for (const c of candidatas) {
+        if (typeof c === 'string' && c.trim() !== '') return c.trim();
+        if (c && typeof c === 'object' && typeof c.nombre === 'string' && c.nombre.trim() !== '') return c.nombre.trim();
+    }
+    const otro = payload.reparacion?.categoria_falla_otro;
+    if (typeof otro === 'string' && otro.trim() !== '') return otro.trim();
+    return null;
+}
+
 @Injectable()
 export class IntegracionesService {
     constructor(
@@ -122,10 +135,8 @@ export class IntegracionesService {
             const discrepancias: any[] = [];
 
             // Acuerdo G3: el diagnóstico del retiro para revisión es la categoria_falla
-            // del cierre (a nivel payload); si no viene, 'Causa desconocida'.
-            const categoriaFalla = typeof payload.categoria_falla?.nombre === 'string'
-                ? payload.categoria_falla.nombre.trim()
-                : null;
+            // del cierre; si no viene, 'Causa desconocida'.
+            const categoriaFalla = extraerCategoriaFalla(payload);
 
             for (const item of equipos) {
                 const resultado = await this.procesarEquipo(queryRunner, item, idOt, idEmpresa, categoriaFalla);
