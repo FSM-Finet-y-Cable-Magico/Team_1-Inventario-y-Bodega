@@ -742,16 +742,27 @@ export class ReportesService {
       .orderBy('fecha_vencimiento', 'ASC')
       .addOrderBy('u.numero_serie', 'ASC')
       .getRawMany();
+    // El driver de pg puede entregar las columnas DATE como objeto Date o como
+    // string según el contexto; normalizar antes de armar el resultado.
+    const aFechaISO = (valor: unknown): string | null => {
+      if (valor === null || valor === undefined) return null;
+      const d =
+        valor instanceof Date
+          ? valor
+          : new Date(
+              String(valor).includes('T')
+                ? String(valor)
+                : `${String(valor)}T00:00:00Z`,
+            );
+      return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
+    };
     const resultado = filas.map((fila) => {
-      const fechaVencimiento = fila.fecha_vencimiento
-        ? new Date(`${fila.fecha_vencimiento}T00:00:00Z`)
-        : null;
+      const fechaVencimiento = aFechaISO(fila.fecha_vencimiento);
+      const hoyISO = new Date().toISOString().slice(0, 10);
       const dias = fechaVencimiento
         ? Math.round(
-            (fechaVencimiento.getTime() -
-              new Date(
-                `${new Date().toISOString().slice(0, 10)}T00:00:00Z`,
-              ).getTime()) /
+            (new Date(`${fechaVencimiento}T00:00:00Z`).getTime() -
+              new Date(`${hoyISO}T00:00:00Z`).getTime()) /
               86_400_000,
           )
         : null;
@@ -761,17 +772,9 @@ export class ReportesService {
         marca: fila.marca ?? null,
         modelo: fila.modelo ?? null,
         proveedor: fila.proveedor ?? null,
-        fecha_adquisicion: fila.fecha_adquisicion
-          ? new Date(`${fila.fecha_adquisicion}T00:00:00Z`)
-              .toISOString()
-              .slice(0, 10)
-          : null,
+        fecha_adquisicion: aFechaISO(fila.fecha_adquisicion),
         duracion_garantia_dias: Number(fila.duracion_garantia_dias ?? 0),
-        fecha_vencimiento: fila.fecha_vencimiento
-          ? new Date(`${fila.fecha_vencimiento}T00:00:00Z`)
-              .toISOString()
-              .slice(0, 10)
-          : null,
+        fecha_vencimiento: fechaVencimiento,
         dias,
         dias_restantes: dias !== null && dias >= 0 ? dias : null,
         dias_vencidos: dias !== null && dias < 0 ? Math.abs(dias) : null,
