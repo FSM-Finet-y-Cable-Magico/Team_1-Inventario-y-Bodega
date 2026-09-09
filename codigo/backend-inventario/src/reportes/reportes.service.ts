@@ -5,12 +5,22 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { Bodega } from '../bodegas/entities/bodega.entity';
 import { StockConsumible } from '../bodegas/entities/stock-consumible.entity';
 import { TipoEquipo } from '../inventario/entities/tipo-equipo.entity';
 import { UnidadEquipo } from '../inventario/entities/unidad-equipo.entity';
+import { HistorialEstado } from '../inventario/entities/historial-estado.entity';
+import { Usuario } from '../usuarios/entities/usuario.entity';
+import { InventarioPersonal } from '../salidas/entities/inventario-personal.entity';
+import { SalidaBodega } from '../salidas/entities/salida-bodega.entity';
+import { SalidaDetalle } from '../salidas/entities/salida-detalle.entity';
+import { OrdenIngreso } from '../ordenes-ingreso/entities/orden-ingreso.entity';
+import { OrdenIngresoDetalle } from '../ordenes-ingreso/entities/orden-ingreso-detalle.entity';
+import { PrestamoDetalle } from '../prestamos/entities/prestamo-detalle.entity';
+import { PrestamoExterno } from '../inventario/entities/prestamo-externo.entity';
+import { PrestamoRetorno } from '../prestamos/entities/prestamo-retorno.entity';
 import { MovimientoInventario } from '../transferencias/entities/movimiento-inventario.entity';
 
 type FiltrosStock = {
@@ -100,18 +110,30 @@ export class ReportesService {
       );
     }
 
-    const tecnicos = await this.dataSource.query(
-      `SELECT u.id_usuario, u.nombre_completo, u.id_empresa
-       FROM usuario u
-       INNER JOIN usuario_rol ur ON ur.id_usuario = u.id_usuario
-       INNER JOIN rol r ON r.id_rol = ur.id_rol
-       WHERE u.activo = true
-         AND r.nombre_rol = 'TECNICO_TERRENO'
-         AND ($1::int IS NULL OR u.id_empresa = $1)
-         AND ($2::int IS NULL OR u.id_usuario = $2)
-       ORDER BY u.nombre_completo ASC, u.id_usuario ASC`,
-      [idEmpresa, filtros.id_usuario],
-    );
+    const tecnicosQb = this.dataSource
+      .getRepository(Usuario)
+      .createQueryBuilder('u')
+      .innerJoin('u.usuarioRoles', 'ur')
+      .innerJoin('ur.rol', 'r')
+      .where('u.activo = true')
+      .andWhere('r.nombre_rol = :rol', { rol: 'TECNICO_TERRENO' });
+    if (idEmpresa !== undefined && idEmpresa !== null) {
+      tecnicosQb.andWhere('u.id_empresa = :idEmpresa', { idEmpresa });
+    }
+    if (filtros.id_usuario !== undefined) {
+      tecnicosQb.andWhere('u.id_usuario = :idUsuario', {
+        idUsuario: filtros.id_usuario,
+      });
+    }
+    const tecnicos = (await tecnicosQb
+      .orderBy('u.nombre_completo', 'ASC')
+      .addOrderBy('u.id_usuario', 'ASC')
+      .getMany())
+      .map((u) => ({
+        id_usuario: u.id_usuario,
+        nombre_completo: u.nombre_completo,
+        id_empresa: u.id_empresa,
+      }));
 
     if (filtros.id_usuario !== undefined && tecnicos.length === 0) {
       throw new NotFoundException('Técnico no encontrado.');
@@ -124,49 +146,115 @@ export class ReportesService {
           nombre_completo: string;
           id_empresa: number;
         }) => {
-          const [unidades, saldos] = await Promise.all([
-            this.dataSource.query(
-              `SELECT u.numero_serie, t.nombre AS tipo_equipo,
-                    COALESCE(h.fecha_hora, sb.fecha_hora) AS fecha_asignacion,
-                    GREATEST(0, CURRENT_DATE - COALESCE(h.fecha_hora, sb.fecha_hora)::date)::int AS dias_transcurridos
-             FROM unidad_equipo u
-             INNER JOIN tipo_equipo t ON t.id_tipo_equipo = u.id_tipo_equipo
-             LEFT JOIN LATERAL (
-               SELECT he.fecha_hora
-               FROM historial_estado_equipo he
-               WHERE he.id_unidad = u.id_unidad
-                 AND he.estado_nuevo = 'Asignado a técnico'
-                 AND he.id_usuario = u.id_tecnico_asignado
-               ORDER BY he.fecha_hora DESC, he.id_historial DESC
-               LIMIT 1
-             ) h ON true
-             LEFT JOIN LATERAL (
-               SELECT s.fecha_hora
-               FROM salida_detalle sd
-               INNER JOIN salida_bodega s ON s.id_salida = sd.id_salida
-               WHERE sd.id_unidad = u.id_unidad
-                 AND s.id_tecnico = u.id_tecnico_asignado
-               ORDER BY s.fecha_hora DESC, s.id_salida DESC
-               LIMIT 1
-             ) sb ON true
-             WHERE u.id_empresa = $1
-               AND u.id_tecnico_asignado = $2
-               AND u.estado = 'Asignado a técnico'
-             ORDER BY u.numero_serie ASC`,
-              [tecnico.id_empresa, tecnico.id_usuario],
-            ),
-            this.dataSource.query(
-              `SELECT ip.id_tipo_equipo, t.nombre AS tipo_equipo,
-                    ip.cantidad AS cantidad_disponible, t.unidad_medida
-             FROM inventario_personal_tecnico ip
-             INNER JOIN tipo_equipo t ON t.id_tipo_equipo = ip.id_tipo_equipo
-             WHERE ip.id_tecnico = $1
-               AND t.requiere_serie_individual = false
-               AND ip.cantidad > 0
-             ORDER BY t.nombre ASC`,
-              [tecnico.id_usuario],
-            ),
-          ]);
+          // CU-89: unidades asignadas al técnico. La fecha de asignación es el
+          // último historial 'Asignado a técnico' de ese técnico; como respaldo,
+          // la última salida de bodega que incluyó la unidad (equivalente a los
+          // LEFT JOIN LATERAL de la versión anterior, en TypeORM).
+          const unidades = await this.dataSource
+            .getRepository(UnidadEquipo)
+            .find({
+              where: {
+                id_empresa: tecnico.id_empresa,
+                idTecnicoAsignado: tecnico.id_usuario,
+                estado: 'Asignado a técnico',
+              },
+              relations: { tipoEquipo: true },
+              order: { serialNumber: 'ASC' },
+            });
+
+          const historialRepository = this.dataSource.getRepository(
+            HistorialEstado,
+          );
+          const salidaDetalleRepository = this.dataSource.getRepository(
+            SalidaDetalle,
+          );
+
+          const equipos_individualizables = await Promise.all(
+            unidades.map(async (unidad) => {
+              const [ultimoAsignado, ultimaSalida] = await Promise.all([
+                historialRepository
+                  .createQueryBuilder('he')
+                  .where('he.id_unidad = :idUnidad', {
+                    idUnidad: unidad.id_unidad,
+                  })
+                  .andWhere('he.estado_nuevo = :estado', {
+                    estado: 'Asignado a técnico',
+                  })
+                  .andWhere('he.id_usuario = :idUsuario', {
+                    idUsuario: tecnico.id_usuario,
+                  })
+                  .orderBy('he.fecha_hora', 'DESC')
+                  .addOrderBy('he.id_historial', 'DESC')
+                  .getOne(),
+                salidaDetalleRepository
+                  .createQueryBuilder('sd')
+                  .innerJoinAndSelect('sd.salida', 's')
+                  .where('sd.id_unidad = :idUnidad', {
+                    idUnidad: unidad.id_unidad,
+                  })
+                  .andWhere('s.id_tecnico = :idTecnico', {
+                    idTecnico: tecnico.id_usuario,
+                  })
+                  .orderBy('s.fecha_hora', 'DESC')
+                  .addOrderBy('s.id_salida', 'DESC')
+                  .getOne(),
+              ]);
+
+              const fechaAsignacion =
+                ultimoAsignado?.fechaHora ?? ultimaSalida?.salida?.fecha_hora ?? null;
+              const diasTranscurridos = fechaAsignacion
+                ? Math.max(
+                    0,
+                    Math.floor(
+                      (Date.now() - new Date(fechaAsignacion).getTime()) /
+                        (1000 * 60 * 60 * 24),
+                    ),
+                  )
+                : 0;
+
+              return {
+                numero_serie: unidad.serialNumber,
+                tipo_equipo: unidad.tipoEquipo?.nombre ?? null,
+                fecha_asignacion: fechaAsignacion
+                  ? new Date(fechaAsignacion).toISOString().slice(0, 10)
+                  : null,
+                dias_transcurridos: diasTranscurridos,
+              };
+            }),
+          );
+
+          // CU-58: saldos de consumibles del técnico (solo tipos no individualizables)
+          const filasSaldos = await this.dataSource
+            .getRepository(InventarioPersonal)
+            .find({ where: { id_tecnico: tecnico.id_usuario } });
+          const idsTipos = [...new Set(filasSaldos.map((s) => s.id_tipo_equipo))];
+          const tiposSaldos = idsTipos.length
+            ? await this.dataSource
+                .getRepository(TipoEquipo)
+                .findBy({ id_tipo_equipo: In(idsTipos) })
+            : [];
+          const mapaTiposSaldos = new Map(
+            tiposSaldos.map((t) => [t.id_tipo_equipo, t]),
+          );
+          const consumibles = filasSaldos
+            .filter((s) => {
+              const tipo = mapaTiposSaldos.get(s.id_tipo_equipo);
+              return tipo?.requiereSerialNumber === false && Number(s.cantidad) > 0;
+            })
+            .sort((a, b) => {
+              const nombreA = mapaTiposSaldos.get(a.id_tipo_equipo)?.nombre ?? '';
+              const nombreB = mapaTiposSaldos.get(b.id_tipo_equipo)?.nombre ?? '';
+              return nombreA.localeCompare(nombreB);
+            })
+            .map((s) => {
+              const tipo = mapaTiposSaldos.get(s.id_tipo_equipo);
+              return {
+                id_tipo_equipo: s.id_tipo_equipo,
+                tipo_equipo: tipo?.nombre ?? null,
+                cantidad_disponible: Number(s.cantidad),
+                unidad_medida: tipo?.unidadMedida ?? null,
+              };
+            });
 
           return {
             tecnico: {
@@ -174,24 +262,8 @@ export class ReportesService {
               nombre_completo: tecnico.nombre_completo,
               empresa: this.nombreEmpresa(tecnico.id_empresa),
             },
-            equipos_individualizables: unidades.map(
-              (unidad: Record<string, unknown>) => ({
-                numero_serie: unidad.numero_serie,
-                tipo_equipo: unidad.tipo_equipo,
-                fecha_asignacion: unidad.fecha_asignacion
-                  ? new Date(unidad.fecha_asignacion as string)
-                      .toISOString()
-                      .slice(0, 10)
-                  : null,
-                dias_transcurridos: Number(unidad.dias_transcurridos ?? 0),
-              }),
-            ),
-            consumibles: saldos.map((saldo: Record<string, unknown>) => ({
-              id_tipo_equipo: saldo.id_tipo_equipo,
-              tipo_equipo: saldo.tipo_equipo,
-              cantidad_disponible: Number(saldo.cantidad_disponible),
-              unidad_medida: saldo.unidad_medida ?? null,
-            })),
+            equipos_individualizables,
+            consumibles,
           };
         },
       ),
@@ -241,87 +313,97 @@ export class ReportesService {
       order: { nombre: 'ASC' },
     });
 
-    const [tieneIngresos, tieneRetornos] = await Promise.all([
-      this.tableExists('orden_ingreso_detalle'),
-      this.tableExists('prestamo_retorno'),
-    ]);
+    // Las tablas orden_ingreso_detalle y prestamo_retorno las crea migrar.ts en
+    // cada arranque (CREATE TABLE IF NOT EXISTS), no hace falta introspección.
+    // Filtros de período/empresa compartidos por las tres sumas del reporte.
+    const tieneDesde = filtros.fecha_desde != null && filtros.fecha_desde !== '';
+    const tieneHasta = filtros.fecha_hasta != null && filtros.fecha_hasta !== '';
 
     const resultado = await Promise.all(
       tipos.map(async (tipo) => {
+        // Ingresado: cantidad recibida de órdenes de ingreso (CU-52..56)
+        const ingresadoQb = this.dataSource
+          .getRepository(OrdenIngresoDetalle)
+          .createQueryBuilder('oid')
+          .select('COALESCE(SUM(oid.cantidad_recibida), 0)', 'cantidad')
+          .innerJoin(OrdenIngreso, 'oi', 'oi.id_orden = oid.id_orden')
+          .where('oid.id_tipo_equipo = :idTipo', { idTipo: tipo.id_tipo_equipo });
+        if (idEmpresa !== undefined) {
+          ingresadoQb.andWhere('oi.id_empresa_destino = :idEmpresa', { idEmpresa });
+        }
+        if (tieneDesde) {
+          ingresadoQb.andWhere('oi.fecha_creacion >= :desde', { desde: filtros.fecha_desde });
+        }
+        if (tieneHasta) {
+          ingresadoQb.andWhere('oi.fecha_creacion < (:hasta::date + INTERVAL \'1 day\')', {
+            hasta: filtros.fecha_hasta,
+          });
+        }
+
+        // Entregado: consumibles salidos de bodega a técnico (CU-57/60)
+        const entregadoQb = this.dataSource
+          .getRepository(SalidaDetalle)
+          .createQueryBuilder('sd')
+          .select('COALESCE(SUM(sd.cantidad), 0)', 'cantidad')
+          .innerJoin(SalidaBodega, 'sb', 'sb.id_salida = sd.id_salida')
+          .where('sd.id_tipo_equipo = :idTipo', { idTipo: tipo.id_tipo_equipo })
+          .andWhere('sd.id_unidad IS NULL');
+        if (idEmpresa !== undefined) {
+          entregadoQb.andWhere('sb.id_empresa = :idEmpresa', { idEmpresa });
+        }
+        if (tieneDesde) {
+          entregadoQb.andWhere('sb.fecha_hora >= :desde', { desde: filtros.fecha_desde });
+        }
+        if (tieneHasta) {
+          entregadoQb.andWhere('sb.fecha_hora < (:hasta::date + INTERVAL \'1 day\')', {
+            hasta: filtros.fecha_hasta,
+          });
+        }
+
+        // Devuelto: consumibles retornados de préstamos externos (CU-82)
+        const devueltoQb = this.dataSource
+          .getRepository(PrestamoRetorno)
+          .createQueryBuilder('pr')
+          .select('COALESCE(SUM(pr.cantidad), 0)', 'cantidad')
+          .innerJoin(PrestamoDetalle, 'pd', 'pd.id_detalle = pr.id_detalle')
+          .innerJoin(PrestamoExterno, 'pe', 'pe.id_prestamo = pd.id_prestamo')
+          .where('pd.id_tipo_equipo = :idTipo', { idTipo: tipo.id_tipo_equipo })
+          .andWhere('pd.id_unidad IS NULL');
+        if (idEmpresa !== undefined) {
+          devueltoQb.andWhere('pe.id_empresa = :idEmpresa', { idEmpresa });
+        }
+        if (tieneDesde) {
+          devueltoQb.andWhere('pr.fecha_retorno >= :desde', { desde: filtros.fecha_desde });
+        }
+        if (tieneHasta) {
+          devueltoQb.andWhere('pr.fecha_retorno < (:hasta::date + INTERVAL \'1 day\')', {
+            hasta: filtros.fecha_hasta,
+          });
+        }
+
         const [ingresado, entregado, devuelto] = await Promise.all([
-          tieneIngresos
-            ? this.dataSource
-                .query(
-                  `SELECT COALESCE(SUM(oid.cantidad_recibida), 0) AS cantidad
-                 FROM orden_ingreso_detalle oid
-                 INNER JOIN orden_ingreso oi ON oi.id_orden = oid.id_orden
-                 WHERE oid.id_tipo_equipo = $1
-                   AND ($2::int IS NULL OR oi.id_empresa_destino = $2)
-                   AND ($3::date IS NULL OR oi.fecha_creacion >= $3::date)
-                   AND ($4::date IS NULL OR oi.fecha_creacion < ($4::date + INTERVAL '1 day'))`,
-                  [
-                    tipo.id_tipo_equipo,
-                    idEmpresa,
-                    filtros.fecha_desde ?? null,
-                    filtros.fecha_hasta ?? null,
-                  ],
-                )
-                .then((rows: Array<{ cantidad: string | number }>) =>
-                  Number(rows[0]?.cantidad ?? 0),
-                )
-            : Promise.resolve(0),
-          this.getConsumibleTotal(
-            `SELECT COALESCE(SUM(sd.cantidad), 0) AS cantidad
-             FROM salida_detalle sd
-             INNER JOIN salida_bodega sb ON sb.id_salida = sd.id_salida
-             WHERE sd.id_tipo_equipo = $1
-               AND sd.id_unidad IS NULL
-               AND ($2::int IS NULL OR sb.id_empresa = $2)
-               AND ($3::date IS NULL OR sb.fecha_hora >= $3::date)
-               AND ($4::date IS NULL OR sb.fecha_hora < ($4::date + INTERVAL '1 day'))`,
-            tipo.id_tipo_equipo,
-            idEmpresa,
-            filtros.fecha_desde,
-            filtros.fecha_hasta,
-          ),
-          tieneRetornos
-            ? this.dataSource
-                .query(
-                  `SELECT COALESCE(SUM(pr.cantidad), 0) AS cantidad
-                 FROM prestamo_retorno pr
-                 INNER JOIN prestamo_detalle pd ON pd.id_detalle = pr.id_detalle
-                 INNER JOIN prestamo_externo pe ON pe.id_prestamo = pd.id_prestamo
-                 WHERE pd.id_tipo_equipo = $1
-                   AND pd.id_unidad IS NULL
-                   AND ($2::int IS NULL OR pe.id_empresa = $2)
-                   AND ($3::date IS NULL OR pr.fecha_retorno >= $3::date)
-                   AND ($4::date IS NULL OR pr.fecha_retorno < ($4::date + INTERVAL '1 day'))`,
-                  [
-                    tipo.id_tipo_equipo,
-                    idEmpresa,
-                    filtros.fecha_desde ?? null,
-                    filtros.fecha_hasta ?? null,
-                  ],
-                )
-                .then((rows: Array<{ cantidad: string | number }>) =>
-                  Number(rows[0]?.cantidad ?? 0),
-                )
-            : Promise.resolve(0),
+          ingresadoQb.getRawOne<{ cantidad: string | number }>(),
+          entregadoQb.getRawOne<{ cantidad: string | number }>(),
+          devueltoQb.getRawOne<{ cantidad: string | number }>(),
         ]);
+
+        const ingresadoNum = Number(ingresado?.cantidad ?? 0);
+        const entregadoNum = Number(entregado?.cantidad ?? 0);
+        const devueltoNum = Number(devuelto?.cantidad ?? 0);
 
         // CU-64/CU-68 aún no están implementados: se deja la columna lista.
         const usadoEnCierres = 0;
-        const diferencia = ingresado - entregado + devuelto;
+        const diferencia = ingresadoNum - entregadoNum + devueltoNum;
         return {
           id_tipo_equipo: tipo.id_tipo_equipo,
           tipo_consumible: tipo.nombre,
           unidad_medida: tipo.unidadMedida ?? null,
-          cantidad_ingresada: ingresado,
-          cantidad_entregada: entregado,
+          cantidad_ingresada: ingresadoNum,
+          cantidad_entregada: entregadoNum,
           cantidad_usada_en_cierres: usadoEnCierres,
-          cantidad_devuelta: devuelto,
+          cantidad_devuelta: devueltoNum,
           diferencia,
-          desvio: ingresado > 0 && Math.abs(diferencia) > ingresado * 0.15,
+          desvio: ingresadoNum > 0 && Math.abs(diferencia) > ingresadoNum * 0.15,
         };
       }),
     );
@@ -334,30 +416,6 @@ export class ReportesService {
     );
     await this.auditReport(actor, filtros, filas.length, 'reporte_consumo');
     return filas;
-  }
-
-  private async getConsumibleTotal(
-    sql: string,
-    idTipoEquipo: number,
-    idEmpresa?: number,
-    fechaDesde?: string,
-    fechaHasta?: string,
-  ): Promise<number> {
-    const rows = await this.dataSource.query(sql, [
-      idTipoEquipo,
-      idEmpresa,
-      fechaDesde ?? null,
-      fechaHasta ?? null,
-    ]);
-    return Number(rows[0]?.cantidad ?? 0);
-  }
-
-  private async tableExists(tableName: string): Promise<boolean> {
-    const rows = await this.dataSource.query(
-      'SELECT to_regclass($1) IS NOT NULL AS existe',
-      [tableName],
-    );
-    return rows[0]?.existe === true;
   }
 
   async getStockReport(filtros: FiltrosStock, actor: Actor): Promise<any[]> {
