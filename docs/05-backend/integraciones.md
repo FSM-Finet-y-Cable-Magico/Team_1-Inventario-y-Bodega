@@ -71,5 +71,6 @@ Respuestas envueltas `{ success, data }`.
 - [x] Diagnóstico en `RETIRADO_PARA_DIAGNOSTICO`: acordado con G3 (08-sept) — `categoria_falla` del cierre.
 - [ ] Descuento/validación de materiales (CU-58/CU-68).
 - [ ] `GET /tecnicos/{id}/inventario-personal` (después de CU-58).
-- [x] Al mergear: definir la key real en Railway y enviar a G3 la URL pública del backend
-      (key **T1→G3**, distinta de la `fd2e2646...` que G3 nos dio para consumir sus endpoints).
+- [x] Al mergear: definir la key real en Railway y enviar a G3 la URL pública del backend.
+      (La key **T1→G3** es el mismo valor `fd2e2646...` que G3 nos dio para consumir sus
+      endpoints — así se acordó con ellos; si se rota, avisar a ambos lados el mismo día).
