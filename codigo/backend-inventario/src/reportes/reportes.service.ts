@@ -161,7 +161,7 @@ export class ReportesService {
              FROM inventario_personal_tecnico ip
              INNER JOIN tipo_equipo t ON t.id_tipo_equipo = ip.id_tipo_equipo
              WHERE ip.id_tecnico = $1
-               AND t.requiere_serial_number = false
+               AND t.requiere_serie_individual = false
                AND ip.cantidad > 0
              ORDER BY t.nombre ASC`,
               [tecnico.id_usuario],
@@ -252,13 +252,13 @@ export class ReportesService {
           tieneIngresos
             ? this.dataSource
                 .query(
-                  `SELECT COALESCE(SUM(oid.cantidad), 0) AS cantidad
+                  `SELECT COALESCE(SUM(oid.cantidad_recibida), 0) AS cantidad
                  FROM orden_ingreso_detalle oid
-                 INNER JOIN orden_ingreso oi ON oi.id_orden_ingreso = oid.id_orden_ingreso
+                 INNER JOIN orden_ingreso oi ON oi.id_orden = oid.id_orden
                  WHERE oid.id_tipo_equipo = $1
-                   AND ($2::int IS NULL OR oi.id_empresa = $2)
-                   AND ($3::date IS NULL OR oi.fecha >= $3::date)
-                   AND ($4::date IS NULL OR oi.fecha < ($4::date + INTERVAL '1 day'))`,
+                   AND ($2::int IS NULL OR oi.id_empresa_destino = $2)
+                   AND ($3::date IS NULL OR oi.fecha_creacion >= $3::date)
+                   AND ($4::date IS NULL OR oi.fecha_creacion < ($4::date + INTERVAL '1 day'))`,
                   [
                     tipo.id_tipo_equipo,
                     idEmpresa,
@@ -289,10 +289,13 @@ export class ReportesService {
                 .query(
                   `SELECT COALESCE(SUM(pr.cantidad), 0) AS cantidad
                  FROM prestamo_retorno pr
-                 WHERE pr.id_tipo_equipo = $1
-                   AND ($2::int IS NULL OR pr.id_empresa = $2)
-                   AND ($3::date IS NULL OR pr.fecha_hora >= $3::date)
-                   AND ($4::date IS NULL OR pr.fecha_hora < ($4::date + INTERVAL '1 day'))`,
+                 INNER JOIN prestamo_detalle pd ON pd.id_detalle = pr.id_detalle
+                 INNER JOIN prestamo_externo pe ON pe.id_prestamo = pd.id_prestamo
+                 WHERE pd.id_tipo_equipo = $1
+                   AND pd.id_unidad IS NULL
+                   AND ($2::int IS NULL OR pe.id_empresa = $2)
+                   AND ($3::date IS NULL OR pr.fecha_retorno >= $3::date)
+                   AND ($4::date IS NULL OR pr.fecha_retorno < ($4::date + INTERVAL '1 day'))`,
                   [
                     tipo.id_tipo_equipo,
                     idEmpresa,
