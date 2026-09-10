@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
-	import { getUsers, getWarehouses, getCatalog, getUnits, getWarehouseStock, crearSalida, listarSalidas, getInventarioTecnico } from '$lib/api/index';
+	import { getUsers, getWarehouses, getCatalog, getUnits, getWarehouseStock, crearSalida, listarSalidas, getInventarioTecnico, verificarSerie } from '$lib/api/index';
 	import { userRoles } from '$lib/stores/auth';
 	import type { Usuario, Bodega, TipoEquipo, SalidaResumen, InventarioTecnico, VerificacionSerie, ItemSalida } from '$lib/types';
 	import Button from '$lib/components/Button.svelte';
@@ -101,22 +101,28 @@
 
 	onMount(load);
 
-	// CU-59: el NS se elige del dropdown de disponibles de la bodega (sin tipear);
-	// la validación de verdad la re-ejecuta el backend en la transacción de la salida
-	function agregarSerie() {
-		const serie = serieSeleccion.trim();
+	// CU-59: el NS se elige del dropdown de disponibles de la bodega o se tipea en
+	// la búsqueda (Enter); la validación real corre contra el backend (verificarSerie)
+	// y se re-ejecuta en la transacción de la salida. NS inexistente → Excepción 1.
+	async function agregarSerie(texto?: string) {
+		const serie = (texto ?? serieSeleccion).trim();
 		error = '';
 		if (!serie) return;
 		if (seriesItems.some((s) => s.serie.toLowerCase() === serie.toLowerCase())) {
 			error = `El equipo [${serie}] está repetido en la salida.`;
 			serieSeleccion = '';
+			busquedaSerie = '';
 			return;
 		}
-		seriesItems = [...seriesItems, {
-			serie,
-			verificacion: { existe: true, numero_serie: serie, estado: 'En bodega', id_bodega_actual: form.id_bodega_origen, disponible: true }
-		}];
+		let verificacion: VerificacionSerie;
+		try {
+			verificacion = await verificarSerie(serie, form.id_bodega_origen || undefined);
+		} catch {
+			verificacion = { existe: false, disponible: false };
+		}
+		seriesItems = [...seriesItems, { serie, verificacion }];
 		serieSeleccion = '';
+		busquedaSerie = '';
 	}
 
 	// CU-59/CU-60: si cambia la bodega de origen, las selecciones y saldos pierden
@@ -272,9 +278,10 @@
 						{#if form.id_bodega_origen && equiposEnBodegaElegida.length > 0}
 							<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
 								<FormField label="Buscar por serie" name="sal_buscar">
-									<input id="sal_buscar" type="text" bind:value={busquedaSerie} maxlength={80}
-										placeholder="Ej: ONT, SAL-TEST…"
-										class="w-full px-3 py-2 border border-border rounded-md text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary" />
+								<input id="sal_buscar" type="text" bind:value={busquedaSerie} maxlength={80}
+									placeholder="Ej: ONT, SAL-TEST…"
+									onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); agregarSerie(busquedaSerie); } }}
+									class="w-full px-3 py-2 border border-border rounded-md text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary" />
 								</FormField>
 								<FormField label="Filtrar por tipo" name="sal_filtro">
 									<select id="sal_filtro" bind:value={filtroTipo}
@@ -288,14 +295,18 @@
 							</div>
 						{/if}
 						<FormField label="Equipo disponible" name="sal_serie">
-							<select id="sal_serie" bind:value={serieSeleccion} onchange={agregarSerie}
-								disabled={!form.id_bodega_origen}
-								class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
-								<option value="" disabled>
-									{form.id_bodega_origen
-										? (seriesDisponibles.length ? `Seleccionar equipo (${seriesDisponibles.length} con filtro actual)...` : (equiposEnBodegaElegida.length ? 'Sin resultados para el filtro actual' : 'No hay equipos disponibles en esta bodega'))
-										: 'Seleccione bodega...'}
-								</option>
+						<select id="sal_serie" bind:value={serieSeleccion} onchange={() => agregarSerie()}
+							disabled={!form.id_bodega_origen}
+							class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+							<option value="" disabled>
+								{form.id_bodega_origen
+									? (seriesDisponibles.length
+										? `Seleccionar equipo (${seriesDisponibles.length} con filtro actual)...`
+										: (busquedaSerie.trim()
+											? 'Número de serie no encontrado'
+											: (equiposEnBodegaElegida.length ? 'Sin resultados para el filtro actual' : 'No hay equipos disponibles en esta bodega')))
+									: 'Seleccione bodega...'}
+							</option>
 								{#each seriesDisponibles as serie}
 									<option value={serie}>{serie}</option>
 								{/each}
