@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
 	import { getCatalog, getEmpresas, getUsers, getWarehouses, generarReporteGarantias, generarReporteMovimientos, generarReporteInventarioTecnicos, generarReporteConsumo } from '$lib/api/index';
 	import type { Bodega, Empresa, ReporteConsumoFila, ReporteGarantiaFila, ReporteInventarioTecnico, ReporteMovimientoFila, TipoEquipo, Usuario } from '$lib/types';
 	import Badge from '$lib/components/Badge.svelte';
@@ -251,6 +252,14 @@
 			onclick={() => (activeTab = 'consumo')}
 		>
 			Consumo de consumibles
+		</button>
+		<!-- CU-85: el reporte de stock es su propia página en /reportes/stock -->
+		<button
+			type="button"
+			class="px-4 py-2 text-sm font-medium rounded-md transition-colors text-muted"
+			onclick={() => goto('/reportes/stock')}
+		>
+			Stock
 		</button>
 	</div>
 
