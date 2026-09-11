@@ -6,7 +6,10 @@ skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
 <style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
-skinparam sequence { MessageAlign center  LifeLineBorderColor black }
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
 hide footbox
 
 actor "Admin/AdminBodega/\nSuperusuario" as user
@@ -16,7 +19,11 @@ participant "C_OrdenesIngresoService" as svc
 participant "C_CatalogService" as cat
 participant "C_AuditoriaService" as aud
 participant "C_QueryRunner" as qr
-database "postgres" as db
+participant "tipo_equipo" as tent
+participant "orden_ingreso" as oing
+participant "orden_ingreso_detalle" as odet
+participant "log_auditoria" as aent
+participant "unidad_equipo" as uent
 
 user -> view : Abre "Registrar recepción" e indica\nla cantidad recibida de un ítem\ncon requiere_serie_individual = true
 activate view
@@ -43,8 +50,8 @@ activate ctrl
 ctrl -> svc : registrarRecepcion(id, dto, actor)
 activate svc
 
-svc -> db : SELECT * FROM tipo_equipo\nWHERE id_tipo_equipo = ?
-db --> svc : tipo (requiere_serie_individual = true)
+svc -> tent : SELECT * FROM tipo_equipo\nWHERE id_tipo_equipo = ?
+tent --> svc : tipo (requiere_serie_individual = true)
 
 svc -> svc : numeros_serie.length == cantidad_recibida\n(si no, Excepción 3)
 
@@ -54,29 +61,29 @@ loop por cada NS
   cat --> svc : formato válido
   deactivate cat
 
-  svc -> db : SELECT * FROM unidad_equipo\nWHERE numero_serie = ?
-  db --> svc : sin coincidencias
+  svc -> uent : SELECT * FROM unidad_equipo\nWHERE numero_serie = ?
+  uent --> svc : sin coincidencias
 end
 
 svc -> qr : startTransaction()
 activate qr
 
-qr -> db : UPDATE orden_ingreso_detalle\nSET cantidad_recibida = cantidad_recibida + ?
+qr -> odet : UPDATE orden_ingreso_detalle\nSET cantidad_recibida = cantidad_recibida + ?
 
 loop por cada NS
-  qr -> db : INSERT INTO unidad_equipo\n(numero_serie, estado='En bodega',\nid_empresa, id_bodega_actual,\nfecha_adquisicion, fecha_venc_garantia,\nproveedor)
-  db --> qr : unidad creada
+  qr -> uent : INSERT INTO unidad_equipo\n(numero_serie, estado='En bodega',\nid_empresa, id_bodega_actual,\nfecha_adquisicion, fecha_venc_garantia,\nproveedor)
+  uent --> qr : unidad creada
 end
 
-qr -> db : UPDATE orden_ingreso SET estado = ?
-qr -> db : COMMIT
+qr -> oing : UPDATE orden_ingreso SET estado = ?
+qr -> oing :COMMIT (sobre la orden_ingreso)
 qr --> svc : Transacción exitosa
 deactivate qr
 
 svc -> aud : create({ accion: 'RECEPCION', orden })\ny un CREAR por cada unidad_equipo
 activate aud
-aud -> db : INSERT INTO log_auditoria
-db --> aud : ok
+aud -> aent : INSERT INTO log_auditoria
+aent --> aud : ok
 aud --> svc : Auditoría registrada
 deactivate aud
 
