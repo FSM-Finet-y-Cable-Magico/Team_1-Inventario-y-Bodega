@@ -1,0 +1,34 @@
+@startuml CU56-FechaAdquisicionReal-Exc-SinFecha
+title CU-56 — Registrando fecha de adquisición real en recepción (excepción: el actor no ingresa la fecha de recepción)
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 25
+skinparam ActorPadding 20
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Admin/AdminBodega/\nSuperusuario" as user
+participant "V_OrdenIngresoDetalle" as view
+participant "C_ValidationPipe" as pipe
+participant "C_OrdenesIngresoController" as ctrl
+participant "C_OrdenesIngresoService" as svc
+
+user -> view : Confirma la recepción con el campo\n'Fecha de recepción' vacío
+activate view
+view -> ctrl : POST /api/ordenes-ingreso/{id}/recepcion\n{ fecha_recepcion: "", items: [...] }
+activate ctrl
+ctrl -> pipe : valida RegistrarRecepcionDto (class-validator)
+activate pipe
+pipe -> pipe : @IsNotEmpty({ message:\n'La fecha de recepción es obligatoria' }) → falla
+pipe --> ctrl : 400 BadRequestException\n'La fecha de recepción es obligatoria'
+deactivate pipe
+ctrl --> view : 400
+deactivate ctrl
+view --> user : Banner con el mensaje exacto · el service nunca\nse ejecuta: sin fecha no quedan unidades creadas\n(fecha_adquisicion de cada unidad depende de este dato)
+deactivate view
+@enduml
