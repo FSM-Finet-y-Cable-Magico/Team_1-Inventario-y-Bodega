@@ -4,12 +4,8 @@ title CU-89 — Generando reporte de inventario actual de técnicos (excepción:
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
-<style>
-sequenceDiagram {
-  participant { Margin 25 }
-  actor { Margin 20 }
-}
-</style>
+skinparam ParticipantPadding 25
+skinparam ActorPadding 20
 skinparam sequence {
 	MessageAlign center
 	LifeLineBorderColor black

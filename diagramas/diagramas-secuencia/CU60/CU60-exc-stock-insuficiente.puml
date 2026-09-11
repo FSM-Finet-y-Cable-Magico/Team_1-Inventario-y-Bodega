@@ -4,7 +4,8 @@ skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-<style> sequenceDiagram { participant { Margin 30 } actor { Margin 12 } } </style>
+skinparam ParticipantPadding 30
+skinparam ActorPadding 12
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black
