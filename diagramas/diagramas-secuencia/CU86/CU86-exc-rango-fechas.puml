@@ -4,8 +4,16 @@ title CU-86 — Generando reporte de movimientos de inventario (excepción: rang
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
-skinparam ParticipantPadding 25
-skinparam ActorPadding 20
+<style>
+sequenceDiagram {
+  participant {
+    padding 25
+  }
+  actor {
+    padding 20
+  }
+}
+</style>
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black
