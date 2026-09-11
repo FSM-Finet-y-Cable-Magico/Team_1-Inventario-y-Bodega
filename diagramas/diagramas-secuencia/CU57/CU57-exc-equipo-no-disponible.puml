@@ -1,5 +1,5 @@
 @startuml CU57-exc-equipo-no-disponible
-title CU-57 — Excepción 3 / CU-59 E2: equipo no disponible en esa bodega
+title CU-57 — Registrando salida de equipos de bodega a técnico (excepción: equipo no disponible en esta bodega)
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
