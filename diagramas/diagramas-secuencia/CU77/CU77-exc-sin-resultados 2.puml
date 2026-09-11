@@ -1,5 +1,5 @@
 @startuml CU77-exc-sin-resultados
-title CU-77 — Consultando listado de equipos en revisión\n(excepción 1: no hay equipos en revisión)
+title CU-77 — Consultando listado de equipos en revisión (excepción 1: no hay equipos en revisión)
 
 skinparam style strictuml
 skinparam monochrome true

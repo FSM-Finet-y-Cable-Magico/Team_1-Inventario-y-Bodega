@@ -1,5 +1,5 @@
 @startuml CU82-exc-item-invalido
-title CU-82 — Excepción: ítem de otro préstamo o ya retornado (rollback completo)
+title CU-82 — Registrando retorno de préstamo externo de equipos (excepción: ítem de otro préstamo o ya retornado)
 
 skinparam style strictuml
 skinparam monochrome true
