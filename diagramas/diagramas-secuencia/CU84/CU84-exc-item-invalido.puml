@@ -1,5 +1,5 @@
 @startuml CU84-exc-item-invalido
-title CU-84 — Excepción: un error por cada ítem inválido, sin procesar nada
+title CU-84 — Validando trazabilidad de devolución (excepción: ítem inválido, no se procesa nada)
 
 skinparam style strictuml
 skinparam monochrome true

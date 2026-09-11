@@ -6,7 +6,10 @@ skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
 <style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
-skinparam sequence { MessageAlign center  LifeLineBorderColor black }
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
 hide footbox
 
 actor "Admin/AdminBodega/\nSuperusuario" as user
@@ -15,7 +18,7 @@ participant "V_OrdenIngresoDetalle" as detalle
 participant "C_OrdenesIngresoController" as ctrl
 participant "C_OrdenesIngresoService" as svc
 participant "C_TypeORM" as orm
-database "postgres" as db
+participant "orden_ingreso" as oing
 
 user -> view : Navega a\n/ordenes-ingreso
 activate view
@@ -29,15 +32,15 @@ svc -> svc : Aislamiento: si no es Superusuario\nfuerza id_empresa_destino = su 
 
 svc -> orm : createQueryBuilder + andWhere\n(estado, proveedor, rango de fechas,\nempresa, buscar)
 activate orm
-orm -> db : SELECT * FROM orden_ingreso o\nWHERE o.id_empresa_destino = ?\nAND o.estado = ?\nAND o.fecha_documento BETWEEN ? AND ?\nORDER BY o.id_orden DESC
-db --> orm : OrdenIngreso[] (N filas)
+orm -> oing : SELECT * FROM orden_ingreso o\nWHERE o.id_empresa_destino = ?\nAND o.estado = ?\nAND o.fecha_documento BETWEEN ? AND ?\nORDER BY o.id_orden DESC
+oing --> orm : OrdenIngreso[] (N filas)
 orm --> svc : OrdenIngreso[]
 deactivate orm
 
 svc -> orm : Enriquecer cada orden\n(proveedor, bodega, tipos de equipo)
 activate orm
-orm -> db : SELECT proveedor / bodega /\ntipo_equipo + orden_ingreso_detalle
-db --> orm : rows
+orm -> oing : SELECT orden_ingreso\n+ JOIN proveedor, bodega, tipo_equipo, detalle
+oing --> orm : rows (nombres y detalles)
 orm --> svc : nombre_proveedor, nombre_bodega,\nnombre_empresa, detalles[]
 deactivate orm
 
@@ -62,8 +65,8 @@ activate svc
 
 svc -> orm : findOne(orden_ingreso)
 activate orm
-orm -> db : SELECT * FROM orden_ingreso\nWHERE id_orden = ?
-db --> orm : row
+orm -> oing : SELECT * FROM orden_ingreso\nWHERE id_orden = ?
+oing --> orm : row
 orm --> svc : OrdenIngreso
 deactivate orm
 

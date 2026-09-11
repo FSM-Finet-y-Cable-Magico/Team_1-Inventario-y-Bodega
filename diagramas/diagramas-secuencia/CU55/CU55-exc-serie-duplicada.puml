@@ -6,7 +6,10 @@ skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
 <style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
-skinparam sequence { MessageAlign center  LifeLineBorderColor black }
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
 hide footbox
 
 actor "Admin/AdminBodega/\nSuperusuario" as user
@@ -14,7 +17,8 @@ participant "V_OrdenIngresoDetalle" as view
 participant "C_OrdenesIngresoController" as ctrl
 participant "C_OrdenesIngresoService" as svc
 participant "C_CatalogService" as cat
-database "postgres" as db
+participant "unidad_equipo" as uent
+participant "orden_ingreso" as oing
 
 user -> view : Ingresa un NS que ya existe\nen el inventario y confirma
 activate view
@@ -32,16 +36,16 @@ activate cat
 cat --> svc : formato válido
 deactivate cat
 
-svc -> db : SELECT * FROM unidad_equipo\nWHERE numero_serie = 'OK-9991'
-db --> svc : sin coincidencias
+svc -> uent : SELECT * FROM unidad_equipo\nWHERE numero_serie = 'OK-9991'
+oing --> svc : sin coincidencias
 
 svc -> cat : validarFormatoSerialNumber("NS-0002")
 activate cat
 cat --> svc : formato válido
 deactivate cat
 
-svc -> db : SELECT * FROM unidad_equipo\nWHERE numero_serie = 'NS-0002'
-db --> svc : unidad existente
+svc -> uent : SELECT * FROM unidad_equipo\nWHERE numero_serie = 'NS-0002'
+uent --> svc : unidad existente
 
 svc -> svc : Excepción 2
 

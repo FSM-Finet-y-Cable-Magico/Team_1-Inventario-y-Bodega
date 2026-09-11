@@ -1,5 +1,5 @@
 @startuml CU75-exc-campos-incompletos
-title CU-75 — Enviando equipo a reparación externa\n(excepción: campo obligatorio incompleto)
+title CU-75 — Enviando equipo a reparación externa (excepción: campo obligatorio incompleto)
 
 skinparam style strictuml
 skinparam monochrome true

@@ -1,5 +1,5 @@
 @startuml CU60-exc-cantidad-invalida
-title CU-60 — Excepción 1: cantidad 0 o negativa
+title CU-60 — excepción: cantidad cero o negativa
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false

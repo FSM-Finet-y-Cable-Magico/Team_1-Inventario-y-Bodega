@@ -6,7 +6,10 @@ skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
 <style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
-skinparam sequence { MessageAlign center  LifeLineBorderColor black }
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
 hide footbox
 
 actor "Usuario" as user
@@ -15,7 +18,12 @@ participant "C_OrdenesIngresoController" as ctrl
 participant "C_OrdenesIngresoService" as svc
 participant "C_AuditoriaService" as aud
 participant "C_TypeORM" as orm
-database "postgres" as db
+participant "proveedor" as prov
+participant "orden_ingreso" as oing
+participant "bodega" as bdg
+participant "tipo_equipo" as tent
+participant "orden_ingreso_detalle" as odet
+participant "log_auditoria" as aent
 
 user -> view : Clic "Nueva orden de ingreso"\ny completa formulario\n(proveedor, nro doc, fecha,\nempresa, bodega, ítems)
 activate view
@@ -30,15 +38,15 @@ svc -> svc : Aislamiento: no-superusuario\nfuerza id_empresa_destino = su empres
 
 svc -> orm : findOne(proveedor)
 activate orm
-orm -> db : SELECT * FROM proveedor\nWHERE id_proveedor = ?
-db --> orm : row
+orm -> prov : SELECT * FROM proveedor\nWHERE id_proveedor = ?
+prov --> orm : row
 orm --> svc : Proveedor existe
 deactivate orm
 
 svc -> orm : findOne(bodega)
 activate orm
-orm -> db : SELECT * FROM bodega\nWHERE id_bodega = ?
-db --> orm : row (activa, empresa correcta)
+orm -> bdg : SELECT * FROM bodega\nWHERE id_bodega = ?
+bdg --> orm : row (activa, empresa correcta)
 orm --> svc : Bodega válida
 deactivate orm
 
@@ -46,29 +54,29 @@ svc -> svc : Validar fecha no futura
 
 svc -> orm : findOne(tipo_equipo) x N ítems
 activate orm
-orm -> db : SELECT * FROM tipo_equipo\nWHERE id_tipo_equipo = ?
-db --> orm : rows (activos)
+orm -> tent : SELECT * FROM tipo_equipo\nWHERE id_tipo_equipo = ?
+tent --> orm : rows (activos)
 orm --> svc : Tipos válidos
 deactivate orm
 
 svc -> orm : QueryRunner.startTransaction()
 activate orm
 
-orm -> db : SELECT pg_advisory_xact_lock(52)
-db --> orm : lock tomado\n(se libera en el COMMIT)
+orm -> oing : SELECT pg_advisory_xact_lock(52)
+oing --> orm : lock tomado\n(se libera en el COMMIT)
 
-orm -> db : SELECT correlativo\nFROM orden_ingreso\nORDER BY id_orden DESC\nLIMIT 1
-db --> orm : último correlativo (o vacío)
+orm -> oing : SELECT correlativo\nFROM orden_ingreso\nORDER BY id_orden DESC\nLIMIT 1
+oing --> orm : último correlativo (o vacío)
 
 svc -> svc : Calcular siguiente:\nOI-{MAX+1 padded 4 dígitos}
 
-orm -> db : INSERT INTO orden_ingreso\n(correlativo, id_proveedor, ...)
-db --> orm : orden guardada
+orm -> oing : INSERT INTO orden_ingreso\n(correlativo, id_proveedor, ...)
+oing --> orm : orden guardada
 
-orm -> db : INSERT INTO orden_ingreso_detalle\n(id_orden, id_tipo_equipo,\ncantidad_esperada, garantia_dias) x N
-db --> orm : detalles guardados
+orm -> oing : INSERT INTO orden_ingreso_detalle\n(id_orden, id_tipo_equipo,\ncantidad_esperada, garantia_dias) x N
+odet --> orm : detalles guardados
 
-orm -> db : COMMIT
+orm -> oing :COMMIT (sobre la orden_ingreso)
 orm --> svc : Transacción exitosa
 deactivate orm
 
@@ -76,8 +84,8 @@ svc -> aud : create({ accion: 'CREAR',\nentidad_afectada: 'orden_ingreso' })
 activate aud
 aud -> orm : save(log)
 activate orm
-orm -> db : INSERT INTO log_auditoria
-db --> orm : ok
+orm -> aent : INSERT INTO log_auditoria
+aent --> orm : ok
 deactivate orm
 aud --> svc : Auditoría registrada
 deactivate aud

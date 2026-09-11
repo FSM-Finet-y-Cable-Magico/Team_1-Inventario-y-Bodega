@@ -1,5 +1,5 @@
 @startuml CU81-exc-ns-invalido
-title CU-81 — Excepción 1: un NS no existe o no está en bodega
+title CU-81 — Registrando préstamo externo de equipos (excepción: NS no existe o no está en bodega)
 
 skinparam style strictuml
 skinparam monochrome true

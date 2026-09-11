@@ -6,7 +6,10 @@ skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
 <style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
-skinparam sequence { MessageAlign center  LifeLineBorderColor black }
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
 hide footbox
 
 actor "Admin/AdminBodega/\nSuperusuario" as user
@@ -15,7 +18,9 @@ participant "C_OrdenesIngresoController" as ctrl
 participant "C_OrdenesIngresoService" as svc
 participant "C_AuditoriaService" as aud
 participant "C_QueryRunner" as qr
-database "postgres" as db
+participant "orden_ingreso" as oing
+participant "orden_ingreso_detalle" as odet
+participant "log_auditoria" as aent
 
 user -> view : Abre la ficha de una orden\n'Pendiente de recepción'\no 'Recepción parcial'
 activate view
@@ -34,13 +39,13 @@ activate svc
 
 svc -> svc : verificarPertenencia(id, actor)\n404 genérico si es de otra empresa
 
-svc -> db : SELECT * FROM orden_ingreso\nWHERE id_orden = ?
-db --> svc : orden
+svc -> oing : SELECT * FROM orden_ingreso\nWHERE id_orden = ?
+oing --> svc : orden
 
 svc -> svc : Precondición: estado != 'Completada'
 
-svc -> db : SELECT * FROM orden_ingreso_detalle\nWHERE id_orden = ?
-db --> svc : detalles[]
+svc -> oing : SELECT * FROM orden_ingreso_detalle\nWHERE id_orden = ?
+odet --> svc : detalles[]
 
 svc -> svc : Valida TODOS los ítems antes de\nabrir la transacción:\n0 <= cantidad <= (esperada - recibida)
 
@@ -49,20 +54,20 @@ svc -> svc : Calcula el estado resultante:\ntodos completos -> 'Completada'\nalg
 svc -> qr : startTransaction()
 activate qr
 
-qr -> db : UPDATE orden_ingreso_detalle\nSET cantidad_recibida = cantidad_recibida + ?\nWHERE id_detalle = ?   (x N ítems)
-db --> qr : ok
+qr -> oing : UPDATE orden_ingreso_detalle\nSET cantidad_recibida = cantidad_recibida + ?\nWHERE id_detalle = ?   (x N ítems)
+odet --> qr : ok
 
-qr -> db : UPDATE orden_ingreso\nSET estado = ?\nWHERE id_orden = ?
-db --> qr : ok
+qr -> oing : UPDATE orden_ingreso\nSET estado = ?\nWHERE id_orden = ?
+oing --> qr : ok
 
-qr -> db : COMMIT
+qr -> oing :COMMIT (sobre la orden_ingreso)
 qr --> svc : Transacción exitosa
 deactivate qr
 
 svc -> aud : create({ accion: 'RECEPCION',\nentidad_afectada: 'orden_ingreso',\nvalor_anterior: estado previo,\nvalor_nuevo: items + estado })
 activate aud
-aud -> db : INSERT INTO log_auditoria
-db --> aud : ok
+aud -> aent : INSERT INTO log_auditoria
+oing --> aud : ok
 aud --> svc : Auditoría registrada
 deactivate aud
 

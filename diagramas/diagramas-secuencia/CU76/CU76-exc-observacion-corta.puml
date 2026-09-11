@@ -1,5 +1,5 @@
 @startuml CU76-exc-observacion-corta
-title CU-76 — Reingresando equipo desde reparación externa\n(excepción: observación con menos de 5 caracteres)
+title CU-76 — Reingresando equipo desde reparación externa (excepción: observación con menos de 5 caracteres)
 
 skinparam style strictuml
 skinparam monochrome true

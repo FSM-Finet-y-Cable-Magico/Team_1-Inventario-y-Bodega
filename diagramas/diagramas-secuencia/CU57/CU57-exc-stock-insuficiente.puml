@@ -1,5 +1,5 @@
 @startuml CU57-exc-stock-insuficiente
-title CU-57 — Excepción 2: saldo de consumibles insuficiente (mensaje de CU-62)
+title CU-57 — Registrando salida de equipos de bodega a técnico (excepción: saldo de consumibles insuficiente)
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
@@ -15,7 +15,8 @@ actor "Administrador de bodega" as user
 participant "V_Salidas" as view
 participant "C_SalidasController" as ctrl
 participant "C_SalidasService" as svc
-participant "postgres" as db
+participant "salida_bodega" as sald
+participant "stock_consumible" as stock
 
 user -> view : Salida con consumible x100\n(solo hay 74.5 en la bodega)
 activate view
@@ -23,12 +24,12 @@ view -> ctrl : POST /api/salidas { items: [{ tipo: CONSUMIBLE, cantidad: 100 }] 
 activate ctrl
 ctrl -> svc : registrarSalida(dto, idEmpresa, actor)
 activate svc
-svc -> db : startTransaction · INSERT salida_bodega
-svc -> db : SELECT stock_consumible FOR UPDATE\nWHERE (id_bodega, id_tipo_equipo)
-db --> svc : cantidad_disponible = 74.5
+svc -> sald : startTransaction · INSERT salida_bodega
+svc -> stock : SELECT stock_consumible FOR UPDATE\nWHERE (id_bodega, id_tipo_equipo)
+stock --> svc : cantidad_disponible = 74.5
 svc -> svc : 74.5 < 100 → no alcanza
 svc --> ctrl : 400 BadRequestException('Stock insuficiente de [Fibra drop QA]\nen [Bodega Central QA]. Disponible: 74.5 Metro.') (CU-62)
-svc -> db : ROLLBACK (la cabecera de salida no queda)
+svc -> sald :ROLLBACK (la cabecera de salida no queda)
 deactivate svc
 ctrl --> view : 400
 deactivate ctrl

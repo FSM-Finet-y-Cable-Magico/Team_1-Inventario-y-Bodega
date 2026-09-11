@@ -17,7 +17,12 @@ participant "C_RolesGuard" as guard
 participant "C_SalidasController" as ctrl
 participant "C_SalidasService" as svc
 participant "C_TypeORM (transacción)" as orm
-database "postgres" as db
+participant "usuario" as usr
+participant "bodega" as bdg
+participant "salida_bodega" as sald
+participant "stock_consumible" as stock
+participant "unidad_equipo" as uent
+participant "log_auditoria" as aent
 
 user -> view : Formulario: técnico, bodega,\nNS + consumibles → Confirma
 activate view
@@ -30,23 +35,25 @@ activate ctrl
 ctrl -> svc : registrarSalida(dto, idEmpresa, actor)
 activate svc
 
-svc -> db : SELECT usuario (+roles) WHERE id_tecnico, activo\nSELECT bodega WHERE id_bodega AND id_empresa
-db --> svc : técnico TECNICO_TERRENO activo ✓ · bodega activa ✓
+svc -> usr : SELECT usuario (+roles) WHERE id_tecnico, activo\n→ técnico TECNICO_TERRENO activo ✓
+usr --> svc : técnico activo ✓
+svc -> bdg : SELECT bodega WHERE id_bodega AND id_empresa\n→ bodega activa ✓
+bdg --> svc : bodega activa ✓
 
 svc -> orm : startTransaction()
-orm -> db : INSERT salida_bodega\n(id_tecnico, id_bodega_origen, fecha_hora=now(), id_empresa, id_usuario_registro)
-db --> orm : salida #N
+orm -> sald : INSERT salida_bodega\n(id_tecnico, id_bodega_origen, fecha_hora=now(), id_empresa, id_usuario_registro)
+sald --> orm : salida #N
 
 svc -> orm : (por ítem UNIDAD) SELECT unidad_equipo\nWHERE numero_serie AND id_empresa
-db --> orm : unidad (estado 'En bodega', bodega origen) ✓
+uent --> orm : unidad (estado 'En bodega', bodega origen) ✓
 svc -> orm : UPDATE unidad_equipo SET estado='Asignado a técnico',\nid_tecnico_asignado=tecnico, id_bodega_actual=NULL, ubicacion_fisica=NULL
-orm -> db : unidad actualizada
+orm -> uent : unidad actualizada
 svc -> orm : INSERT historial_estado_equipo\n('En bodega' → 'Asignado a técnico', motivo='Salida de bodega a técnico. Salida #N.')
 svc -> orm : INSERT salida_detalle (id_unidad)
 svc -> orm : INSERT movimiento_inventario\n(tipo_movimiento='SALIDA_A_TECNICO', cantidad=1, referencia_id=N)
 
 svc -> orm : (por ítem CONSUMIBLE) SELECT stock_consumible FOR UPDATE\nWHERE (id_bodega, id_tipo_equipo)
-db --> orm : stock (cantidad_disponible = 100)
+stock --> orm : stock (cantidad_disponible = 100)
 svc -> orm : UPDATE stock SET cantidad_disponible = 100 - 25.5 = 74.5
 svc -> orm : UPSERT inventario_personal_tecnico\n(UNIQUE tecnico+tipo) cantidad += 25.5
 svc -> orm : INSERT salida_detalle (id_tipo_equipo, cantidad) + movimiento_inventario
@@ -56,8 +63,8 @@ activate orm
 orm --> svc : Transacción confirmada
 deactivate orm
 
-svc -> db : auditoriaService.create({ accion: 'SALIDA_BODEGA',\nentidad: 'salida_bodega', valor_nuevo: { tecnico, bodega, items } })
-db --> svc : log_auditoria insertado
+svc -> aent : auditoriaService.create({ accion: 'SALIDA_BODEGA',\nentidad: 'salida_bodega', valor_nuevo: { tecnico, bodega, items } })
+aent --> svc : log_auditoria insertado
 
 svc --> ctrl : 200 { success: true, id_salida: N, resumen, message }
 deactivate svc

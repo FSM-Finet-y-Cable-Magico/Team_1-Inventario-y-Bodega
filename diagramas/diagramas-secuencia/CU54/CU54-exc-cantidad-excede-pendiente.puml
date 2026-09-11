@@ -6,14 +6,18 @@ skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
 <style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
-skinparam sequence { MessageAlign center  LifeLineBorderColor black }
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
 hide footbox
 
 actor "Admin/AdminBodega/\nSuperusuario" as user
 participant "V_OrdenIngresoDetalle" as view
 participant "C_OrdenesIngresoController" as ctrl
 participant "C_OrdenesIngresoService" as svc
-database "postgres" as db
+participant "orden_ingreso" as oing
+participant "orden_ingreso_detalle" as odet
 
 user -> view : Ingresa una cantidad mayor\nal pendiente del ítem\n(p. ej. 99 sobre un pendiente de 3)
 activate view
@@ -38,8 +42,8 @@ activate ctrl
 ctrl -> svc : registrarRecepcion(id, dto, actor)
 activate svc
 
-svc -> db : SELECT * FROM orden_ingreso_detalle\nWHERE id_orden = ?
-db --> svc : detalles[] (esperada 4, recibida 1)
+svc -> oing : SELECT * FROM orden_ingreso_detalle\nWHERE id_orden = ?
+odet --> svc : detalles[] (esperada 4, recibida 1)
 
 svc -> svc : 99 > (4 - 1) → Excepción 1
 

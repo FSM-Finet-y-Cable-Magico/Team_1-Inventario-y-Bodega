@@ -17,7 +17,10 @@ participant "C_SalidasController" as ctrl
 participant "C_SalidasService" as svc
 participant "C_InventarioPersonalService" as ips
 participant "C_TypeORM (transacción)" as orm
-database "postgres" as db
+participant "usuario" as usr
+participant "stock_consumible" as stock
+participant "log_auditoria" as aent
+participant "salida_bodega" as sald
 
 user -> view : Técnico + bodega + consumible (fibra) x50.5 metros → Confirma
 activate view
@@ -25,18 +28,19 @@ view -> ctrl : POST /api/salidas\n{ id_tecnico, id_bodega_origen, items: [{ tipo
 activate ctrl
 ctrl -> svc : registrarSalida(dto, idEmpresa, actor)
 activate svc
-svc -> db : técnico activo TECNICO_TERRENO ✓ · bodega activa ✓
+svc -> usr : SELECT usuario (+roles)\n→ técnico activo TECNICO_TERRENO ✓
+svc -> bdg : SELECT bodega WHERE id_bodega AND id_empresa → activa ✓
 svc -> orm : startTransaction() · INSERT salida_bodega
 svc -> orm : SELECT tipo_equipo → requiereSerialNumber = false ✓ (es consumible)
 svc -> orm : SELECT stock_consumible FOR UPDATE WHERE (id_bodega, id_tipo_equipo)
-db --> orm : cantidad_disponible = 100
+stock --> orm : cantidad_disponible = 100
 svc -> orm : UPDATE stock SET cantidad_disponible = 100 − 50.5 = 49.5
 svc -> ips : sumar(manager, id_tecnico, id_tipo_equipo, 50.5) (CU-58)
 ips -> orm : UPSERT inventario_personal_tecnico (bloqueo de fila) → saldo += 50.5
 svc -> orm : INSERT salida_detalle (id_tipo_equipo, cantidad=50.5)
 svc -> orm : INSERT movimiento_inventario (SALIDA_A_TECNICO, cantidad=50.5)
 svc -> orm : commitTransaction()
-svc -> db : auditoriaService.create({ accion: 'SALIDA_BODEGA', ... })
+svc -> aent : auditoriaService.create({ accion: 'SALIDA_BODEGA', ... })
 svc --> ctrl : 200 { success, id_salida, consumibles_salidos: 1 }
 deactivate svc
 ctrl --> view : 200
