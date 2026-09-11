@@ -1,0 +1,43 @@
+@startuml CU55-NumSerieRecepcion-Exc-NSPendientes
+title CU-55 — Ingresando números de serie en recepción de equipos (excepción: existen NS pendientes de ingresar)
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 25
+skinparam ActorPadding 20
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Admin/AdminBodega/\nSuperusuario" as user
+participant "V_OrdenIngresoDetalle" as view
+participant "C_OrdenesIngresoController" as ctrl
+participant "C_OrdenesIngresoService" as svc
+participant "C_TypeORM" as orm
+participant "tipo_equipo" as tent
+participant "orden_ingreso" as oing
+
+user -> view : Declara cantidad_recibida = 4 pero\nsolo tipea 2 NS y confirma
+activate view
+view -> ctrl : POST /api/ordenes-ingreso/{id}/recepcion\n{ items: [{ id_detalle, cantidad_recibida: 4,\nnumeros_serie: ['NS-0001','NS-0002'] }] }
+activate ctrl
+ctrl -> svc : registrarRecepcion(id, dto, actor)
+activate svc
+
+svc -> orm : SELECT tipo_equipo del ítem\n→ requiere_serie_individual = true ✓
+orm -> tent : SELECT tipo_equipo WHERE id_tipo_equipo
+tent --> orm : requiere_serie_individual = true
+orm --> svc : tipo individualizable
+
+svc -> svc : series.length (2) ≠ cantidad_recibida (4)\n→ CU-55 Excepción 3: NO se permite confirmar
+
+svc --> ctrl : 400 BadRequestException\n'Debe ingresar 4 número(s) de serie para el ítem\n"[Router QA]". Ingresados: 2.'
+deactivate svc
+ctrl --> view : 400
+deactivate ctrl
+view --> user : Banner con el mensaje exacto · quedan NS\npendientes por tipear; la orden NO avanza de estado\n(-sin unidades creadas ni descuentos-)
+deactivate view
+@enduml
