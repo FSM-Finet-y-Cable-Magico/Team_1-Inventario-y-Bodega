@@ -7,10 +7,10 @@ skinparam sequenceMessageAlign center
 <style>
 sequenceDiagram {
   participant {
-    padding 30
+    margin 30
   }
   actor {
-    padding 12
+    margin 12
   }
 }
 </style>
