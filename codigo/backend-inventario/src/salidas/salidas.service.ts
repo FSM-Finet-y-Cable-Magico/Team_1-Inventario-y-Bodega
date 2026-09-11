@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, EntityManager, Repository } from 'typeorm';
+import { DataSource, EntityManager, In, Repository } from 'typeorm';
 import { SalidaBodega } from './entities/salida-bodega.entity';
 import { SalidaDetalle } from './entities/salida-detalle.entity';
 import { InventarioPersonalService } from './inventario-personal.service';
@@ -361,12 +361,12 @@ export class SalidasService {
     const usuarios = idsTecnicos.length
       ? await this.dataSource
           .getRepository(Usuario)
-          .findBy({ id_usuario: idsTecnicos as any })
+          .findBy({ id_usuario: In(idsTecnicos) })
       : [];
     const bodegas = idsBodegas.length
       ? await this.dataSource
           .getRepository(Bodega)
-          .findBy({ id_bodega: idsBodegas as any })
+          .findBy({ id_bodega: In(idsBodegas) })
       : [];
     const mapaUsuarios = new Map(
       usuarios.map((u) => [u.id_usuario, u.nombre_completo]),
