@@ -1,5 +1,5 @@
 @startuml CU57-exc-ns-no-encontrado
-title CU-57 — Excepción 1 / CU-59 E1: número de serie no encontrado
+title CU-57 — Registrando salida de equipos de bodega a técnico (excepción: número de serie no encontrado)
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
@@ -16,24 +16,25 @@ participant "V_Salidas" as view
 participant "C_UnitsController" as uctrl
 participant "C_UnitsService" as usvc
 participant "C_SalidasService" as svc
-participant "postgres" as db
+participant "unidad_equipo" as uent
+participant "salida_bodega" as sald
 
 user -> view : Ingresa NS inexistente y agrega
 activate view
 view -> uctrl : GET /api/unidades/serie/{ns}?id_bodega=N (validación en vivo, CU-59)
 uctrl -> usvc : verificarSerie(ns, id_empresa, id_bodega)
-usvc -> db : SELECT unidad WHERE numero_serie AND id_empresa
-db --> usvc : sin filas
+usvc -> uent : SELECT unidad WHERE numero_serie AND id_empresa
+sald --> usvc : sin filas
 usvc --> view : 200 { existe: false, disponible: false }
 view --> user : Marca el NS en rojo:\n'Número de serie no encontrado.'\nDeshabilita Confirmar
 
 user -> view : Confirma de todos modos (o quedaba un NS inválido)
 view -> svc : POST /api/salidas (re-valida de verdad)
 activate svc
-svc -> db : SELECT unidad WHERE numero_serie AND id_empresa (transacción)
-db --> svc : sin filas
+svc -> uent : SELECT unidad WHERE numero_serie AND id_empresa (transacción)
+sald --> svc : sin filas
 svc --> view : 404 NotFoundException('Número de serie no encontrado.')
-svc -> db : ROLLBACK total (nada queda aplicado)
+svc -> sald :ROLLBACK total (nada queda aplicado) (sobre la salida_bodega)
 deactivate svc
 view --> user : Banner de error con el mensaje exacto
 deactivate view

@@ -1,5 +1,5 @@
 @startuml CU57-exc-equipo-no-disponible
-title CU-57 — Excepción 3 / CU-59 E2: equipo no disponible en esa bodega
+title CU-57 — Registrando salida de equipos de bodega a técnico (excepción: equipo no disponible en esta bodega)
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
@@ -16,23 +16,24 @@ participant "V_Salidas" as view
 participant "C_UnitsController" as uctrl
 participant "C_UnitsService" as usvc
 participant "C_SalidasService" as svc
-participant "postgres" as db
+participant "unidad_equipo" as uent
+participant "salida_bodega" as sald
 
 user -> view : Agrega NS de un equipo que está\nen otra bodega o en otro estado
 view -> uctrl : GET /api/unidades/serie/{ns}?id_bodega=N
 uctrl -> usvc : verificarSerie(ns, id_empresa, id_bodega)
-usvc -> db : SELECT unidad WHERE numero_serie AND id_empresa
-db --> usvc : unidad (estado 'Asignado a técnico', id_bodega_actual=otra)
+usvc -> uent : SELECT unidad WHERE numero_serie AND id_empresa
+uent --> usvc : unidad (estado 'Asignado a técnico', id_bodega_actual=otra)
 usvc --> view : 200 { existe: true, estado, id_bodega_actual, disponible: false }
 view --> user : Marca en rojo:\n'El equipo [NS] no está disponible en esta bodega.\nEstado actual: [ESTADO].' · Deshabilita Confirmar
 
 user -> view : Confirma de todos modos
 view -> svc : POST /api/salidas (re-valida en la transacción)
 activate svc
-svc -> db : SELECT unidad (FOR la salida)
-db --> svc : estado ≠ 'En bodega' o id_bodega_actual ≠ origen
+svc -> uent : SELECT unidad (FOR la salida)
+uent --> svc : estado ≠ 'En bodega' o id_bodega_actual ≠ origen
 svc --> view : 400 BadRequestException('El equipo [NS] no está disponible\nen esta bodega. Estado actual: [ESTADO].')
-svc -> db : ROLLBACK total
+svc -> sald :ROLLBACK total (sobre la salida_bodega)
 deactivate svc
 view --> user : Banner con el mensaje exacto
 deactivate view

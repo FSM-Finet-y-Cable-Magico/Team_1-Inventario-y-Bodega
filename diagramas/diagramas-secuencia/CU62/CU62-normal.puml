@@ -14,13 +14,13 @@ hide footbox
 participant "Sistema" as sys #lightgrey
 participant "C_SalidasService" as svc
 participant "C_TypeORM (transacción)" as orm
-database "postgres" as db
+participant "stock_consumible" as stock
 
 note over sys : Automático en toda salida de consumibles (CU-57/60 y CU-81 futuro).
 sys -> svc : registrarSalida → ítem CONSUMIBLE cantidad 25.5
 activate svc
 svc -> orm : SELECT stock_consumible FOR UPDATE (fila bloqueada)\nWHERE id_bodega = :bodega AND id_tipo_equipo = :tipo
-db --> orm : cantidad_disponible = 100
+stock --> orm : cantidad_disponible = 100
 svc -> svc : 100 ≥ 25.5 → suficiente ✓
 svc -> orm : UPDATE stock SET cantidad_disponible = 74.5
 svc -> orm : (continúa: inventario personal, detalle, movimiento)

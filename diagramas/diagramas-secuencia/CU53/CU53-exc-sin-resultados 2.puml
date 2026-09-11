@@ -6,7 +6,10 @@ skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
 <style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
-skinparam sequence { MessageAlign center  LifeLineBorderColor black }
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
 hide footbox
 
 actor "Admin/AdminBodega/\nSuperusuario" as user
@@ -14,7 +17,7 @@ participant "V_OrdenesIngreso" as view
 participant "C_OrdenesIngresoController" as ctrl
 participant "C_OrdenesIngresoService" as svc
 participant "C_TypeORM" as orm
-database "postgres" as db
+participant "orden_ingreso" as oing
 
 user -> view : Aplica filtros que no\ncoinciden con ninguna orden\n(p. ej. estado = 'Completada')
 activate view
@@ -29,8 +32,8 @@ activate svc
 
 svc -> orm : createQueryBuilder + andWhere(estado)
 activate orm
-orm -> db : SELECT * FROM orden_ingreso o\nWHERE o.id_empresa_destino = ?\nAND o.estado = 'Completada'\nORDER BY o.id_orden DESC
-db --> orm : [] (sin filas)
+orm -> oing : SELECT * FROM orden_ingreso o\nWHERE o.id_empresa_destino = ?\nAND o.estado = 'Completada'\nORDER BY o.id_orden DESC
+oing --> orm : [] (sin filas)
 orm --> svc : []
 deactivate orm
 

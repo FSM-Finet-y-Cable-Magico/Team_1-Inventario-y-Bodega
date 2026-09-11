@@ -1,5 +1,5 @@
 @startuml CU80-exc-ns-no-cumple
-title CU-80 — Excepción 1: un NS no está dado de baja por donación
+title CU-80 — Registrando donación de equipos dados de baja (excepción: NS no dado de baja por donación)
 
 skinparam style strictuml
 skinparam monochrome true

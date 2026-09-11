@@ -1,5 +1,5 @@
 @startuml CU79-exc-error-registro
-title CU-79 — Excepción 1: error al registrar la baja (rollback y reintento)
+title CU-79 — Ejecutando acciones posteriores a baja definitiva (excepción: error al registrar la baja)
 
 skinparam style strictuml
 skinparam monochrome true

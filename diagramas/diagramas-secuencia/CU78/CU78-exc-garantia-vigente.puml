@@ -1,5 +1,5 @@
 @startuml CU78-exc-garantia-vigente
-title CU-78 — Excepción 2: el equipo tiene garantía vigente (continuar o cancelar)
+title CU-78 — Registrando baja definitiva de equipo (excepción: el equipo tiene garantía vigente)
 
 skinparam style strictuml
 skinparam monochrome true

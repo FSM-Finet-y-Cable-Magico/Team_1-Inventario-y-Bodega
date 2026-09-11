@@ -1,5 +1,5 @@
 @startuml CU72-exc-garantia-vigente
-title CU-72 — Registrando resultado de revisión de equipo\n(excepción 1: garantía vigente al dar de baja)
+title CU-72 — Registrando resultado de revisión de equipo (excepción 1: garantía vigente al dar de baja)
 
 skinparam style strictuml
 skinparam monochrome true

@@ -1,5 +1,5 @@
 @startuml CU78-exc-transicion-no-permitida
-title CU-78 — Excepción 1: el estado actual no permite la baja
+title CU-78 — Registrando baja definitiva de equipo (excepción: el estado actual no permite la baja)
 
 skinparam style strictuml
 skinparam monochrome true

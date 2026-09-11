@@ -1,5 +1,5 @@
 @startuml CU82-exc-fecha-futura
-title CU-82 — Excepción 1: la fecha de retorno es futura
+title CU-82 — Registrando retorno de préstamo externo de equipos (excepción: la fecha de retorno es futura)
 
 skinparam style strictuml
 skinparam monochrome true

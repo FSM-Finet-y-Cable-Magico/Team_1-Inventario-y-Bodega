@@ -1,5 +1,5 @@
 @startuml CU83-exc-sin-activos
-title CU-83 — Excepción 1: no hay préstamos externos activos
+title CU-83 — Consultando tabla de préstamos externos activos (excepción: no hay préstamos activos)
 
 skinparam style strictuml
 skinparam monochrome true

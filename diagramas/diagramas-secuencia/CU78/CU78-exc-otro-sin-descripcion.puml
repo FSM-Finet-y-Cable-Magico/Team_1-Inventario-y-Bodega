@@ -1,5 +1,5 @@
 @startuml CU78-exc-otro-sin-descripcion
-title CU-78 — Excepción 3: motivo 'Otro' sin descripción (5-200 caracteres)
+title CU-78 — Registrando baja definitiva de equipo (excepción: motivo Otro sin descripción)
 
 skinparam style strictuml
 skinparam monochrome true
