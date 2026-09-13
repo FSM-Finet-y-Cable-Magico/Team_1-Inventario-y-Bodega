@@ -1,0 +1,135 @@
+@startuml
+!theme plain
+skinparam shadowing false
+skinparam roundcorner 5
+skinparam objectFontSize 11
+skinparam classFontName "Helvetica,Arial,sans-serif"
+skinparam arrowColor #333333
+
+title Diagrama de Objetos — Escenario de Salida de Bodega a Técnico (CU-57 / CU-58 / CU-60)
+
+object "<u>tecnico : Usuario</u>" as u1 {
+  id_usuario = 14
+  nombre_completo = "Carlos Mendoza"
+  nombre_usuario = "cmendoza"
+  id_empresa = 1 (Finet)
+  activo = true
+}
+
+object "<u>bodeguero : Usuario</u>" as u2 {
+  id_usuario = 3
+  nombre_completo = "Andrés Gómez"
+  nombre_usuario = "agomez"
+  id_empresa = 1 (Finet)
+  activo = true
+}
+
+object "<u>bodegaCentral : Bodega</u>" as b1 {
+  id_bodega = 1
+  id_empresa = 1
+  nombre = "Bodega Central Finet"
+  activa = true
+}
+
+object "<u>salida : SalidaBodega</u>" as s1 {
+  id_salida = 101
+  id_tecnico = 14
+  id_bodega_origen = 1
+  fecha_hora = 2026-06-12 09:30:00
+  id_empresa = 1
+  id_usuario_registro = 3
+}
+
+object "<u>tipoOnt : TipoEquipo</u>" as te1 {
+  id_tipo_equipo = 5
+  nombre = "ONT Huawei HG8245H"
+  categoria = "ONT/ONU"
+  requiere_serie_individual = true
+  garantia_dias = 365
+}
+
+object "<u>ontSerializada : UnidadEquipo</u>" as eq1 {
+  id_unidad = 502
+  numero_serie = "HWTC12345678"
+  estado = "Asignado a técnico"
+  id_bodega_actual = 1
+  id_tecnico_asignado = 14
+  ubicacion_fisica = "Pasillo A - Estante 2"
+}
+
+object "<u>itemSalida1 : SalidaDetalle</u>" as d1 {
+  id_detalle = 201
+  id_salida = 101
+  id_unidad = 502
+  id_tipo_equipo = null
+  cantidad = null
+}
+
+object "<u>tipoCable : TipoEquipo</u>" as te2 {
+  id_tipo_equipo = 12
+  nombre = "Cable Drop Fibra 1 Hilo"
+  categoria = "Consumible fibra óptica"
+  requiere_serie_individual = false
+  unidad_medida = "Metro"
+}
+
+object "<u>itemSalida2 : SalidaDetalle</u>" as d2 {
+  id_detalle = 202
+  id_salida = 101
+  id_unidad = null
+  id_tipo_equipo = 12
+  cantidad = 100.00
+}
+
+object "<u>saldoTecnico : InventarioPersonal</u>" as inv1 {
+  id_inventario = 45
+  id_tecnico = 14
+  id_tipo_equipo = 12
+  cantidad = 100.00
+  fecha_actualizacion = 2026-06-12 09:30:00
+}
+
+object "<u>historialUnidad : HistorialEstado</u>" as h1 {
+  id_historial = 1205
+  id_unidad = 502
+  id_usuario = 3
+  estado_anterior = "En bodega"
+  estado_nuevo = "Asignado a técnico"
+  motivo = "Despacho para trabajos en terreno"
+  fecha_hora = 2026-06-12 09:30:00
+}
+
+object "<u>movSalida : MovimientoInventario</u>" as mov1 {
+  id_movimiento = 3010
+  id_tipo_equipo = 5
+  id_unidad = 502
+  tipo_movimiento = "SALIDA_A_TECNICO"
+  id_bodega_origen = 1
+  id_usuario = 3
+  referencia_id = 101
+}
+
+object "<u>logEvento : Auditoria</u>" as aud1 {
+  id_log = 8402
+  id_usuario = 3
+  accion = "SALIDA_BODEGA_TECNICO"
+  entidad_afectada = "salida_bodega"
+  id_entidad_afectada = 101
+  valor_nuevo = "{\"items\": 2, \"tecnico\": 14}"
+}
+
+u1 <-- s1 : "id_tecnico"
+u2 <-- s1 : "id_usuario_registro"
+b1 <-- s1 : "id_bodega_origen"
+s1 *-- d1 : "detalles"
+s1 *-- d2 : "detalles"
+d1 --> eq1 : "id_unidad"
+eq1 --> te1 : "id_tipo_equipo"
+d2 --> te2 : "id_tipo_equipo"
+u1 <-- inv1 : "id_tecnico"
+te2 <-- inv1 : "id_tipo_equipo"
+eq1 *-- h1 : "id_unidad"
+u2 <-- h1 : "id_usuario"
+s1 <-- mov1 : "referencia_id"
+s1 <-- aud1 : "id_entidad_afectada"
+@enduml

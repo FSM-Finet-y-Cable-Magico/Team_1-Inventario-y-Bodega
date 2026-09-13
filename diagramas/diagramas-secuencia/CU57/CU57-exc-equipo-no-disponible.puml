@@ -24,26 +24,85 @@ actor "Administrador de bodega" as user
 participant "V_Salidas" as view
 participant "C_UnitsController" as uctrl
 participant "C_UnitsService" as usvc
+participant "C_SalidasController" as ctrl
 participant "C_SalidasService" as svc
+participant "C_TypeORM" as orm
 participant "unidad_equipo" as uent
 participant "salida_bodega" as sald
 
-user -> view : Agrega NS de un equipo que está\nen otra bodega o en otro estado
-view -> uctrl : GET /api/unidades/serie/{ns}?id_bodega=N
+user -> view : Agrega el NS de un equipo que\nestá en otra bodega o en otro estado
+activate view
+
+view -> uctrl : GET /api/unidades/serie/{ns}?id_bodega=N\n(validación en vivo, CU-59)
+activate uctrl
+
 uctrl -> usvc : verificarSerie(ns, id_empresa, id_bodega)
-usvc -> uent : SELECT unidad WHERE numero_serie AND id_empresa
-uent --> usvc : unidad (estado 'Asignado a técnico', id_bodega_actual=otra)
-usvc --> view : 200 { existe: true, estado, id_bodega_actual, disponible: false }
-view --> user : Marca en rojo:\n'El equipo [NS] no está disponible en esta bodega.\nEstado actual: [ESTADO].' · Deshabilita Confirmar
+activate usvc
+
+usvc -> uent : SELECT * FROM unidad_equipo\nWHERE numero_serie = ? AND id_empresa = ?
+activate uent
+uent --> usvc : unidad (estado 'Asignado a técnico',\nid_bodega_actual = otra)
+deactivate uent
+
+usvc --> uctrl : 200 { existe: true, estado,\nid_bodega_actual, disponible: false }
+deactivate usvc
+
+uctrl --> view : 200
+deactivate uctrl
+
+view --> user : Marca en rojo:\n'El equipo [NS] no está disponible en esta\nbodega. Estado actual: [ESTADO].'\nDeshabilita Confirmar
 
 user -> view : Confirma de todos modos
-view -> svc : POST /api/salidas (re-valida en la transacción)
+
+view -> ctrl : POST /api/salidas (re-valida en la transacción)
+activate ctrl
+
+ctrl -> svc : registrarSalida(dto, idEmpresa, actor)
 activate svc
-svc -> uent : SELECT unidad (FOR la salida)
-uent --> svc : estado ≠ 'En bodega' o id_bodega_actual ≠ origen
-svc --> view : 400 BadRequestException('El equipo [NS] no está disponible\nen esta bodega. Estado actual: [ESTADO].')
-svc -> sald :ROLLBACK total (sobre la salida_bodega)
+
+svc -> orm : QueryRunner.connect()\n+ startTransaction()
+activate orm
+orm --> svc : Transacción iniciada
+deactivate orm
+
+svc -> orm : manager.save(SalidaBodega, { ... })
+activate orm
+orm -> sald : INSERT INTO salida_bodega
+activate sald
+sald --> orm : salida #N
+deactivate sald
+orm --> svc : salida #N
+deactivate orm
+
+svc -> orm : procesarItemUnidad(...)\nfindOne(UnidadEquipo, { numero_serie, id_empresa })
+activate orm
+orm -> uent : SELECT * FROM unidad_equipo\nWHERE numero_serie = ? AND id_empresa = ?
+activate uent
+uent --> orm : unidad (estado distinto de 'En bodega'\no en otra bodega)
+deactivate uent
+orm --> svc : unidad
+deactivate orm
+
+svc -> svc : estado != 'En bodega' o\nid_bodega_actual != origen -> Excepción (CU-59)
+activate svc
 deactivate svc
+
+svc -> orm : QueryRunner.rollbackTransaction()
+activate orm
+orm --> svc : Rollback total (la salida no queda)
+deactivate orm
+
+svc -> orm : QueryRunner.release()
+activate orm
+orm --> svc : Conexión liberada
+deactivate orm
+
+svc --> ctrl : throw BadRequestException\n('El equipo [NS] no está disponible\nen esta bodega. Estado actual: [ESTADO].')
+deactivate svc
+
+ctrl --> view : 400 Bad Request
+deactivate ctrl
+
 view --> user : Banner con el mensaje exacto
 deactivate view
 @enduml

@@ -25,60 +25,183 @@ participant "V_Salidas" as view
 participant "C_RolesGuard" as guard
 participant "C_SalidasController" as ctrl
 participant "C_SalidasService" as svc
-participant "C_TypeORM (transacción)" as orm
+participant "C_InventarioPersonalService" as ips
+participant "C_AuditoriaService" as aud
+participant "C_TypeORM" as orm
 participant "usuario" as usr
 participant "bodega" as bdg
 participant "salida_bodega" as sald
-participant "stock_consumible" as stock
 participant "unidad_equipo" as uent
+participant "stock_consumible" as stock
 participant "log_auditoria" as aent
 
-user -> view : Formulario: técnico, bodega,\nNS + consumibles → Confirma
+user -> view : Formulario: técnico, bodega,\nNS + consumibles -> Confirma
 activate view
+
 view -> guard : POST /api/salidas\n{ id_tecnico, id_bodega_origen, items[] }
 activate guard
-guard --> view : Autorizado (ADMIN_BODEGA / ADMIN / SUPERUSUARIO)\nCompanyIsolationGuard: id_empresa = contexto
+
+guard -> guard : AuthGuard('jwt') + RolesGuard:\nrol ADMIN_BODEGA / ADMIN / SUPERUSUARIO
+activate guard
 deactivate guard
-view -> ctrl : registrarSalida(dto, actor)
+
+guard -> guard : CompanyIsolationGuard:\nid_empresa = contexto del actor
+activate guard
+deactivate guard
+
+guard --> view : Autorizado\n(canActivate() = true)
+deactivate guard
+
+view -> ctrl : POST /api/salidas\n{ id_tecnico, id_bodega_origen, items[] }
 activate ctrl
+
 ctrl -> svc : registrarSalida(dto, idEmpresa, actor)
 activate svc
 
-svc -> usr : SELECT usuario (+roles) WHERE id_tecnico, activo\n→ técnico TECNICO_TERRENO activo ✓
-usr --> svc : técnico activo ✓
-svc -> bdg : SELECT bodega WHERE id_bodega AND id_empresa\n→ bodega activa ✓
-bdg --> svc : bodega activa ✓
-
-svc -> orm : startTransaction()
-orm -> sald : INSERT salida_bodega\n(id_tecnico, id_bodega_origen, fecha_hora=now(), id_empresa, id_usuario_registro)
-sald --> orm : salida #N
-
-svc -> orm : (por ítem UNIDAD) SELECT unidad_equipo\nWHERE numero_serie AND id_empresa
-uent --> orm : unidad (estado 'En bodega', bodega origen) ✓
-svc -> orm : UPDATE unidad_equipo SET estado='Asignado a técnico',\nid_tecnico_asignado=tecnico, id_bodega_actual=NULL, ubicacion_fisica=NULL
-orm -> uent : unidad actualizada
-svc -> orm : INSERT historial_estado_equipo\n('En bodega' → 'Asignado a técnico', motivo='Salida de bodega a técnico. Salida #N.')
-svc -> orm : INSERT salida_detalle (id_unidad)
-svc -> orm : INSERT movimiento_inventario\n(tipo_movimiento='SALIDA_A_TECNICO', cantidad=1, referencia_id=N)
-
-svc -> orm : (por ítem CONSUMIBLE) SELECT stock_consumible FOR UPDATE\nWHERE (id_bodega, id_tipo_equipo)
-stock --> orm : stock (cantidad_disponible = 100)
-svc -> orm : UPDATE stock SET cantidad_disponible = 100 - 25.5 = 74.5
-svc -> orm : UPSERT inventario_personal_tecnico\n(UNIQUE tecnico+tipo) cantidad += 25.5
-svc -> orm : INSERT salida_detalle (id_tipo_equipo, cantidad) + movimiento_inventario
-
-svc -> orm : commitTransaction()
+svc -> orm : findOne(Usuario, { id_usuario,\nactivo: true }, relations: usuarioRoles.rol)
 activate orm
-orm --> svc : Transacción confirmada
+orm -> usr : SELECT usuario\nJOIN usuario_rol JOIN rol\nWHERE id_usuario = ? AND activo = true
+activate usr
+usr --> orm : técnico con rol TECNICO_TERRENO
+deactivate usr
+orm --> svc : técnico activo de la empresa ✓
 deactivate orm
 
-svc -> aent : auditoriaService.create({ accion: 'SALIDA_BODEGA',\nentidad: 'salida_bodega', valor_nuevo: { tecnico, bodega, items } })
-aent --> svc : log_auditoria insertado
+svc -> orm : findOne(Bodega, { id_bodega, id_empresa })
+activate orm
+orm -> bdg : SELECT * FROM bodega\nWHERE id_bodega = ? AND id_empresa = ?
+activate bdg
+bdg --> orm : bodega activa
+deactivate bdg
+orm --> svc : bodega de origen válida ✓
+deactivate orm
 
-svc --> ctrl : 200 { success: true, id_salida: N, resumen, message }
+svc -> svc : Valida NS duplicados dentro\ndel mismo envío (CU-59)
+activate svc
 deactivate svc
-ctrl --> view : 200 OK
+
+svc -> orm : QueryRunner.connect()\n+ startTransaction()
+activate orm
+orm --> svc : Transacción iniciada
+deactivate orm
+
+svc -> orm : manager.save(SalidaBodega)\n{ id_tecnico, id_bodega_origen,\nfecha_hora = now(), id_empresa,\nid_usuario_registro }
+activate orm
+orm -> sald : INSERT INTO salida_bodega
+activate sald
+sald --> orm : salida #N
+deactivate sald
+orm --> svc : salida #N
+deactivate orm
+
+note over svc : inicio loop\n(por cada ítem UNIDAD - procesarItemUnidad)
+  svc -> orm : manager.findOne(UnidadEquipo,\n{ numero_serie, id_empresa })
+  activate orm
+  orm -> uent : SELECT * FROM unidad_equipo\nWHERE numero_serie = ? AND id_empresa = ?
+  activate uent
+  uent --> orm : unidad (estado 'En bodega',\nbodega de origen) ✓
+  deactivate uent
+  orm --> svc : unidad disponible
+  deactivate orm
+
+  svc -> orm : manager.save(unidad)\n[estado = 'Asignado a técnico',\nid_tecnico_asignado, id_bodega_actual = NULL,\nubicacion_fisica = NULL (CU-47)]
+  activate orm
+  orm -> uent : UPDATE unidad_equipo SET estado = ...
+  activate uent
+  uent --> orm : unidad actualizada
+  deactivate uent
+  orm --> svc : ok
+  deactivate orm
+
+  svc -> orm : manager.save(HistorialEstado)\n['En bodega' -> 'Asignado a técnico']
+  activate orm
+  orm --> svc : registrado
+  deactivate orm
+
+  svc -> orm : manager.save(SalidaDetalle, { id_unidad })
+  activate orm
+  orm --> svc : registrado
+  deactivate orm
+
+  svc -> orm : manager.save(MovimientoInventario)\n{ tipo_movimiento = 'SALIDA_A_TECNICO', cantidad = 1 }
+  activate orm
+  orm --> svc : registrado
+  deactivate orm
+note over svc : término loop
+
+note over svc : inicio loop\n(por cada ítem CONSUMIBLE - procesarItemConsumible)
+  svc -> orm : manager.findOne(TipoEquipo)\n-> es consumible (no requiere NS)
+  activate orm
+  orm --> svc : tipo válido
+  deactivate orm
+
+  svc -> orm : verificarStockDisponible(...)\nfindOne(StockConsumible, lock pessimistic_write)
+  activate orm
+  orm -> stock : SELECT * FROM stock_consumible\nWHERE (id_bodega, id_tipo_equipo)\nFOR UPDATE
+  activate stock
+  stock --> orm : cantidad_disponible = 100
+  deactivate stock
+  orm --> svc : disponible >= cantidad ✓
+  deactivate orm
+
+  svc -> orm : manager.save(stock)\n[cantidad_disponible = 100 - 25.5 = 74.5]
+  activate orm
+  orm -> stock : UPDATE stock_consumible\nSET cantidad_disponible = ?
+  activate stock
+  stock --> orm : stock actualizado
+  deactivate stock
+  orm --> svc : ok
+  deactivate orm
+
+  svc -> ips : sumar(manager, id_tecnico,\nid_tipo_equipo, cantidad) (CU-58)
+  activate ips
+  ips -> orm : findOne(InventarioPersonal, lock)\n+ save
+  activate orm
+  orm --> ips : saldo += 25.5
+  deactivate orm
+  ips --> svc : ok
+  deactivate ips
+
+  svc -> orm : manager.save(SalidaDetalle)\n{ id_tipo_equipo, cantidad }
+  activate orm
+  orm --> svc : registrado
+  deactivate orm
+
+  svc -> orm : manager.save(MovimientoInventario)\n{ tipo_movimiento = 'SALIDA_A_TECNICO', cantidad }
+  activate orm
+  orm --> svc : registrado
+  deactivate orm
+note over svc : término loop
+
+svc -> orm : QueryRunner.commitTransaction()
+activate orm
+orm --> svc : Commit OK
+deactivate orm
+
+svc -> orm : QueryRunner.release()
+activate orm
+orm --> svc : Conexión liberada
+deactivate orm
+
+svc -> aud : create({ accion: 'SALIDA_BODEGA',\nentidad_afectada: 'salida_bodega',\nvalor_nuevo: { tecnico, bodega, items } })
+activate aud
+aud -> orm : save(log)
+activate orm
+orm -> aent : INSERT INTO log_auditoria
+activate aent
+aent --> orm : Registrado
+deactivate aent
+orm --> aud : Log guardado
+deactivate orm
+aud --> svc : Auditoría registrada
+deactivate aud
+
+svc --> ctrl : { success: true, id_salida,\nunidades_salidas, consumibles_salidos, message }
+deactivate svc
+
+ctrl --> view : 201 Created
 deactivate ctrl
-view --> user : Éxito + inventario personal del técnico actualizado (CU-58)
+
+view --> user : Éxito + inventario personal\ndel técnico actualizado (CU-58)
 deactivate view
 @enduml

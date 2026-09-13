@@ -61,10 +61,10 @@ activate qr
 
 qr -> odet : UPDATE orden_ingreso_detalle\nSET cantidad_recibida = cantidad_recibida + ?
 
-loop por cada unidad recibida
+note over qr : inicio loop\n(por cada unidad recibida)
   qr -> uent : INSERT INTO unidad_equipo\n(fecha_adquisicion = '2026-08-25',\nfecha_venc_garantia = '2026-08-25'\n+ garantia_dias del ítem,\nestado = 'En bodega')
   uent --> qr : unidad creada
-end
+note over qr : término loop
 
 note right of qr
   orden_ingreso.fecha_documento NO se toca:
