@@ -126,7 +126,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="ctrlFrame" parent="1" style="align=left;overflow=fill;html=1;dropTarget=0;whiteSpace=wrap;" value="&lt;p style=&quot;margin:0px;margin-top:6px;text-align:center;&quot;&gt;&lt;b&gt;Capa Controladores NestJS&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:8px;&quot;&gt;&lt;br&gt;&lt;/p&gt;" vertex="1">
-          <mxGeometry height="660" width="350" x="1770" y="210" as="geometry" />
+          <mxGeometry height="660" width="520" x="1770" y="210" as="geometry" />
         </mxCell>
         <mxCell id="ctrlFrameIcon" parent="ctrlFrame" style="shape=component;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
           <mxGeometry height="20" relative="1" width="20" x="1" as="geometry">
@@ -208,6 +208,92 @@
             <mxPoint x="-27" y="7" as="offset" />
           </mxGeometry>
         </mxCell>
+        <mxCell id="c10" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="ProveedoresController" vertex="1">
+          <mxGeometry height="50" width="210" x="2040" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="c10i" parent="c10" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
+          <mxGeometry height="20" relative="1" width="20" x="1" as="geometry">
+            <mxPoint x="-27" y="7" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c11" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="OrdenesIngresoController" vertex="1">
+          <mxGeometry height="50" width="210" x="2040" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="c11i" parent="c11" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
+          <mxGeometry height="20" relative="1" width="20" x="1" as="geometry">
+            <mxPoint x="-27" y="7" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c12" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="SalidasController" vertex="1">
+          <mxGeometry height="50" width="210" x="2040" y="370" as="geometry" />
+        </mxCell>
+        <mxCell id="c12i" parent="c12" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
+          <mxGeometry height="20" relative="1" width="20" x="1" as="geometry">
+            <mxPoint x="-27" y="7" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c13" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="TecnicosController" vertex="1">
+          <mxGeometry height="50" width="210" x="2040" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="c13i" parent="c13" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
+          <mxGeometry height="20" relative="1" width="20" x="1" as="geometry">
+            <mxPoint x="-27" y="7" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c14" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="BajasController" vertex="1">
+          <mxGeometry height="50" width="210" x="2040" y="490" as="geometry" />
+        </mxCell>
+        <mxCell id="c14i" parent="c14" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
+          <mxGeometry height="20" relative="1" width="20" x="1" as="geometry">
+            <mxPoint x="-27" y="7" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c15" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="DonacionesController" vertex="1">
+          <mxGeometry height="50" width="210" x="2040" y="550" as="geometry" />
+        </mxCell>
+        <mxCell id="c15i" parent="c15" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
+          <mxGeometry height="20" relative="1" width="20" x="1" as="geometry">
+            <mxPoint x="-27" y="7" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c16" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="PrestamosController" vertex="1">
+          <mxGeometry height="50" width="210" x="2040" y="610" as="geometry" />
+        </mxCell>
+        <mxCell id="c16i" parent="c16" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
+          <mxGeometry height="20" relative="1" width="20" x="1" as="geometry">
+            <mxPoint x="-27" y="7" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c17" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="ReportesController" vertex="1">
+          <mxGeometry height="50" width="210" x="2040" y="670" as="geometry" />
+        </mxCell>
+        <mxCell id="c17i" parent="c17" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
+          <mxGeometry height="20" relative="1" width="20" x="1" as="geometry">
+            <mxPoint x="-27" y="7" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c18" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="IntegracionesController" vertex="1">
+          <mxGeometry height="50" width="210" x="2040" y="730" as="geometry" />
+        </mxCell>
+        <mxCell id="c18i" parent="c18" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
+          <mxGeometry height="20" relative="1" width="20" x="1" as="geometry">
+            <mxPoint x="-27" y="7" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="extSys" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="Sistemas externos&#xa;(G3 Terreno · G8 CRM)" vertex="1">
+          <mxGeometry height="70" width="210" x="2040" y="940" as="geometry" />
+        </mxCell>
+        <mxCell id="extSyi" parent="extSys" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
+          <mxGeometry height="20" relative="1" width="20" x="1" as="geometry">
+            <mxPoint x="-27" y="7" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eExt" edge="1" parent="1" source="extSys" style="endArrow=open;dashed=1;html=1;fontSize=10;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="c18" value="REST / X-API-KEY">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2145" y="860" as="sourcePoint" />
+            <mxPoint x="2145" y="820" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
         <mxCell id="pCtrlOut" parent="1" style="fontStyle=0;labelPosition=right;verticalLabelPosition=middle;align=left;verticalAlign=middle;spacingLeft=2;" value="" vertex="1">
           <mxGeometry height="20" width="20" x="1760" y="800" as="geometry" />
         </mxCell>
@@ -218,7 +304,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="svcFrame" parent="1" style="align=left;overflow=fill;html=1;dropTarget=0;whiteSpace=wrap;" value="&lt;p style=&quot;margin:0px;margin-top:6px;text-align:center;&quot;&gt;&lt;b&gt;Capa Servicios - Módulos de aplicación&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:8px;&quot;&gt;&lt;br&gt;&lt;/p&gt;" vertex="1">
-          <mxGeometry height="600" width="430" x="1024.44" y="890" as="geometry" />
+          <mxGeometry height="900" width="620" x="1024.44" y="890" as="geometry" />
         </mxCell>
         <mxCell id="svcFrameIcon" parent="svcFrame" style="shape=component;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
           <mxGeometry height="20" relative="1" width="20" x="1" as="geometry">
@@ -226,7 +312,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="pSvcIn" parent="1" style="fontStyle=0;labelPosition=right;verticalLabelPosition=middle;align=left;verticalAlign=middle;spacingLeft=2;" value="" vertex="1">
-          <mxGeometry height="20" width="20" x="1444.44" y="935" as="geometry" />
+          <mxGeometry height="20" width="20" x="1624.44" y="935" as="geometry" />
         </mxCell>
         <mxCell id="pSvcOut" parent="1" style="fontStyle=0;labelPosition=right;verticalLabelPosition=middle;align=left;verticalAlign=middle;spacingLeft=2;" value="" vertex="1">
           <mxGeometry height="20" width="20" x="1014.44" y="1180" as="geometry" />
@@ -299,6 +385,70 @@
           <mxGeometry height="65" width="144.74" x="1279.7" y="1290" as="geometry" />
         </mxCell>
         <mxCell id="s9i" parent="s9" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
+          <mxGeometry height="20" relative="1" width="20" x="1" as="geometry">
+            <mxPoint x="-27" y="7" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s10" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="&lt;span style=&quot;text-wrap-mode: nowrap;&quot;&gt;Servicio Proveedores&lt;/span&gt;" vertex="1">
+          <mxGeometry height="65" width="144.74" x="1474.7" y="982.5" as="geometry" />
+        </mxCell>
+        <mxCell id="s10i" parent="s10" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
+          <mxGeometry height="20" relative="1" width="20" x="1" as="geometry">
+            <mxPoint x="-27" y="7" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s11" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="Servicio Órdenes&#xa;de Ingreso" vertex="1">
+          <mxGeometry height="65" width="144.74" x="1474.7" y="1082.5" as="geometry" />
+        </mxCell>
+        <mxCell id="s11i" parent="s11" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
+          <mxGeometry height="20" relative="1" width="20" x="1" as="geometry">
+            <mxPoint x="-27" y="7" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s12" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="Servicio Salidas&#xa;a Técnicos" vertex="1">
+          <mxGeometry height="65" width="144.74" x="1474.7" y="1182.5" as="geometry" />
+        </mxCell>
+        <mxCell id="s12i" parent="s12" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
+          <mxGeometry height="20" relative="1" width="20" x="1" as="geometry">
+            <mxPoint x="-27" y="7" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s13" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="&lt;span style=&quot;text-wrap-mode: nowrap;&quot;&gt;Servicio Bajas&lt;/span&gt;" vertex="1">
+          <mxGeometry height="65" width="144.74" x="1474.7" y="1282.5" as="geometry" />
+        </mxCell>
+        <mxCell id="s13i" parent="s13" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
+          <mxGeometry height="20" relative="1" width="20" x="1" as="geometry">
+            <mxPoint x="-27" y="7" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s14" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="&lt;span style=&quot;text-wrap-mode: nowrap;&quot;&gt;Servicio Donaciones&lt;/span&gt;" vertex="1">
+          <mxGeometry height="65" width="144.74" x="1474.7" y="1382.5" as="geometry" />
+        </mxCell>
+        <mxCell id="s14i" parent="s14" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
+          <mxGeometry height="20" relative="1" width="20" x="1" as="geometry">
+            <mxPoint x="-27" y="7" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s15" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="&lt;span style=&quot;text-wrap-mode: nowrap;&quot;&gt;Servicio Préstamos&lt;/span&gt;" vertex="1">
+          <mxGeometry height="65" width="144.74" x="1474.7" y="1482.5" as="geometry" />
+        </mxCell>
+        <mxCell id="s15i" parent="s15" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
+          <mxGeometry height="20" relative="1" width="20" x="1" as="geometry">
+            <mxPoint x="-27" y="7" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s16" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="&lt;span style=&quot;text-wrap-mode: nowrap;&quot;&gt;Servicio Reportes&lt;/span&gt;" vertex="1">
+          <mxGeometry height="65" width="144.74" x="1474.7" y="1582.5" as="geometry" />
+        </mxCell>
+        <mxCell id="s16i" parent="s16" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
+          <mxGeometry height="20" relative="1" width="20" x="1" as="geometry">
+            <mxPoint x="-27" y="7" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s17" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="&lt;span style=&quot;text-wrap-mode: nowrap;&quot;&gt;Servicio Integraciones&lt;/span&gt;" vertex="1">
+          <mxGeometry height="65" width="144.74" x="1474.7" y="1682.5" as="geometry" />
+        </mxCell>
+        <mxCell id="s17i" parent="s17" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
           <mxGeometry height="20" relative="1" width="20" x="1" as="geometry">
             <mxPoint x="-27" y="7" as="offset" />
           </mxGeometry>
