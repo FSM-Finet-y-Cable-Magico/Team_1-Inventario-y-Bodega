@@ -1,5 +1,5 @@
 @startuml CU78-normal-solicitud
-title CU-78 — Registrando baja definitiva (flujo normal: técnico solicita, Administrador aprueba)
+title CU-78 — Registrando baja definitiva de equipo (flujo normal: técnico solicita, Administrador aprueba)
 
 skinparam style strictuml
 skinparam monochrome true

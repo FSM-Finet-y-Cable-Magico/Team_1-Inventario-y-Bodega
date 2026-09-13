@@ -1,5 +1,5 @@
 @startuml CU58-exc-saldo-negativo
-title CU-58 — excepción: la operación llevaría el saldo a negativo
+title CU-58 — Manteniendo inventario personal del técnico (excepción: la operación llevaría el saldo a negativo)
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false

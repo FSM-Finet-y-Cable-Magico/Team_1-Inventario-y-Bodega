@@ -1,5 +1,5 @@
 @startuml CU62-exc-stock-insuficiente
-title CU-62 — excepción: stock insuficiente (no permite continuar)
+title CU-62 — Validando stock disponible en bodega para consumibles (excepción: stock insuficiente)
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false

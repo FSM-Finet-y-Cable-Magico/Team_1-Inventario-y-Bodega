@@ -1,5 +1,5 @@
 @startuml CU54-RecepcionOrdenIngreso-Exc-CantidadExcedePendiente
-title CU-54 — Registrando recepción (excepción: la cantidad supera el pendiente del ítem)
+title CU-54 — Registrando recepción total o parcial de orden de ingreso (excepción: la cantidad supera el pendiente del ítem)
 
 skinparam style strictuml
 skinparam monochrome true

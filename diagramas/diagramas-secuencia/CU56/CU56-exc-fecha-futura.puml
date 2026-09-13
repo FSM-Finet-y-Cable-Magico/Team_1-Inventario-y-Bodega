@@ -1,5 +1,5 @@
 @startuml CU56-FechaAdquisicionReal-Exc-FechaFutura
-title CU-56 — Registrando fecha de adquisición real (excepciones: sin fecha y fecha futura)
+title CU-56 — Registrando fecha de adquisición real en recepción (excepción: la fecha de recepción no puede ser futura)
 
 skinparam style strictuml
 skinparam monochrome true
