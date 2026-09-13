@@ -36,7 +36,7 @@ activate bsvc
 bsvc -> svc : transicionarEstado(id, 'Dado de baja', ...)
 activate svc
 
-loop hasta 3 intentos (backoff 100ms × intento)
+note over svc : inicio loop\n(hasta 3 intentos, backoff 100ms × intento)
     svc -> orm : queryRunner.startTransaction()\nsave(unidad)
     activate orm
     orm -> uent : UPDATE unidad_equipo\nSET estado = 'Dado de baja'
@@ -63,7 +63,7 @@ loop hasta 3 intentos (backoff 100ms × intento)
     deactivate uent
     orm --> svc : Transacción revertida
     deactivate orm
-end
+note over svc : término loop
 
 svc --> bsvc : 400 BadRequestException\n'Error al registrar el cambio en el historial.\nEl sistema reintentó la escritura\npero el error persiste.'
 deactivate svc

@@ -24,24 +24,66 @@ actor "Administrador de bodega" as user
 participant "V_Salidas" as view
 participant "C_SalidasController" as ctrl
 participant "C_SalidasService" as svc
+participant "C_TypeORM" as orm
 participant "salida_bodega" as sald
 participant "stock_consumible" as stock
 
 user -> view : Salida con consumible x100\n(solo hay 74.5 en la bodega)
 activate view
-view -> ctrl : POST /api/salidas { items: [{ tipo: CONSUMIBLE, cantidad: 100 }] }
+
+view -> ctrl : POST /api/salidas\n{ id_tecnico, id_bodega_origen,\nitems: [ { tipo: 'CONSUMIBLE',\nid_tipo_equipo, cantidad: 100 } ] }
 activate ctrl
+
 ctrl -> svc : registrarSalida(dto, idEmpresa, actor)
 activate svc
-svc -> sald : startTransaction · INSERT salida_bodega
-svc -> stock : SELECT stock_consumible FOR UPDATE\nWHERE (id_bodega, id_tipo_equipo)
-stock --> svc : cantidad_disponible = 74.5
-svc -> svc : 74.5 < 100 → no alcanza
-svc --> ctrl : 400 BadRequestException('Stock insuficiente de [Fibra drop QA]\nen [Bodega Central QA]. Disponible: 74.5 Metro.') (CU-62)
-svc -> sald :ROLLBACK (la cabecera de salida no queda)
+
+svc -> svc : Valida técnico, bodega y\nNS duplicados ✓
+activate svc
 deactivate svc
-ctrl --> view : 400
+
+svc -> orm : QueryRunner.connect()\n+ startTransaction()
+activate orm
+orm --> svc : Transacción iniciada
+deactivate orm
+
+svc -> orm : manager.save(SalidaBodega, { ... })
+activate orm
+orm -> sald : INSERT INTO salida_bodega
+activate sald
+sald --> orm : salida #N
+deactivate sald
+orm --> svc : salida #N
+deactivate orm
+
+svc -> orm : verificarStockDisponible(...)\nfindOne(StockConsumible, lock pessimistic_write)
+activate orm
+orm -> stock : SELECT * FROM stock_consumible\nWHERE (id_bodega, id_tipo_equipo)\nFOR UPDATE
+activate stock
+stock --> orm : cantidad_disponible = 74.5
+deactivate stock
+orm --> svc : disponible = 74.5
+deactivate orm
+
+svc -> svc : 74.5 < 100 -> Excepción (CU-62)
+activate svc
+deactivate svc
+
+svc -> orm : QueryRunner.rollbackTransaction()
+activate orm
+orm --> svc : Rollback OK (la cabecera no queda)
+deactivate orm
+
+svc -> orm : QueryRunner.release()
+activate orm
+orm --> svc : Conexión liberada
+deactivate orm
+
+svc --> ctrl : throw BadRequestException\n('Stock insuficiente de [Fibra drop QA]\nen [Bodega Central QA].\nDisponible: 74.5 Metro.')
+deactivate svc
+
+ctrl --> view : 400 Bad Request
 deactivate ctrl
-view --> user : Banner con el mensaje exacto;\nel stock y el saldo del técnico quedan intactos
+
+view --> user : Banner con el mensaje exacto;\nel stock y el saldo del técnico\nquedan intactos
 deactivate view
 @enduml

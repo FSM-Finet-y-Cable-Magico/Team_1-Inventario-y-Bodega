@@ -72,7 +72,7 @@ svc -> svc : dataSource.createQueryRunner()\n→ connect() → startTransaction(
 activate svc
 deactivate svc
 
-loop Por cada movimiento pendiente
+note over svc : inicio loop\n(por cada movimiento pendiente)
   svc -> orm : update(movimiento_inventario,\ntipo_movimiento = APROBADA)
   activate orm
   orm -> mvent : UPDATE movimiento_inventario\nSET tipo_movimiento = 'TRANSFERENCIA_APROBADA'\nWHERE id_movimiento = id
@@ -90,7 +90,7 @@ loop Por cada movimiento pendiente
   deactivate uent
   orm --> svc : OK
   deactivate orm
-end
+note over svc : término loop
 
 svc -> svc : queryRunner.commitTransaction()
 activate svc
