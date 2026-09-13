@@ -1,17 +1,9 @@
 @startchen
-skinparam nodesep 6
-skinparam ranksep 16
-skinparam defaultFontSize 13
+skinparam nodesep 8
+skinparam ranksep 18
+skinparam defaultFontSize 12
 skinparam shadowing false
-' ============================================================================
-' Modelo Entidad-Relación Extendido (MERE) — Notación de Chen
-' Sistema de Inventario y Bodega — Esquema propio del equipo
-' Fuente: schema-inventario-usado.txt
-' Convenciones Chen:
-'   [] Entidad fuerte   [[]] Entidad débil   <> Relación
-'   () Atributo   (clave) atributo subrayado = identificador
-'   Cardinalidades 1 : N : M
-' ============================================================================
+
 title Modelo Entidad-Relación Extendido (Chen) — Inventario y Bodega
 
 ' ---------------------------------------------------------------------------
@@ -74,6 +66,7 @@ entity UNIDAD_EQUIPO {
   fecha_venc_garantia
   diagnostico_tecnico
   id_cliente_instalado
+  id_tecnico_asignado
   numero_poste
   id_caja_nap
   mac_address
@@ -82,7 +75,6 @@ entity UNIDAD_EQUIPO {
   ubicacion_fisica
 }
 
-' Entidad débil: cada registro depende de la UNIDAD_EQUIPO a la que pertenece
 entity HISTORIAL_ESTADO <<weak>> {
   id_historial <<key>>
   estado_anterior
@@ -116,6 +108,49 @@ entity LOG_AUDITORIA {
   fecha_hora
 }
 
+entity PROVEEDOR {
+  id_proveedor <<key>>
+  nombre_comercial
+  rut
+  nombre_contacto
+  telefono
+  email
+  activa
+  fecha_creacion
+}
+
+entity ORDEN_INGRESO {
+  id_orden <<key>>
+  correlativo
+  numero_documento
+  fecha_documento
+  estado
+  fecha_creacion
+}
+
+entity ORDEN_DETALLE <<weak>> {
+  id_detalle <<key>>
+  cantidad_esperada
+  garantia_dias
+  cantidad_recibida
+}
+
+entity SALIDA_BODEGA {
+  id_salida <<key>>
+  fecha_hora
+}
+
+entity SALIDA_DETALLE <<weak>> {
+  id_detalle <<key>>
+  cantidad
+}
+
+entity INV_TECNICO {
+  id_inventario <<key>>
+  cantidad
+  fecha_actualizacion
+}
+
 ' ---------------------------------------------------------------------------
 ' RELACIONES
 ' ---------------------------------------------------------------------------
@@ -129,39 +164,27 @@ relationship Cataloga {
 }
 relationship Registra {
 }
-
-' M:N con atributo propio (usuario_rol)
 relationship Tiene_rol {
   fecha_asignacion
 }
-
-' Tipificación de cada unidad
 relationship Clasifica {
 }
 relationship Almacena {
 }
-
-' M:N con atributos propios (stock_consumible)
 relationship Stock {
   cantidad_disponible
   umbral_minimo
 }
-
-' Relación identificadora de la entidad débil HISTORIAL_ESTADO
 relationship Tiene_historial <<identifying>> {
 }
 relationship Modifica {
 }
-
-' Transferencias entre empresas (roles origen/destino)
 relationship Transf_origen {
 }
 relationship Transf_destino {
 }
 relationship Transf_registra {
 }
-
-' Movimientos de inventario
 relationship Mov_ejecuta {
 }
 relationship Mov_tipo {
@@ -176,13 +199,38 @@ relationship Mov_emp_origen {
 }
 relationship Mov_emp_destino {
 }
-
-' Auditoría
 relationship Genera {
 }
 
+relationship Suministra {
+}
+relationship Emite {
+}
+relationship Recibe_OI {
+}
+relationship Registra_OI {
+}
+relationship Tiene_detalle_OI <<identifying>> {
+}
+relationship Detalla_tipo {
+}
+relationship Despacha {
+}
+relationship Recibe_salida {
+}
+relationship Tiene_detalle_salida <<identifying>> {
+}
+relationship Asigna_unidad {
+}
+relationship Asigna_consumible {
+}
+relationship Custodia {
+}
+relationship Saldo_tipo {
+}
+
 ' ---------------------------------------------------------------------------
-' CONEXIONES (cardinalidades)
+' CONEXIONES
 ' ---------------------------------------------------------------------------
 EMPRESA -1- Emplea
 Emplea -N- USUARIO
@@ -241,4 +289,43 @@ Mov_emp_destino -N- MOVIMIENTO_INV
 
 USUARIO -1- Genera
 Genera -N- LOG_AUDITORIA
+
+PROVEEDOR -N- Suministra
+Suministra -M- TIPO_EQUIPO
+
+PROVEEDOR -1- Emite
+Emite -N- ORDEN_INGRESO
+
+BODEGA -1- Recibe_OI
+Recibe_OI -N- ORDEN_INGRESO
+
+USUARIO -1- Registra_OI
+Registra_OI -N- ORDEN_INGRESO
+
+ORDEN_INGRESO =1= Tiene_detalle_OI
+Tiene_detalle_OI -N- ORDEN_DETALLE
+
+TIPO_EQUIPO -1- Detalla_tipo
+Detalla_tipo -N- ORDEN_DETALLE
+
+BODEGA -1- Despacha
+Despacha -N- SALIDA_BODEGA
+
+USUARIO -1- Recibe_salida
+Recibe_salida -N- SALIDA_BODEGA
+
+SALIDA_BODEGA =1= Tiene_detalle_salida
+Tiene_detalle_salida -N- SALIDA_DETALLE
+
+UNIDAD_EQUIPO -1- Asigna_unidad
+Asigna_unidad -N- SALIDA_DETALLE
+
+TIPO_EQUIPO -1- Asigna_consumible
+Asigna_consumible -N- SALIDA_DETALLE
+
+USUARIO -1- Custodia
+Custodia -N- INV_TECNICO
+
+TIPO_EQUIPO -1- Saldo_tipo
+Saldo_tipo -N- INV_TECNICO
 @endchen

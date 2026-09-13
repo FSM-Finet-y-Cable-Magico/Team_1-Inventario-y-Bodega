@@ -1,5 +1,5 @@
 @startuml CU59-exc-otra-bodega-o-estado
-title CU-59 — excepción: equipo existente pero no disponible en la bodega seleccionada
+title CU-59 — Validando número de serie en salida de bodega (excepción: equipo existente pero no disponible en la bodega seleccionada)
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false

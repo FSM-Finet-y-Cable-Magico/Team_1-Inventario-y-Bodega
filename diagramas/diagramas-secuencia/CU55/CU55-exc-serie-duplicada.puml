@@ -1,5 +1,5 @@
 @startuml CU55-NumerosSerieRecepcion-Exc-SerieDuplicada
-title CU-55 — Ingresando números de serie (excepción: número de serie ya registrado)
+title CU-55 — Ingresando números de serie en recepción de equipos (excepción: número de serie ya registrado)
 
 skinparam style strictuml
 skinparam monochrome true

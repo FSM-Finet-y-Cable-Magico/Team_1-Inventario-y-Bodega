@@ -1,5 +1,5 @@
 @startuml CU60-exc-stock-insuficiente
-title CU-60 — excepción: stock insuficiente
+title CU-60 — Registrando salida de consumibles de bodega a técnico (excepción: stock insuficiente)
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false

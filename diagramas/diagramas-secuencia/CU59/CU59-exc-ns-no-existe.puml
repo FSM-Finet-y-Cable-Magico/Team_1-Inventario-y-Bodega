@@ -1,5 +1,5 @@
 @startuml CU59-exc-ns-no-existe
-title CU-59 — excepción: número de serie no existe
+title CU-59 — Validando número de serie en salida de bodega (excepción: número de serie no existe)
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
