@@ -39,11 +39,11 @@ activate view
 
 view -> view : Muestra la sección de NS\ncon el contador 0 / cantidad
 
-loop por cada unidad física recibida
+note over view : inicio loop\n(por cada unidad física recibida)
   user -> view : Ingresa un NS y pulsa "Agregar"
   view -> view : Valida formato /^[A-Z0-9-]{4,30}$/\ny que no esté repetido en el listado
   view --> user : Acepta el NS y actualiza\nel contador N / cantidad
-end
+note over view : término loop
 
 note right of view
   "Guardar recepción" permanece
@@ -64,7 +64,7 @@ tent --> svc : tipo (requiere_serie_individual = true)
 
 svc -> svc : numeros_serie.length == cantidad_recibida\n(si no, Excepción 3)
 
-loop por cada NS
+note over svc : inicio loop\n(por cada NS)
   svc -> cat : validarFormatoSerialNumber(ns)
   activate cat
   cat --> svc : formato válido
@@ -72,17 +72,17 @@ loop por cada NS
 
   svc -> uent : SELECT * FROM unidad_equipo\nWHERE numero_serie = ?
   uent --> svc : sin coincidencias
-end
+note over svc : término loop
 
 svc -> qr : startTransaction()
 activate qr
 
 qr -> odet : UPDATE orden_ingreso_detalle\nSET cantidad_recibida = cantidad_recibida + ?
 
-loop por cada NS
+note over qr : inicio loop\n(por cada NS)
   qr -> uent : INSERT INTO unidad_equipo\n(numero_serie, estado='En bodega',\nid_empresa, id_bodega_actual,\nfecha_adquisicion, fecha_venc_garantia,\nproveedor)
   uent --> qr : unidad creada
-end
+note over qr : término loop
 
 qr -> oing : UPDATE orden_ingreso SET estado = ?
 qr -> oing :COMMIT (sobre la orden_ingreso)

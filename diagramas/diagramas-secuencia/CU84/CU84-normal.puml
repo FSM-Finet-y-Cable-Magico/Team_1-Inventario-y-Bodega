@@ -62,7 +62,7 @@ deactivate rent
 orm --> svc : datos para validar
 deactivate orm
 
-group Validaciones por cada ítem del body
+note over svc : inicio loop\n(validaciones por cada ítem del body)
   svc -> svc : (A) el NS pertenece al listado\ndel préstamo seleccionado
   activate svc
   deactivate svc
@@ -72,7 +72,7 @@ group Validaciones por cada ítem del body
   svc -> svc : (C) cantidad_retornada + lo pedido\n(incluido lo repetido en el mismo envío)\n≤ cantidad prestada
   activate svc
   deactivate svc
-end
+note over svc : término loop
 
 svc -> svc : Sin errores → continúa el registro\ndel retorno (CU-82)
 activate svc

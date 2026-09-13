@@ -24,27 +24,85 @@ actor "Administrador de bodega" as user
 participant "V_Salidas" as view
 participant "C_UnitsController" as uctrl
 participant "C_UnitsService" as usvc
+participant "C_SalidasController" as ctrl
 participant "C_SalidasService" as svc
+participant "C_TypeORM" as orm
 participant "unidad_equipo" as uent
 participant "salida_bodega" as sald
 
-user -> view : Ingresa NS inexistente y agrega
+user -> view : Ingresa un NS inexistente y lo agrega
 activate view
-view -> uctrl : GET /api/unidades/serie/{ns}?id_bodega=N (validación en vivo, CU-59)
+
+view -> uctrl : GET /api/unidades/serie/{ns}?id_bodega=N\n(validación en vivo, CU-59)
+activate uctrl
+
 uctrl -> usvc : verificarSerie(ns, id_empresa, id_bodega)
-usvc -> uent : SELECT unidad WHERE numero_serie AND id_empresa
-sald --> usvc : sin filas
-usvc --> view : 200 { existe: false, disponible: false }
+activate usvc
+
+usvc -> uent : SELECT * FROM unidad_equipo\nWHERE numero_serie = ? AND id_empresa = ?
+activate uent
+uent --> usvc : sin filas
+deactivate uent
+
+usvc --> uctrl : 200 { existe: false, disponible: false }
+deactivate usvc
+
+uctrl --> view : 200
+deactivate uctrl
+
 view --> user : Marca el NS en rojo:\n'Número de serie no encontrado.'\nDeshabilita Confirmar
 
-user -> view : Confirma de todos modos (o quedaba un NS inválido)
-view -> svc : POST /api/salidas (re-valida de verdad)
+user -> view : Confirma de todos modos\n(quedaba un NS inválido en el listado)
+
+view -> ctrl : POST /api/salidas (re-valida de verdad)
+activate ctrl
+
+ctrl -> svc : registrarSalida(dto, idEmpresa, actor)
 activate svc
-svc -> uent : SELECT unidad WHERE numero_serie AND id_empresa (transacción)
-sald --> svc : sin filas
-svc --> view : 404 NotFoundException('Número de serie no encontrado.')
-svc -> sald :ROLLBACK total (nada queda aplicado) (sobre la salida_bodega)
+
+svc -> orm : QueryRunner.connect()\n+ startTransaction()
+activate orm
+orm --> svc : Transacción iniciada
+deactivate orm
+
+svc -> orm : manager.save(SalidaBodega, { ... })
+activate orm
+orm -> sald : INSERT INTO salida_bodega
+activate sald
+sald --> orm : salida #N
+deactivate sald
+orm --> svc : salida #N
+deactivate orm
+
+svc -> orm : procesarItemUnidad(...)\nfindOne(UnidadEquipo, { numero_serie, id_empresa })
+activate orm
+orm -> uent : SELECT * FROM unidad_equipo\nWHERE numero_serie = ? AND id_empresa = ?
+activate uent
+uent --> orm : sin filas
+deactivate uent
+orm --> svc : null
+deactivate orm
+
+svc -> svc : unidad no encontrada -> Excepción (CU-59)
+activate svc
 deactivate svc
+
+svc -> orm : QueryRunner.rollbackTransaction()
+activate orm
+orm --> svc : Rollback total (nada queda aplicado)
+deactivate orm
+
+svc -> orm : QueryRunner.release()
+activate orm
+orm --> svc : Conexión liberada
+deactivate orm
+
+svc --> ctrl : throw NotFoundException\n('Número de serie no encontrado.')
+deactivate svc
+
+ctrl --> view : 404 Not Found
+deactivate ctrl
+
 view --> user : Banner de error con el mensaje exacto
 deactivate view
 @enduml

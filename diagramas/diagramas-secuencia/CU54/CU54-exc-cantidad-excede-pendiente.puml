@@ -25,6 +25,7 @@ actor "Admin/AdminBodega/\nSuperusuario" as user
 participant "V_OrdenIngresoDetalle" as view
 participant "C_OrdenesIngresoController" as ctrl
 participant "C_OrdenesIngresoService" as svc
+participant "C_TypeORM" as orm
 participant "orden_ingreso" as oing
 participant "orden_ingreso_detalle" as odet
 
@@ -32,6 +33,8 @@ user -> view : Ingresa una cantidad mayor\nal pendiente del ítem\n(p. ej. 99 so
 activate view
 
 view -> view : Validación en cliente (guardarRecepcion):\ncantidad > (esperada - recibida)
+activate view
+deactivate view
 
 note right of view
   El formulario usa `novalidate`: con la
@@ -45,16 +48,33 @@ view --> user : "La cantidad no puede superar\nla cantidad pendiente del ítem."
 
 user -> view : Reintenta (o llamada directa a la API\nsin pasar por la interfaz)
 
-view -> ctrl : POST /api/ordenes-ingreso/{id}/recepcion\n{ items: [ { id_detalle, cantidad_recibida: 99 } ] }
+view -> ctrl : POST /api/ordenes-ingreso/{id}/recepcion\n{ fecha_recepcion, items: [ { id_detalle,\ncantidad_recibida: 99 } ] }
 activate ctrl
 
 ctrl -> svc : registrarRecepcion(id, dto, actor)
 activate svc
 
-svc -> oing : SELECT * FROM orden_ingreso_detalle\nWHERE id_orden = ?
-odet --> svc : detalles[] (esperada 4, recibida 1)
+svc -> orm : findOne(orden_ingreso)\nverificarPertenencia(id, actor)
+activate orm
+orm -> oing : SELECT * FROM orden_ingreso\nWHERE id_orden = ?
+activate oing
+oing --> orm : orden
+deactivate oing
+orm --> svc : orden
+deactivate orm
 
-svc -> svc : 99 > (4 - 1) → Excepción 1
+svc -> orm : find(orden_ingreso_detalle, { id_orden })
+activate orm
+orm -> odet : SELECT * FROM orden_ingreso_detalle\nWHERE id_orden = ?
+activate odet
+odet --> orm : detalles[] (esperada 4, recibida 1)
+deactivate odet
+orm --> svc : detalles[]
+deactivate orm
+
+svc -> svc : 99 > (4 - 1) -> Excepción 1
+activate svc
+deactivate svc
 
 note right of svc
   La validación ocurre ANTES de abrir la
