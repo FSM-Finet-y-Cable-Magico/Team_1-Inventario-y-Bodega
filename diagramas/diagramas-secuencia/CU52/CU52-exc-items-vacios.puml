@@ -1,5 +1,5 @@
 @startuml CU52-OrdenIngreso-Exc-ItemsVacios
-title CU-52 — Registrando orden de ingreso (excepción: listado de ítems vacío o campo obligatorio incompleto)
+title CU-52 — Registrando orden de ingreso desde proveedor (excepción: listado de ítems vacío o campo obligatorio incompleto)
 
 skinparam style strictuml
 skinparam monochrome true

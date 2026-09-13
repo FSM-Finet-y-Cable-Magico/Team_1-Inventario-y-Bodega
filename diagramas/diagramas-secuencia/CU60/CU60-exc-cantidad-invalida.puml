@@ -1,5 +1,5 @@
 @startuml CU60-exc-cantidad-invalida
-title CU-60 — excepción: cantidad cero o negativa
+title CU-60 — Registrando salida de consumibles de bodega a técnico (excepción: cantidad cero o negativa)
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
