@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, In } from 'typeorm';
-import { ConfigService } from '@nestjs/config';
+import { G3ClientService } from '../integraciones/g3/g3-client.service';
 import { UnidadEquipo } from './entities/unidad-equipo.entity';
 import { TipoEquipo } from './entities/tipo-equipo.entity';
 import { Bodega } from '../bodegas/entities/bodega.entity';
@@ -47,7 +47,7 @@ export class UnitsService {
     private readonly dataSource: DataSource,
     private readonly auditoriaService: AuditoriaService,
     private readonly proveedoresService: ProveedoresService,
-    private readonly configService: ConfigService,
+    private readonly g3Client: G3ClientService,
   ) {}
 
   async listarUnidades(
@@ -1503,7 +1503,7 @@ export class UnitsService {
       // Si G3 no responde o no está configurado se degrada a lo persistido por
       // el cierre de instalación (CU-64).
       if (datos.rut) {
-        const clienteG3 = await this.consultarClienteG3(
+        const clienteG3 = await this.g3Client.consultarClientePorRut(
           datos.rut,
           unidad.id_empresa,
         );
@@ -1558,31 +1558,6 @@ export class UnitsService {
 
     // 'En bodega' y 'Dado de baja' no tienen ubicación externa.
     return null;
-  }
-
-  // CU-48: consulta opcional a G3 del cliente por RUT. Timeout corto y sin
-  // excepciones: la ficha muestra lo persistido si G3 no responde.
-  private async consultarClienteG3(
-    rut: string,
-    idEmpresa: number | undefined,
-  ): Promise<any | null> {
-    const baseUrl = this.configService.get<string>('G3_INTEGRACION_URL');
-    const apiKey = this.configService.get<string>('G3_INTEGRACION_API_KEY');
-    if (!baseUrl || !apiKey) return null;
-
-    const url = `${baseUrl.replace(/\/+$/, '')}/clientes/rut/${encodeURIComponent(rut)}?id_empresa=${idEmpresa ?? ''}`;
-    try {
-      const respuesta = await fetch(url, {
-        headers: { 'X-API-KEY': apiKey },
-        signal: AbortSignal.timeout(2000),
-      });
-      if (!respuesta.ok) return null;
-      const cuerpo = await respuesta.json();
-      return cuerpo?.data ?? null;
-    } catch {
-      // Degradación silenciosa: la ubicación se muestra con lo persistido.
-      return null;
-    }
   }
 
   async editarDatos(idUnidad: number, dto: EditarDatosUnidadDto, actor: any) {

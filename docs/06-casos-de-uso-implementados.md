@@ -80,6 +80,7 @@
 | 58 | Inventario personal del técnico (consulta) | `salidas` | `/salidas` (sección) |
 | 59 | Validación de NS en salida (en vivo + transacción) | `salidas`, `inventario/units` | `/salidas` |
 | 60 | Salida de consumibles a técnico | `salidas` | `/salidas` |
+| 61 | Vista móvil de trabajos e inventario del técnico | `salidas` (jornada), `integraciones` (G3) | `/jornada` |
 | 62 | Validación de stock con bloqueo de fila | `salidas` | `/salidas` (banner) |
 | 64 | Acciones atómicas del cierre de instalación (estado + cliente/dirección + materiales + SRV) | `integraciones` (webhook G3), `salidas`, `inventario` | `/unidades/[id]` (ficha) |
 | 68 | Verificación de saldo de consumibles en cierre (pre-check + transacción) | `integraciones` (webhook G3), `salidas` (`InventarioPersonalService`) | `/unidades/[id]` (sin UI propia; el cierre llega por webhook) |

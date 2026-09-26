@@ -13,8 +13,8 @@ no esté reflejado aquí.
 ## Resumen
 
 - **Total de casos de uso:** 96
-- **Implementados:** 79 (CU-01 a CU-46, CU-49 a CU-62, CU-64, CU-68, CU-72, CU-74 a CU-84, CU-85, CU-86, CU-88, CU-89, CU-91) — incluye CU-47, CU-57..62, CU-64 y CU-68, en `dev`/rama `feat/javier-cus`
-- **Pendientes (Incremento 3):** 17 (CU-48, CU-61, CU-63, CU-65, CU-66, CU-67, CU-69, CU-70, CU-71, CU-73, CU-87, CU-90, CU-92 a CU-96) — tickets **sc-139 a sc-157** con responsable asignado (ver columna Notas)
+- **Implementados:** 80 (CU-01 a CU-46, CU-49 a CU-62, CU-64, CU-68, CU-72, CU-74 a CU-84, CU-85, CU-86, CU-88, CU-89, CU-91) — incluye CU-47, CU-57..62, CU-64, CU-68 y CU-61, en `dev`/rama `feat/javier-cus`
+- **Pendientes (Incremento 3):** 16 (CU-63, CU-65, CU-66, CU-67, CU-69, CU-70, CU-71, CU-73, CU-87, CU-90, CU-92 a CU-96) — tickets **sc-139 a sc-157** con responsable asignado (ver columna Notas)
 - **Integración con otros grupos (fuera del conteo de 96):** **sc-158/sc-159** (G8 CRM, acuerdo v1 ratificado 24-sept-2026 · Javier) — sc-158 (P0) implementado en `feat/javier-cus`; sc-159 (P1) pendiente. **sc-113** (G3, implementado)
 
 ## Leyenda
@@ -121,7 +121,7 @@ no esté reflejado aquí.
 | CU-58 | Manteniendo inventario personal del técnico | [x] Implementado | Mergeado a `dev` |
 | CU-59 | Validando número de serie en salida de bodega | [x] Implementado | Mergeado a `dev` |
 | CU-60 | Registrando salida de consumibles de bodega a técnico | [x] Implementado | Mergeado a `dev` |
-| CU-61 | Consultando vista móvil de trabajos e inventario del técnico | [ ] Pendiente | Incremento 3 · sc-140 (Javier) |
+| CU-61 | Consultando vista móvil de trabajos e inventario del técnico | [x] Implementado | Incremento 3 · sc-140 (Javier) — rama `feat/javier-cus` (pendiente PR). `GET /tecnicos/me/jornada` (trabajos G3 + inventario CU-58) y página `/jornada` |
 | CU-62 | Validando stock disponible en bodega para consumibles | [x] Implementado | Mergeado a `dev` |
 
 ### Cierre de trabajo e instalación en cliente

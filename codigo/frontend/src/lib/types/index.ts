@@ -677,3 +677,31 @@ export interface InventarioTecnico {
 		unidad_medida: string | null;
 	}[];
 }
+
+// CU-61: vista móvil del técnico — trabajos del día desde G3 + inventario personal
+export interface TrabajoDelDia {
+	id_ot: number | null;
+	tipo_ot: string | null;
+	estado: string | null;
+	prioridad: string | null;
+	fecha_programada: string | null;
+	observaciones: string | null;
+	cliente: {
+		id_cliente: number | null;
+		rut: string | null;
+		nombre_completo: string | null;
+		telefono: string | null;
+	};
+	direccion: {
+		direccion: string | null;
+		comuna: string | null;
+		referencia: string | null;
+	};
+}
+
+export interface JornadaTecnico {
+	fecha: string;
+	trabajos_estado: 'OK' | 'NO_DISPONIBLE';
+	trabajos: TrabajoDelDia[];
+	inventario: InventarioTecnico;
+}

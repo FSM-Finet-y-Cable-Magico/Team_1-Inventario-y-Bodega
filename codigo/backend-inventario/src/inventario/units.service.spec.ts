@@ -10,7 +10,7 @@ function crearServicio(
   opciones: {
     usuario?: Record<string, unknown> | null;
     prestamo?: Record<string, unknown> | null;
-    g3?: { url?: string; key?: string };
+    clienteG3?: Record<string, unknown> | null;
   } = {},
 ) {
   const usuarioRepo: Doble = {
@@ -26,12 +26,10 @@ function crearServicio(
       return { findOne: jest.fn().mockResolvedValue(null) };
     }),
   };
-  const configService = {
-    get: jest.fn((clave: string) => {
-      if (clave === 'G3_INTEGRACION_URL') return opciones.g3?.url;
-      if (clave === 'G3_INTEGRACION_API_KEY') return opciones.g3?.key;
-      return undefined;
-    }),
+  const g3Client = {
+    consultarClientePorRut: jest
+      .fn()
+      .mockResolvedValue(opciones.clienteG3 ?? null),
   };
 
   const service = new UnitsService(
@@ -41,9 +39,9 @@ function crearServicio(
     dataSource as never,
     {} as never,
     {} as never,
-    configService as never,
+    g3Client as never,
   );
-  return { service };
+  return { service, g3Client };
 }
 
 const UNIDAD = (overrides: Record<string, unknown> = {}) =>
@@ -56,12 +54,6 @@ const UNIDAD = (overrides: Record<string, unknown> = {}) =>
   }) as unknown as UnidadEquipo;
 
 describe('UnitsService — CU-48 (ubicación externa en la ficha)', () => {
-  const fetchOriginal = global.fetch;
-
-  afterEach(() => {
-    global.fetch = fetchOriginal;
-  });
-
   it('Asignado a técnico: nombre y RUT del usuario', async () => {
     const { service } = crearServicio({
       usuario: { id_usuario: 45, nombre_completo: 'Pedro Técnico', rut: '11111111-1' },
@@ -129,27 +121,21 @@ describe('UnitsService — CU-48 (ubicación externa en la ficha)', () => {
   });
 
   it('Instalado en cliente: G3 completa los campos que faltan', async () => {
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        data: {
-          rut: '12345678-5',
-          nombre_completo: 'María Soto',
-          direcciones: [{ direccion: 'Los Aromos 123', comuna: 'Valparaíso' }],
-        },
-      }),
-    }) as never;
-    const { service } = crearServicio({
-      g3: { url: 'https://g3.test/api/integraciones/', key: 'g3-key' },
+    const { service, g3Client } = crearServicio({
+      clienteG3: {
+        rut: '12345678-5',
+        nombre_completo: 'María Soto',
+        direcciones: [{ direccion: 'Los Aromos 123', comuna: 'Valparaíso' }],
+      },
     });
 
     const ubicacion = await service.resolverUbicacionExterna(
       UNIDAD({ estado: 'Instalado en cliente', clienteRut: '12345678-5' }),
     );
 
-    expect(global.fetch).toHaveBeenCalledWith(
-      'https://g3.test/api/integraciones/clientes/rut/12345678-5?id_empresa=1',
-      expect.objectContaining({ headers: { 'X-API-KEY': 'g3-key' } }),
+    expect(g3Client.consultarClientePorRut).toHaveBeenCalledWith(
+      '12345678-5',
+      1,
     );
     expect(ubicacion).toEqual({
       tipo: 'CLIENTE',
@@ -163,11 +149,8 @@ describe('UnitsService — CU-48 (ubicación externa en la ficha)', () => {
     });
   });
 
-  it('Instalado en cliente: si G3 falla, degrada mostrando lo persistido', async () => {
-    global.fetch = jest.fn().mockRejectedValue(new Error('timeout')) as never;
-    const { service } = crearServicio({
-      g3: { url: 'https://g3.test/api/integraciones', key: 'g3-key' },
-    });
+  it('Instalado en cliente: si G3 no responde, degrada mostrando lo persistido', async () => {
+    const { service } = crearServicio({ clienteG3: null });
 
     const ubicacion = await service.resolverUbicacionExterna(
       UNIDAD({
