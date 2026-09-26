@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import {
 		getPrestamos, getPrestamoDetalle, registrarPrestamo, registrarRetornoPrestamo,
-		getUnits, getWarehouses, getWarehouseStock, getEmpresas
+		getUnits, getWarehouses, getWarehouseStock, getEmpresas, esAvisoGarantia
 	} from '$lib/api/index';
 	import { userRoles } from '$lib/stores/auth';
 	import type { PrestamoExterno, PrestamoDetalleCompleto, UnidadEquipo, Bodega, Empresa } from '$lib/types';
@@ -10,6 +10,7 @@
 	import Modal from '$lib/components/Modal.svelte';
 	import FormField from '$lib/components/FormField.svelte';
 	import Badge from '$lib/components/Badge.svelte';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import { Plus, RotateCw, Eye, Trash2, PackageCheck } from '@lucide/svelte';
 
@@ -285,7 +286,11 @@
 		return porItem;
 	}
 
-	async function handleRetorno() {
+	// CU-95: aviso de garantía vigente (409 del backend); "Continuar sin garantía"
+	// reenvía con confirmación explícita y "Cancelar" no envía nada (Excepción 1)
+	let avisoGarantia = $state<{ mensaje: string; continuar: () => void } | null>(null);
+
+	async function handleRetorno(forzarAvisoGarantia = false) {
 		if (!retornoPrestamo) return;
 		retornoError = '';
 		erroresPorItem = {};
@@ -302,12 +307,18 @@
 			const resultado = await registrarRetornoPrestamo(retornoPrestamo.id_prestamo, {
 				fecha_retorno: retornoForm.fecha_retorno,
 				observacion: retornoForm.observacion.trim() || undefined,
-				items
+				items,
+				// CU-95: el actor eligió "Continuar sin garantía"
+				...(forzarAvisoGarantia ? { forzar_aviso_garantia: true } : {})
 			});
 			showRetorno = false;
 			success = resultado?.message ?? 'Retorno registrado';
 			await load();
 		} catch (err: unknown) {
+			if (esAvisoGarantia(err)) {
+				avisoGarantia = { mensaje: err.message, continuar: () => handleRetorno(true) };
+				return;
+			}
 			retornoError = err instanceof Error ? err.message : 'Error al registrar el retorno';
 			// CU-84: marcar en la lista los ítems que el sistema rechazó
 			erroresPorItem = repartirErrores(retornoError);
@@ -692,3 +703,19 @@
 		</div>
 	</form>
 </Modal>
+
+<!-- CU-95: aviso de garantía vigente al pasar a 'En revisión'. Cancelar no envía nada (Excepción 1) -->
+<ConfirmDialog
+	open={avisoGarantia !== null}
+	title="Garantía vigente"
+	message={avisoGarantia?.mensaje ?? ''}
+	confirmlabel="Continuar sin garantía"
+	cancellabel="Cancelar"
+	variant="destructive"
+	onconfirm={() => {
+		const continuar = avisoGarantia?.continuar;
+		avisoGarantia = null;
+		continuar?.();
+	}}
+	oncancel={() => (avisoGarantia = null)}
+/>

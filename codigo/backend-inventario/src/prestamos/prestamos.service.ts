@@ -19,6 +19,10 @@ import { TipoEquipo } from '../inventario/entities/tipo-equipo.entity';
 import { Usuario } from '../usuarios/entities/usuario.entity';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { EMPRESAS } from '../companies/companies.service';
+import {
+  exigirConfirmacionGarantia,
+  auditarAvisoGarantiaIgnorado,
+} from '../inventario/aviso-garantia';
 
 const ESTADO_EN_BODEGA = 'En bodega';
 const ESTADO_PRESTAMO = 'En préstamo externo';
@@ -698,6 +702,28 @@ export class PrestamosService {
     }
 
     if (errores.length > 0) throw new BadRequestException(errores.join(' '));
+
+    // CU-95: las unidades retornadas pasan a 'En revisión'; si alguna tiene
+    // garantía vigente se muestra el aviso (409) salvo confirmación explícita
+    const idsARetornar = aRetornar
+      .map(({ detalle }) => detalle.id_unidad)
+      .filter((id): id is number => id !== null);
+    const unidadesARetornar = idsARetornar.length
+      ? await this.unidadRepository.find({
+          where: { id_unidad: In(idsARetornar) },
+          relations: { tipoEquipo: true },
+        })
+      : [];
+    const vigentes = exigirConfirmacionGarantia(
+      unidadesARetornar,
+      dto.forzar_aviso_garantia,
+    );
+    await auditarAvisoGarantiaIgnorado(
+      this.auditoriaService,
+      vigentes,
+      ESTADO_REVISION,
+      actor.id_usuario,
+    );
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();

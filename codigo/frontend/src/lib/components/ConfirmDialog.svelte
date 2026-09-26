@@ -28,7 +28,7 @@
 	>
 		<div class="bg-white rounded-lg border border-border shadow-lg w-full max-w-sm mx-4 p-6">
 			<h3 class="text-base font-semibold text-foreground mb-2">{title}</h3>
-			<p class="text-sm text-muted mb-6">{message}</p>
+			<p class="text-sm text-muted mb-6 whitespace-pre-line">{message}</p>
 			<div class="flex justify-end gap-3">
 				<button
 					onclick={() => oncancel?.()}

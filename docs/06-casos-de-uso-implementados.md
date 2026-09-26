@@ -92,6 +92,7 @@
 | 88 | Reporte de garantías | `reportes`, `inventario`, `auditoria` | `/reportes` (pestaña Garantías) |
 | 89 | Reporte de inventario actual de técnicos | `reportes`, `salidas`, `inventario`, `auditoria` | `/reportes` (pestaña Inventario de técnicos) |
 | 91 | Reporte de consumo de consumibles | `reportes`, `salidas`, `auditoria` | `/reportes` (pestaña Consumo de consumibles) |
+| 95 | Aviso de garantía vigente al registrar Dado de baja / En revisión (Continuar sin garantía / Cancelar) | `inventario/units` (`aviso-garantia.ts`), `bajas`, `prestamos`, `auditoria` | `/unidades/[id]`, `/unidades/devolucion`, `/prestamos` |
 | 78 | Baja definitiva de equipo (directa o por solicitud del técnico) | `bajas`, `inventario/units`, `companies` | `/unidades/[id]`, `/bajas`, `Header` (campana) |
 | 79 | Acciones automáticas posteriores a la baja (exclusión del inventario activo) | `inventario/units`, `bodegas`, `companies` | `/dashboard`, `/bodegas`, `/unidades` (sin UI propia) |
 | 80 | Donación de equipos dados de baja + resumen en PDF | `donaciones` | `/bajas` (pestaña Donaciones) |
