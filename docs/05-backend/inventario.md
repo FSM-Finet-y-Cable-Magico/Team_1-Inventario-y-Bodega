@@ -87,6 +87,8 @@ Ambos usan `@UseGuards(AuthGuard('jwt'), CompanyIsolationGuard, RolesGuard)`.
 | GET | `/api/unidades/:serialNumber/historial` | 4 roles | CU-36/CU-37 ver historial |
 | PATCH | `/api/unidades/:id/cambiar-estado` | 4 roles | CU-35/36/40/47 cambio de estado |
 | PATCH | `/api/unidades/:id` | `ADMIN`, `SUPERUSUARIO`, `ADMIN_BODEGA` | CU-34 editar datos |
+| GET | `/api/unidades/devolucion/:numeroSerie` | 4 roles | CU-71 buscar equipo por NS para la devolución |
+| POST | `/api/unidades/:id/devolucion` | 4 roles | CU-71 registrar devolución de equipo desde cliente |
 | POST | `/api/unidades/:id/resultado-revision` | `ADMIN_BODEGA`, `ADMIN`, `SUPERUSUARIO` | CU-72 registrar resultado de revisión |
 
 
@@ -158,6 +160,21 @@ Constante: `MAC_REGEX = /^([0-9A-Fa-f]{2}[:\\-]){5}[0-9A-Fa-f]{2}$/`.
   resuelve nombres de usuarios y empresa. Sin historial: unidad inexistente → **CU-33/CU-37 Excepción
   1** `'Número de serie no encontrado.'`; existente → `'El dispositivo se encuentra en su estado
   inicial de fábrica...'`.
+- **`consultarParaDevolucion` (CU-71):** busca la unidad por `numero_serie` + empresa (404
+  `'El equipo solicitado no existe.'`). **Excepción 1:** si el estado no es `'Instalado en cliente'`
+  → `'Transición de estado no permitida para este equipo. Estado actual: [ESTADO].'`. Devuelve NS,
+  tipo, marca, modelo, `nombre_cliente` y `direccion_instalacion`. El cliente y la dirección se leen
+  (helper privado `buscarClienteInstalacion`) del último registro de `integracion_cierre` de la
+  empresa cuyo `acciones_aplicadas` contiene esa serie con `estado_nuevo: 'Instalado en cliente'`
+  (`payload.cliente.nombre_completo`, `payload.direccion.direccion` + `comuna`); si no hay datos,
+  quedan `null` y el front muestra lo disponible ("No registrado").
+- **`registrarDevolucion` (CU-71):** misma precondición/Excepción 1. Valida `fecha_devolucion`
+  (YYYY-MM-DD, no futura según `America/Santiago`), `estado_visual` ∈ {`Sin daño visible`, `Daño
+  leve`, `Daño grave`, `No enciende`, `Incompleto`} (constante `ESTADOS_VISUALES_DEVOLUCION`),
+  `nombre_tecnico_retiro` obligatorio y bodega de destino activa de la empresa (reutiliza
+  `validarDestinoOperativo`). Transacción `QueryRunner`: estado → `'En revisión'`,
+  `id_bodega_actual` = bodega destino, historial con cliente, dirección, fecha DD/MM/YYYY, estado
+  visual, técnico y bodega. Audita `DEVOLUCION_CLIENTE` sobre `unidad_equipo`.
 - **`registrarResultadoRevision` (CU-72):** precondición estado `'En revisión'` (mensaje
   `'Transición de estado no permitida para este equipo. Estado actual: [ESTADO].'`, distinto al de
   CU-35). Tres resultados: (A) `OPERATIVO` → bodega destino activa + ubicación física (≤60,
@@ -206,5 +223,7 @@ Constante: `MAC_REGEX = /^([0-9A-Fa-f]{2}[:\\-]){5}[0-9A-Fa-f]{2}$/`.
 CU-24..CU-31 (catálogo y ficha técnica), CU-32..CU-40 (unidades, estados, garantía, historial,
 diagnóstico). Detalle exacto de cada restricción en los diagramas de secuencia
 (`diagramas/diagramas-secuencia/CU24/` … `CU40/`).
+
+CU-71 (devolución de equipo desde cliente → `'En revisión'`).
 
 CU-72 (resultado de revisión de equipo: operativo/reparación externa/baja).

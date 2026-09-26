@@ -288,6 +288,18 @@ export interface EquipoEnRevision {
 	diagnostico_tecnico: string | null;
 }
 
+// CU-71: datos del equipo mostrados al ingresar el NS en la devolución
+export interface EquipoDevolucion {
+	id_unidad: number;
+	numero_serie: string;
+	tipo: string | null;
+	marca: string | null;
+	modelo: string | null;
+	estado: string;
+	nombre_cliente: string | null;
+	direccion_instalacion: string | null;
+}
+
 export interface Bodega {
 	id_bodega: number;
 	id_empresa: number | null;
