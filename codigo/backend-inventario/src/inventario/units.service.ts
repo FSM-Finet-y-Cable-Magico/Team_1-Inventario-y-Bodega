@@ -1442,6 +1442,12 @@ export class UnitsService {
       numero_poste: unidad.numeroPoste ?? null,
       id_cliente_instalado: unidad.id_cliente_instalado ?? null,
       id_caja_nap: unidad.id_caja_nap ?? null,
+      // CU-64: cliente/dirección persistidos del cierre de instalación y SRV vigente.
+      cliente_rut: unidad.clienteRut ?? null,
+      cliente_nombre: unidad.clienteNombre ?? null,
+      direccion_instalacion: unidad.direccionInstalacion ?? null,
+      comuna_instalacion: unidad.comunaInstalacion ?? null,
+      srv: unidad.srv ?? null,
     };
   }
 

@@ -70,9 +70,29 @@ otros datos de activación. Respuestas envueltas `{ success, data }`.
 - **Correlación G8 (sc-158):** al terminar el cierre se completa por `id_ot` + `id_empresa` la
   activación de G8 que estuviera `PENDIENTE_CIERRE` (crea las asignaciones activas), o se deja un
   registro `PENDIENTE_ACTIVACION` si el cierre declaró `equipos_instalados` y aún no hay activación.
-- **Materiales:** quedan registrados en el payload (`materiales_pendientes_descuento: true`);
-  la validación de saldo (CU-68) y el descuento del inventario personal (CU-58) se implementan
-  con esos CUs — acuerdo Opción A con G3 (saldo insuficiente = ajuste, nunca rechazo del cierre).
+- **CU-64 (acciones atómicas · sc-142), dentro de la misma transacción:**
+  - **(B) cliente/dirección:** al instalar una unidad se persisten `cliente_rut`, `cliente_nombre`,
+    `direccion_instalacion`, `comuna_instalacion` y el `srv` en `unidad_equipo` (base de CU-48/71/73/87;
+    G3 identifica por RUT).
+  - **(C) materiales:** `materiales[]` se descuenta del inventario personal del técnico
+    (`InventarioPersonalService.descontarHasta`, bloqueo de fila). Técnico = `payload.id_tecnico`
+    o, si no viene, el `id_tecnico_asignado` de las unidades del cierre.
+  - **(D) SRV:** para `tipo_ot = INSTALACION` se genera `SRV-YYYY-XXXXX` con secuencia atómica por
+    empresa/año (`secuencia_srv`); un re-cierre de la misma OT conserva el SRV original. Viaja en
+    `data.srv` de la respuesta 2xx.
+  - **(E) trazabilidad:** `integracion_cierre` guarda `srv`, `id_tecnico`, `materiales_aplicados`
+    (`{descontados, ajustes}`), `acciones_aplicadas` y `discrepancias`.
+  - **E1 (fallo):** rollback total del `QueryRunner` y error específico (5xx → G3 reintenta);
+    los problemas por ítem siguen siendo discrepancias con 2xx.
+- **CU-68 (saldo de consumibles · sc-146):**
+  - `InventarioPersonalService.validarSaldo(...)` (pre-check, mensaje exacto de E1) bloquea el flujo
+    humano de confirmación; `detectarInsuficientes(...)` reporta todos los consumibles faltantes.
+  - En el **webhook** el saldo insuficiente **nunca rechaza**: se descuenta lo disponible, el
+    faltante queda en `materiales.ajustes` y como discrepancia `SALDO_INSUFICIENTE_AJUSTADO`
+    (acuerdo Opción A con G3). `cantidad <= 0` es payload inválido (400).
+- **Respuesta 2xx del cierre (sc-142):** `data = {duplicado, id_ot, clave_idempotencia,
+  estado_proceso, srv, id_tecnico, acciones_aplicadas, discrepancias, materiales{descontados,ajustes}}`
+  (el antiguo flag `materiales_pendientes_descuento` fue retirado).
 - Sin `log_auditoria` en el procesamiento (no hay usuario actor); la trazabilidad vive en
   `integracion_cierre`/`integracion_activacion` (payload + discrepancias + acciones) y en el
   historial de estados.
@@ -111,14 +131,20 @@ otros datos de activación. Respuestas envueltas `{ success, data }`.
   `id_servicio_externo`, `id_contrato_externo`, `id_ot`, `fecha_instalacion`, `fecha_retiro`,
   `activa`, `origen` (`ACTIVACION_G8`), `trace_id`. Los IDs de G8 son referencias externas
   **sin FK**. Índices: `UNIQUE(event_id, id_unidad)` + `(id_empresa, id_servicio_externo, activa)`.
-- Las tres se declaran en `scripts/migrar.ts` (`CREATE TABLE IF NOT EXISTS`) y `database/init.sql`.
+- `secuencia_srv` (CU-64): contador por `(id_empresa, anio)` del identificador `SRV-YYYY-XXXXX`.
+- `unidad_equipo` (CU-64): columnas `cliente_rut`, `cliente_nombre`, `direccion_instalacion`,
+  `comuna_instalacion`, `srv` con la ubicación vigente cuando la unidad está instalada.
+- Las tablas anteriores se declaran en `scripts/migrar.ts` (`CREATE TABLE IF NOT EXISTS` /
+  `ADD COLUMN IF NOT EXISTS`) y `database/init.sql`.
 - Auditoría de integración: la trazabilidad vive en las tablas de eventos (patrón
   `integracion_cierre`), no en `log_auditoria` (no hay usuario JWT en el flujo S2S).
 
 ## 5. Pendientes
 
 - [x] Diagnóstico en `RETIRADO_PARA_DIAGNOSTICO`: acordado con G3 (08-sept) — `categoria_falla` del cierre.
-- [ ] Descuento/validación de materiales (CU-58/CU-68 — sc-142/sc-146).
+- [x] Descuento/validación de materiales (CU-64/CU-68 · sc-142/sc-146).
+- [ ] Coordinar con G3 que el payload incluya `id_tecnico` (hoy se infiere de las unidades; sin
+      unidades ni `id_tecnico`, los materiales quedan como discrepancia `TECNICO_NO_IDENTIFICADO`).
 - [ ] `GET /tecnicos/{id}/inventario-personal` (después de CU-58).
 - [x] Al mergear: definir la key real en Railway y enviar a G3 la URL pública del backend.
       (La key **T1→G3** es el mismo valor `fd2e2646...` que G3 nos dio para consumir sus

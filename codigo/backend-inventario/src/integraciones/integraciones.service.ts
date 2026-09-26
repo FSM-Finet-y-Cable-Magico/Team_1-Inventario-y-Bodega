@@ -6,13 +6,21 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, EntityManager, Repository } from 'typeorm';
+import {
+  DataSource,
+  EntityManager,
+  IsNull,
+  Not,
+  Repository,
+} from 'typeorm';
 import { IntegracionCierre } from './entities/cierre-integracion.entity';
 import { IntegracionActivacion } from './entities/integracion-activacion.entity';
 import { AsignacionEquipoServicio } from './entities/asignacion-equipo-servicio.entity';
 import { UnidadEquipo } from '../inventario/entities/unidad-equipo.entity';
 import { HistorialEstado } from '../inventario/entities/historial-estado.entity';
+import { TipoEquipo } from '../inventario/entities/tipo-equipo.entity';
 import { CatalogService } from '../inventario/catalog.service';
+import { InventarioPersonalService } from '../salidas/inventario-personal.service';
 import { IntegracionContexto } from './guards/api-key.guard';
 
 // sc-113: mapeo de las acciones semánticas que emite G3 en el cierre de OT
@@ -83,11 +91,12 @@ export class IntegracionesService {
     private readonly activacionRepository: Repository<IntegracionActivacion>,
     @InjectRepository(AsignacionEquipoServicio)
     private readonly asignacionRepository: Repository<AsignacionEquipoServicio>,
-    @InjectRepository(UnidadEquipo)
-    private readonly unitRepository: Repository<UnidadEquipo>,
-    private readonly catalogService: CatalogService,
-    private readonly dataSource: DataSource,
-  ) {}
+        @InjectRepository(UnidadEquipo)
+        private readonly unitRepository: Repository<UnidadEquipo>,
+        private readonly catalogService: CatalogService,
+        private readonly inventarioPersonalService: InventarioPersonalService,
+        private readonly dataSource: DataSource,
+    ) {}
 
   // Todas las rutas de integración exigen id_empresa explícito, validado contra el scope de la key.
   validarScope(integracion: IntegracionContexto, idEmpresa: number): void {
@@ -439,7 +448,15 @@ export class IntegracionesService {
     }
 
     const equipos = this.extraerEquipos(payload);
+    // CU-64 (C)/CU-68: consumibles declarados en el cierre.
+    const materiales = this.extraerMateriales(payload);
+    // CU-64 (D): técnico del cierre (payload o inferido de las unidades).
+    let idTecnico: number | null = this.enteroPositivo(payload.id_tecnico);
 
+    // CU-64 (B): datos de cliente/dirección que se persisten al instalar.
+    const datosInstalacion = this.extraerDatosInstalacion(payload);
+    const tipoOt = typeof payload.tipo_ot === 'string' ? payload.tipo_ot : null;
+    const fechaCompletada = this.parsearFecha(payload.fecha_completada) ?? new Date();
     // Idempotencia: si la clave ya fue procesada, devolvemos el resultado original (2xx).
     const previo = await this.cierreRepository.findOne({
       where: { claveIdempotencia: clave },
@@ -460,13 +477,26 @@ export class IntegracionesService {
         claveIdempotencia: clave,
         id_ot: idOt,
         id_empresa: idEmpresa,
-        tipo_ot: typeof payload.tipo_ot === 'string' ? payload.tipo_ot : null,
+        tipo_ot: tipoOt,
         payload: payload,
         estadoProceso: 'PROCESADO',
       });
 
       const accionesAplicadas: any[] = [];
       const discrepancias: any[] = [];
+
+      // CU-64 (D): identificador de servicio SRV-YYYY-XXXXX para instalaciones
+      // (secuencia por empresa/año; re-cierres de la misma OT conservan su SRV).
+      // Se genera antes de procesar equipos para dejarlo en las unidades instaladas.
+      const datosInstalacionConSrv = { ...datosInstalacion, srv: null as string | null };
+      if (tipoOt === 'INSTALACION') {
+        datosInstalacionConSrv.srv = await this.obtenerSrv(
+          queryRunner.manager,
+          idEmpresa,
+          idOt,
+          fechaCompletada,
+        );
+      }
 
       // Acuerdo G3: el diagnóstico del retiro para revisión es la categoria_falla
       // del cierre; si no viene, 'Causa desconocida'.
@@ -479,7 +509,11 @@ export class IntegracionesService {
           idOt,
           idEmpresa,
           categoriaFalla,
+          datosInstalacionConSrv,
         );
+        if (resultado.id_tecnico && idTecnico === null) {
+          idTecnico = resultado.id_tecnico;
+        }
         if (resultado.discrepancia) {
           discrepancias.push(resultado.discrepancia);
         } else if (resultado.aplicada) {
@@ -487,6 +521,21 @@ export class IntegracionesService {
         }
       }
 
+      // CU-64 (C) + CU-68: descuento de los consumibles declarados del inventario
+      // personal. Saldo insuficiente = ajuste registrado, nunca rechazo del cierre.
+      const resultadoMateriales = await this.procesarMateriales(
+        queryRunner.manager,
+        materiales,
+        idTecnico,
+        idEmpresa,
+      );
+      discrepancias.push(...resultadoMateriales.discrepancias);
+      accionesAplicadas.push(...resultadoMateriales.acciones);
+
+      cierreGuardado.id_tecnico = idTecnico;
+      cierreGuardado.srv = datosInstalacionConSrv.srv;
+      cierreGuardado.materialesAplicados =
+        materiales.length > 0 ? resultadoMateriales.resumen : null;
       cierreGuardado.estadoProceso =
         discrepancias.length > 0 ? 'PROCESADO_CON_DISCREPANCIAS' : 'PROCESADO';
       cierreGuardado.discrepancias =
@@ -564,7 +613,14 @@ export class IntegracionesService {
     idOt: number,
     idEmpresa: number,
     categoriaFalla: string | null,
-  ): Promise<{ aplicada?: any; discrepancia?: any }> {
+    datosInstalacion: {
+      clienteRut: string | null;
+      clienteNombre: string | null;
+      direccionInstalacion: string | null;
+      comunaInstalacion: string | null;
+      srv: string | null;
+    },
+  ): Promise<{ aplicada?: any; discrepancia?: any; id_tecnico?: number | null }> {
     const serie = item.numero_serie.trim();
     const regla = ACCIONES_G3[item.accion];
 
@@ -591,10 +647,12 @@ export class IntegracionesService {
           codigo: 'TRANSICION_INVALIDA',
           detalle: `La unidad está en estado [${unidad.estado}] y la acción requiere origen en: ${regla.origenes.join(', ')}. Revisar manualmente.`,
         },
+        id_tecnico: unidad.idTecnicoAsignado ?? null,
       };
     }
 
     const estadoOrigen = unidad.estado;
+    const idTecnicoUnidad = unidad.idTecnicoAsignado ?? null;
     unidad.estado = regla.estado;
 
     // Reglas de la máquina de estados (consistente con UnitsService.transicionarEstado):
@@ -611,6 +669,19 @@ export class IntegracionesService {
     if (regla.estado === 'En revisión') {
       // Acuerdo G3: diagnóstico = categoria_falla del cierre; sin dato → fallback.
       unidad.diagnosticoTecnico = categoriaFalla ?? DIAGNOSTICO_FALLBACK_G3;
+    }
+    // CU-64 (B): al instalar se persisten cliente y dirección del cierre para
+    // CU-48/71/73/87 (G3 identifica por RUT). El SRV se asigna al final del cierre.
+    if (regla.estado === 'Instalado en cliente') {
+      if (datosInstalacion.clienteRut !== null)
+        unidad.clienteRut = datosInstalacion.clienteRut;
+      if (datosInstalacion.clienteNombre !== null)
+        unidad.clienteNombre = datosInstalacion.clienteNombre;
+      if (datosInstalacion.direccionInstalacion !== null)
+        unidad.direccionInstalacion = datosInstalacion.direccionInstalacion;
+      if (datosInstalacion.comunaInstalacion !== null)
+        unidad.comunaInstalacion = datosInstalacion.comunaInstalacion;
+      if (datosInstalacion.srv) unidad.srv = datosInstalacion.srv;
     }
 
     await queryRunner.manager.save(unidad);
@@ -648,7 +719,204 @@ export class IntegracionesService {
         estado_anterior: estadoOrigen,
         estado_nuevo: regla.estado,
       },
+      id_tecnico: idTecnicoUnidad,
     };
+  }
+
+  // --- CU-64/CU-68: acciones atómicas del cierre -----------------------------
+
+  // CU-64 (B): cliente/dirección del payload de G3 (tolerante a los nombres del
+  // contrato doc-12 §1.3: cliente{rut,nombre|nombre_completo} y direccion{...}).
+  private extraerDatosInstalacion(payload: any): {
+    clienteRut: string | null;
+    clienteNombre: string | null;
+    direccionInstalacion: string | null;
+    comunaInstalacion: string | null;
+  } {
+    const cliente =
+      payload.cliente && typeof payload.cliente === 'object' && !Array.isArray(payload.cliente)
+        ? payload.cliente
+        : null;
+    const direccion =
+      payload.direccion &&
+      typeof payload.direccion === 'object' &&
+      !Array.isArray(payload.direccion)
+        ? payload.direccion
+        : null;
+
+    const texto = (valor: any): string | null =>
+      typeof valor === 'string' && valor.trim() !== '' ? valor.trim() : null;
+
+    return {
+      clienteRut: texto(cliente?.rut),
+      clienteNombre: texto(cliente?.nombre_completo) ?? texto(cliente?.nombre),
+      direccionInstalacion:
+        texto(direccion?.direccion_completa) ?? texto(direccion?.direccion),
+      comunaInstalacion: texto(direccion?.comuna),
+    };
+  }
+
+  // CU-64 (C): materiales[{id_tipo_equipo, cantidad}] del cierre. Cantidad 0 o
+  // negativa = payload inválido (400); duplicados del mismo tipo se suman.
+  private extraerMateriales(payload: any): { id_tipo_equipo: number; cantidad: number }[] {
+    const valor = payload.materiales;
+    if (valor === undefined || valor === null) return [];
+    if (!Array.isArray(valor)) {
+      throw new BadRequestException('El campo materiales debe ser un arreglo.');
+    }
+
+    const acumulado = new Map<number, number>();
+    valor.forEach((item: any, index: number) => {
+      if (item === null || typeof item !== 'object' || Array.isArray(item)) {
+        throw new BadRequestException(
+          `Cada material debe ser un objeto (posición ${index}).`,
+        );
+      }
+      const idTipo = Number(item.id_tipo_equipo);
+      if (!Number.isInteger(idTipo) || idTipo <= 0) {
+        throw new BadRequestException(
+          `Cada material debe incluir un id_tipo_equipo numérico (posición ${index}).`,
+        );
+      }
+      const cantidad = Number(item.cantidad);
+      if (!Number.isFinite(cantidad) || cantidad <= 0) {
+        throw new BadRequestException(
+          `La cantidad del material [${idTipo}] debe ser mayor que cero (posición ${index}).`,
+        );
+      }
+      acumulado.set(idTipo, (acumulado.get(idTipo) ?? 0) + cantidad);
+    });
+
+    return [...acumulado.entries()].map(([id_tipo_equipo, cantidad]) => ({
+      id_tipo_equipo,
+      cantidad: Number(cantidad.toFixed(2)),
+    }));
+  }
+
+  // CU-64 (C)/CU-68: descuenta materiales del inventario personal del técnico.
+  // Nunca rechaza el cierre: si el saldo no alcanza, descuenta lo disponible y
+  // registra el faltante como ajuste + discrepancia (acuerdo Opción A con G3).
+  private async procesarMateriales(
+    manager: EntityManager,
+    materiales: { id_tipo_equipo: number; cantidad: number }[],
+    idTecnico: number | null,
+    idEmpresa: number,
+  ): Promise<{
+    descontados: any[];
+    ajustes: any[];
+    discrepancias: any[];
+    acciones: any[];
+    resumen: { descontados: any[]; ajustes: any[] };
+  }> {
+    const descontados: any[] = [];
+    const ajustes: any[] = [];
+    const discrepancias: any[] = [];
+    const acciones: any[] = [];
+
+    if (materiales.length === 0) {
+      return { descontados, ajustes, discrepancias, acciones, resumen: { descontados, ajustes } };
+    }
+
+    if (idTecnico === null) {
+      // Sin técnico identificado no hay inventario personal que descontar: el
+      // material igual queda registrado y se alerta para revisión manual.
+      discrepancias.push({
+        codigo: 'TECNICO_NO_IDENTIFICADO',
+        detalle:
+          'No fue posible identificar al técnico del cierre; los materiales declarados no se descontaron del inventario personal. Revisar manualmente.',
+        materiales,
+      });
+      return { descontados, ajustes, discrepancias, acciones, resumen: { descontados, ajustes } };
+    }
+
+    for (const material of materiales) {
+      const tipo = await manager.findOne(TipoEquipo, {
+        where: {
+          id_tipo_equipo: material.id_tipo_equipo,
+          id_empresa: idEmpresa,
+        },
+      });
+      const nombre = tipo?.nombre ?? String(material.id_tipo_equipo);
+      const unidad = tipo?.unidadMedida ?? 'Unidad';
+
+      const resultado = await this.inventarioPersonalService.descontarHasta(
+        manager,
+        idTecnico,
+        material.id_tipo_equipo,
+        material.cantidad,
+      );
+
+      if (resultado.faltante > 0) {
+        const ajuste = {
+          id_tipo_equipo: material.id_tipo_equipo,
+          nombre,
+          unidad_medida: unidad,
+          disponible: resultado.saldoAnterior,
+          declarado: material.cantidad,
+          descontado: resultado.descontado,
+          faltante: resultado.faltante,
+        };
+        ajustes.push(ajuste);
+        discrepancias.push({
+          codigo: 'SALDO_INSUFICIENTE_AJUSTADO',
+          id_tipo_equipo: material.id_tipo_equipo,
+          detalle: `Saldo insuficiente de [${nombre}]: disponible ${resultado.saldoAnterior} ${unidad}, declarado ${material.cantidad} ${unidad}. Se descontó lo disponible y el faltante quedó como ajuste.`,
+        });
+      }
+
+      if (resultado.descontado > 0) {
+        descontados.push({
+          id_tipo_equipo: material.id_tipo_equipo,
+          nombre,
+          cantidad: resultado.descontado,
+          saldo_anterior: resultado.saldoAnterior,
+          saldo_nuevo: Number(
+            (resultado.saldoAnterior - resultado.descontado).toFixed(2),
+          ),
+        });
+      }
+    }
+
+    if (descontados.length > 0 || ajustes.length > 0) {
+      acciones.push({
+        tipo: 'MATERIALES',
+        descontados,
+        ajustes,
+      });
+    }
+
+    return {
+      descontados,
+      ajustes,
+      discrepancias,
+      acciones,
+      resumen: { descontados, ajustes },
+    };
+  }
+
+  // CU-64 (D): SRV-YYYY-XXXXX con secuencia atómica por empresa/año. Un re-cierre
+  // de la misma OT conserva el SRV original.
+  private async obtenerSrv(
+    manager: EntityManager,
+    idEmpresa: number,
+    idOt: number,
+    fecha: Date,
+  ): Promise<string> {
+    const previo = await manager.findOne(IntegracionCierre, {
+      where: { id_ot: idOt, id_empresa: idEmpresa, srv: Not(IsNull()) },
+      order: { id_cierre: 'DESC' },
+    });
+    if (previo?.srv) return previo.srv;
+
+    const anio = fecha.getFullYear();
+    const filas: any[] = await manager.query(
+      `INSERT INTO secuencia_srv (id_empresa, anio, ultimo) VALUES ($1, $2, 1)
+       ON CONFLICT (id_empresa, anio) DO UPDATE SET ultimo = secuencia_srv.ultimo + 1
+       RETURNING ultimo`,
+      [idEmpresa, anio],
+    );
+    const ultimo = Number(filas?.[0]?.ultimo ?? 1);
+    return `SRV-${anio}-${String(ultimo).padStart(5, '0')}`;
   }
 
   // --- sc-158 (acuerdo G8): helpers de activaciones -------------------------
@@ -982,11 +1250,16 @@ export class IntegracionesService {
         id_ot: cierre.id_ot,
         clave_idempotencia: cierre.claveIdempotencia,
         estado_proceso: cierre.estadoProceso,
+        // CU-64 (D): SRV-YYYY-XXXXX de la instalación (G3 lo espera en data.srv).
+        srv: cierre.srv ?? null,
+        id_tecnico: cierre.id_tecnico ?? null,
         acciones_aplicadas: cierre.accionesAplicadas ?? [],
         discrepancias: cierre.discrepancias ?? [],
-        // Los materiales declarados quedan registrados en el payload; el descuento
-        // y la validación de saldo son de T1 vía CU-58/CU-68 (aún no implementados).
-        materiales_pendientes_descuento: true,
+        // CU-64 (C)/CU-68: resultado del consumo de materiales declarados.
+        materiales: cierre.materialesAplicados ?? {
+          descontados: [],
+          ajustes: [],
+        },
       },
     };
   }

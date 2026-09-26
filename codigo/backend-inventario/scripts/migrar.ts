@@ -308,6 +308,26 @@ const SENTENCIAS = [
     discrepancias         JSONB,
     fecha_proceso         TIMESTAMPTZ DEFAULT now()
   )`,
+  // CU-64 (D): SRV-YYYY-XXXXX y técnico del cierre + resultado de materiales.
+  // El SRV identifica el servicio (OT): un re-cierre conserva el SRV original,
+  // por eso no lleva UNIQUE por fila (la secuencia por empresa/año garantiza que
+  // dos OTs distintas nunca reciban el mismo SRV).
+  `ALTER TABLE integracion_cierre ADD COLUMN IF NOT EXISTS srv varchar(20)`,
+  `ALTER TABLE integracion_cierre ADD COLUMN IF NOT EXISTS id_tecnico integer`,
+  `ALTER TABLE integracion_cierre ADD COLUMN IF NOT EXISTS materiales_aplicados jsonb`,
+  // CU-64 (D): secuencia del identificador de servicio por empresa y año.
+  `CREATE TABLE IF NOT EXISTS secuencia_srv (
+    id_empresa  INTEGER NOT NULL,
+    anio        INTEGER NOT NULL,
+    ultimo      INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (id_empresa, anio)
+  )`,
+  // CU-64 (B): cliente/dirección persistidos del cierre de instalación + SRV vigente.
+  `ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS cliente_rut varchar(20)`,
+  `ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS cliente_nombre varchar(150)`,
+  `ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS direccion_instalacion varchar(300)`,
+  `ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS comuna_instalacion varchar(100)`,
+  `ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS srv varchar(20)`,
 ];
 
 // CU-78/CU-80/CU-81: tablas de bajas, donaciones y detalle de préstamos externos.

@@ -560,10 +560,28 @@ async function handleRegistrarRetorno() {
 								<p class="text-foreground">{unit.ubicacion_fisica || '-'}</p>
 							</div>
 						{:else}
-							<!-- CU-33: fuera de bodega se indica la ubicación externa según el estado -->
+							<!-- CU-33/CU-64: fuera de bodega se indica la ubicación externa según el estado -->
 							<div class="col-span-2">
 								<span class="text-muted">Ubicación externa:</span>
-								<p class="text-foreground">{unit.estado}{unit.estado === 'Instalado en cliente' && unit.id_cliente_instalado ? ` (cliente #${unit.id_cliente_instalado})` : ''}</p>
+								{#if unit.estado === 'Instalado en cliente' && (unit.cliente_nombre || unit.cliente_rut || unit.direccion_instalacion || unit.srv || unit.id_cliente_instalado)}
+									<!-- CU-64: datos persistidos en el cierre de instalación -->
+									<p class="text-foreground">
+										{unit.estado}
+										{#if unit.cliente_nombre || unit.cliente_rut}
+											· {unit.cliente_nombre ?? `cliente #${unit.id_cliente_instalado}`}{unit.cliente_rut ? ` (${unit.cliente_rut})` : ''}
+										{:else if unit.id_cliente_instalado}
+											· cliente #{unit.id_cliente_instalado}
+										{/if}
+										{#if unit.direccion_instalacion}
+											· {unit.direccion_instalacion}{unit.comuna_instalacion ? `, ${unit.comuna_instalacion}` : ''}
+										{/if}
+										{#if unit.srv}
+											· Servicio {unit.srv}
+										{/if}
+									</p>
+								{:else}
+									<p class="text-foreground">{unit.estado}{unit.estado === 'Instalado en cliente' && unit.id_cliente_instalado ? ` (cliente #${unit.id_cliente_instalado})` : ''}</p>
+								{/if}
 							</div>
 						{/if}
 						{#if unit.estado === 'Dado de baja' && unit.motivo_baja}

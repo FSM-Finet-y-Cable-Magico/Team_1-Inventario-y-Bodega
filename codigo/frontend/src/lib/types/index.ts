@@ -124,6 +124,12 @@ export interface UnidadEquipo {
 	marca?: string | null;
 	empresa?: string | null;
 	bodega?: string | null;
+	// CU-64: cliente/dirección persistidos del cierre de instalación y SRV vigente
+	cliente_rut?: string | null;
+	cliente_nombre?: string | null;
+	direccion_instalacion?: string | null;
+	comuna_instalacion?: string | null;
+	srv?: string | null;
 	garantia?: {
 		posee_garantia: boolean;
 		garantia_vigente: boolean;

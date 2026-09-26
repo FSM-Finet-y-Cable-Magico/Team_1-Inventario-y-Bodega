@@ -371,3 +371,26 @@ CREATE TABLE IF NOT EXISTS integracion_activacion (
     discrepancias         JSONB,
     fecha_proceso         TIMESTAMPTZ DEFAULT now()
 );
+
+-- CU-64 (D): SRV-YYYY-XXXXX y técnico del cierre + resultado de materiales.
+-- El SRV identifica el servicio (OT): un re-cierre conserva el SRV original,
+-- por eso no lleva UNIQUE por fila (la secuencia por empresa/año garantiza que
+-- dos OTs distintas nunca reciban el mismo SRV).
+ALTER TABLE integracion_cierre ADD COLUMN IF NOT EXISTS srv VARCHAR(20);
+ALTER TABLE integracion_cierre ADD COLUMN IF NOT EXISTS id_tecnico INTEGER;
+ALTER TABLE integracion_cierre ADD COLUMN IF NOT EXISTS materiales_aplicados JSONB;
+
+-- CU-64 (D): secuencia del identificador de servicio por empresa y año
+CREATE TABLE IF NOT EXISTS secuencia_srv (
+    id_empresa  INTEGER NOT NULL,
+    anio        INTEGER NOT NULL,
+    ultimo      INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (id_empresa, anio)
+);
+
+-- CU-64 (B): cliente/dirección persistidos del cierre de instalación + SRV vigente
+ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS cliente_rut VARCHAR(20);
+ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS cliente_nombre VARCHAR(150);
+ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS direccion_instalacion VARCHAR(300);
+ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS comuna_instalacion VARCHAR(100);
+ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS srv VARCHAR(20);

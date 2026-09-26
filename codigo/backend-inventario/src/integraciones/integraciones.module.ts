@@ -7,6 +7,7 @@ import { IntegracionActivacion } from './entities/integracion-activacion.entity'
 import { AsignacionEquipoServicio } from './entities/asignacion-equipo-servicio.entity';
 import { UnidadEquipo } from '../inventario/entities/unidad-equipo.entity';
 import { InventarioModule } from '../inventario/inventario.module';
+import { SalidasModule } from '../salidas/salidas.module';
 
 @Module({
   imports: [
@@ -18,6 +19,8 @@ import { InventarioModule } from '../inventario/inventario.module';
     ]),
     // sc-158: el catálogo S2S de G8 reutiliza CatalogService (no se duplica lógica).
     InventarioModule,
+    // CU-64/CU-68: el descuento de materiales reutiliza el inventario personal (CU-58).
+    SalidasModule,
   ],
   controllers: [IntegracionesController],
   providers: [IntegracionesService],

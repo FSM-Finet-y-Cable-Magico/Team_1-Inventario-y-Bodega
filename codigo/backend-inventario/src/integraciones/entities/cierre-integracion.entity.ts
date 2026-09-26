@@ -24,6 +24,22 @@ export class IntegracionCierre {
   @Column({ type: 'varchar', length: 30, name: 'tipo_ot', nullable: true })
   tipo_ot?: string | null;
 
+  // CU-64 (D): identificador de servicio SRV-YYYY-XXXXX generado al cerrar la
+  // instalación (secuencia por empresa/año en la tabla secuencia_srv). Un
+  // re-cierre de la misma OT conserva el SRV, por eso no es UNIQUE por fila.
+  @Column({ type: 'varchar', length: 20, name: 'srv', nullable: true })
+  srv?: string | null;
+
+  // CU-64 (D): técnico del cierre (payload.id_tecnico o inferido de la unidad).
+  @Column({ type: 'integer', name: 'id_tecnico', nullable: true })
+  id_tecnico?: number | null;
+
+  // CU-64 (C)/CU-68: resultado del descuento de materiales del inventario personal
+  // ({descontados: [], ajustes: []}); los ajustes por saldo insuficiente también
+  // quedan en discrepancias.
+  @Column({ type: 'jsonb', name: 'materiales_aplicados', nullable: true })
+  materialesAplicados?: any;
+
   @Column({ type: 'jsonb', name: 'payload' })
   payload!: any;
 

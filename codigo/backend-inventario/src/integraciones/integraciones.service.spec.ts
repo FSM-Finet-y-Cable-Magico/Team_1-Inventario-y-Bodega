@@ -4,6 +4,8 @@ import { IntegracionActivacion } from './entities/integracion-activacion.entity'
 import { IntegracionCierre } from './entities/cierre-integracion.entity';
 import { AsignacionEquipoServicio } from './entities/asignacion-equipo-servicio.entity';
 import { UnidadEquipo } from '../inventario/entities/unidad-equipo.entity';
+import { InventarioPersonal } from '../salidas/entities/inventario-personal.entity';
+import { InventarioPersonalService } from '../salidas/inventario-personal.service';
 import { IntegracionContexto } from './guards/api-key.guard';
 
 // sc-158: pruebas del acuerdo G8. El service trabaja dentro de una transacción,
@@ -17,11 +19,14 @@ const PK: Record<string, string> = {
   AsignacionEquipoServicio: 'id_asignacion',
   UnidadEquipo: 'id_unidad',
   HistorialEstado: 'id_historial',
+  InventarioPersonal: 'id_inventario',
+  TipoEquipo: 'id_tipo_equipo',
 };
 
 class FakeManager {
   store: Record<string, Fila[]> = {};
   private seq = 1000;
+  onSave: ((clase: string, fila: Fila) => void) | null = null;
 
   constructor(seed: Record<string, Fila[]> = {}) {
     this.store = seed;
@@ -33,13 +38,18 @@ class FakeManager {
     return this.store[nombre];
   }
 
-  create(_entity: any, datos: Fila): Fila {
-    return { ...datos };
+  create(entity: any, datos: Fila): Fila {
+    // Instancia real (no un objeto plano) para que save() reconozca la clase
+    // cuando se llama con un solo argumento, igual que TypeORM.
+    const instancia = Object.create(entity?.prototype ?? Object.prototype);
+    Object.assign(instancia, datos);
+    return instancia;
   }
 
   async save(entity: any, datos?: Fila): Promise<Fila> {
     const esClase = typeof entity === 'function';
     const clase = esClase ? entity : entity.constructor;
+    if (this.onSave) this.onSave(clase.name, datos ?? entity);
     const fila = esClase ? { ...(datos ?? {}) } : { ...entity };
     const tabla = this.tabla(clase);
     const pk = PK[clase.name] ?? 'id';
@@ -50,8 +60,35 @@ class FakeManager {
     return fila;
   }
 
+  // CU-64 (D): upsert de la secuencia SRV por empresa/año.
+  async query(sql: string, params?: any[]): Promise<any[]> {
+    if (/secuencia_srv/i.test(sql)) {
+      const [idEmpresa, anio] = params ?? [];
+      const filas = this.tabla('secuencia_srv');
+      let fila = filas.find(
+        (f) => f.id_empresa === idEmpresa && f.anio === anio,
+      );
+      if (!fila) {
+        fila = { id_empresa: idEmpresa, anio, ultimo: 0 };
+        filas.push(fila);
+      }
+      fila.ultimo += 1;
+      return [{ ultimo: fila.ultimo }];
+    }
+    return [];
+  }
+
   private coincide(fila: Fila, where: Record<string, any>): boolean {
-    return Object.entries(where).every(([campo, valor]) => fila[campo] === valor);
+    return Object.entries(where).every(([campo, valor]) => {
+      // Soporte mínimo de operadores TypeORM usados por el service (Not(IsNull())).
+      if (valor && typeof valor === 'object' && valor._type === 'not') {
+        const interno = valor._value;
+        if (interno && typeof interno === 'object' && interno._type === 'isNull') {
+          return fila[campo] !== null && fila[campo] !== undefined;
+        }
+      }
+      return fila[campo] === valor;
+    });
   }
 
   private ordenar(filas: Fila[], order?: Record<string, 'ASC' | 'DESC'>): Fila[] {
@@ -84,7 +121,10 @@ class FakeManager {
   }
 }
 
-function crearServicio(seed: Record<string, Fila[]> = {}) {
+function crearServicio(
+  seed: Record<string, Fila[]> = {},
+  inventarioPersonalService?: unknown,
+) {
   const manager = new FakeManager(seed);
   const queryRunner = {
     connect: jest.fn().mockResolvedValue(undefined),
@@ -108,6 +148,11 @@ function crearServicio(seed: Record<string, Fila[]> = {}) {
     findOne: jest.fn((opciones: any) => manager.findOne(UnidadEquipo, opciones)),
   };
   const catalogService = { consultar: jest.fn().mockResolvedValue([]) };
+  // CU-64/CU-68: se usa el servicio real de inventario personal contra el
+  // FakeManager (sus métodos de descuento no tocan los repositorios inyectados).
+  const inventario =
+    inventarioPersonalService ??
+    new InventarioPersonalService({} as never, {} as never);
 
   const service = new IntegracionesService(
     cierreRepository as never,
@@ -115,6 +160,7 @@ function crearServicio(seed: Record<string, Fila[]> = {}) {
     asignacionRepository as never,
     unitRepository as never,
     catalogService as never,
+    inventario as never,
     dataSource as never,
   );
   return { service, manager, queryRunner, catalogService, activacionRepository };
@@ -495,6 +541,264 @@ describe('IntegracionesService — sc-158 (acuerdo G8 P0)', () => {
       expect(manager.tabla(IntegracionActivacion)).toHaveLength(1);
       expect(manager.tabla(IntegracionActivacion)[0].estadoProceso).toBe('COMPLETO');
       expect(manager.tabla(AsignacionEquipoServicio)).toHaveLength(1);
+    });
+  });
+
+  describe('CU-64/CU-68 — acciones atómicas del cierre de instalación', () => {
+    const TIPO_MATERIAL: Fila = {
+      id_tipo_equipo: 7,
+      id_empresa: 1,
+      nombre: 'Cable UTP Cat6',
+      unidadMedida: 'Metro',
+      requiereSerialNumber: false,
+    };
+
+    const payloadCierreInstalacion = (overrides: Fila = {}) => ({
+      clave_idempotencia: '781:2026-09-25T10:00:00Z',
+      id_ot: 781,
+      id_empresa: 1,
+      tipo_ot: 'INSTALACION',
+      id_tecnico: 45,
+      fecha_completada: '2026-09-25T10:00:00Z',
+      cliente: { rut: '12345678-5', nombre_completo: 'Juan Pérez' },
+      direccion: { direccion_completa: 'Av. Siempre Viva 742', comuna: 'Santiago' },
+      equipos_instalados: [
+        { numero_serie: 'ONT-123456', accion: 'INSTALADO_EN_CLIENTE' },
+      ],
+      equipos_retirados: [],
+      materiales: [{ id_tipo_equipo: 7, cantidad: 10 }],
+      ...overrides,
+    });
+
+    function seedCierre(materialesSaldo = 25) {
+      return {
+        TipoEquipo: [{ ...TIPO_MATERIAL }],
+        UnidadEquipo: [
+          {
+            ...UNIDAD_INSTALADA,
+            estado: 'Asignado a técnico',
+            idTecnicoAsignado: 45,
+            tipoEquipo: undefined,
+          },
+        ],
+        InventarioPersonal: [
+          {
+            id_inventario: 1,
+            id_tecnico: 45,
+            id_tipo_equipo: 7,
+            cantidad: String(materialesSaldo),
+          },
+        ],
+      };
+    }
+
+    it('descuenta materiales, persiste cliente/dirección y devuelve SRV', async () => {
+      const { service, manager } = crearServicio(seedCierre(25));
+
+      const respuesta = await service.recibirCierreOt(
+        781,
+        payloadCierreInstalacion(),
+        G8,
+      );
+
+      expect(respuesta.data.srv).toBe('SRV-2026-00001');
+      expect(respuesta.data.id_tecnico).toBe(45);
+      expect(respuesta.data.estado_proceso).toBe('PROCESADO');
+      expect(respuesta.data.materiales.descontados).toEqual([
+        {
+          id_tipo_equipo: 7,
+          nombre: 'Cable UTP Cat6',
+          cantidad: 10,
+          saldo_anterior: 25,
+          saldo_nuevo: 15,
+        },
+      ]);
+      expect(respuesta.data.materiales.ajustes).toEqual([]);
+      // El saldo real quedó descontado en el inventario personal del técnico.
+      expect(
+        Number(manager.tabla(InventarioPersonal)[0].cantidad),
+      ).toBe(15);
+      // Cliente/dirección persistidos en la unidad instalada (CU-48/71/73/87).
+      const unidad = manager.tabla(UnidadEquipo)[0];
+      expect(unidad.estado).toBe('Instalado en cliente');
+      expect(unidad.clienteRut).toBe('12345678-5');
+      expect(unidad.clienteNombre).toBe('Juan Pérez');
+      expect(unidad.direccionInstalacion).toBe('Av. Siempre Viva 742');
+      expect(unidad.comunaInstalacion).toBe('Santiago');
+      expect(unidad.srv).toBe('SRV-2026-00001');
+    });
+
+    it('saldo exacto (disponible == declarado) permite el cierre', async () => {
+      const { service } = crearServicio(seedCierre(10));
+
+      const respuesta = await service.recibirCierreOt(
+        781,
+        payloadCierreInstalacion(),
+        G8,
+      );
+
+      expect(respuesta.data.materiales.descontados[0].cantidad).toBe(10);
+      expect(respuesta.data.materiales.ajustes).toEqual([]);
+      expect(respuesta.data.discrepancias).toEqual([]);
+    });
+
+    it('saldo insuficiente: ajuste registrado, nunca rechazo del cierre', async () => {
+      const { service, manager } = crearServicio(seedCierre(4));
+
+      const respuesta = await service.recibirCierreOt(
+        781,
+        payloadCierreInstalacion(),
+        G8,
+      );
+
+      // 2xx con ajuste: se descuenta lo disponible y el faltante queda registrado.
+      expect(respuesta.data.srv).toBe('SRV-2026-00001');
+      expect(respuesta.data.materiales.descontados[0]).toMatchObject({
+        cantidad: 4,
+        saldo_nuevo: 0,
+      });
+      expect(respuesta.data.materiales.ajustes[0]).toMatchObject({
+        disponible: 4,
+        declarado: 10,
+        faltante: 6,
+      });
+      expect(respuesta.data.discrepancias[0].codigo).toBe(
+        'SALDO_INSUFICIENTE_AJUSTADO',
+      );
+      expect(respuesta.data.discrepancias[0].detalle).toContain(
+        'Saldo insuficiente de [Cable UTP Cat6]: disponible 4 Metro, declarado 10 Metro.',
+      );
+      expect(Number(manager.tabla(InventarioPersonal)[0].cantidad)).toBe(0);
+    });
+
+    it('múltiples consumibles: reporta todos los insuficientes', async () => {
+      const { service } = crearServicio({
+        ...seedCierre(100),
+        TipoEquipo: [
+          { ...TIPO_MATERIAL },
+          {
+            id_tipo_equipo: 8,
+            id_empresa: 1,
+            nombre: 'Conector SC',
+            unidad_medida: 'Unidad',
+          },
+        ],
+        InventarioPersonal: [
+          { id_inventario: 1, id_tecnico: 45, id_tipo_equipo: 7, cantidad: '100' },
+          { id_inventario: 2, id_tecnico: 45, id_tipo_equipo: 8, cantidad: '2' },
+        ],
+      });
+
+      const respuesta = await service.recibirCierreOt(
+        781,
+        payloadCierreInstalacion({
+          materiales: [
+            { id_tipo_equipo: 7, cantidad: 10 },
+            { id_tipo_equipo: 8, cantidad: 5 },
+          ],
+        }),
+        G8,
+      );
+
+      expect(respuesta.data.materiales.descontados).toHaveLength(2);
+      expect(respuesta.data.materiales.descontados[1]).toMatchObject({
+        id_tipo_equipo: 8,
+        cantidad: 2,
+        saldo_nuevo: 0,
+      });
+      expect(respuesta.data.materiales.ajustes).toHaveLength(1);
+      expect(respuesta.data.materiales.ajustes[0]).toMatchObject({
+        id_tipo_equipo: 8,
+        disponible: 2,
+        declarado: 5,
+        faltante: 3,
+      });
+      expect(respuesta.data.discrepancias).toHaveLength(1);
+    });
+
+    it('cantidad cero o negativa es payload inválido (400)', async () => {
+      const { service } = crearServicio(seedCierre());
+
+      await expect(
+        service.recibirCierreOt(
+          781,
+          payloadCierreInstalacion({
+            materiales: [{ id_tipo_equipo: 7, cantidad: 0 }],
+          }),
+          G8,
+        ),
+      ).rejects.toThrow(
+        'La cantidad del material [7] debe ser mayor que cero (posición 0).',
+      );
+    });
+
+    it('sin técnico identificado: registra discrepancia y no descuenta', async () => {
+      const { service, manager } = crearServicio({
+        ...seedCierre(25),
+        UnidadEquipo: [{ ...UNIDAD_INSTALADA, estado: 'Asignado a técnico' }],
+      });
+
+      const respuesta = await service.recibirCierreOt(
+        781,
+        payloadCierreInstalacion({ id_tecnico: undefined }),
+        G8,
+      );
+
+      expect(respuesta.data.discrepancias[0].codigo).toBe('TECNICO_NO_IDENTIFICADO');
+      expect(Number(manager.tabla(InventarioPersonal)[0].cantidad)).toBe(25);
+    });
+
+    it('REPARACION no genera SRV', async () => {
+      const { service } = crearServicio(seedCierre(25));
+
+      const respuesta = await service.recibirCierreOt(
+        781,
+        payloadCierreInstalacion({ tipo_ot: 'REPARACION' }),
+        G8,
+      );
+
+      expect(respuesta.data.srv).toBeNull();
+    });
+
+    it('re-cierre de la misma OT conserva el SRV original', async () => {
+      const { service } = crearServicio({
+        ...seedCierre(25),
+        IntegracionCierre: [
+          {
+            id_cierre: 1,
+            claveIdempotencia: '780:2026-09-24T10:00:00Z',
+            id_ot: 781,
+            id_empresa: 1,
+            srv: 'SRV-2026-00007',
+            payload: {},
+          },
+        ],
+      });
+
+      const respuesta = await service.recibirCierreOt(
+        781,
+        payloadCierreInstalacion(),
+        G8,
+      );
+
+      expect(respuesta.data.srv).toBe('SRV-2026-00007');
+    });
+
+    it('E1/atomicidad: si una escritura falla a mitad, se revierte todo', async () => {
+      const { service, manager, queryRunner } = crearServicio(seedCierre(25));
+      manager.onSave = (clase) => {
+        if (clase === 'HistorialEstado') {
+          throw new Error('fallo simulado de escritura');
+        }
+      };
+
+      await expect(
+        service.recibirCierreOt(781, payloadCierreInstalacion(), G8),
+      ).rejects.toThrow('fallo simulado de escritura');
+
+      expect(queryRunner.rollbackTransaction).toHaveBeenCalled();
+      // No se descuenta el material antes del rollback.
+      expect(Number(manager.tabla(InventarioPersonal)[0].cantidad)).toBe(25);
     });
   });
 });
