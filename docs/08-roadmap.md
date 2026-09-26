@@ -13,8 +13,9 @@ no esté reflejado aquí.
 ## Resumen
 
 - **Total de casos de uso:** 96
-- **Implementados:** 76 (CU-01 a CU-46, CU-49 a CU-62, CU-72, CU-74 a CU-77, CU-78 a CU-84, CU-85, CU-86, CU-88, CU-89, CU-91)
-- **Pendientes:** 20 (CU-47, CU-48, CU-61, CU-63 a CU-71, CU-73, CU-87, CU-90, CU-92 a CU-96)
+- **Implementados:** 77 (CU-01 a CU-46, CU-49 a CU-62, CU-72, CU-74 a CU-84, CU-85, CU-86, CU-88, CU-89, CU-91) — incluye CU-47 y CU-57..62, ya mergeados a `dev`
+- **Pendientes (Incremento 3):** 19 (CU-48, CU-61, CU-63 a CU-71, CU-73, CU-87, CU-90, CU-92 a CU-96) — tickets **sc-139 a sc-157** con responsable asignado (ver columna Notas)
+- **Integración con otros grupos (fuera del conteo de 96):** **sc-158/sc-159** (G8 CRM, acuerdo v1 ratificado 24-sept-2026 · Javier) — sc-158 (P0) implementado en `feat/javier-cus`; sc-159 (P1) pendiente. **sc-113** (G3, implementado)
 
 ## Leyenda
 
@@ -96,8 +97,8 @@ no esté reflejado aquí.
 | CU-44 | Consultando listado de bodegas | [x] Implementado | |
 | CU-45 | Consultando stock de bodega | [x] Implementado | |
 | CU-46 | Configurando umbral de stock mínimo | [x] Implementado | |
-| CU-47 | Registrando ubicación física de equipo en bodega | [~] En progreso | Rama `feat/CU-47-ubicacion-fisica` (Javier) — implementación completa, pendiente de PR/revisión |
-| CU-48 | Consultando ubicación externa de equipo fuera de bodega | [ ] Pendiente | |
+| CU-47 | Registrando ubicación física de equipo en bodega | [x] Implementado | Mergeado a `dev` (PR #39 · Javier) |
+| CU-48 | Consultando ubicación externa de equipo fuera de bodega | [ ] Pendiente | Incremento 3 · sc-139 (Javier) |
 
 ### Recepción de equipos desde proveedor
 
@@ -116,33 +117,33 @@ no esté reflejado aquí.
 
 | CU | Nombre | Estado | Notas |
 |----|--------|--------|-------|
-| CU-57 | Registrando salida de equipos de bodega a técnico | [~] En progreso | Implementado, pendiente de merge (PR #15, rama `feat/CU-47-ubicacion-fisica`) |
-| CU-58 | Manteniendo inventario personal del técnico | [~] En progreso | Implementado, pendiente de merge (PR #15, rama `feat/CU-47-ubicacion-fisica`) |
-| CU-59 | Validando número de serie en salida de bodega | [~] En progreso | Implementado, pendiente de merge (PR #15, rama `feat/CU-47-ubicacion-fisica`) |
-| CU-60 | Registrando salida de consumibles de bodega a técnico | [~] En progreso | Implementado, pendiente de merge (PR #15, rama `feat/CU-47-ubicacion-fisica`) |
-| CU-61 | Consultando vista móvil de trabajos e inventario del técnico | [ ] Pendiente | |
-| CU-62 | Validando stock disponible en bodega para consumibles | [~] En progreso | Implementado, pendiente de merge (PR #15, rama `feat/CU-47-ubicacion-fisica`) |
+| CU-57 | Registrando salida de equipos de bodega a técnico | [x] Implementado | Mergeado a `dev` |
+| CU-58 | Manteniendo inventario personal del técnico | [x] Implementado | Mergeado a `dev` |
+| CU-59 | Validando número de serie en salida de bodega | [x] Implementado | Mergeado a `dev` |
+| CU-60 | Registrando salida de consumibles de bodega a técnico | [x] Implementado | Mergeado a `dev` |
+| CU-61 | Consultando vista móvil de trabajos e inventario del técnico | [ ] Pendiente | Incremento 3 · sc-140 (Javier) |
+| CU-62 | Validando stock disponible en bodega para consumibles | [x] Implementado | Mergeado a `dev` |
 
 ### Cierre de trabajo e instalación en cliente
 
 | CU | Nombre | Estado | Notas |
 |----|--------|--------|-------|
-| CU-63 | Registrando cierre de trabajo de instalación | [ ] Pendiente | |
-| CU-64 | Ejecutando acciones atómicas del cierre de instalación | [ ] Pendiente | |
-| CU-65 | Creando datos del cliente | [ ] Pendiente | |
-| CU-66 | Editando datos del cliente | [ ] Pendiente | |
-| CU-67 | Consultando datos y equipos del cliente | [ ] Pendiente | |
-| CU-68 | Verificando saldo de consumibles en cierre | [ ] Pendiente | |
-| CU-69 | Registrando cierre de trabajo de reparación | [ ] Pendiente | |
-| CU-70 | Seleccionando tipo de trabajo codificado para cierre | [ ] Pendiente | |
+| CU-63 | Registrando cierre de trabajo de instalación | [ ] Pendiente | Incremento 3 · sc-141 (Javier) — solo documentar/verificar implementación de G3 |
+| CU-64 | Ejecutando acciones atómicas del cierre de instalación | [ ] Pendiente | Incremento 3 · sc-142 (Javier) |
+| CU-65 | Creando datos del cliente | [ ] Pendiente | Incremento 3 · sc-143 (Javier) — solo documentar/verificar implementación de G3 |
+| CU-66 | Editando datos del cliente | [ ] Pendiente | Incremento 3 · sc-144 (Javier) — solo documentar/verificar implementación de G3 |
+| CU-67 | Consultando datos y equipos del cliente | [ ] Pendiente | Incremento 3 · sc-145 (Javier) — solo documentar/verificar implementación de G3 |
+| CU-68 | Verificando saldo de consumibles en cierre | [ ] Pendiente | Incremento 3 · sc-146 (Javier) |
+| CU-69 | Registrando cierre de trabajo de reparación | [ ] Pendiente | Incremento 3 · sc-147 (Tomás) |
+| CU-70 | Seleccionando tipo de trabajo codificado para cierre | [ ] Pendiente | Incremento 3 · sc-148 (Tomás) |
 
 ### Devolución de equipos desde clientes
 
 | CU | Nombre | Estado | Notas |
 |----|--------|--------|-------|
-| CU-71 | Registrando devolución de equipo desde cliente | [ ] Pendiente | |
+| CU-71 | Registrando devolución de equipo desde cliente | [ ] Pendiente | Incremento 3 · sc-149 (Javiera) |
 | CU-72 | Registrando resultado de revisión de equipo | [x] Implementado | |
-| CU-73 | Mostrando información de equipo en devolución | [ ] Pendiente | |
+| CU-73 | Mostrando información de equipo en devolución | [ ] Pendiente | Incremento 3 · sc-150 (Javiera) |
 
 ### Reacondicionamiento y equipos defectuosos
 
@@ -176,18 +177,18 @@ no esté reflejado aquí.
 |----|--------|--------|-------|
 | CU-85 | Generando reporte de stock actual | [x] Implementado | Grupo 5 · RF-60 · `/reportes/stock` · filtros, estados, umbral y auditoría |
 | CU-86 | Generando reporte de movimientos de inventario | [x] Implementado | Grupo 5 · RF-61 · `/reportes` · filtros, rango máximo 365 días, aislamiento y auditoría |
-| CU-87 | Generando reporte de equipos instalados por cliente | [ ] Pendiente | |
+| CU-87 | Generando reporte de equipos instalados por cliente | [ ] Pendiente | Incremento 3 · sc-151 (Kevin) |
 | CU-88 | Generando reporte de garantías | [x] Implementado | Grupo 5 · RF-63 · `/api/reportes/garantias` · filtro por empresa, tipo y período, empty state y auditoría |
 | CU-89 | Generando reporte de inventario actual de técnicos | [x] Implementado | Grupo 5 · RF-64 · endpoint `/api/reportes/tecnicos/inventario` y pestaña en `/reportes` |
-| CU-90 | Generando reporte de productividad de técnicos | [ ] Pendiente | |
+| CU-90 | Generando reporte de productividad de técnicos | [ ] Pendiente | Incremento 3 · sc-152 (Kevin) |
 | CU-91 | Generando reporte de consumo de consumibles | [x] Implementado | Grupo 5 · RF-66 · endpoint `/api/reportes/consumo` y pestaña Consumo de consumibles |
-| CU-92 | Exportando reporte a Excel | [ ] Pendiente | |
-| CU-93 | Exportando reporte a PDF | [ ] Pendiente | |
+| CU-92 | Exportando reporte a Excel | [ ] Pendiente | Incremento 3 · sc-153 (Kevin) |
+| CU-93 | Exportando reporte a PDF | [ ] Pendiente | Incremento 3 · sc-154 (Tomás) |
 
 ### Alertas y notificaciones
 
 | CU | Nombre | Estado | Notas |
 |----|--------|--------|-------|
-| CU-94 | Consultando alertas activas en el dashboard | [ ] Pendiente | |
-| CU-95 | Mostrando aviso de garantía vigente al cambiar estado | [ ] Pendiente | |
-| CU-96 | Recibiendo notificaciones visuales en la campana del sistema | [ ] Pendiente | |
+| CU-94 | Consultando alertas activas en el dashboard | [ ] Pendiente | Incremento 3 · sc-155 (Uriel) |
+| CU-95 | Mostrando aviso de garantía vigente al cambiar estado | [ ] Pendiente | Incremento 3 · sc-156 (Javiera) |
+| CU-96 | Recibiendo notificaciones visuales en la campana del sistema | [ ] Pendiente | Incremento 3 · sc-157 (Uriel) |

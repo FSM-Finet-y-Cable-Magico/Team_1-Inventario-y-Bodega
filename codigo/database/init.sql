@@ -329,3 +329,45 @@ CREATE TABLE IF NOT EXISTS inventario_personal_tecnico (
 
 -- CU-57: técnico que tiene asignada la unidad
 ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS id_tecnico_asignado INTEGER;
+
+-- sc-158 (acuerdo G8 v1): histórico equipo ↔ servicio. Los IDs de G8 son
+-- referencias externas sin FK; id_unidad sí referencia a unidad_equipo.
+CREATE TABLE IF NOT EXISTS asignacion_equipo_servicio (
+    id_asignacion         SERIAL PRIMARY KEY,
+    id_unidad             INTEGER NOT NULL,
+    id_empresa            INTEGER NOT NULL,
+    event_id              VARCHAR(100),
+    id_cliente_externo    INTEGER,
+    rut_cliente           VARCHAR(20),
+    id_servicio_externo   INTEGER NOT NULL,
+    id_contrato_externo   INTEGER,
+    id_ot                 INTEGER,
+    fecha_instalacion     TIMESTAMPTZ NOT NULL,
+    fecha_retiro          TIMESTAMPTZ,
+    activa                BOOLEAN NOT NULL DEFAULT TRUE,
+    origen                VARCHAR(30),
+    trace_id              VARCHAR(100),
+    CONSTRAINT fk_asignacion_unidad FOREIGN KEY (id_unidad) REFERENCES unidad_equipo (id_unidad)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS ux_asignacion_evento_unidad ON asignacion_equipo_servicio (event_id, id_unidad);
+CREATE INDEX IF NOT EXISTS ix_asignacion_empresa_servicio_activa ON asignacion_equipo_servicio (id_empresa, id_servicio_externo, activa);
+
+-- sc-158 (acuerdo G8 v1): cabecera del evento de activación (idempotencia por event_id).
+-- event_id nulo = registro PENDIENTE_ACTIVACION de un cierre al que aún no llega la activación.
+CREATE TABLE IF NOT EXISTS integracion_activacion (
+    id_activacion         SERIAL PRIMARY KEY,
+    event_id              VARCHAR(100) UNIQUE,
+    trace_id              VARCHAR(100),
+    id_empresa            INTEGER NOT NULL,
+    id_ot                 INTEGER,
+    id_cliente_externo    INTEGER,
+    rut_cliente           VARCHAR(20),
+    id_servicio_externo   INTEGER,
+    id_contrato_externo   INTEGER,
+    payload               JSONB,
+    estado_proceso        VARCHAR(40) NOT NULL,
+    equipos_asociados     JSONB,
+    discrepancias         JSONB,
+    fecha_proceso         TIMESTAMPTZ DEFAULT now()
+);
