@@ -1,0 +1,72 @@
+@startuml CU73-exc-datos-incompletos
+title CU-73 — Mostrando información de equipo en devolución\n(excepción 1: algunos datos de la unidad están incompletos)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Técnico de terreno /\nAdministrador de bodega /\nAdministrador / Superusuario" as user
+participant "V_DevolucionEquipo" as view
+participant "C_UnitsController" as ctrl
+participant "C_UnitsService" as svc
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as uent
+participant "integracion_cierre" as cent
+participant "historial_estado_equipo" as hent
+
+user -> view : Ingresa el NS de un equipo con datos\nincompletos y presiona "Buscar"
+activate view
+
+view -> ctrl : GET /unidades/devolucion/:numeroSerie
+activate ctrl
+
+ctrl -> svc : consultarParaDevolucion(numeroSerie, actor)
+activate svc
+
+svc -> orm : findOne(numero_serie, id_empresa) + tipoEquipo
+activate orm
+orm -> uent : SELECT unidad_equipo JOIN tipo_equipo\nWHERE numero_serie = :ns AND id_empresa = :idEmpresa
+activate uent
+uent --> orm : Datos unidad (fecha_adquisicion = NULL,\nfecha_venc_garantia = NULL)
+deactivate uent
+orm --> svc : unidad (estado = 'Instalado en cliente')
+deactivate orm
+
+svc -> orm : buscarClienteInstalacion(ns, id_empresa)
+activate orm
+orm -> cent : SELECT integracion_cierre (misma consulta)
+activate cent
+cent --> orm : Cierre sin bloque cliente/direccion\n(o sin cierre registrado)
+deactivate cent
+orm --> svc : nombre_cliente = null,\ndireccion_instalacion = null
+deactivate orm
+
+svc -> orm : historyRepository.find({ id_unidad },\norder: fecha_hora DESC, take: 5)
+activate orm
+orm -> hent : SELECT historial_estado_equipo\nWHERE id_unidad = :id\nORDER BY fecha_hora DESC LIMIT 5
+activate hent
+hent --> orm : Cambios de estado disponibles
+deactivate hent
+orm --> svc : ultimosCambios[]
+deactivate orm
+
+svc -> svc : fecha_venc_garantia = 'Sin garantía'\ncampos_no_registrados = campos en null →\n['Fecha de adquisición', 'Nombre del cliente',\n'Dirección de instalación']
+activate svc
+deactivate svc
+
+svc --> ctrl : 200 OK { ...campos disponibles,\nfecha_adquisicion: null, nombre_cliente: null,\ndireccion_instalacion: null,\ncampos_no_registrados: [...] }
+deactivate svc
+ctrl --> view : 200 OK
+deactivate ctrl
+
+view --> user : Muestra los campos disponibles; los faltantes\nmarcados "No registrado" y el aviso:\n'Campos no registrados: Fecha de adquisición,\nNombre del cliente, Dirección de instalación.'\n(el formulario de devolución sigue disponible)
+deactivate view
+
+@enduml

@@ -13,8 +13,8 @@ no esté reflejado aquí.
 ## Resumen
 
 - **Total de casos de uso:** 96
-- **Implementados:** 77 (CU-01 a CU-46, CU-49 a CU-62, CU-71, CU-72, CU-74 a CU-77, CU-78 a CU-84, CU-85, CU-86, CU-88, CU-89, CU-91)
-- **Pendientes:** 19 (CU-47, CU-48, CU-61, CU-63 a CU-70, CU-73, CU-87, CU-90, CU-92 a CU-96)
+- **Implementados:** 78 (CU-01 a CU-46, CU-49 a CU-62, CU-71 a CU-73, CU-74 a CU-77, CU-78 a CU-84, CU-85, CU-86, CU-88, CU-89, CU-91)
+- **Pendientes:** 18 (CU-47, CU-48, CU-61, CU-63 a CU-70, CU-87, CU-90, CU-92 a CU-96)
 
 ## Leyenda
 
@@ -142,7 +142,7 @@ no esté reflejado aquí.
 |----|--------|--------|-------|
 | CU-71 | Registrando devolución de equipo desde cliente | [x] Implementado | Rama `feat/CU-72-Registrando-resultado-re`. `GET /unidades/devolucion/:numeroSerie` + `POST /unidades/:id/devolucion`; página `/unidades/devolucion`. Cliente y dirección desde el cierre de OT de G3 persistido (`integracion_cierre`). |
 | CU-72 | Registrando resultado de revisión de equipo | [x] Implementado | |
-| CU-73 | Mostrando información de equipo en devolución | [ ] Pendiente | |
+| CU-73 | Mostrando información de equipo en devolución | [x] Implementado | Rama `feat/CU-72-Registrando-resultado-re`. Extiende `GET /unidades/devolucion/:numeroSerie` de CU-71: fechas DD/MM/YYYY (`Sin garantía`), últimos 5 cambios de estado y `campos_no_registrados` (E1); panel en `/unidades/devolucion`. |
 
 ### Reacondicionamiento y equipos defectuosos
 

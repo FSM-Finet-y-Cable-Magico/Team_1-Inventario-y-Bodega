@@ -82,6 +82,7 @@
 | 62 | Validación de stock con bloqueo de fila | `salidas` | `/salidas` (banner) |
 | 71 | Registrando devolución de equipo desde cliente (Instalado en cliente → En revisión) | `inventario/units`, `integraciones` (lectura de `integracion_cierre`) | `/unidades/devolucion` |
 | 72 | Registrando resultado de revisión (Operativo/Reparación externa/Baja) | `inventario/units` | `/unidades/[id]` |
+| 73 | Mostrando información de equipo en devolución (garantía, últimos 5 cambios, cliente, campos no registrados) | `inventario/units`, `integraciones` (lectura de `integracion_cierre`) | `/unidades/devolucion` |
 | 74 | Reacondicionando equipo operativo desde revisión a bodega | `inventario/units` | `/unidades/[id]` |
 | 75 | Enviando equipo a reparación externa | `inventario/units` | `/unidades/[id]` |
 | 76 | Reingresando equipo desde reparación externa | `inventario/units` | `/unidades/[id]` |
