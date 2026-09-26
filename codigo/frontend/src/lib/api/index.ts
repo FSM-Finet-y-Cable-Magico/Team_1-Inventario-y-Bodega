@@ -1,5 +1,5 @@
 import { api } from './client';
-import type { LoginDto, LoginResponse, Usuario, EquipoEnRevision, VerificacionSerie, ItemSalida, SalidaResumen, InventarioTecnico, ReporteStock } from '$lib/types';
+import type { LoginDto, LoginResponse, Usuario, EquipoEnRevision, EquipoDevolucion, VerificacionSerie, ItemSalida, SalidaResumen, InventarioTecnico, ReporteStock } from '$lib/types';
 
 export async function login(dto: LoginDto): Promise<LoginResponse> {
 	return api.post<LoginResponse>('/auth/login', dto);
@@ -148,6 +148,19 @@ export function enviarAReparacionExterna(id: number, data: Record<string, unknow
 // CU-76: registrar retorno de reparación externa (equipo → "En revisión")
 export function registrarRetornoReparacion(id: number, data: Record<string, unknown>) {
 	return api.post<any>(`/unidades/${id}/retorno-reparacion`, data);
+}
+
+// CU-71: buscar equipo por NS para la devolución (valida "Instalado en cliente")
+export function getEquipoParaDevolucion(numeroSerie: string) {
+	return api.get<EquipoDevolucion>(`/unidades/devolucion/${encodeURIComponent(numeroSerie)}`);
+}
+
+// CU-71: registrar devolución de equipo desde cliente (equipo → "En revisión")
+export function registrarDevolucion(
+	id: number,
+	data: { fecha_devolucion: string; estado_visual: string; nombre_tecnico_retiro: string; id_bodega_destino: number }
+) {
+	return api.post<any>(`/unidades/${id}/devolucion`, data);
 }
 
 // CU-78: registrar baja definitiva (ADMIN/SUPERUSUARIO/ADMIN_BODEGA la aplican

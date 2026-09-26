@@ -1,0 +1,159 @@
+@startuml CU71-normal
+title CU-71 — Registrando devolución de equipo desde cliente (flujo normal)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Técnico de terreno /\nAdministrador de bodega /\nAdministrador / Superusuario" as user
+participant "V_DevolucionEquipo" as view
+participant "C_RolesGuard" as guard
+participant "C_UnitsController" as ctrl
+participant "C_UnitsService" as svc
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as uent
+participant "integracion_cierre" as cent
+participant "bodega" as bent
+participant "historial_estado_equipo" as hent
+participant "log_auditoria" as aent
+
+user -> view : Ingresa el NS del equipo a devolver\ny presiona "Buscar"
+activate view
+
+view -> guard : GET /unidades/devolucion/:numeroSerie
+activate guard
+guard --> view : Autorizado (TECNICO_TERRENO /\nADMIN_BODEGA / ADMIN / SUPERUSUARIO)
+deactivate guard
+
+view -> ctrl : consultarParaDevolucion(numeroSerie, actor)
+activate ctrl
+
+ctrl -> svc : consultarParaDevolucion(numeroSerie, actor)
+activate svc
+
+svc -> orm : findOne(numero_serie, id_empresa)\n+ tipoEquipo
+activate orm
+orm -> uent : SELECT unidad_equipo JOIN tipo_equipo\nWHERE numero_serie = :ns AND id_empresa = :idEmpresa
+activate uent
+uent --> orm : Datos unidad (estado = 'Instalado en cliente')
+deactivate uent
+orm --> svc : unidad (existe)
+deactivate orm
+
+svc -> svc : Precondición: estado === 'Instalado en cliente'\n(si no → Excepción 1)
+activate svc
+deactivate svc
+
+svc -> orm : buscarClienteInstalacion(ns, id_empresa)
+activate orm
+orm -> cent : SELECT integracion_cierre\nWHERE id_empresa = :idEmpresa\nAND acciones_aplicadas @> [{ numero_serie: :ns,\nestado_nuevo: 'Instalado en cliente' }]\nORDER BY fecha_proceso DESC LIMIT 1
+activate cent
+cent --> orm : Último cierre de OT de G3 que instaló el equipo\n(payload.cliente, payload.direccion)
+deactivate cent
+orm --> svc : nombre_cliente, direccion_instalacion\n(null si no están registrados)
+deactivate orm
+
+svc --> ctrl : 200 OK { id_unidad, numero_serie, tipo, marca,\nmodelo, estado, nombre_cliente, direccion_instalacion }
+deactivate svc
+ctrl --> view : 200 OK
+deactivate ctrl
+
+view --> user : Muestra NS, tipo, marca, modelo, cliente y\ndirección de instalación ("No registrado" si falta)\ny el formulario de devolución
+
+user -> view : Completa fecha de devolución (no futura),\nestado visual, nombre del técnico que realiza\nel retiro y bodega de destino; confirma
+
+view -> view : Valida campos obligatorios y fecha ≤ hoy;\ndiálogo "Confirmar devolución"
+activate view
+deactivate view
+
+view -> guard : POST /unidades/:id/devolucion\n{ fecha_devolucion, estado_visual,\nnombre_tecnico_retiro, id_bodega_destino }
+activate guard
+guard --> view : Autorizado (TECNICO_TERRENO /\nADMIN_BODEGA / ADMIN / SUPERUSUARIO)
+deactivate guard
+
+view -> ctrl : registrarDevolucion(id, body, actor)
+activate ctrl
+
+ctrl -> svc : registrarDevolucion(idUnidad, dto, actor)
+activate svc
+
+svc -> orm : findOne(id_unidad, id_empresa)
+activate orm
+orm -> uent : SELECT unidad_equipo\nWHERE id_unidad = :id AND id_empresa = :idEmpresa
+activate uent
+uent --> orm : Datos unidad (estado = 'Instalado en cliente')
+deactivate uent
+orm --> svc : unidad (existe)
+deactivate orm
+
+svc -> svc : Precondición: estado === 'Instalado en cliente'\nfecha_devolucion ≤ hoy (America/Santiago)\nestado_visual ∈ { Sin daño visible, Daño leve,\nDaño grave, No enciende, Incompleto }\nnombre_tecnico_retiro obligatorio
+activate svc
+deactivate svc
+
+svc -> orm : validarDestinoOperativo(id_bodega_destino)\ngetRepository(Bodega).findOne(id_bodega, id_empresa)
+activate orm
+orm -> bent : SELECT bodega\nWHERE id_bodega = :id AND id_empresa = :idEmpresa
+activate bent
+bent --> orm : bodega (existe y activa)
+deactivate bent
+orm --> svc : bodega
+deactivate orm
+
+svc -> orm : buscarClienteInstalacion(ns, id_empresa)
+activate orm
+orm -> cent : SELECT integracion_cierre (misma consulta)
+activate cent
+cent --> orm : cliente y dirección de instalación
+deactivate cent
+orm --> svc : nombre_cliente, direccion_instalacion
+deactivate orm
+
+svc -> orm : queryRunner.startTransaction()\nmanager.save(unidad\n{ estado: 'En revisión', id_bodega_actual })
+activate orm
+orm -> uent : UPDATE unidad_equipo\nSET estado = 'En revisión',\nid_bodega_actual = :destino\nWHERE id_unidad = :id
+activate uent
+uent --> orm : Unidad actualizada
+deactivate uent
+orm --> svc : unidad guardada
+deactivate orm
+
+svc -> orm : manager.save(historial\n{ estadoAnterior: 'Instalado en cliente',\nestadoNuevo: 'En revisión', motivo: cliente, dirección,\nfecha DD/MM/YYYY, estado visual, técnico, bodega })
+activate orm
+orm -> hent : INSERT historial_estado_equipo
+activate hent
+hent --> orm : Registro insertado
+deactivate hent
+orm --> svc : historial guardado
+deactivate orm
+
+svc -> orm : queryRunner.commitTransaction()
+activate orm
+orm --> svc : Transacción confirmada
+deactivate orm
+
+svc -> orm : auditoriaService.create({ accion:\n'DEVOLUCION_CLIENTE', entidad: 'unidad_equipo',\nvalor_anterior: { estado, id_bodega_actual },\nvalor_nuevo: { estado: 'En revisión', id_bodega_actual,\nfecha_devolucion, estado_visual, nombre_tecnico_retiro,\nnombre_cliente, direccion_instalacion } })
+activate orm
+orm -> aent : INSERT log_auditoria
+activate aent
+aent --> orm : Registro insertado
+deactivate aent
+orm --> svc : auditoría guardada
+deactivate orm
+
+svc --> ctrl : 201 Created { success: true,\nestadoActual: 'En revisión', id_bodega_actual }
+deactivate svc
+
+ctrl --> view : 201 Created
+deactivate ctrl
+
+view --> user : 'Devolución registrada: el equipo [NS]\nquedó En revisión.'
+deactivate view
+
+@enduml

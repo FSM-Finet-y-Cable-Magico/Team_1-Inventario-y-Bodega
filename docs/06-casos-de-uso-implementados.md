@@ -80,6 +80,7 @@
 | 59 | Validación de NS en salida (en vivo + transacción) | `salidas`, `inventario/units` | `/salidas` |
 | 60 | Salida de consumibles a técnico | `salidas` | `/salidas` |
 | 62 | Validación de stock con bloqueo de fila | `salidas` | `/salidas` (banner) |
+| 71 | Registrando devolución de equipo desde cliente (Instalado en cliente → En revisión) | `inventario/units`, `integraciones` (lectura de `integracion_cierre`) | `/unidades/devolucion` |
 | 72 | Registrando resultado de revisión (Operativo/Reparación externa/Baja) | `inventario/units` | `/unidades/[id]` |
 | 74 | Reacondicionando equipo operativo desde revisión a bodega | `inventario/units` | `/unidades/[id]` |
 | 75 | Enviando equipo a reparación externa | `inventario/units` | `/unidades/[id]` |

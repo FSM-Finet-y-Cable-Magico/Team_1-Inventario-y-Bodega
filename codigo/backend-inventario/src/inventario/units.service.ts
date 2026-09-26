@@ -18,8 +18,18 @@ import { EditarDatosUnidadDto } from './dto/editar-datos-unidad.dto';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { PrestamoExterno } from './entities/prestamo-externo.entity';
 import { ProveedoresService } from '../proveedores/proveedores.service';
+import { IntegracionCierre } from '../integraciones/entities/cierre-integracion.entity';
 
 const MAC_REGEX = /^([0-9A-Fa-f]{2}[:\-]){5}[0-9A-Fa-f]{2}$/;
+
+// CU-71: estado visual del equipo al momento de la devolución (lista cerrada del CU)
+const ESTADOS_VISUALES_DEVOLUCION = [
+  'Sin daño visible',
+  'Daño leve',
+  'Daño grave',
+  'No enciende',
+  'Incompleto',
+];
 
 // CU-35: máquina de estados de las unidades. Se exporta para que los módulos que
 // hacen su propia transacción (CU-81 préstamos) validen con la misma tabla en vez
@@ -1327,6 +1337,231 @@ export class UnitsService {
       estado: unidad.estado,
       id_bodega_actual: unidad.id_bodega_actual ?? null,
       disponible,
+    };
+  }
+
+  // CU-71: cliente y dirección de instalación del equipo, tomados del último
+  // cierre de OT de G3 persistido (integracion_cierre) que instaló esa serie
+  // (solo cierres donde la instalación se aplicó, no los que quedaron como discrepancia).
+  // Si no hay registro, se devuelven null y el front muestra lo disponible.
+  private async buscarClienteInstalacion(
+    numeroSerie: string,
+    idEmpresa: number,
+  ): Promise<{ nombre: string | null; direccion: string | null }> {
+    const cierre = await this.dataSource
+      .getRepository(IntegracionCierre)
+      .createQueryBuilder('c')
+      .where('c.id_empresa = :idEmpresa', { idEmpresa })
+      .andWhere('c.acciones_aplicadas @> :filtro::jsonb', {
+        filtro: JSON.stringify([
+          { numero_serie: numeroSerie, estado_nuevo: 'Instalado en cliente' },
+        ]),
+      })
+      .orderBy('c.fecha_proceso', 'DESC')
+      .getOne();
+
+    const payload = cierre?.payload as
+      | {
+          cliente?: { nombre_completo?: unknown };
+          direccion?: { direccion?: unknown; comuna?: unknown };
+        }
+      | undefined;
+    const cliente = payload?.cliente;
+    const direccion = payload?.direccion;
+    const nombre =
+      typeof cliente?.nombre_completo === 'string' &&
+      cliente.nombre_completo.trim() !== ''
+        ? cliente.nombre_completo.trim()
+        : null;
+    const partesDireccion = [direccion?.direccion, direccion?.comuna].filter(
+      (p) => typeof p === 'string' && p.trim() !== '',
+    ) as string[];
+
+    return {
+      nombre,
+      direccion:
+        partesDireccion.length > 0
+          ? partesDireccion.map((p) => p.trim()).join(', ')
+          : null,
+    };
+  }
+
+  // CU-71: el actor ingresa el NS; se valida que esté 'Instalado en cliente'
+  // (Excepción 1) y se muestran NS, tipo, marca, modelo, cliente y dirección.
+  async consultarParaDevolucion(numeroSerie: string, actor: any) {
+    const serie = (numeroSerie ?? '').trim();
+    if (serie === '') {
+      throw new BadRequestException('El número de serie es obligatorio.');
+    }
+
+    const unidad = await this.unitRepository.findOne({
+      where: { serialNumber: serie, id_empresa: actor.id_empresa },
+      relations: { tipoEquipo: true },
+    });
+    if (!unidad) throw new NotFoundException('El equipo solicitado no existe.');
+
+    // CU-71 Excepción 1: mensaje exacto del caso de uso
+    if (unidad.estado !== 'Instalado en cliente') {
+      throw new BadRequestException(
+        `Transición de estado no permitida para este equipo. Estado actual: ${unidad.estado}.`,
+      );
+    }
+
+    const cliente = await this.buscarClienteInstalacion(
+      unidad.serialNumber,
+      actor.id_empresa,
+    );
+
+    return {
+      id_unidad: unidad.id_unidad,
+      numero_serie: unidad.serialNumber,
+      tipo: unidad.tipoEquipo?.nombre ?? null,
+      marca: unidad.tipoEquipo?.marca ?? null,
+      modelo: unidad.modelo ?? unidad.tipoEquipo?.modelo ?? null,
+      estado: unidad.estado,
+      nombre_cliente: cliente.nombre,
+      direccion_instalacion: cliente.direccion,
+    };
+  }
+
+  // CU-71: registra la devolución de un equipo 'Instalado en cliente'; queda
+  // 'En revisión' en la bodega indicada, con historial y auditoría.
+  async registrarDevolucion(
+    idUnidad: number,
+    dto: {
+      fecha_devolucion?: string;
+      estado_visual?: string;
+      nombre_tecnico_retiro?: string;
+      id_bodega_destino?: number;
+    },
+    actor: any,
+  ) {
+    if (!idUnidad || isNaN(idUnidad)) {
+      throw new BadRequestException('El ID de la unidad es inválido.');
+    }
+
+    const unidad = await this.unitRepository.findOne({
+      where: { id_unidad: idUnidad, id_empresa: actor.id_empresa },
+    });
+    if (!unidad) throw new NotFoundException('El equipo solicitado no existe.');
+
+    // CU-71 Excepción 1: mensaje exacto del caso de uso
+    if (unidad.estado !== 'Instalado en cliente') {
+      throw new BadRequestException(
+        `Transición de estado no permitida para este equipo. Estado actual: ${unidad.estado}.`,
+      );
+    }
+
+    // Fecha de devolución (YYYY-MM-DD desde el input; se muestra DD/MM/YYYY): no futura
+    const fechaDevolucion = dto.fecha_devolucion?.trim() ?? '';
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(fechaDevolucion) ||
+      isNaN(new Date(fechaDevolucion).getTime())
+    ) {
+      throw new BadRequestException('La fecha de devolución es obligatoria.');
+    }
+    const hoyChile = new Date().toLocaleDateString('en-CA', {
+      timeZone: 'America/Santiago',
+    });
+    if (fechaDevolucion > hoyChile) {
+      throw new BadRequestException(
+        'La fecha de devolución no puede ser una fecha futura.',
+      );
+    }
+
+    const estadoVisual = dto.estado_visual?.trim() ?? '';
+    if (!ESTADOS_VISUALES_DEVOLUCION.includes(estadoVisual)) {
+      throw new BadRequestException(
+        'Debe seleccionar el estado visual del equipo al momento de la devolución.',
+      );
+    }
+
+    const nombreTecnico = dto.nombre_tecnico_retiro?.trim() ?? '';
+    if (nombreTecnico === '') {
+      throw new BadRequestException(
+        'Debe ingresar el nombre del técnico que realiza el retiro.',
+      );
+    }
+
+    // Bodega de destino activa y de la empresa (misma validación que CU-72/CU-74)
+    const { bodega } = await this.validarDestinoOperativo(
+      dto.id_bodega_destino,
+      undefined,
+      actor.id_empresa,
+    );
+
+    const cliente = await this.buscarClienteInstalacion(
+      unidad.serialNumber,
+      actor.id_empresa,
+    );
+
+    const estadoOrigen = unidad.estado;
+    const bodegaOrigen = unidad.id_bodega_actual ?? null;
+    const [anio, mes, dia] = fechaDevolucion.split('-');
+    const motivoHistorial =
+      `Devolución desde cliente: ${cliente.nombre ?? 'no registrado'}. ` +
+      `Dirección de instalación: ${cliente.direccion ?? 'no registrada'}. ` +
+      `Fecha de devolución: ${dia}/${mes}/${anio}. ` +
+      `Estado visual: ${estadoVisual}. ` +
+      `Técnico que realiza el retiro: ${nombreTecnico}. ` +
+      `Bodega de destino: ${bodega.nombre}.`;
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      unidad.estado = 'En revisión';
+      unidad.id_bodega_actual = bodega.id_bodega;
+      await queryRunner.manager.save(unidad);
+
+      const fechaChile = new Date(
+        new Date().toLocaleString('en-US', { timeZone: 'America/Santiago' }),
+      );
+      const nuevoHistorial = this.historyRepository.create({
+        id_unidad: unidad.id_unidad,
+        id_usuario: actor.id_usuario,
+        estadoAnterior: estadoOrigen,
+        estadoNuevo: 'En revisión',
+        motivo: motivoHistorial,
+        fechaHora: fechaChile,
+      });
+      await queryRunner.manager.save(nuevoHistorial);
+
+      await queryRunner.commitTransaction();
+    } catch {
+      await queryRunner.rollbackTransaction();
+      throw new BadRequestException(
+        'Error al registrar la devolución del equipo. Intente nuevamente.',
+      );
+    } finally {
+      await queryRunner.release();
+    }
+
+    await this.auditoriaService.create({
+      id_usuario: actor.id_usuario,
+      accion: 'DEVOLUCION_CLIENTE',
+      entidad_afectada: 'unidad_equipo',
+      id_entidad_afectada: unidad.id_unidad,
+      valor_anterior: {
+        estado: estadoOrigen,
+        id_bodega_actual: bodegaOrigen,
+      },
+      valor_nuevo: {
+        estado: 'En revisión',
+        id_bodega_actual: unidad.id_bodega_actual,
+        fecha_devolucion: fechaDevolucion,
+        estado_visual: estadoVisual,
+        nombre_tecnico_retiro: nombreTecnico,
+        nombre_cliente: cliente.nombre,
+        direccion_instalacion: cliente.direccion,
+      },
+    });
+
+    return {
+      success: true,
+      estadoActual: unidad.estado,
+      id_bodega_actual: unidad.id_bodega_actual,
+      message: 'La devolución del equipo fue registrada correctamente.',
     };
   }
 
