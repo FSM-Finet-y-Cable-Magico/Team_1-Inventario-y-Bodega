@@ -1412,16 +1412,64 @@ export class UnitsService {
       actor.id_empresa,
     );
 
-    return {
-      id_unidad: unidad.id_unidad,
-      numero_serie: unidad.serialNumber,
+    // CU-73: últimos 5 cambios de estado del historial de la unidad (CU-37)
+    const ultimosCambios = await this.historyRepository.find({
+      where: { id_unidad: unidad.id_unidad },
+      order: { fechaHora: 'DESC', id_historial: 'DESC' },
+      take: 5,
+    });
+
+    const datos = {
       tipo: unidad.tipoEquipo?.nombre ?? null,
       marca: unidad.tipoEquipo?.marca ?? null,
       modelo: unidad.modelo ?? unidad.tipoEquipo?.modelo ?? null,
-      estado: unidad.estado,
+      // CU-73: fechas en DD/MM/YYYY; sin vencimiento → literal 'Sin garantía' (CU-38/CU-39)
+      fecha_adquisicion: this.formatearFechaDDMMYYYY(unidad.fechaAdquisicion),
+      fecha_venc_garantia:
+        this.formatearFechaDDMMYYYY(unidad.fechaVencGarantia) ?? 'Sin garantía',
       nombre_cliente: cliente.nombre,
       direccion_instalacion: cliente.direccion,
     };
+
+    // CU-73 Excepción 1: se indican explícitamente los campos no registrados
+    const etiquetas: Record<string, string> = {
+      tipo: 'Tipo de equipo',
+      marca: 'Marca',
+      modelo: 'Modelo',
+      fecha_adquisicion: 'Fecha de adquisición',
+      nombre_cliente: 'Nombre del cliente',
+      direccion_instalacion: 'Dirección de instalación',
+    };
+    const camposNoRegistrados = Object.keys(etiquetas)
+      .filter((campo) => datos[campo as keyof typeof datos] === null)
+      .map((campo) => etiquetas[campo]);
+
+    return {
+      id_unidad: unidad.id_unidad,
+      numero_serie: unidad.serialNumber,
+      estado: unidad.estado,
+      ...datos,
+      ultimos_cambios_estado: ultimosCambios.map((h) => ({
+        fecha_hora: h.fechaHora,
+        estado_anterior: h.estadoAnterior ?? null,
+        estado_nuevo: h.estadoNuevo ?? null,
+        observacion: h.motivo ?? null,
+      })),
+      campos_no_registrados: camposNoRegistrados,
+    };
+  }
+
+  // CU-73: fecha (columna date o Date) → 'DD/MM/YYYY'; null si no está registrada
+  private formatearFechaDDMMYYYY(
+    fecha: Date | string | null | undefined,
+  ): string | null {
+    if (!fecha) return null;
+    const iso =
+      typeof fecha === 'string'
+        ? fecha.slice(0, 10)
+        : fecha.toISOString().slice(0, 10);
+    const [anio, mes, dia] = iso.split('-');
+    return anio && mes && dia ? `${dia}/${mes}/${anio}` : null;
   }
 
   // CU-71: registra la devolución de un equipo 'Instalado en cliente'; queda

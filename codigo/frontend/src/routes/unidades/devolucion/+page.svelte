@@ -60,6 +60,16 @@
 		}
 	}
 
+	// CU-73: fecha y hora DD/MM/YYYY HH:MM:SS del historial, zona America/Santiago (igual que CU-37)
+	function fmtFechaHora(fecha: string | null): string {
+		if (!fecha) return '-';
+		return new Date(fecha).toLocaleString('en-GB', {
+			day: '2-digit', month: '2-digit', year: 'numeric',
+			hour: '2-digit', minute: '2-digit', second: '2-digit',
+			hour12: false, timeZone: 'America/Santiago'
+		}).replace(',', '');
+	}
+
 	// DD/MM/YYYY para mostrar la fecha elegida
 	function fmtFecha(iso: string): string {
 		const [y, m, d] = iso.split('-');
@@ -141,14 +151,62 @@
 	{#if equipo}
 		<div class="bg-white rounded-lg border border-border p-6 mb-4">
 			<h2 class="text-sm font-semibold text-foreground mb-4">Información del equipo</h2>
+
+			<!-- CU-73 Excepción 1: se indican los campos no registrados -->
+			{#if equipo.campos_no_registrados.length > 0}
+				<div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-md px-3 py-2 text-sm mb-4">
+					Campos no registrados: {equipo.campos_no_registrados.join(', ')}.
+				</div>
+			{/if}
+
 			<dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
 				<div><dt class="text-muted">NS</dt><dd class="text-foreground font-mono">{equipo.numero_serie}</dd></div>
-				<div><dt class="text-muted">Tipo</dt><dd class="text-foreground">{equipo.tipo ?? 'No registrado'}</dd></div>
-				<div><dt class="text-muted">Marca</dt><dd class="text-foreground">{equipo.marca ?? 'No registrado'}</dd></div>
-				<div><dt class="text-muted">Modelo</dt><dd class="text-foreground">{equipo.modelo ?? 'No registrado'}</dd></div>
-				<div><dt class="text-muted">Cliente</dt><dd class="text-foreground">{equipo.nombre_cliente ?? 'No registrado'}</dd></div>
-				<div><dt class="text-muted">Dirección de instalación</dt><dd class="text-foreground">{equipo.direccion_instalacion ?? 'No registrada'}</dd></div>
+				{#each [
+					{ label: 'Tipo de equipo', valor: equipo.tipo },
+					{ label: 'Marca', valor: equipo.marca },
+					{ label: 'Modelo', valor: equipo.modelo },
+					{ label: 'Fecha de adquisición', valor: equipo.fecha_adquisicion },
+					{ label: 'Vencimiento de garantía', valor: equipo.fecha_venc_garantia },
+					{ label: 'Cliente', valor: equipo.nombre_cliente },
+					{ label: 'Dirección de instalación', valor: equipo.direccion_instalacion }
+				] as campo}
+					<div>
+						<dt class="text-muted">{campo.label}</dt>
+						{#if campo.valor}
+							<dd class="text-foreground">{campo.valor}</dd>
+						{:else}
+							<dd class="text-amber-700 italic">No registrado</dd>
+						{/if}
+					</div>
+				{/each}
 			</dl>
+
+			<!-- CU-73: últimos 5 cambios de estado del historial de la unidad -->
+			<h3 class="text-sm font-semibold text-foreground mt-6 mb-2">Últimos cambios de estado</h3>
+			{#if equipo.ultimos_cambios_estado.length === 0}
+				<p class="text-sm text-amber-700 italic">No registrado</p>
+			{:else}
+				<div class="overflow-x-auto border border-border rounded-md">
+					<table class="w-full text-sm">
+						<thead>
+							<tr class="border-b border-border bg-surface/50">
+								<th class="text-left px-3 py-2 font-medium text-muted text-xs uppercase tracking-wider">Fecha / hora</th>
+								<th class="text-left px-3 py-2 font-medium text-muted text-xs uppercase tracking-wider">Cambio de estado</th>
+								<th class="text-left px-3 py-2 font-medium text-muted text-xs uppercase tracking-wider">Observación</th>
+							</tr>
+						</thead>
+						<tbody>
+							{#each equipo.ultimos_cambios_estado as cambio}
+								<tr class="border-b border-border last:border-0">
+									<td class="px-3 py-2 text-muted whitespace-nowrap">{fmtFechaHora(cambio.fecha_hora)}</td>
+									<td class="px-3 py-2 text-foreground">{cambio.estado_anterior ?? '-'} → {cambio.estado_nuevo ?? '-'}</td>
+									<td class="px-3 py-2 text-muted">{cambio.observacion || '-'}</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+			{/if}
 		</div>
 
 		<div class="bg-white rounded-lg border border-border p-6">
