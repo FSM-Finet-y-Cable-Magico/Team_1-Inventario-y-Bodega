@@ -98,7 +98,7 @@ no esté reflejado aquí.
 | CU-45 | Consultando stock de bodega | [x] Implementado | |
 | CU-46 | Configurando umbral de stock mínimo | [x] Implementado | |
 | CU-47 | Registrando ubicación física de equipo en bodega | [x] Implementado | Mergeado a `dev` (PR #39 · Javier) |
-| CU-48 | Consultando ubicación externa de equipo fuera de bodega | [ ] Pendiente | Incremento 3 · sc-139 (Javier) |
+| CU-48 | Consultando ubicación externa de equipo fuera de bodega | [x] Implementado | Incremento 3 · sc-139 (Javier) — rama `feat/javier-cus` (pendiente PR). `ubicacion_externa` en la ficha + sección UI con E1 y enriquecimiento G3 opcional |
 
 ### Recepción de equipos desde proveedor
 

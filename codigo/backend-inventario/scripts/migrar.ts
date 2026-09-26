@@ -328,6 +328,8 @@ const SENTENCIAS = [
   `ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS direccion_instalacion varchar(300)`,
   `ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS comuna_instalacion varchar(100)`,
   `ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS srv varchar(20)`,
+  // CU-48: RUT del usuario para la ubicación externa de equipos asignados.
+  `ALTER TABLE usuario ADD COLUMN IF NOT EXISTS rut varchar(12)`,
 ];
 
 // CU-78/CU-80/CU-81: tablas de bajas, donaciones y detalle de préstamos externos.

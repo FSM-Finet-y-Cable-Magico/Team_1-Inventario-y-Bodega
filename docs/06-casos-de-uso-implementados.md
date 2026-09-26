@@ -67,6 +67,7 @@
 | 45 | Stock por tipo/estado/unidad de medida | `bodegas` | `/bodegas/[id]` |
 | 46 | Umbral mínimo de stock + alertas | `bodegas`, `companies` | `/bodegas/[id]`, `/dashboard`, `Header` |
 | 47 | Ubicación física al ingresar/reingresar a bodega | `inventario/units` | `/unidades/[id]` |
+| 48 | Consultar ubicación externa (técnico/cliente/préstamo) | `inventario/units`, `usuarios`, `prestamos`, `integraciones` (G3) | `/unidades/[id]` |
 | 49 | Crear proveedor (CU-49) | `proveedores` | `/proveedores` |
 | 50 | Editar proveedor (CU-50) | `proveedores` | `/proveedores` |
 | 51 | Consultar listado de proveedores (CU-51) | `proveedores` | `/proveedores` |

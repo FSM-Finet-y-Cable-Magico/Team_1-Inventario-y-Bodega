@@ -98,8 +98,40 @@ export type EstadoUnidad =
 	| 'En préstamo externo'
 	| 'Dado de baja';
 
-export interface UnidadEquipo {
-	id_unidad: number;
+// CU-48: ubicación externa de una unidad fuera de bodega, resuelta por el backend
+// según el estado (E1: campos_faltantes indica lo que no está registrado).
+export type UbicacionExterna =
+	| {
+			tipo: 'TECNICO';
+			datos: {
+				id_usuario: number | null;
+				nombre_completo: string | null;
+				rut: string | null;
+			};
+			campos_faltantes: string[];
+	  }
+	| {
+			tipo: 'CLIENTE';
+			datos: {
+				rut: string | null;
+				nombre: string | null;
+				direccion: string | null;
+				comuna: string | null;
+			};
+			campos_faltantes: string[];
+	  }
+	| {
+			tipo: 'PRESTAMO_EXTERNO';
+			datos: {
+				nombre_receptor: string | null;
+				rut_receptor: string | null;
+				numero_prestamo: string | null;
+				motivo: string | null;
+			};
+			campos_faltantes: string[];
+	  };
+
+export interface UnidadEquipo {	id_unidad: number;
 	id_tipo_equipo: number | null;
 	id_empresa: number | null;
 	numero_serie: string;
@@ -130,6 +162,8 @@ export interface UnidadEquipo {
 	direccion_instalacion?: string | null;
 	comuna_instalacion?: string | null;
 	srv?: string | null;
+	// CU-48: ubicación externa resuelta por estado (técnico/cliente/préstamo)
+	ubicacion_externa?: UbicacionExterna | null;
 	garantia?: {
 		posee_garantia: boolean;
 		garantia_vigente: boolean;

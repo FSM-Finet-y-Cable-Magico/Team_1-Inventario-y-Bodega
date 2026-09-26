@@ -394,3 +394,6 @@ ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS cliente_nombre VARCHAR(150);
 ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS direccion_instalacion VARCHAR(300);
 ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS comuna_instalacion VARCHAR(100);
 ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS srv VARCHAR(20);
+
+-- CU-48: RUT del usuario para la ubicación externa de equipos asignados
+ALTER TABLE usuario ADD COLUMN IF NOT EXISTS rut VARCHAR(12);
