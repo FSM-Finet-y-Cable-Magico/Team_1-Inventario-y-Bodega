@@ -1,0 +1,112 @@
+@startuml CU95-normal
+title CU-95 — Mostrando aviso de garantía vigente al cambiar estado\n(flujo normal: el actor elige "Continuar sin garantía")
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Técnico de terreno /\nAdministrador de bodega /\nAdministrador / Superusuario" as user
+participant "V_FichaUnidad" as view
+participant "C_UnitsController" as ctrl
+participant "C_UnitsService" as svc
+participant "aviso-garantia\n(helper)" as aviso
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as uent
+participant "historial_estado_equipo" as hent
+participant "log_auditoria" as aent
+
+user -> view : Registra 'En revisión' (o 'Dado de baja')\nsobre un equipo con garantía vigente
+activate view
+
+view -> ctrl : PATCH /unidades/:id/cambiar-estado\n{ nuevoEstado: 'En revisión', diagnostico }
+activate ctrl
+ctrl -> svc : transicionarEstado(id, nuevoEstado, actor, ...,\navisoGarantia: { forzar: false })
+activate svc
+
+svc -> orm : findOne(id_unidad) + tipoEquipo
+activate orm
+orm -> uent : SELECT unidad_equipo JOIN tipo_equipo\nWHERE id_unidad = :id
+activate uent
+uent --> orm : unidad (fecha_venc_garantia, proveedor,\nmarca, modelo)
+deactivate uent
+orm --> svc : unidad
+deactivate orm
+
+svc -> svc : Transición permitida (CU-35)\ny diagnóstico válido (CU-40)
+activate svc
+deactivate svc
+
+svc -> aviso : exigirConfirmacionGarantia([unidad], forzar = false)
+activate aviso
+aviso -> aviso : tieneGarantiaVigente: hoy (America/Santiago)\n≤ fecha_venc_garantia → true
+aviso --> svc : throw ConflictException { codigo: 'AVISO_GARANTIA',\nmessage: 'AVISO: El equipo [NS] ([MARCA] [MODELO]) tiene\ngarantía vigente hasta [DD/MM/YYYY]. Considere contactar\nal proveedor [NOMBRE_PROVEEDOR] antes de proceder.\n¿Desea continuar de todas formas?' }
+deactivate aviso
+svc --> ctrl : 409 Conflict (sin ejecutar el cambio)
+deactivate svc
+ctrl --> view : 409 Conflict { codigo: 'AVISO_GARANTIA', message }
+deactivate ctrl
+
+view --> user : ConfirmDialog "Garantía vigente" con el aviso\ny botones "Continuar sin garantía" / "Cancelar"
+
+user -> view : Presiona "Continuar sin garantía"
+
+view -> ctrl : PATCH /unidades/:id/cambiar-estado\n{ nuevoEstado, diagnostico, forzar_aviso_garantia: true }
+activate ctrl
+ctrl -> svc : transicionarEstado(..., avisoGarantia: { forzar: true })
+activate svc
+
+svc -> aviso : exigirConfirmacionGarantia([unidad], forzar = true)
+activate aviso
+aviso --> svc : unidades con garantía vigente [unidad]
+deactivate aviso
+
+svc -> aviso : auditarAvisoGarantiaIgnorado(auditoriaService,\n[unidad], 'En revisión', id_usuario)
+activate aviso
+aviso -> aent : INSERT log_auditoria { accion: 'AVISO_GARANTIA_IGNORADO',\nentidad: 'unidad_equipo', valor_nuevo: { numero_serie,\nestado_solicitado, fecha_venc_garantia, proveedor, fecha_hora } }
+activate aent
+aent --> aviso : Registro insertado
+deactivate aent
+aviso --> svc : aviso ignorado auditado
+deactivate aviso
+
+svc -> orm : queryRunner.startTransaction()\nsave(unidad { estado: 'En revisión' })
+activate orm
+orm -> uent : UPDATE unidad_equipo SET estado = 'En revisión'
+activate uent
+uent --> orm : Unidad actualizada
+deactivate uent
+orm -> hent : INSERT historial_estado_equipo
+activate hent
+hent --> orm : Registro insertado
+deactivate hent
+orm --> svc : commitTransaction()
+deactivate orm
+
+svc -> aent : auditoriaService.create({ accion: 'CAMBIAR_ESTADO', ... })
+activate aent
+aent --> svc : Registro insertado
+deactivate aent
+
+svc --> ctrl : 200 OK { success: true, estadoActual: 'En revisión' }
+deactivate svc
+ctrl --> view : 200 OK
+deactivate ctrl
+
+view --> user : 'Estado actualizado correctamente'
+deactivate view
+
+note over view, aent
+  El mismo aviso (helper aviso-garantia) se aplica en: POST /bajas (CU-78, directa o
+  solicitud del técnico), POST /unidades/:id/resultado-revision (CU-72, Baja),
+  POST /unidades/:id/devolucion (CU-71), POST /unidades/:id/retorno-reparacion (CU-76)
+  y POST /prestamos/:id/retorno (CU-82, un aviso por cada equipo con garantía vigente).
+end note
+
+@enduml

@@ -1,4 +1,4 @@
-import { IsInt, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsInt, IsOptional, IsString } from 'class-validator';
 
 // CU-78: la validación del motivo (lista cerrada) y de la descripción de 'Otro'
 // vive en BajasService para devolver los mensajes exactos del caso de uso.
@@ -12,4 +12,9 @@ export class CreateBajaDto {
   @IsOptional()
   @IsString()
   descripcion_otro?: string;
+
+  // CU-95: confirmación explícita del aviso de garantía vigente ("Continuar sin garantía")
+  @IsOptional()
+  @IsBoolean()
+  forzar_aviso_garantia?: boolean;
 }

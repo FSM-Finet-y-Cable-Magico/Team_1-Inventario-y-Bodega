@@ -13,8 +13,8 @@ no esté reflejado aquí.
 ## Resumen
 
 - **Total de casos de uso:** 96
-- **Implementados:** 78 (CU-01 a CU-46, CU-49 a CU-62, CU-71 a CU-73, CU-74 a CU-77, CU-78 a CU-84, CU-85, CU-86, CU-88, CU-89, CU-91)
-- **Pendientes:** 18 (CU-47, CU-48, CU-61, CU-63 a CU-70, CU-87, CU-90, CU-92 a CU-96)
+- **Implementados:** 79 (CU-01 a CU-46, CU-49 a CU-62, CU-71 a CU-73, CU-74 a CU-77, CU-78 a CU-84, CU-85, CU-86, CU-88, CU-89, CU-91, CU-95)
+- **Pendientes:** 17 (CU-47, CU-48, CU-61, CU-63 a CU-70, CU-87, CU-90, CU-92 a CU-94, CU-96)
 
 ## Leyenda
 
@@ -189,5 +189,5 @@ no esté reflejado aquí.
 | CU | Nombre | Estado | Notas |
 |----|--------|--------|-------|
 | CU-94 | Consultando alertas activas en el dashboard | [ ] Pendiente | |
-| CU-95 | Mostrando aviso de garantía vigente al cambiar estado | [ ] Pendiente | |
+| CU-95 | Mostrando aviso de garantía vigente al cambiar estado | [x] Implementado | Rama `feat/CU-72-Registrando-resultado-re`. Helper `inventario/aviso-garantia.ts`: 409 `AVISO_GARANTIA` con el texto exacto y confirmación `forzar_aviso_garantia: true` → audita `AVISO_GARANTIA_IGNORADO`. Aplica a CU-35/40, CU-71, CU-72 (Baja), CU-76, CU-78 y CU-82; unifica los avisos previos de CU-72/CU-78. |
 | CU-96 | Recibiendo notificaciones visuales en la campana del sistema | [ ] Pendiente | |

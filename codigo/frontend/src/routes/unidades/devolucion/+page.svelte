@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { getEquipoParaDevolucion, registrarDevolucion, getWarehouses } from '$lib/api/index';
+	import { getEquipoParaDevolucion, registrarDevolucion, getWarehouses, esAvisoGarantia } from '$lib/api/index';
 	import type { EquipoDevolucion } from '$lib/types';
 	import Button from '$lib/components/Button.svelte';
 	import FormField from '$lib/components/FormField.svelte';
@@ -25,6 +25,10 @@
 	let showConfirm = $state(false);
 	let guardando = $state(false);
 	let success = $state('');
+
+	// CU-95: aviso de garantía vigente (409 del backend); "Continuar sin garantía"
+	// reenvía con confirmación explícita y "Cancelar" no envía nada (Excepción 1)
+	let avisoGarantia = $state<{ mensaje: string; continuar: () => void } | null>(null);
 
 	onMount(async () => {
 		try {
@@ -90,7 +94,7 @@
 		if (!formError) showConfirm = true;
 	}
 
-	async function confirmar() {
+	async function confirmar(forzarAvisoGarantia = false) {
 		if (!equipo) return;
 		showConfirm = false;
 		guardando = true;
@@ -100,13 +104,19 @@
 				fecha_devolucion: form.fecha_devolucion,
 				estado_visual: form.estado_visual,
 				nombre_tecnico_retiro: form.nombre_tecnico_retiro.trim(),
-				id_bodega_destino: form.id_bodega_destino
+				id_bodega_destino: form.id_bodega_destino,
+				// CU-95: el actor eligió "Continuar sin garantía"
+				...(forzarAvisoGarantia ? { forzar_aviso_garantia: true } : {})
 			});
 			success = `Devolución registrada: el equipo ${equipo.numero_serie} quedó En revisión.`;
 			equipo = null;
 			numeroSerie = '';
 			resetForm();
 		} catch (err: unknown) {
+			if (esAvisoGarantia(err)) {
+				avisoGarantia = { mensaje: err.message, continuar: () => confirmar(true) };
+				return;
+			}
 			formError = err instanceof Error ? err.message : 'Error al registrar la devolución';
 		} finally {
 			guardando = false;
@@ -264,6 +274,22 @@
 		: ''}
 	confirmlabel="Confirmar"
 	variant="primary"
-	onconfirm={confirmar}
+	onconfirm={() => confirmar()}
 	oncancel={() => (showConfirm = false)}
+/>
+
+<!-- CU-95: aviso de garantía vigente al pasar a 'En revisión'. Cancelar no envía nada (Excepción 1) -->
+<ConfirmDialog
+	open={avisoGarantia !== null}
+	title="Garantía vigente"
+	message={avisoGarantia?.mensaje ?? ''}
+	confirmlabel="Continuar sin garantía"
+	cancellabel="Cancelar"
+	variant="destructive"
+	onconfirm={() => {
+		const continuar = avisoGarantia?.continuar;
+		avisoGarantia = null;
+		continuar?.();
+	}}
+	oncancel={() => (avisoGarantia = null)}
 />

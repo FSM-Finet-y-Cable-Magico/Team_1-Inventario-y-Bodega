@@ -13,6 +13,10 @@ import { Usuario } from '../usuarios/entities/usuario.entity';
 import { UnitsService } from '../inventario/units.service';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { EMPRESAS } from '../companies/companies.service';
+import {
+  exigirConfirmacionGarantia,
+  auditarAvisoGarantiaIgnorado,
+} from '../inventario/aviso-garantia';
 
 // CU-78: lista cerrada de motivos de baja definitiva
 export const MOTIVOS_BAJA = [
@@ -118,6 +122,19 @@ export class BajasService {
     const descripcion = this.validarMotivo(dto.motivo, dto.descripcion_otro);
     const unidad = await this.buscarUnidad(dto.id_unidad, actor);
     this.validarEstado(unidad);
+
+    // CU-78 Excepción 2 / CU-95: garantía vigente → aviso (409) salvo que el
+    // actor confirme "Continuar sin garantía"; en ese caso se audita el aviso ignorado
+    const vigentes = exigirConfirmacionGarantia(
+      [unidad],
+      dto.forzar_aviso_garantia,
+    );
+    await auditarAvisoGarantiaIgnorado(
+      this.auditoriaService,
+      vigentes,
+      'Dado de baja',
+      actor.id_usuario,
+    );
 
     // CU-78: Administrador/Superusuario aplican la baja directamente
     if (this.aplicaBajaDirecta(actor)) {

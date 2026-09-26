@@ -1,4 +1,6 @@
 import { api } from './client';
+// CU-95: detección del 409 de aviso de garantía vigente
+export { esAvisoGarantia } from './client';
 import type { LoginDto, LoginResponse, Usuario, EquipoEnRevision, EquipoDevolucion, VerificacionSerie, ItemSalida, SalidaResumen, InventarioTecnico, ReporteStock } from '$lib/types';
 
 export async function login(dto: LoginDto): Promise<LoginResponse> {
@@ -158,14 +160,14 @@ export function getEquipoParaDevolucion(numeroSerie: string) {
 // CU-71: registrar devolución de equipo desde cliente (equipo → "En revisión")
 export function registrarDevolucion(
 	id: number,
-	data: { fecha_devolucion: string; estado_visual: string; nombre_tecnico_retiro: string; id_bodega_destino: number }
+	data: { fecha_devolucion: string; estado_visual: string; nombre_tecnico_retiro: string; id_bodega_destino: number; forzar_aviso_garantia?: boolean }
 ) {
 	return api.post<any>(`/unidades/${id}/devolucion`, data);
 }
 
 // CU-78: registrar baja definitiva (ADMIN/SUPERUSUARIO/ADMIN_BODEGA la aplican
 // directo; el técnico de terreno genera una solicitud pendiente de aprobación)
-export function registrarBaja(data: { id_unidad: number; motivo: string; descripcion_otro?: string }) {
+export function registrarBaja(data: { id_unidad: number; motivo: string; descripcion_otro?: string; forzar_aviso_garantia?: boolean }) {
 	return api.post<any>('/bajas', data);
 }
 
@@ -249,7 +251,7 @@ export function registrarPrestamo(data: {
 // CU-82: retorno total o parcial de un préstamo externo
 export function registrarRetornoPrestamo(
 	id: number,
-	data: { fecha_retorno: string; observacion?: string; items: { id_detalle?: number; numero_serie?: string; cantidad?: number }[] }
+	data: { fecha_retorno: string; observacion?: string; items: { id_detalle?: number; numero_serie?: string; cantidad?: number }[]; forzar_aviso_garantia?: boolean }
 ) {
 	return api.post<any>(`/prestamos/${id}/retorno`, data);
 }

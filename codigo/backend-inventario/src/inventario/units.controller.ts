@@ -139,6 +139,7 @@ export class UnitsController {
     @Body('descripcionOtro') descripcionOtro: string,
     @Body('simularErrorHistorial') simularErrorHistorial: boolean,
     @Body('ubicacion_fisica') ubicacionFisica: string,
+    @Body('forzar_aviso_garantia') forzarAvisoGarantia: boolean,
     @CurrentUser() actor: any,
   ) {
     return this.unitsService.transicionarEstado(
@@ -150,6 +151,9 @@ export class UnitsController {
       descripcionOtro,
       simularErrorHistorial,
       ubicacionFisica,
+      undefined,
+      // CU-95: aviso de garantía vigente (confirmación explícita para continuar)
+      { forzar: forzarAvisoGarantia === true },
     );
   }
 

@@ -19,6 +19,11 @@ import { AuditoriaService } from '../auditoria/auditoria.service';
 import { PrestamoExterno } from './entities/prestamo-externo.entity';
 import { ProveedoresService } from '../proveedores/proveedores.service';
 import { IntegracionCierre } from '../integraciones/entities/cierre-integracion.entity';
+import {
+  ESTADOS_CON_AVISO_GARANTIA,
+  exigirConfirmacionGarantia,
+  auditarAvisoGarantiaIgnorado,
+} from './aviso-garantia';
 
 const MAC_REGEX = /^([0-9A-Fa-f]{2}[:\-]){5}[0-9A-Fa-f]{2}$/;
 
@@ -525,6 +530,9 @@ export class UnitsService {
     simularErrorHistorial?: boolean,
     ubicacionFisicaPayload?: string,
     bajaPayload?: { motivo: string; descripcion?: string | null },
+    // CU-95: solo lo envía el endpoint de cambio de estado; los flujos que ya
+    // mostraron el aviso (p. ej. la baja de CU-78) no lo pasan
+    avisoGarantia?: { forzar: boolean },
   ) {
     // CU-36: la observación es opcional, con máximo 300 caracteres
     const observacion = motivoPayload?.trim() || undefined;
@@ -598,6 +606,21 @@ export class UnitsService {
       } else {
         unidad.diagnosticoTecnico = diagnosticoNormalizado;
       }
+    }
+
+    // CU-95: garantía vigente al registrar 'Dado de baja' o 'En revisión' →
+    // aviso (409) salvo confirmación explícita; si continúa, se audita el aviso ignorado
+    if (avisoGarantia && ESTADOS_CON_AVISO_GARANTIA.includes(nuevoEstado)) {
+      const vigentes = exigirConfirmacionGarantia(
+        [unidad],
+        avisoGarantia.forzar,
+      );
+      await auditarAvisoGarantiaIgnorado(
+        this.auditoriaService,
+        vigentes,
+        nuevoEstado,
+        actor.id_usuario,
+      );
     }
 
     // CU-78: motivo de la baja definitiva (lo valida BajasService, aquí solo se
@@ -1055,6 +1078,7 @@ export class UnitsService {
     dto: {
       resultado?: 'REPARADO' | 'NO_REPARADO';
       observacion?: string;
+      forzar_aviso_garantia?: boolean;
     },
     actor: any,
   ) {
@@ -1107,6 +1131,18 @@ export class UnitsService {
         'La observación no puede superar los 300 caracteres.',
       );
     }
+
+    // CU-95: aviso de garantía vigente antes de pasar a 'En revisión'
+    const vigentes = exigirConfirmacionGarantia(
+      [unidad],
+      dto.forzar_aviso_garantia,
+    );
+    await auditarAvisoGarantiaIgnorado(
+      this.auditoriaService,
+      vigentes,
+      'En revisión',
+      actor.id_usuario,
+    );
 
     const estadoOrigen = unidad.estado;
     const motivoHistorial = `Retorno de reparación externa: ${dto.resultado === 'REPARADO' ? 'Reparado' : 'No reparado'}. ${observacion}`;
@@ -1173,7 +1209,7 @@ export class UnitsService {
       fecha_retorno_estimada?: string;
       descripcion_falla?: string;
       motivo?: string;
-      confirmar_garantia?: boolean;
+      forzar_aviso_garantia?: boolean;
     },
     actor: any,
   ) {
@@ -1198,8 +1234,6 @@ export class UnitsService {
 
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
-    const garantiaVigente =
-      !!unidad.fechaVencGarantia && new Date(unidad.fechaVencGarantia) >= hoy;
 
     let nuevoEstado: string;
     let motivoHistorial: string;
@@ -1237,17 +1271,23 @@ export class UnitsService {
       motivoHistorial = `Resultado de revisión: Requiere reparación externa. Receptor: ${nombreReceptor}. Retorno estimado: ${dto.fecha_retorno_estimada}.`;
     } else {
       // (C) BAJA — Excepción 1: garantía vigente exige confirmación explícita
+      // con el aviso unificado de CU-95 (409 + 'Continuar sin garantía')
       const motivo = dto.motivo?.trim() ?? '';
       if (motivo.length === 0 || motivo.length > 200) {
         throw new BadRequestException(
           'Debe ingresar un motivo de baja (máximo 200 caracteres).',
         );
       }
-      if (garantiaVigente && dto.confirmar_garantia !== true) {
-        throw new BadRequestException(
-          'El equipo tiene garantía vigente. Confirme que desea continuar con la baja de todas formas.',
-        );
-      }
+      const vigentes = exigirConfirmacionGarantia(
+        [unidad],
+        dto.forzar_aviso_garantia,
+      );
+      await auditarAvisoGarantiaIgnorado(
+        this.auditoriaService,
+        vigentes,
+        'Dado de baja',
+        actor.id_usuario,
+      );
       nuevoEstado = 'Dado de baja';
       motivoHistorial = `Resultado de revisión: Dado de baja. Motivo: ${motivo}.`;
     }
@@ -1481,6 +1521,7 @@ export class UnitsService {
       estado_visual?: string;
       nombre_tecnico_retiro?: string;
       id_bodega_destino?: number;
+      forzar_aviso_garantia?: boolean;
     },
     actor: any,
   ) {
@@ -1536,6 +1577,18 @@ export class UnitsService {
       dto.id_bodega_destino,
       undefined,
       actor.id_empresa,
+    );
+
+    // CU-95: aviso de garantía vigente antes de pasar a 'En revisión'
+    const vigentes = exigirConfirmacionGarantia(
+      [unidad],
+      dto.forzar_aviso_garantia,
+    );
+    await auditarAvisoGarantiaIgnorado(
+      this.auditoriaService,
+      vigentes,
+      'En revisión',
+      actor.id_usuario,
     );
 
     const cliente = await this.buscarClienteInstalacion(
