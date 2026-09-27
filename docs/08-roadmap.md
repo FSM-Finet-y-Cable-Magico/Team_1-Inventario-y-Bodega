@@ -13,8 +13,9 @@ no esté reflejado aquí.
 ## Resumen
 
 - **Total de casos de uso:** 96
-- **Implementados:** 80 (CU-01 a CU-46, CU-49 a CU-62, CU-64, CU-68, CU-72, CU-74 a CU-84, CU-85, CU-86, CU-88, CU-89, CU-91) — incluye CU-47, CU-57..62, CU-64, CU-68 y CU-61, en `dev`/rama `feat/javier-cus`
-- **Pendientes (Incremento 3):** 16 (CU-63, CU-65, CU-66, CU-67, CU-69, CU-70, CU-71, CU-73, CU-87, CU-90, CU-92 a CU-96) — tickets **sc-139 a sc-157** con responsable asignado (ver columna Notas)
+- **Implementados por T1:** 81 (CU-01 a CU-48, CU-49 a CU-62, CU-64, CU-68, CU-72, CU-74 a CU-84, CU-85, CU-86, CU-88, CU-89, CU-91) — incluye CU-47, CU-48, CU-57..62, CU-61, CU-64 y CU-68; en `dev` (hasta CU-68) y en la rama `feat/javier-cus` (CU-48 y CU-61)
+- **Tomados por G3 (no los implementa T1):** 4 (CU-63, CU-65, CU-66, CU-67) — verificados contra `Team-3-FSM` (26-sept-2026), evidencia en `docs/11` §6
+- **Pendientes (Incremento 3):** 11 (CU-69, CU-70, CU-71, CU-73, CU-87, CU-90, CU-92 a CU-96) — tickets **sc-147 a sc-157** con responsable asignado (ver columna Notas)
 - **Integración con otros grupos (fuera del conteo de 96):** **sc-158/sc-159** (G8 CRM, acuerdo v1 ratificado 24-sept-2026 · Javier) — sc-158 (P0) implementado en `feat/javier-cus`; sc-159 (P1) pendiente. **sc-113** (G3, implementado)
 
 ## Leyenda
@@ -22,6 +23,7 @@ no esté reflejado aquí.
 | Estado | Significado |
 |--------|-------------|
 | `[x]` Implementado | Caso de uso completo (backend + frontend + BDD + docs + diagramas + PR). |
+| `[x]` Implementado por G3 | CU que **no implementa T1**: lo cubre G3 y T1 solo consume sus endpoints. Evidencia en `docs/11`. |
 | `[~]` En progreso | En desarrollo en una rama (indicar rama/PR en la columna Notas). |
 | `[ ]` Pendiente | Sin empezar. |
 
@@ -128,11 +130,11 @@ no esté reflejado aquí.
 
 | CU | Nombre | Estado | Notas |
 |----|--------|--------|-------|
-| CU-63 | Registrando cierre de trabajo de instalación | [ ] Pendiente | Incremento 3 · sc-141 (Javier) — solo documentar/verificar implementación de G3 |
+| CU-63 | Registrando cierre de trabajo de instalación | [x] Implementado por G3 | Tomado por **G3-CU-04** (`POST /ordenes/:id/cerrar` + fan-out del webhook). T1 solo consume el cierre (CU-64/68). Verificado 26-sept-2026 (`Team-3-FSM` origin/main) — ver `docs/11` §6 |
 | CU-64 | Ejecutando acciones atómicas del cierre de instalación | [x] Implementado | Incremento 3 · sc-142 (Javier) — rama `feat/javier-cus` (pendiente PR). Webhook G3 extendido: cliente/dirección, descuento de materiales, `data.srv` (SRV-YYYY-XXXXX) y trazabilidad en `integracion_cierre` |
-| CU-65 | Creando datos del cliente | [ ] Pendiente | Incremento 3 · sc-143 (Javier) — solo documentar/verificar implementación de G3 |
-| CU-66 | Editando datos del cliente | [ ] Pendiente | Incremento 3 · sc-144 (Javier) — solo documentar/verificar implementación de G3 |
-| CU-67 | Consultando datos y equipos del cliente | [ ] Pendiente | Incremento 3 · sc-145 (Javier) — solo documentar/verificar implementación de G3 |
+| CU-65 | Creando datos del cliente | [x] Implementado por G3 | Tomado por **G3-CU-27** (`POST /clientes`, DV + RUT duplicado 409). Verificado 26-sept-2026 — ver `docs/11` §6 |
+| CU-66 | Editando datos del cliente | [x] Implementado por G3 | Tomado por **G3-CU-28** (`PATCH /clientes/:id`). Verificado 26-sept-2026 — ver `docs/11` §6 |
+| CU-67 | Consultando datos y equipos del cliente | [x] Implementado por G3 | Tomado por **G3-CU-06/28** (`GET /clientes` + `GET /clientes/rut/:rut`, también S2S). Verificado 26-sept-2026 — ver `docs/11` §6 |
 | CU-68 | Verificando saldo de consumibles en cierre | [x] Implementado | Incremento 3 · sc-146 (Javier) — rama `feat/javier-cus` (pendiente PR). `validarSaldo`/`detectarInsuficientes` + ajuste en el webhook (nunca rechazo) |
 | CU-69 | Registrando cierre de trabajo de reparación | [ ] Pendiente | Incremento 3 · sc-147 (Tomás) |
 | CU-70 | Seleccionando tipo de trabajo codificado para cierre | [ ] Pendiente | Incremento 3 · sc-148 (Tomás) |
