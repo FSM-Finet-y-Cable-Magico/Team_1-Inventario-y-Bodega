@@ -89,12 +89,12 @@ G2 es el consumidor final (portal) y dueño de pagos.**
 | G1-1 | `POST /api/integraciones/ordenes/{id_ot}/cierre` | **G3** (al confirmar su cierre) | T1-CU-64 (acciones atómicas), CU-68 (saldo), CU-69 (reparación) | **✅ Implementado (sc-113)**: autenticación `X-API-KEY`, `clave_idempotencia`, discrepancias por ítem (un serial inválido no tumba el cierre). Payload en `docs/12 §1.3` + `equipos_instalados[]`/`equipos_retirados[]` con `accion` (mapeo acordado 04-sept) y `categoria_falla` (diagnóstico del retiro, acuerdo 08-sept). Pendiente: entregar URL/key/serial QA a G3 |
 | G1-2 | `GET /api/integraciones/unidades/{numero_serie}` | **G3** y **G8** | G3-CU-22 (vincular NS), G3-CU-24 (estado ONT), G8-CU-18/20 (validar equipo/estado/empresa), G8-CU-22, G8-CU-59 | **✅ Implementado (sc-113)** versión base: `numero_serie, estado (literal oficial), id_empresa, tipo_equipo`. **Ampliación por acuerdo G8 (P0, sc-158) — ✅ implementada:** `id_unidad`, tipo detallado, `mac_address`, `id_bodega_actual`, `fecha_adquisicion`, `garantia{vencimiento,vigente}`, `asignacion_actual{cliente,servicio,contrato,ot}` externos |
 | G1-3 | `POST /api/integraciones/unidades/{numero_serie}/transiciones` | **G3** y **G8** | G3-CU-24 (ONT → Dado de baja), G8-CU-22 (Bloqueado) | Cuerpo: `{estado_destino (literal oficial T1), id_ot/id_servicio_origen, motivo, id_usuario_solicitante}`. T1 valida la máquina de estados y ejecuta; respuesta con resultado o 400 con la transición inválida |
-| G1-4 | `GET /api/integraciones/stock?id_tipo_equipo=&id_bodega=` (extensible con `&categoria=`) | **G3** (validar antes de declarar materiales), **G8** (factibilidad comercial, P1) | G3-CU-22, G8-CU-56 | `{id_tipo_equipo, nombre, unidad_medida, saldo, umbral_minimo, alerta_activa}` — informativo: **G8 no reserva ni descuenta stock** |
+| G1-4 | `GET /api/integraciones/stock?id_tipo_equipo=&id_bodega=` (extensible con `&categoria=`) | **G3** (validar antes de declarar materiales), **G8** (factibilidad comercial, P1) | G3-CU-22, G8-CU-56 | `{id_tipo_equipo, nombre, unidad_medida, saldo, umbral_minimo, alerta_activa}` — informativo: **G8 no reserva ni descuenta stock** · **✅ Implementado S2S por empresa (sc-159):** `GET /integraciones/stock?id_empresa=&id_tipo_equipo=|&categoria=` → `{disponible, reservado, total}` |
 | G1-5 | `GET /api/integraciones/tecnicos/{id_usuario}/inventario-personal` | **G3**, **G8** | G3-CU-23 (resumen diario), G3-CU-04 (valida materiales del cierre), G8-CU-61 (consumo mensual) | `{tecnico, ns_asignados[], saldos_consumibles[] {id_tipo_equipo, saldo, unidad}}` |
 | G1-6 | `GET /api/integraciones/unidades/{numero_serie}/garantia` *(baja prioridad)* | **G8** | G8-CU-85 (garantía de equipo) | `{vigente, fecha_adquisicion, fecha_vencimiento, estado}` — ya viaja dentro de G1-2 ampliado; el endpoint dedicado solo si G8 lo pide |
 | G1-7 | `GET /api/integraciones/tipos-equipo?id_empresa=&categoria=&buscar=&activo=` | **G8** (Planes comerciales) | G8-CU de Planes | Catálogo S2S (wrapper del catálogo humano): `id_tipo_equipo, id_empresa, nombre, categoria, marca, modelo, descripcion_tecnica, unidad_medida, garantia_dias, requiere_serie_individual, activo` · **✅ Implementado (sc-158, acuerdo G8 P0)** |
 | G1-8 | `POST /api/integraciones/activaciones` | **G8** (tras crear cliente/servicio) | G8-CU-07/59 | `{event_id, trace_id, id_empresa, id_ot, id_cliente, rut_cliente, id_servicio, id_contrato, equipos[{numero_serie}]}` → cabecera `event_id` UNIQUE + `UNIQUE(event_id, id_unidad)`, tolera ambos órdenes cierre/activación (`PENDIENTE_CIERRE`/`PENDIENTE_ACTIVACION`/`COMPLETO`/`CON_DISCREPANCIAS`) · **✅ Implementado (sc-158, acuerdo G8 v1 P0 ratificado)** |
-| G1-9 | `GET /api/integraciones/equipos?id_empresa=&id_servicio=` | **G8** (perfil del servicio) | G8-CU-59 | Asignaciones activas `{id_unidad, numero_serie, estado, tipo_equipo, fecha_instalacion, id_ot}` desde `asignacion_equipo_servicio` · **acuerdo G8 P1 (sc-159)** |
+| G1-9 | `GET /api/integraciones/equipos?id_empresa=&id_servicio=` | **G8** (perfil del servicio) | G8-CU-59 | Asignaciones activas `{id_unidad, numero_serie, estado, tipo_equipo, fecha_instalacion, id_ot}` desde `asignacion_equipo_servicio` · **✅ Implementado (sc-159, acuerdo G8 P1)** |
 
 > **Acuerdo G8 (borrador 12-sept-2026, pendiente de ratificación del jefe):** agrega además la
 > tabla histórica **`asignacion_equipo_servicio`** (equipo ↔ servicio/cliente/contrato; IDs de G8
@@ -345,8 +345,9 @@ Sigue pendiente de ratificar: **credenciales del portal cliente** (dueño G3 vs 
 7. **Acuerdo G8 (P0/P1):** **acuerdo v1 aceptado por G8 y ratificado por G1 (24-sept-2026)**
    (contra-preguntas resueltas, `docs/12` §7.3; tabla `asignacion_equipo_servicio` de G1).
    **P0 (sc-158) ✅ implementado** en la rama `feat/javier-cus` (endpoints G1-7/G1-8 + ampliación
-   G1-2 + tabla `asignacion_equipo_servicio`); **P1 (sc-159) pendiente**. Único pendiente
-   operativo: API key de G8 (canal aparte).
+   G1-2 + tabla `asignacion_equipo_servicio`). **P1 (sc-159) ✅ implementado** (G1-9 + G1-4
+   extendido; garantía ya viaja en la unidad). Único pendiente operativo: API key de G8
+   (canal aparte).
 
 ---
 
@@ -354,7 +355,7 @@ Sigue pendiente de ratificar: **credenciales del portal cliente** (dueño G3 vs 
 
 | Grupo | Crear | Modificar | Habilitar (solo acceso) | Desistir / absorber |
 |-------|-------|-----------|--------------------------|----------------------|
-| **G1 T1** | 9 endpoints de integración (G1-1..9): **sc-113 ya implementó G1-1/G1-2 (base)**; por acuerdo G8: **G1-7/G1-8 + ampliación G1-2 ✅ implementados (sc-158 P0, rama `feat/javier-cus`)** · G1-9 + extensión G1-4 + garantía dedicada = **sc-159 P1 pendiente** | Auth API-KEY + mapeo estados + tabla `asignacion_equipo_servicio` (refs externas sin FK) ✅ | — | CU-65/66/67 (ya tomados por G3) |
+| **G1 T1** | 9 endpoints de integración (G1-1..9): **sc-113 ya implementó G1-1/G1-2 (base)**; por acuerdo G8: **G1-7/G1-8 + ampliación G1-2 ✅ implementados (sc-158 P0)** y **G1-9 + extensión G1-4 ✅ implementados (sc-159 P1)** — rama `feat/javier-cus`; garantía dedicada solo si G8 la pide | Auth API-KEY + mapeo estados + tabla `asignacion_equipo_servicio` (refs externas sin FK) ✅ | — | CU-65/66/67 (ya tomados por G3) |
 | **G3 Terreno** | 4 (G3-1..4; G3-2 y G3-3 condicionales) | 4 (DTO cierre, materiales en listado, no tocar unidad_equipo, descuento — **descuento ya resuelto Opción A**) | 4 endpoints ya existentes | CU-29 como creación (v2) · **absorbe 3 CUs de G2 (CU-33/36/78)** |
 | **G8 CRM** | 8 (deuda, WiFi, webhook pagos, contratos + G8-5/6/7/8 pedidos por G2) | 4 (redirigir inventario a G1) | 4 endpoints ya existentes | **desiste: 10 CUs inventario + 4 CUs portal (CU-38..41) · absorbe 15 CUs de G2** |
 | **G2 Web** | 1 llamada saliente (G2-1) + 1 receptor opcional (G2-2) | login delegado a G3 | — | **deriva 18 CUs (15→G8, 3→G3)** |

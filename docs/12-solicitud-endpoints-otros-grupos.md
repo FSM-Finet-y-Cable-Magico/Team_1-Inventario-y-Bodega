@@ -222,9 +222,9 @@ de un técnico, y consumo de stock por OT. El detalle va en otro documento cuand
 
 | Ítem | Endpoint | Respuesta T1 |
 |------|----------|--------------|
-| G8-E | `GET /api/integraciones/equipos?id_empresa=&id_servicio=` | Sí (P1) — desde `asignacion_equipo_servicio` (solo activas) |
-| G8-F | `GET /api/integraciones/stock?id_empresa=&id_tipo_equipo=` o `&categoria=` | Sí (P1) — **informativo** (`disponible/reservado/total`); CRM no reserva ni descuenta. Reusa/extiende G1-4 |
-| G8-G | Garantía (`GET /unidades/{serie}/garantia` o dentro de la unidad) | Ya incluida en G8-B; endpoint dedicado solo si G8 lo pide (prioridad baja, G1-6) |
+| G8-E | `GET /api/integraciones/equipos?id_empresa=&id_servicio=` | **Sí · ✅ Implementado (sc-159)** — desde `asignacion_equipo_servicio` (solo activas) |
+| G8-F | `GET /api/integraciones/stock?id_empresa=&id_tipo_equipo=` o `&categoria=` | **Sí · ✅ Implementado (sc-159)** — **informativo** (`disponible/reservado/total`); CRM no reserva ni descuenta |
+| G8-G | Garantía (`GET /unidades/{serie}/garantia` o dentro de la unidad) | Ya incluida en G8-B; endpoint dedicado **solo si G8 lo pide** (prioridad baja, G1-6) |
 | G8-H | Reportes avanzados | **P2 — fuera del backlog de T1**; se evalúa aparte con el jefe |
 
 ### 7.3 Condiciones y contra-preguntas de T1 — **respondidas por G8 (v1, 24-sept-2026) y ratificadas por G1**

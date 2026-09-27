@@ -39,6 +39,34 @@ export class IntegracionesController {
     });
   }
 
+  @Get('equipos')
+  consultarEquiposPorServicio(
+    @Query('id_empresa') idEmpresa: string,
+    @Query('id_servicio') idServicio: string,
+    @Req() request: any,
+  ) {
+    const integracion = request.integracion as IntegracionContexto;
+    const id = Number(idEmpresa);
+    this.integracionesService.validarScope(integracion, id);
+    return this.integracionesService.consultarEquiposPorServicio(id, idServicio);
+  }
+
+  @Get('stock')
+  consultarStock(
+    @Query('id_empresa') idEmpresa: string,
+    @Query('id_tipo_equipo') idTipoEquipo: string,
+    @Query('categoria') categoria: string,
+    @Req() request: any,
+  ) {
+    const integracion = request.integracion as IntegracionContexto;
+    const id = Number(idEmpresa);
+    this.integracionesService.validarScope(integracion, id);
+    return this.integracionesService.consultarStock(id, {
+      id_tipo_equipo: idTipoEquipo,
+      categoria,
+    });
+  }
+
   @Get('unidades/:numeroSerie')
   consultarUnidadPorSerie(
     @Param('numeroSerie') numeroSerie: string,

@@ -4,6 +4,8 @@ import { IntegracionActivacion } from './entities/integracion-activacion.entity'
 import { IntegracionCierre } from './entities/cierre-integracion.entity';
 import { AsignacionEquipoServicio } from './entities/asignacion-equipo-servicio.entity';
 import { UnidadEquipo } from '../inventario/entities/unidad-equipo.entity';
+import { TipoEquipo } from '../inventario/entities/tipo-equipo.entity';
+import { StockConsumible } from '../bodegas/entities/stock-consumible.entity';
 import { InventarioPersonal } from '../salidas/entities/inventario-personal.entity';
 import { InventarioPersonalService } from '../salidas/inventario-personal.service';
 import { IntegracionContexto } from './guards/api-key.guard';
@@ -21,6 +23,7 @@ const PK: Record<string, string> = {
   HistorialEstado: 'id_historial',
   InventarioPersonal: 'id_inventario',
   TipoEquipo: 'id_tipo_equipo',
+  StockConsumible: 'id_stock',
 };
 
 class FakeManager {
@@ -80,12 +83,16 @@ class FakeManager {
 
   private coincide(fila: Fila, where: Record<string, any>): boolean {
     return Object.entries(where).every(([campo, valor]) => {
-      // Soporte mínimo de operadores TypeORM usados por el service (Not(IsNull())).
+      // Soporte mínimo de operadores TypeORM usados por el service.
       if (valor && typeof valor === 'object' && valor._type === 'not') {
         const interno = valor._value;
         if (interno && typeof interno === 'object' && interno._type === 'isNull') {
           return fila[campo] !== null && fila[campo] !== undefined;
         }
+      }
+      if (valor && typeof valor === 'object' && valor._type === 'in') {
+        const lista = Array.isArray(valor._value) ? valor._value : [];
+        return lista.includes(fila[campo]);
       }
       return fila[campo] === valor;
     });
@@ -143,9 +150,17 @@ function crearServicio(
   };
   const asignacionRepository = {
     findOne: jest.fn((opciones: any) => manager.findOne(AsignacionEquipoServicio, opciones)),
+    find: jest.fn((opciones: any) => manager.find(AsignacionEquipoServicio, opciones)),
   };
   const unitRepository = {
     findOne: jest.fn((opciones: any) => manager.findOne(UnidadEquipo, opciones)),
+    find: jest.fn((opciones: any) => manager.find(UnidadEquipo, opciones)),
+  };
+  const tipoRepository = {
+    find: jest.fn((opciones: any) => manager.find(TipoEquipo, opciones)),
+  };
+  const stockRepository = {
+    find: jest.fn((opciones: any) => manager.find(StockConsumible, opciones)),
   };
   const catalogService = { consultar: jest.fn().mockResolvedValue([]) };
   // CU-64/CU-68: se usa el servicio real de inventario personal contra el
@@ -159,6 +174,8 @@ function crearServicio(
     activacionRepository as never,
     asignacionRepository as never,
     unitRepository as never,
+    tipoRepository as never,
+    stockRepository as never,
     catalogService as never,
     inventario as never,
     dataSource as never,
@@ -799,6 +816,196 @@ describe('IntegracionesService — sc-158 (acuerdo G8 P0)', () => {
       expect(queryRunner.rollbackTransaction).toHaveBeenCalled();
       // No se descuenta el material antes del rollback.
       expect(Number(manager.tabla(InventarioPersonal)[0].cantidad)).toBe(25);
+    });
+  });
+});
+
+describe('IntegracionesService — sc-159 (acuerdo G8 P1)', () => {
+  describe('GET /integraciones/equipos?id_servicio=', () => {
+    const ASIGNACIONES = [
+      {
+        id_asignacion: 1,
+        id_unidad: 501,
+        id_empresa: 1,
+        eventId: 'client-activation-ot-781',
+        idServicioExterno: 245,
+        id_ot: 781,
+        activa: true,
+        fechaInstalacion: new Date('2026-09-25T10:00:00Z'),
+      },
+      {
+        id_asignacion: 2,
+        id_unidad: 502,
+        id_empresa: 1,
+        idServicioExterno: 245,
+        id_ot: 780,
+        activa: false,
+        fechaInstalacion: new Date('2026-01-01T00:00:00Z'),
+        fechaRetiro: new Date('2026-09-25T10:00:00Z'),
+      },
+      {
+        id_asignacion: 3,
+        id_unidad: 503,
+        id_empresa: 1,
+        idServicioExterno: 999,
+        id_ot: 700,
+        activa: true,
+        fechaInstalacion: new Date('2026-02-01T00:00:00Z'),
+      },
+    ];
+
+    const UNIDADES: Fila[] = [
+      {
+        id_unidad: 501,
+        id_empresa: 1,
+        id_tipo_equipo: 3,
+        serialNumber: 'ONT-123456',
+        estado: 'Instalado en cliente',
+        tipoEquipo: { id_tipo_equipo: 3, nombre: 'ONT Huawei', categoria: 'ONT/ONU' },
+      },
+      {
+        id_unidad: 502,
+        id_empresa: 1,
+        id_tipo_equipo: 3,
+        serialNumber: 'ONT-000001',
+        estado: 'Instalado en cliente',
+        tipoEquipo: { id_tipo_equipo: 3, nombre: 'ONT Huawei', categoria: 'ONT/ONU' },
+      },
+    ];
+
+    it('devuelve solo las asignaciones activas del servicio', async () => {
+      const { service } = crearServicio({
+        AsignacionEquipoServicio: ASIGNACIONES.map((a) => ({ ...a })),
+        UnidadEquipo: UNIDADES.map((u) => ({ ...u })),
+      });
+
+      const respuesta = await service.consultarEquiposPorServicio(1, '245');
+
+      expect(respuesta.data).toEqual([
+        {
+          id_unidad: 501,
+          numero_serie: 'ONT-123456',
+          estado: 'Instalado en cliente',
+          tipo_equipo: {
+            id_tipo_equipo: 3,
+            nombre: 'ONT Huawei',
+            categoria: 'ONT/ONU',
+          },
+          fecha_instalacion: new Date('2026-09-25T10:00:00Z'),
+          id_ot: 781,
+        },
+      ]);
+    });
+
+    it('servicio sin equipos → 200 con lista vacía', async () => {
+      const { service } = crearServicio({ AsignacionEquipoServicio: [] });
+
+      const respuesta = await service.consultarEquiposPorServicio(1, '245');
+
+      expect(respuesta.data).toEqual([]);
+    });
+
+    it('exige id_servicio numérico (400)', async () => {
+      const { service } = crearServicio();
+
+      await expect(
+        service.consultarEquiposPorServicio(1, undefined as never),
+      ).rejects.toThrow('Falta el parámetro id_servicio o no es numérico.');
+    });
+  });
+
+  describe('GET /integraciones/stock', () => {
+    const TIPOS: Fila[] = [
+      {
+        id_tipo_equipo: 3,
+        id_empresa: 1,
+        nombre: 'ONT Huawei',
+        categoria: 'ONT/ONU',
+        requiereSerialNumber: true,
+        activo: true,
+      },
+      {
+        id_tipo_equipo: 7,
+        id_empresa: 1,
+        nombre: 'Cable UTP Cat6',
+        categoria: 'Consumible otro',
+        unidadMedida: 'Metro',
+        requiereSerialNumber: false,
+        activo: true,
+      },
+    ];
+
+    it('individualizables: disponibles En bodega y reservados Asignado a técnico', async () => {
+      const { service } = crearServicio({
+        TipoEquipo: TIPOS.map((t) => ({ ...t })),
+        UnidadEquipo: [
+          { id_unidad: 1, id_empresa: 1, id_tipo_equipo: 3, estado: 'En bodega' },
+          { id_unidad: 2, id_empresa: 1, id_tipo_equipo: 3, estado: 'En bodega' },
+          { id_unidad: 3, id_empresa: 1, id_tipo_equipo: 3, estado: 'Asignado a técnico' },
+          { id_unidad: 4, id_empresa: 1, id_tipo_equipo: 3, estado: 'Instalado en cliente' },
+        ],
+      });
+
+      const respuesta = await service.consultarStock(1, { id_tipo_equipo: '3' });
+
+      expect(respuesta.data).toEqual([
+        {
+          id_tipo_equipo: 3,
+          id_empresa: 1,
+          nombre: 'ONT Huawei',
+          categoria: 'ONT/ONU',
+          unidad_medida: null,
+          requiere_serie_individual: true,
+          disponible: 2,
+          reservado: 1,
+          total: 3,
+        },
+      ]);
+    });
+
+    it('consumibles: suma el stock de todas las bodegas', async () => {
+      const { service } = crearServicio({
+        TipoEquipo: TIPOS.map((t) => ({ ...t })),
+        StockConsumible: [
+          { id_stock: 1, id_tipo_equipo: 7, id_bodega: 1, cantidad_disponible: '25.5' },
+          { id_stock: 2, id_tipo_equipo: 7, id_bodega: 2, cantidad_disponible: '10' },
+        ],
+      });
+
+      const respuesta = await service.consultarStock(1, { id_tipo_equipo: '7' });
+
+      expect(respuesta.data[0]).toMatchObject({
+        id_tipo_equipo: 7,
+        disponible: 35.5,
+        reservado: 0,
+        total: 35.5,
+      });
+    });
+
+    it('filtra por categoría y devuelve 200 con lista vacía si no hay tipos', async () => {
+      const { service } = crearServicio({ TipoEquipo: TIPOS.map((t) => ({ ...t })) });
+
+      const respuesta = await service.consultarStock(1, {
+        categoria: 'No existe',
+      });
+
+      expect(respuesta.data).toEqual([]);
+    });
+
+    it('tipo inexistente en la empresa → 404', async () => {
+      const { service } = crearServicio({ TipoEquipo: TIPOS.map((t) => ({ ...t })) });
+
+      await expect(
+        service.consultarStock(1, { id_tipo_equipo: '999' }),
+      ).rejects.toThrow('El tipo de equipo no existe en esa empresa.');
+    });
+
+    it('id_tipo_equipo no numérico → 400', async () => {
+      const { service } = crearServicio();
+
+      await expect(
+        service.consultarStock(1, { id_tipo_equipo: 'abc' }),
+      ).rejects.toThrow('El parámetro id_tipo_equipo debe ser numérico.');
     });
   });
 });

@@ -9,6 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import {
   DataSource,
   EntityManager,
+  In,
   IsNull,
   Not,
   Repository,
@@ -19,6 +20,7 @@ import { AsignacionEquipoServicio } from './entities/asignacion-equipo-servicio.
 import { UnidadEquipo } from '../inventario/entities/unidad-equipo.entity';
 import { HistorialEstado } from '../inventario/entities/historial-estado.entity';
 import { TipoEquipo } from '../inventario/entities/tipo-equipo.entity';
+import { StockConsumible } from '../bodegas/entities/stock-consumible.entity';
 import { CatalogService } from '../inventario/catalog.service';
 import { InventarioPersonalService } from '../salidas/inventario-personal.service';
 import { IntegracionContexto } from './guards/api-key.guard';
@@ -93,6 +95,10 @@ export class IntegracionesService {
     private readonly asignacionRepository: Repository<AsignacionEquipoServicio>,
         @InjectRepository(UnidadEquipo)
         private readonly unitRepository: Repository<UnidadEquipo>,
+        @InjectRepository(TipoEquipo)
+        private readonly tipoRepository: Repository<TipoEquipo>,
+        @InjectRepository(StockConsumible)
+        private readonly stockRepository: Repository<StockConsumible>,
         private readonly catalogService: CatalogService,
         private readonly inventarioPersonalService: InventarioPersonalService,
         private readonly dataSource: DataSource,
@@ -152,7 +158,142 @@ export class IntegracionesService {
     };
   }
 
-  // GET /integraciones/unidades/:numeroSerie — G3 valida la serie ANTES de que el
+    // GET /integraciones/equipos — G1-9 (sc-159, P1): equipos de un servicio
+    // desde `asignacion_equipo_servicio` (solo asignaciones activas).
+    async consultarEquiposPorServicio(idEmpresa: number, idServicioRaw: string) {
+        const idServicio = this.enteroPositivo(idServicioRaw);
+        if (idServicio === null) {
+            throw new BadRequestException(
+                'Falta el parámetro id_servicio o no es numérico.',
+            );
+        }
+
+        const asignaciones = await this.asignacionRepository.find({
+            where: {
+                id_empresa: idEmpresa,
+                idServicioExterno: idServicio,
+                activa: true,
+            },
+            order: { fechaInstalacion: 'DESC', id_asignacion: 'DESC' },
+        });
+
+        const idsUnidades = [...new Set(asignaciones.map((a) => a.id_unidad))];
+        const unidades = idsUnidades.length
+            ? await this.unitRepository.find({
+                  where: { id_unidad: In(idsUnidades) },
+              })
+            : [];
+        const mapaUnidades = new Map(unidades.map((u) => [u.id_unidad, u]));
+
+        return {
+            success: true,
+            data: asignaciones.map((asignacion) => {
+                const unidad = mapaUnidades.get(asignacion.id_unidad);
+                return {
+                    id_unidad: asignacion.id_unidad,
+                    numero_serie: unidad?.serialNumber ?? null,
+                    estado: unidad?.estado ?? null,
+                    tipo_equipo: {
+                        id_tipo_equipo: unidad?.id_tipo_equipo ?? null,
+                        nombre: unidad?.tipoEquipo?.nombre ?? null,
+                        categoria: unidad?.tipoEquipo?.categoria ?? null,
+                    },
+                    fecha_instalacion: asignacion.fechaInstalacion ?? null,
+                    id_ot: asignacion.id_ot ?? null,
+                };
+            }),
+        };
+    }
+
+    // GET /integraciones/stock — G1-4 extendido (sc-159, P1): disponibilidad
+    // INFORMATIVA para factibilidad comercial; G8 no reserva ni descuenta.
+    // Consumibles: suma de `stock_consumible.cantidad_disponible`.
+    // Individualizables: unidades 'En bodega' (disponible) y 'Asignado a técnico' (reservado).
+    async consultarStock(
+        idEmpresa: number,
+        filtros: { id_tipo_equipo?: string; categoria?: string },
+    ) {
+        const idTipo = this.enteroPositivo(filtros.id_tipo_equipo);
+        if (
+            filtros.id_tipo_equipo !== undefined &&
+            filtros.id_tipo_equipo !== '' &&
+            idTipo === null
+        ) {
+            throw new BadRequestException(
+                'El parámetro id_tipo_equipo debe ser numérico.',
+            );
+        }
+
+        const where: any = { id_empresa: idEmpresa, activo: true };
+        if (idTipo !== null) where.id_tipo_equipo = idTipo;
+        if (filtros.categoria?.trim()) where.categoria = filtros.categoria.trim();
+
+        const tipos = await this.tipoRepository.find({ where });
+        if (idTipo !== null && tipos.length === 0) {
+            throw new NotFoundException(
+                'El tipo de equipo no existe en esa empresa.',
+            );
+        }
+        if (tipos.length === 0) {
+            return { success: true, data: [] };
+        }
+
+        const idsTipos = tipos.map((t) => t.id_tipo_equipo);
+        const [stocks, unidades] = await Promise.all([
+            this.stockRepository.find({
+                where: { id_tipo_equipo: In(idsTipos) },
+            }),
+            this.unitRepository.find({
+                where: {
+                    id_empresa: idEmpresa,
+                    id_tipo_equipo: In(idsTipos),
+                    estado: In(['En bodega', 'Asignado a técnico']),
+                },
+            }),
+        ]);
+
+        return {
+            success: true,
+            data: tipos.map((tipo) => {
+                let disponible = 0;
+                let reservado = 0;
+
+                if (tipo.requiereSerialNumber === false) {
+                    disponible = stocks
+                        .filter((s) => s.id_tipo_equipo === tipo.id_tipo_equipo)
+                        .reduce(
+                            (total, s) => total + Number(s.cantidad_disponible ?? 0),
+                            0,
+                        );
+                    // El modelo no reserva consumibles (G8 tampoco lo hace).
+                    reservado = 0;
+                } else {
+                    const delTipo = unidades.filter(
+                        (u) => u.id_tipo_equipo === tipo.id_tipo_equipo,
+                    );
+                    disponible = delTipo.filter((u) => u.estado === 'En bodega').length;
+                    reservado = delTipo.filter(
+                        (u) => u.estado === 'Asignado a técnico',
+                    ).length;
+                }
+
+                disponible = Number(disponible.toFixed(2));
+                return {
+                    id_tipo_equipo: tipo.id_tipo_equipo,
+                    id_empresa: tipo.id_empresa ?? null,
+                    nombre: tipo.nombre,
+                    categoria: tipo.categoria ?? null,
+                    unidad_medida: tipo.unidadMedida ?? null,
+                    requiere_serie_individual: tipo.requiereSerialNumber ?? null,
+                    disponible,
+                    reservado,
+                    total: Number((disponible + reservado).toFixed(2)),
+                };
+            }),
+        };
+    }
+
+    // GET /integraciones/unidades/:numeroSerie — G3 valida la serie ANTES de que el
   // técnico cierre la OT. sc-158 (G8): se amplía la respuesta sin quitar campos
   // existentes y con 404 genérico (una serie de otra empresa no se distingue).
   async consultarUnidadPorSerie(numeroSerie: string, idEmpresa: number) {

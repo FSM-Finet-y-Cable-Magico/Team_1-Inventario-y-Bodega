@@ -13,6 +13,8 @@
 | POST | `/api/integraciones/ordenes/:idOt/cierre` | `X-API-KEY` | Webhook receptor del cierre de OT de G3 (push). Base del procesamiento del CU-64 |
 | GET | `/api/integraciones/tipos-equipo?id_empresa=N&categoria=&buscar=&activo=` | `X-API-KEY` | Catálogo S2S para los planes comerciales de G8 (G1-7 · sc-158) |
 | POST | `/api/integraciones/activaciones` | `X-API-KEY` | Evento de activación de G8: asocia cliente/servicio/contrato externos a las unidades instaladas (G1-8 · sc-158) |
+| GET | `/api/integraciones/equipos?id_empresa=N&id_servicio=S` | `X-API-KEY` | Equipos activos de un servicio para el perfil del servicio en el CRM (G1-9 · sc-159) |
+| GET | `/api/integraciones/stock?id_empresa=N&id_tipo_equipo=T` \| `&categoria=C` | `X-API-KEY` | Disponibilidad **informativa** (G1-4 extendido · sc-159). G8 no reserva ni descuenta |
 
 Contrato de errores: `400` falta `id_empresa`/no numérico, payload malformado,
 `clave_idempotencia`/`event_id`/`id_contrato`/`id_servicio` ausentes, `id_ot` de ruta ≠ payload,
@@ -115,6 +117,24 @@ otros datos de activación. Respuestas envueltas `{ success, data }`.
   también se refleja en `unidad_equipo.id_cliente_instalado` cuando G8 informa `id_cliente`.
 - Respuesta: `{success, data: {event_id, id_servicio, equipos_asociados, duplicado}}`.
 
+### 3.5 `consultarEquiposPorServicio` (GET G8 · sc-159)
+- Desde `asignacion_equipo_servicio` con `activa=true` para `(id_empresa, id_servicio_externo)`;
+  `id_servicio` numérico obligatorio (400 si falta).
+- Por ítem: `{id_unidad, numero_serie, estado, tipo_equipo {id_tipo_equipo, nombre, categoria},
+  fecha_instalacion, id_ot}`. Servicio sin equipos → 200 con `[]` (no 404).
+
+### 3.6 `consultarStock` (GET G8 · sc-159)
+- Filtros `id_tipo_equipo` o `categoria` (ambos opcionales; sin filtro devuelve los tipos activos
+  de la empresa). `id_tipo_equipo` inexistente en la empresa → 404; no numérico → 400.
+- **Individualizables:** `disponible` = unidades `En bodega`; `reservado` = unidades
+  `Asignado a técnico`; `total` = suma.
+- **Consumibles:** `disponible` = Σ `stock_consumible.cantidad_disponible` (todas las bodegas);
+  `reservado` = 0 (el modelo no reserva y G8 tampoco reserva ni descuenta).
+- Respuesta **informativa** por tipo: `{id_tipo_equipo, id_empresa, nombre, categoria,
+  unidad_medida, requiere_serie_individual, disponible, reservado, total}`.
+- Garantía (G8-G / G1-6): ya viaja dentro de la consulta de unidad ampliada (sc-158); el endpoint
+  dedicado `GET /unidades/:serie/garantia` queda **solo si G8 lo pide expresamente** (prioridad baja).
+
 ## 4. Entidades / tablas
 
 - `integracion_cierre` (`entities/cierre-integracion.entity.ts`): `id_cierre`,
@@ -150,5 +170,5 @@ otros datos de activación. Respuestas envueltas `{ success, data }`.
       (La key **T1→G3** es el mismo valor `fd2e2646...` que G3 nos dio para consumir sus
       endpoints — así se acordó con ellos; si se rota, avisar a ambos lados el mismo día).
 - [ ] **G8 (sc-158):** key real de G8 por canal aparte y envío de URL pública al cerrar el lote.
-- [ ] **G8 (sc-159, P1):** `GET /integraciones/equipos?id_servicio=`, `GET /integraciones/stock`
-      (informativo) y garantía dedicada.
+- [x] **G8 (sc-159, P1):** `GET /integraciones/equipos?id_servicio=` y `GET /integraciones/stock`
+      (informativo) implementados; garantía dedicada descartada por ahora (ya viaja en la unidad).
