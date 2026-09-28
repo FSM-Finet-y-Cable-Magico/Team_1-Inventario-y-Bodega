@@ -95,6 +95,11 @@ Todas tipadas `<T>`. Nombre de endpoint backend en comentario:
 - `getMyDashboard()` → `GET /empresas/mi-dashboard` (CU-16)
 - `getAlertasActivas()` → `GET /alertas` (CU-94) → `AlertaActiva[]` (`tipo`, `empresa`, `descripcion`, `fecha_hora`)
 
+### Notificaciones (campana persistida)
+- `getNotificaciones()` → `GET /notificaciones` (CU-96) → `NotificacionesNoLeidas` (`contador`, `notificaciones: NotificacionCampana[]`)
+- `marcarNotificacionLeida(id)` → `PATCH /notificaciones/:id/leer`
+- `marcarTodasNotificacionesLeidas()` → `PATCH /notificaciones/leer-todas`
+
 ### Reportes
 - `generarReporteStock({id_empresa?, id_bodega?, id_tipo_equipo?})` → `GET /reportes/stock` (CU-85).
 
@@ -133,6 +138,7 @@ Los principales:
 - `LogAuditoria`, `FiltrosAuditoria`, `DashboardEmpresa`, `PaginatedResponse<T>`, `DecodedToken`.
 - `TipoAlerta` (literales exactos `'Stock bajo umbral' | 'Garantía con defecto' | 'Préstamo vencido' |
   'Revisión prolongada'`) y `AlertaActiva` (CU-94).
+- `NotificacionCampana`, `NotificacionesNoLeidas` (CU-96; `tipo` reutiliza `TipoAlerta`).
 
 > Al implementar un CU nuevo: agrega aquí los tipos que necesite el frontend, **usando los mismos
 > nombres de campo** que devuelve el backend (ver entidades en `05-backend/`).

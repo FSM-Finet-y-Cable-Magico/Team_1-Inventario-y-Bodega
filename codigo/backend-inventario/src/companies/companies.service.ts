@@ -19,13 +19,16 @@ export const EMPRESAS = [
   { id: 2, nombre: 'Cable Mágico' },
 ];
 
-// CU-46: alerta de stock bajo el umbral mínimo (también la consume CU-94)
+// CU-46: alerta de stock bajo el umbral mínimo (también la consume CU-94/CU-96)
 export interface AlertaStockMinimo {
   bodega: string;
   tipo_equipo: string;
   cantidad_disponible: number;
   umbral_minimo: number;
   unidad_medida: string | null;
+  // CU-96: ids para la clave de deduplicación diaria de la notificación
+  id_bodega: number;
+  id_tipo_equipo: number;
 }
 
 @Injectable()
@@ -249,6 +252,8 @@ export class CompaniesService {
           cantidad_disponible: stockActual,
           umbral_minimo: Number(r.umbral_minimo),
           unidad_medida: r.tipoEquipo?.unidadMedida ?? null,
+          id_bodega: r.id_bodega,
+          id_tipo_equipo: r.id_tipo_equipo,
         });
       }
     }

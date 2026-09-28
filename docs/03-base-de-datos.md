@@ -145,6 +145,18 @@ UNIQUE en `(id_proveedor, id_tipo_equipo)`.
 
 > `unidad_equipo` suma la columna `id_tecnico_asignado` (integer, nullable) desde CU-57.
 
+### `notificacion` — campana del sistema (CU-96)
+`id_notificacion` PK · `tipo` varchar(40) (comparte los literales de CU-94: `'Stock bajo umbral'`,
+`'Préstamo vencido'`) · `id_empresa` · `descripcion` varchar(150) (máx. 100 caracteres útiles,
+recortada igual que CU-94) · `clave_dedupe` varchar(120) **UNIQUE** · `leida` boolean (default
+`false`) · `fecha_generacion` timestamptz (auto) · `fecha_leida` timestamptz (nullable).
+
+`clave_dedupe` es `'<tipo>:<referencia>:<YYYY-MM-DD>'` (p. ej. `Préstamo vencido:12:2026-09-28`).
+El `UNIQUE` es la garantía real de "no duplicar una notificación ya generada": generar dos veces
+el mismo día para la misma referencia (préstamo, o bodega+tipo de equipo) intenta insertar la
+misma clave y se ignora. Las notificaciones `leida=true` se purgan a los 30 días de
+`fecha_generacion` (no hay endpoint de historial: es limpieza de tabla, no algo visible).
+
 
 ---
 

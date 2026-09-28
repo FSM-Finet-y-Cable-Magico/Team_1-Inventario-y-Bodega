@@ -190,4 +190,4 @@ no esté reflejado aquí.
 |----|--------|--------|-------|
 | CU-94 | Consultando alertas activas en el dashboard | [~] En progreso | Implementado (back + front + docs + diagramas `CU94/`): módulo backend `alertas` (`GET /api/alertas`) y sección "Alertas activas" en `/dashboard`. Capturas en `Casos de uso/CU-94/`. Pendiente: `feat/runa` y PR hacia `dev` |
 | CU-95 | Mostrando aviso de garantía vigente al cambiar estado | [ ] Pendiente | |
-| CU-96 | Recibiendo notificaciones visuales en la campana del sistema | [ ] Pendiente | |
+| CU-96 | Recibiendo notificaciones visuales en la campana del sistema | [~] En progreso | Implementado (back + front + docs + diagramas `CU96/`): módulo backend `notificaciones` (`GET /api/notificaciones`, `PATCH .../leer`, `PATCH .../leer-todas`, tabla `notificacion`) y sección "Notificaciones del sistema" en la campana (`Header.svelte`). Reutiliza la detección de CU-46/CU-94. Pendiente: capturas en `Casos de uso/CU-96/`, verificación (`npm run lint/build/check`) y PR hacia `dev` desde `feat/runa` |
