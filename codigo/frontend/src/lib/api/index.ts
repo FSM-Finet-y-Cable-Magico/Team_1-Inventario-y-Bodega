@@ -1,5 +1,5 @@
 import { api } from './client';
-import type { LoginDto, LoginResponse, Usuario, EquipoEnRevision, VerificacionSerie, ItemSalida, SalidaResumen, InventarioTecnico, ReporteStock } from '$lib/types';
+import type { LoginDto, LoginResponse, Usuario, EquipoEnRevision, VerificacionSerie, ItemSalida, SalidaResumen, InventarioTecnico, ReporteStock, AlertaActiva } from '$lib/types';
 
 export async function login(dto: LoginDto): Promise<LoginResponse> {
 	return api.post<LoginResponse>('/auth/login', dto);
@@ -357,6 +357,11 @@ export function getDashboard() {
 
 export function getMyDashboard() {
 	return api.get<any>('/empresas/mi-dashboard');
+}
+
+// CU-94: alertas activas del dashboard (el backend las calcula en cada consulta)
+export function getAlertasActivas(): Promise<AlertaActiva[]> {
+	return api.get<AlertaActiva[]>('/alertas');
 }
 
 export function getAuditLog(filters?: Record<string, string | number | undefined>) {

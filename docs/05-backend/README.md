@@ -12,7 +12,8 @@
   `inventario` (catálogo + unidades), `transferencias`, `proveedores`, `ordenes-ingreso`,
   `integraciones` (server-to-server con G3, `docs/05-backend/integraciones.md`),
   `salidas` (salidas a técnico, `docs/05-backend/salidas.md`), `health`.
-  `inventario` (catálogo + unidades), `transferencias`, `bajas`, `donaciones`, `prestamos`, `health`.
+  `inventario` (catálogo + unidades), `transferencias`, `bajas`, `donaciones`, `prestamos`, `health`,
+  `alertas` (alertas activas del dashboard, `docs/05-backend/alertas.md`).
 
 ## 2. Seguridad transversal (obligatorio en todo endpoint)
 
@@ -36,7 +37,7 @@ Cualquier endpoint que acceda a datos protegidos usa:
 |--------|--------|
 | `inventario` (`catalogo`, `unidades`) | Guard dedicado `CompanyIsolationGuard` (exige `id_empresa` no nulo, inyecta `req.companyContextId`; audita y lanza `ForbiddenException` si la cuenta no tiene empresa). |
 | `usuarios`, `bodegas`, `transferencias`, `companies`, `ordenes-ingreso` | Aislamiento **manual en el service** con flag `esSuperusuario`: los no-superusuario solo ven/editan su empresa. En `bodegas` hay `verificarPertenencia` que devuelve **404 genérico** ("Bodega no encontrada") para no revelar existencia. En `ordenes-ingreso` el no-superusuario no puede elegir empresa: se le fuerza la suya. |
-| `usuarios`, `bodegas`, `transferencias`, `bajas`, `donaciones`, `prestamos`, `companies` | Aislamiento **manual en el service** con flag `esSuperusuario`: los no-superusuario solo ven/editan su empresa. En `bodegas` hay `verificarPertenencia` que devuelve **404 genérico** ("Bodega no encontrada") para no revelar existencia. |
+| `usuarios`, `bodegas`, `transferencias`, `bajas`, `donaciones`, `prestamos`, `companies`, `alertas` | Aislamiento **manual en el service** con flag `esSuperusuario`: los no-superusuario solo ven/editan su empresa. En `bodegas` hay `verificarPertenencia` que devuelve **404 genérico** ("Bodega no encontrada") para no revelar existencia. |
 | `transferencias` | Manual: un Admin solo ve transferencias donde su empresa es origen o destino (`NotFoundException('Transferencia no encontrada')` si no). |
 
 **No agregues `CompanyIsolationGuard` a un módulo que no lo usa sin justificación**, y
@@ -93,6 +94,7 @@ Mensajes **en español**, específicos por validación. Excepción: login usa me
 | [bajas.md](./bajas.md) | `bajas` (baja definitiva y solicitudes, CU-78/CU-79) |
 | [donaciones.md](./donaciones.md) | `donaciones` (donación de equipos de baja + PDF, CU-80) |
 | [prestamos.md](./prestamos.md) | `prestamos` (préstamos externos y retornos, CU-81/CU-82) |
+| [alertas.md](./alertas.md) | `alertas` (alertas activas del dashboard, CU-94) |
 
 > Para cada módulo se listan: endpoints, lógica de negocio, entidades, y qué CU cubre.
 

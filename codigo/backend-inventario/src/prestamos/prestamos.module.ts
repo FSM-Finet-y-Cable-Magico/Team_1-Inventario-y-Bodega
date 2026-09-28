@@ -30,5 +30,7 @@ import { AuditoriaModule } from '../auditoria/auditoria.module';
   ],
   controllers: [PrestamosController],
   providers: [PrestamosService],
+  // CU-94: el módulo de alertas reutiliza la tabla de préstamos activos (CU-83)
+  exports: [PrestamosService],
 })
 export class PrestamosModule {}

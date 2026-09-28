@@ -188,6 +188,6 @@ no esté reflejado aquí.
 
 | CU | Nombre | Estado | Notas |
 |----|--------|--------|-------|
-| CU-94 | Consultando alertas activas en el dashboard | [ ] Pendiente | |
+| CU-94 | Consultando alertas activas en el dashboard | [~] En progreso | Implementado (back + front + docs + diagramas `CU94/`): módulo backend `alertas` (`GET /api/alertas`) y sección "Alertas activas" en `/dashboard`. Capturas en `Casos de uso/CU-94/`. Pendiente: `feat/runa` y PR hacia `dev` |
 | CU-95 | Mostrando aviso de garantía vigente al cambiar estado | [ ] Pendiente | |
 | CU-96 | Recibiendo notificaciones visuales en la campana del sistema | [ ] Pendiente | |

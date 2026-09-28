@@ -19,6 +19,15 @@ export const EMPRESAS = [
   { id: 2, nombre: 'Cable Mágico' },
 ];
 
+// CU-46: alerta de stock bajo el umbral mínimo (también la consume CU-94)
+export interface AlertaStockMinimo {
+  bodega: string;
+  tipo_equipo: string;
+  cantidad_disponible: number;
+  umbral_minimo: number;
+  unidad_medida: string | null;
+}
+
 @Injectable()
 export class CompaniesService {
   constructor(
@@ -191,9 +200,26 @@ export class CompaniesService {
       .select('SUM(s.cantidad_disponible)', 'total')
       .getRawOne();
 
-    // CU-46: alertas de stock bajo el umbral mínimo configurado.
-    // Para consumibles el stock es la cantidad disponible; para tipos
-    // serializados es el conteo de unidades en estado 'En bodega'.
+    const alertas = await this.getAlertasStockMinimo(id);
+
+    return {
+      empresa: nombre,
+      id_empresa: id,
+      // CU-79 (B): inventario activo, sin las unidades dadas de baja
+      total_unidades: unidades.length - unidadesDadasDeBaja,
+      unidades_dadas_de_baja: unidadesDadasDeBaja,
+      unidades_por_estado: estadisticasEstado,
+      bodegas_activas: bodegasActivas,
+      stock_consumible_total: Number(stockConsumible?.total ?? 0),
+      alertas_stock_minimo: alertas,
+    };
+  }
+
+  // CU-46: alertas de stock bajo el umbral mínimo configurado.
+  // Para consumibles el stock es la cantidad disponible; para tipos
+  // serializados es el conteo de unidades en estado 'En bodega'.
+  // CU-94: es pública para que las alertas del dashboard usen la misma regla.
+  async getAlertasStockMinimo(id: number): Promise<AlertaStockMinimo[]> {
     const umbralesConfigurados = await this.stockRepository
       .createQueryBuilder('s')
       .innerJoinAndSelect('s.bodega', 'b', 'b.id_empresa = :empresa', {
@@ -204,7 +230,7 @@ export class CompaniesService {
       .andWhere('s.umbral_minimo > 0')
       .getMany();
 
-    const alertas: any[] = [];
+    const alertas: AlertaStockMinimo[] = [];
     for (const r of umbralesConfigurados) {
       const stockActual =
         r.tipoEquipo?.requiereSerialNumber === true
@@ -227,16 +253,6 @@ export class CompaniesService {
       }
     }
 
-    return {
-      empresa: nombre,
-      id_empresa: id,
-      // CU-79 (B): inventario activo, sin las unidades dadas de baja
-      total_unidades: unidades.length - unidadesDadasDeBaja,
-      unidades_dadas_de_baja: unidadesDadasDeBaja,
-      unidades_por_estado: estadisticasEstado,
-      bodegas_activas: bodegasActivas,
-      stock_consumible_total: Number(stockConsumible?.total ?? 0),
-      alertas_stock_minimo: alertas,
-    };
+    return alertas;
   }
 }

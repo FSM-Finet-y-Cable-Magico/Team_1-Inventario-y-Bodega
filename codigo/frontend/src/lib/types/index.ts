@@ -572,6 +572,16 @@ export interface DashboardEmpresa {
 	total_bodegas: number;
 }
 
+// CU-94: alertas activas del dashboard (literales exactos del backend)
+export type TipoAlerta = 'Stock bajo umbral' | 'Garantía con defecto' | 'Préstamo vencido' | 'Revisión prolongada';
+
+export interface AlertaActiva {
+	tipo: TipoAlerta;
+	empresa: string;
+	descripcion: string;
+	fecha_hora: string;
+}
+
 export interface PaginatedResponse<T> {
 	data: T[];
 	total: number;
