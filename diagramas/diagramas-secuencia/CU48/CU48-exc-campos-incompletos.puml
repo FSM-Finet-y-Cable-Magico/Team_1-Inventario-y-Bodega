@@ -1,0 +1,53 @@
+@startuml CU48-exc-campos-incompletos
+title CU-48 — Consultando ubicación externa de equipo fuera de bodega (excepción: datos incompletos)
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style>
+sequenceDiagram {
+  participant {
+    margin 30
+  }
+  actor {
+    margin 12
+  }
+}
+</style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega" as user
+participant "V_UnidadDetalle" as view
+participant "C_UnitsService" as svc
+participant "C_DataSource" as orm
+participant "usuario" as usr
+participant "G3 FSM (externo)" as g3
+
+user -> view : Abre /unidades/[id] (equipo asignado a un técnico sin RUT,\no instalado en cliente sin dirección)
+activate view
+view -> svc : verFichaDetalle(id, id_empresa) → resolverUbicacionExterna(unidad)
+activate svc
+alt Asignado a técnico
+  svc -> usr : SELECT nombre_completo, rut
+  usr --> svc : rut = NULL (campo sin registrar)
+  svc -> svc : campos_faltantes = ['rut']
+else Instalado en cliente
+  svc -> orm : datos persistidos del cierre (CU-64)
+  orm --> svc : direccion_instalacion = NULL
+  opt G3 configurado y rut presente
+    svc -> g3 : GET /clientes/rut/{rut}
+    g3 --> svc : 404 / timeout / sin respuesta
+    note right : degradación silenciosa:\nse muestra solo lo persistido
+  end
+  svc -> svc : campos_faltantes = ['direccion']
+end
+svc --> view : ubicacion_externa { datos disponibles, campos_faltantes }
+deactivate svc
+view --> user : Muestra los campos disponibles y,\nen texto de advertencia, "Campos sin registrar: …"
+note right : Excepción 1: la consulta NO falla;\nse indica explícitamente qué falta registrar
+deactivate view
+@enduml

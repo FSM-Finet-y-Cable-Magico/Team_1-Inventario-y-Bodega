@@ -261,6 +261,7 @@ export class PrestamosService {
     return `PE-${String(ultimo + 1).padStart(5, '0')}`;
   }
 
+  //CU-81
   async registrar(
     dto: CreatePrestamoDto,
     actor: ActorJwt,
@@ -377,7 +378,9 @@ export class PrestamosService {
         const resultadoUpdate = await queryRunner.manager
           .createQueryBuilder()
           .update(StockConsumible)
-          .set({ cantidad_disponible: () => `cantidad_disponible - ${item.cantidad}` })
+          .set({
+            cantidad_disponible: () => `cantidad_disponible - ${item.cantidad}`,
+          })
           .where('id_stock = :idStock AND cantidad_disponible >= :cantidad', {
             idStock: item.stock.id_stock,
             cantidad: item.cantidad,
@@ -760,7 +763,9 @@ export class PrestamosService {
           const resultadoUpdate = await queryRunner.manager
             .createQueryBuilder()
             .update(StockConsumible)
-            .set({ cantidad_disponible: () => `cantidad_disponible + ${cantidad}` })
+            .set({
+              cantidad_disponible: () => `cantidad_disponible + ${cantidad}`,
+            })
             .where('id_bodega = :idBodega AND id_tipo_equipo = :idTipo', {
               idBodega: prestamo.idBodegaOrigen,
               idTipo: detalle.id_tipo_equipo,
@@ -851,6 +856,7 @@ export class PrestamosService {
     }
   }
 
+  //CU-82
   async obtenerDetalle(
     idPrestamo: number,
     actor: ActorJwt,

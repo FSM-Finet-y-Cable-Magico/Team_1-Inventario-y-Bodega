@@ -1,0 +1,54 @@
+@startuml CU68-normal
+title CU-68 — Verificando saldo de consumibles en cierre (flujo normal: saldo suficiente)
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style>
+sequenceDiagram {
+  participant {
+    margin 30
+  }
+  actor {
+    margin 12
+  }
+}
+</style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+participant "Sistema" as sys #lightgrey
+participant "C_InventarioPersonalService" as ips
+participant "C_IntegracionesService" as svc
+participant "C_TypeORM (transacción)" as orm
+participant "inventario_personal_tecnico" as inv
+participant "tipo_equipo" as tipo
+
+note over sys : Cierre de instalación (CU-64, webhook G3) o confirmación humana (CU-63).
+sys -> ips : detectarInsuficientes(manager, id_tecnico, materiales[])\n(pre-check sin bloqueo)
+activate ips
+loop cada material declarado
+  ips -> inv : SELECT cantidad WHERE (id_tecnico, id_tipo_equipo)
+  inv --> ips : saldo
+  ips -> tipo : SELECT nombre, unidad_medida
+  tipo --> ips : 'Cable UTP Cat6' / 'Metro'
+  ips -> ips : saldo ≥ declarado → suficiente ✓
+end
+ips --> svc : insuficientes = [] → el cierre puede confirmarse
+deactivate ips
+sys -> svc : validarSaldo(...) / transacción del cierre
+activate svc
+svc -> ips : descontarHasta(manager, id_tecnico, id_tipo_equipo, cantidad)
+activate ips
+ips -> inv : SELECT ... FOR UPDATE (validación definitiva)
+inv --> ips : saldo 25
+ips -> inv : UPDATE cantidad = 15
+ips --> svc : { saldoAnterior: 25, descontado: 10, faltante: 0 }
+deactivate ips
+svc -> orm : commitTransaction()
+svc --> sys : 200 (materiales.descontados) — el saldo nunca queda negativo
+deactivate svc
+@enduml

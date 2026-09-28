@@ -3,3 +3,6 @@
 # convierte estos archivos a CRLF y rompe su shebang (#!/bin/sh) dentro de los
 # contenedores Linux: "exec ...: no such file or directory".
 *.sh text eol=lf
+# Los .command de macOS también son scripts de shell: un checkout en Windows
+# con autocrlf=true los convierte a CRLF y rompe el shebang al abrirlos en macOS.
+*.command text eol=lf

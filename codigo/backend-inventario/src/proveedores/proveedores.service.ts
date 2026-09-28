@@ -191,6 +191,7 @@ export class ProveedoresService {
     return actualizado;
   }
 
+  //CU-51
   async findAll(filtros?: {
     buscar?: string;
     activa?: boolean;

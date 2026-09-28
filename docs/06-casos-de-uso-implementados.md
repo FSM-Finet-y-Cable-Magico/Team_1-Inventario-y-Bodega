@@ -67,6 +67,7 @@
 | 45 | Stock por tipo/estado/unidad de medida | `bodegas` | `/bodegas/[id]` |
 | 46 | Umbral mínimo de stock + alertas | `bodegas`, `companies` | `/bodegas/[id]`, `/dashboard`, `Header` |
 | 47 | Ubicación física al ingresar/reingresar a bodega | `inventario/units` | `/unidades/[id]` |
+| 48 | Consultar ubicación externa (técnico/cliente/préstamo) | `inventario/units`, `usuarios`, `prestamos`, `integraciones` (G3) | `/unidades/[id]` |
 | 49 | Crear proveedor (CU-49) | `proveedores` | `/proveedores` |
 | 50 | Editar proveedor (CU-50) | `proveedores` | `/proveedores` |
 | 51 | Consultar listado de proveedores (CU-51) | `proveedores` | `/proveedores` |
@@ -79,7 +80,10 @@
 | 58 | Inventario personal del técnico (consulta) | `salidas` | `/salidas` (sección) |
 | 59 | Validación de NS en salida (en vivo + transacción) | `salidas`, `inventario/units` | `/salidas` |
 | 60 | Salida de consumibles a técnico | `salidas` | `/salidas` |
+| 61 | Vista móvil de trabajos e inventario del técnico | `salidas` (jornada), `integraciones` (G3) | `/jornada` |
 | 62 | Validación de stock con bloqueo de fila | `salidas` | `/salidas` (banner) |
+| 64 | Acciones atómicas del cierre de instalación (estado + cliente/dirección + materiales + SRV) | `integraciones` (webhook G3), `salidas`, `inventario` | `/unidades/[id]` (ficha) |
+| 68 | Verificación de saldo de consumibles en cierre (pre-check + transacción) | `integraciones` (webhook G3), `salidas` (`InventarioPersonalService`) | `/unidades/[id]` (sin UI propia; el cierre llega por webhook) |
 | 72 | Registrando resultado de revisión (Operativo/Reparación externa/Baja) | `inventario/units` | `/unidades/[id]` |
 | 74 | Reacondicionando equipo operativo desde revisión a bodega | `inventario/units` | `/unidades/[id]` |
 | 75 | Enviando equipo a reparación externa | `inventario/units` | `/unidades/[id]` |

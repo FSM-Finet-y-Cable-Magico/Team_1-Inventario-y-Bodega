@@ -1,0 +1,44 @@
+@startuml CU61-exc-sin-trabajos
+title CU-61 — Vista móvil del técnico (excepción: sin trabajos asignados para hoy)
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style>
+sequenceDiagram {
+  participant {
+    margin 30
+  }
+  actor {
+    margin 12
+  }
+}
+</style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Técnico de terreno" as user
+participant "V_Jornada (móvil)" as view
+participant "C_JornadaService" as svc
+participant "C_G3ClientService" as g3
+participant "G3 FSM (externo)" as g3api
+
+user -> view : Abre /jornada
+activate view
+view -> svc : GET /api/tecnicos/me/jornada → obtenerJornada(actor)
+activate svc
+svc -> g3 : consultarOrdenes({ id_tecnico, id_empresa, fecha })
+activate g3
+g3 -> g3api : GET /ordenes?...&desde=hoy&hasta=hoy
+g3api --> g3 : 200 { success, data: [] }
+g3 --> svc : { ok: true, data: [] }
+deactivate g3
+svc --> view : 200 { trabajos_estado: OK, trabajos: [], inventario (CU-58) }
+deactivate svc
+view --> user : Empty state con el mensaje exacto:\n"No tiene trabajos asignados para hoy."\n(el inventario personal se sigue mostrando)
+note right : Excepción 1: lista vacía con 200, nunca error
+deactivate view
+@enduml
