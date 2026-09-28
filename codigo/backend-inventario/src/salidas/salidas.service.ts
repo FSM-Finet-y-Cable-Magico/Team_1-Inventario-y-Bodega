@@ -62,6 +62,7 @@ export class SalidasService {
     }
   }
 
+  //CU-57/CU-60
   async registrarSalida(
     dto: CrearSalidaDto,
     idEmpresaContexto: number,
@@ -339,6 +340,7 @@ export class SalidasService {
   }
 
   // Listado de salidas con aislamiento manual por empresa (patrón bodegas)
+  //CU-57
   async listarSalidas(idEmpresaContexto: number, esSuperusuario: boolean) {
     const qb = this.salidaRepository
       .createQueryBuilder('salida')

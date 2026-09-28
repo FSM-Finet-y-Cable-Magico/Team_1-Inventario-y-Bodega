@@ -37,6 +37,11 @@ services:
       # sc-113: API keys de integración server-to-server (X-API-KEY). Solo valor de desarrollo;
       # en Railway se define la variable real con las keys de producción.
       INTEGRACION_API_KEYS: '[{"key":"g3-dev-key","grupo":"G3","empresas":[1,2]}]'
+      # CU-48: G3 como consumidor saliente (enriquecimiento del cliente por RUT en la ficha).
+      # Sin valores por defecto: si no están definidas, la ficha degrada a lo persistido.
+      # Las credenciales reales se definen por entorno (Railway) y nunca se commitean.
+      G3_INTEGRACION_URL: ${G3_INTEGRACION_URL:-}
+      G3_INTEGRACION_API_KEY: ${G3_INTEGRACION_API_KEY:-}
     depends_on:
       db:
         condition: service_healthy

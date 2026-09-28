@@ -21,6 +21,11 @@ export class Usuario {
   @Column({ unique: true, nullable: true })
   email: string;
 
+  // CU-48: RUT del usuario (formato XXXXXXXX-X) para la ubicación externa del
+  // equipo asignado a un técnico. Requiere migración: npm run migrar
+  @Column({ type: 'varchar', length: 12, nullable: true })
+  rut?: string | null;
+
   @Column({ nullable: false })
   password_hash: string;
 

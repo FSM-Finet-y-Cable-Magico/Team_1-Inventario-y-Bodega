@@ -1,0 +1,64 @@
+@startuml CU64-normal
+title CU-64 — Ejecutando acciones atómicas del cierre de instalación (flujo normal)
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style>
+sequenceDiagram {
+  participant {
+    margin 30
+  }
+  actor {
+    margin 12
+  }
+}
+</style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Técnico de terreno (G3)" as g3
+participant "C_IntegracionesController" as ctrl
+participant "C_IntegracionesService" as svc
+participant "C_InventarioPersonalService" as ips
+participant "C_TypeORM (transacción)" as orm
+participant "integracion_cierre" as cierre
+participant "secuencia_srv" as sec
+participant "unidad_equipo" as uni
+participant "inventario_personal_tecnico" as inv
+
+g3 -> ctrl : POST /api/integraciones/ordenes/781/cierre\nX-API-KEY + { clave_idempotencia, tipo_ot: INSTALACION,\ncliente{rut,nombre}, direccion{...}, materiales[], equipos_instalados[] }
+activate ctrl
+ctrl -> svc : recibirCierreOt(781, payload, integracion)
+activate svc
+svc -> svc : validar X-API-KEY + scope id_empresa + payload
+svc -> orm : startTransaction()
+svc -> cierre : INSERT (clave_idempotencia UNIQUE, payload)
+note right : (E) auditoría de integración: el payload completo\n+ acciones + discrepancias quedan en integracion_cierre
+svc -> sec : INSERT ... ON CONFLICT DO UPDATE RETURNING ultimo
+sec --> svc : ultimo = 1 → SRV-2026-00001
+svc -> orm : UPDATE integracion_cierre SET srv, id_tecnico
+loop cada equipos_instalados[] (A)(B)
+  svc -> uni : SELECT WHERE numero_serie + id_empresa
+  uni --> svc : estado 'Asignado a técnico', id_tecnico_asignado
+  svc -> svc : valida acción INSTALADO_EN_CLIENTE (máquina T1)
+  svc -> uni : UPDATE estado = 'Instalado en cliente',\ncliente_rut/nombre, direccion_instalacion, srv
+  svc -> orm : INSERT historial_estado_equipo (usuario null, motivo integración)
+end
+loop cada materiales[] (C)
+  svc -> ips : descontarHasta(manager, id_tecnico, id_tipo_equipo, cantidad)
+  activate ips
+  ips -> inv : SELECT ... FOR UPDATE
+  inv --> ips : cantidad = 25
+  ips -> inv : UPDATE cantidad = 15 (nunca negativa)
+  ips --> svc : { saldoAnterior: 25, descontado: 10, faltante: 0 }
+  deactivate ips
+end
+svc -> orm : commitTransaction()
+svc --> ctrl : 200 { success, data: { srv: 'SRV-2026-00001',\nid_tecnico, acciones_aplicadas, materiales { descontados, ajustes } } }
+deactivate svc
+ctrl --> g3 : 2xx (G3 guarda el SRV; nunca 4xx por regla de negocio)
+@enduml

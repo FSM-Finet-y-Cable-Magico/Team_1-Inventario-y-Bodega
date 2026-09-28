@@ -53,7 +53,33 @@
 
 ---
 
-## 5. Referencias
+## 5. Verificación 26-sept-2026 (Incremento 3 — sc-141/143/144/145)
+
+Re-verificación contra `Team-3-FSM` **`origin/main`** (último commit revisado: `5ca1fbb`).
+Tickets de solo documentación: **no se generó código en T1**.
+
+| Nuestro CU | Endpoint de G3 (código verificado) | Evidencia / observaciones |
+|------------|-------------------------------------|---------------------------|
+| CU-63 | `POST /ordenes/:id/cerrar` (`fsm/backend/src/ordenes/ordenes.controller.ts`) | `CerrarOtDto` incluye `materiales[]`, `equipos_instalados[]`/`equipos_retirados[]` (`numero_serie` + `accion` + `diagnostico`), `potencia_optica_dbm`, `resultado_llamada`. El fan-out `WebhookFanOut` postea `PayloadCierre` a `CIERRE_WEBHOOK_G1_URL` (URL con `{id_ot}`), 3 reintentos backoff y **lee `data.srv` de nuestra respuesta**. ⚠️ El payload **no incluye `id_tecnico`**: nuestro CU-64 infiere el técnico desde `unidad_equipo.id_tecnico_asignado` (o registra `TECNICO_NO_IDENTIFICADO` en CU-68). |
+| CU-65 | `POST /clientes` (`clientes.controller.ts` + `clientes.service.ts`) | Valida DV con `validarRut` (`RUT inválido...`) y RUT duplicado → `409 ConflictException`. Diferencias con nuestra spec: su `rut` es único **global** (no por empresa) y `nombre_completo` admite hasta 120 (nuestra spec 2–80). Sin impacto para T1 (solo lectura). |
+| CU-66 | `PATCH /clientes/:id` (`editarFicha`) + `EditarClienteDto` | Existe y edita la ficha del cliente. |
+| CU-67 | `GET /clientes`, `GET /clientes/rut/:rut` (humanos) y S2S `GET /integraciones/clientes/rut/:rut`, `GET /integraciones/clientes?busqueda=` | Devuelve `id_cliente, rut, nombre_completo, telefono, estado` + `direcciones[]` (S2S). Es la fuente que consume T1 (CU-48/64/71/73/87). |
+| CU-61 (apoyo) | S2S `GET /integraciones/ordenes?id_empresa&estado&id_tecnico&desde&hasta&page&limit` | Incluye `cliente{rut, nombre_completo, telefono}` y `direccion{direccion_completa, comuna}` — exactamente lo que consume nuestro CU-61. |
+
+**Conclusión:** los 4 CUs están cubiertos por G3 y nuestra parte de inventario queda en
+CU-64/CU-68 (webhook del cierre) — verificado end-to-end con el mock del contrato y pruebas
+manuales en `docs/05-backend/integraciones.md`.
+
+### 5.1 Qué consumimos nosotros (confirmado)
+
+- Cierre de instalación: G3 ejecuta `POST /ordenes/:id/cerrar` y notifica por webhook; T1 aplica
+  las acciones atómicas de inventario (CU-64) y valida saldo (CU-68).
+- Cliente: solo lectura por API (`GET /integraciones/clientes/rut/:rut`) para CU-48 (y los
+  CUs cruzados de otros compañeros). No creamos ni editamos clientes.
+
+---
+
+## 6. Referencias
 
 - `docs/10-trazabilidad-entre-equipos.md` — matriz cruzada completa de los 4 grupos (§4 conflictos).
 - `docs/09-cus-integracion-otros-equipos.md` — clasificación original por dominio de datos.

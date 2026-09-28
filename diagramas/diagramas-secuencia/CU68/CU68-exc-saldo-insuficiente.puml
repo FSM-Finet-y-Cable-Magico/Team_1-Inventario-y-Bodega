@@ -1,0 +1,52 @@
+@startuml CU68-exc-saldo-insuficiente
+title CU-68 — Verificando saldo de consumibles en cierre (excepción: saldo insuficiente)
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style>
+sequenceDiagram {
+  participant {
+    margin 30
+  }
+  actor {
+    margin 12
+  }
+}
+</style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+participant "Sistema" as sys #lightgrey
+participant "C_InventarioPersonalService" as ips
+participant "C_IntegracionesService" as svc
+participant "C_TypeORM (transacción)" as orm
+participant "inventario_personal_tecnico" as inv
+participant "integracion_cierre" as cierre
+
+sys -> ips : detectarInsuficientes(manager, id_tecnico, materiales[{tipo 7, cantidad 10}])
+activate ips
+ips -> inv : SELECT cantidad WHERE (id_tecnico, id_tipo_equipo = 7)
+inv --> ips : saldo = 4
+ips -> ips : 4 < 10 → insuficiente
+ips --> sys : [{ mensaje: 'Saldo insuficiente de [Cable UTP Cat6]:\ndisponible 4 Metro, declarado 10 Metro.' }]
+deactivate ips
+alt Confirmación humana (CU-63)
+  sys -> ips : validarSaldo(...)
+  ips --> sys : 400 BadRequestException (mensaje exacto E1)
+  note right : BLOQUEA la confirmación del cierre\n(no se aplica ninguna acción)
+else Webhook G3 (acuerdo Opción A)
+  sys -> svc : continuar el cierre (nunca 4xx por regla de negocio)
+  activate svc
+  svc -> inv : descontarHasta(manager, 7, 10) FOR UPDATE
+  inv --> svc : saldo 4 → descuenta 4, faltante 6
+  svc -> cierre : UPDATE materiales_aplicados (ajustes) +\ndiscrepancias: SALDO_INSUFICIENTE_AJUSTADO
+  svc -> orm : commitTransaction()
+  svc --> sys : 2xx (estado_proceso PROCESADO_CON_DISCREPANCIAS)
+  note right : el faltante queda como ajuste registrado\npara revisión manual; el cierre NO se pierde
+  deactivate svc
+end
+@enduml

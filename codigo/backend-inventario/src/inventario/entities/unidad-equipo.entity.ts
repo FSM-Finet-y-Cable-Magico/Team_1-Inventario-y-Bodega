@@ -98,6 +98,39 @@ export class UnidadEquipo {
   })
   motivoBajaDetalle?: string | null;
 
+  // CU-64: cliente y dirección persistidos del cierre de instalación (G3 identifica
+  // por RUT) para CU-48/71/73/87, y SRV del servicio instalado. El SRV del cierre
+  // vive en `integracion_cierre`; aquí se guarda el vigente de la unidad.
+  @Column({ type: 'varchar', length: 20, name: 'cliente_rut', nullable: true })
+  clienteRut?: string | null;
+
+  @Column({
+    type: 'varchar',
+    length: 150,
+    name: 'cliente_nombre',
+    nullable: true,
+  })
+  clienteNombre?: string | null;
+
+  @Column({
+    type: 'varchar',
+    length: 300,
+    name: 'direccion_instalacion',
+    nullable: true,
+  })
+  direccionInstalacion?: string | null;
+
+  @Column({
+    type: 'varchar',
+    length: 100,
+    name: 'comuna_instalacion',
+    nullable: true,
+  })
+  comunaInstalacion?: string | null;
+
+  @Column({ type: 'varchar', length: 20, name: 'srv', nullable: true })
+  srv?: string | null;
+
   // Relaciones tipadas de TypeORM mapeadas a tus llaves foráneas reales
   @ManyToOne(() => TipoEquipo, (tipo) => tipo.unidades, { eager: true })
   @JoinColumn({ name: 'id_tipo_equipo' })
