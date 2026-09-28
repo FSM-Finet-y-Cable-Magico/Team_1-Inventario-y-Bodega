@@ -1154,6 +1154,7 @@ export class UnitsService {
     };
   }
 
+  //CU-72
   async registrarResultadoRevision(
     unitId: number,
     dto: {

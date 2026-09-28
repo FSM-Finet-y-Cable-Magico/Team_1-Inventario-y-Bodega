@@ -188,6 +188,7 @@ export class DonacionesService {
     return { valido: true };
   }
 
+  //CU-80
   async registrar(
     dto: CreateDonacionDto,
     actor: ActorJwt,
@@ -288,6 +289,7 @@ export class DonacionesService {
     }
   }
 
+  //CU-80
   async listar(actor: ActorJwt): Promise<Record<string, unknown>[]> {
     const donaciones = await this.donacionRepository.find({
       where: this.esSuperusuario(actor) ? {} : { id_empresa: actor.id_empresa },
@@ -320,6 +322,7 @@ export class DonacionesService {
     }));
   }
 
+  //CU-80
   async obtenerDetalle(idDonacion: number, actor: ActorJwt) {
     const donacion = await this.donacionRepository.findOne({
       where: { id_donacion: idDonacion },

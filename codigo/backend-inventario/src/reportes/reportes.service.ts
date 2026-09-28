@@ -88,6 +88,7 @@ export class ReportesService {
     private readonly auditoriaService: AuditoriaService,
   ) {}
 
+  //CU-89
   async getInventarioTecnicosReport(
     filtros: FiltrosInventarioTecnicos,
     actor: Actor,
@@ -125,15 +126,16 @@ export class ReportesService {
         idUsuario: filtros.id_usuario,
       });
     }
-    const tecnicos = (await tecnicosQb
-      .orderBy('u.nombre_completo', 'ASC')
-      .addOrderBy('u.id_usuario', 'ASC')
-      .getMany())
-      .map((u) => ({
-        id_usuario: u.id_usuario,
-        nombre_completo: u.nombre_completo,
-        id_empresa: u.id_empresa,
-      }));
+    const tecnicos = (
+      await tecnicosQb
+        .orderBy('u.nombre_completo', 'ASC')
+        .addOrderBy('u.id_usuario', 'ASC')
+        .getMany()
+    ).map((u) => ({
+      id_usuario: u.id_usuario,
+      nombre_completo: u.nombre_completo,
+      id_empresa: u.id_empresa,
+    }));
 
     if (filtros.id_usuario !== undefined && tecnicos.length === 0) {
       throw new NotFoundException('Técnico no encontrado.');
@@ -162,12 +164,10 @@ export class ReportesService {
               order: { serialNumber: 'ASC' },
             });
 
-          const historialRepository = this.dataSource.getRepository(
-            HistorialEstado,
-          );
-          const salidaDetalleRepository = this.dataSource.getRepository(
-            SalidaDetalle,
-          );
+          const historialRepository =
+            this.dataSource.getRepository(HistorialEstado);
+          const salidaDetalleRepository =
+            this.dataSource.getRepository(SalidaDetalle);
 
           const equipos_individualizables = await Promise.all(
             unidades.map(async (unidad) => {
@@ -201,7 +201,9 @@ export class ReportesService {
               ]);
 
               const fechaAsignacion =
-                ultimoAsignado?.fechaHora ?? ultimaSalida?.salida?.fecha_hora ?? null;
+                ultimoAsignado?.fechaHora ??
+                ultimaSalida?.salida?.fecha_hora ??
+                null;
               const diasTranscurridos = fechaAsignacion
                 ? Math.max(
                     0,
@@ -227,7 +229,9 @@ export class ReportesService {
           const filasSaldos = await this.dataSource
             .getRepository(InventarioPersonal)
             .find({ where: { id_tecnico: tecnico.id_usuario } });
-          const idsTipos = [...new Set(filasSaldos.map((s) => s.id_tipo_equipo))];
+          const idsTipos = [
+            ...new Set(filasSaldos.map((s) => s.id_tipo_equipo)),
+          ];
           const tiposSaldos = idsTipos.length
             ? await this.dataSource
                 .getRepository(TipoEquipo)
@@ -239,11 +243,15 @@ export class ReportesService {
           const consumibles = filasSaldos
             .filter((s) => {
               const tipo = mapaTiposSaldos.get(s.id_tipo_equipo);
-              return tipo?.requiereSerialNumber === false && Number(s.cantidad) > 0;
+              return (
+                tipo?.requiereSerialNumber === false && Number(s.cantidad) > 0
+              );
             })
             .sort((a, b) => {
-              const nombreA = mapaTiposSaldos.get(a.id_tipo_equipo)?.nombre ?? '';
-              const nombreB = mapaTiposSaldos.get(b.id_tipo_equipo)?.nombre ?? '';
+              const nombreA =
+                mapaTiposSaldos.get(a.id_tipo_equipo)?.nombre ?? '';
+              const nombreB =
+                mapaTiposSaldos.get(b.id_tipo_equipo)?.nombre ?? '';
               return nombreA.localeCompare(nombreB);
             })
             .map((s) => {
@@ -278,6 +286,7 @@ export class ReportesService {
     return resultado;
   }
 
+  //CU-91
   async getConsumoReport(
     filtros: FiltrosConsumo,
     actor: Actor,
@@ -316,8 +325,10 @@ export class ReportesService {
     // Las tablas orden_ingreso_detalle y prestamo_retorno las crea migrar.ts en
     // cada arranque (CREATE TABLE IF NOT EXISTS), no hace falta introspección.
     // Filtros de período/empresa compartidos por las tres sumas del reporte.
-    const tieneDesde = filtros.fecha_desde != null && filtros.fecha_desde !== '';
-    const tieneHasta = filtros.fecha_hasta != null && filtros.fecha_hasta !== '';
+    const tieneDesde =
+      filtros.fecha_desde != null && filtros.fecha_desde !== '';
+    const tieneHasta =
+      filtros.fecha_hasta != null && filtros.fecha_hasta !== '';
 
     const resultado = await Promise.all(
       tipos.map(async (tipo) => {
@@ -327,17 +338,26 @@ export class ReportesService {
           .createQueryBuilder('oid')
           .select('COALESCE(SUM(oid.cantidad_recibida), 0)', 'cantidad')
           .innerJoin(OrdenIngreso, 'oi', 'oi.id_orden = oid.id_orden')
-          .where('oid.id_tipo_equipo = :idTipo', { idTipo: tipo.id_tipo_equipo });
+          .where('oid.id_tipo_equipo = :idTipo', {
+            idTipo: tipo.id_tipo_equipo,
+          });
         if (idEmpresa !== undefined) {
-          ingresadoQb.andWhere('oi.id_empresa_destino = :idEmpresa', { idEmpresa });
+          ingresadoQb.andWhere('oi.id_empresa_destino = :idEmpresa', {
+            idEmpresa,
+          });
         }
         if (tieneDesde) {
-          ingresadoQb.andWhere('oi.fecha_creacion >= :desde', { desde: filtros.fecha_desde });
+          ingresadoQb.andWhere('oi.fecha_creacion >= :desde', {
+            desde: filtros.fecha_desde,
+          });
         }
         if (tieneHasta) {
-          ingresadoQb.andWhere('oi.fecha_creacion < (:hasta::date + INTERVAL \'1 day\')', {
-            hasta: filtros.fecha_hasta,
-          });
+          ingresadoQb.andWhere(
+            "oi.fecha_creacion < (:hasta::date + INTERVAL '1 day')",
+            {
+              hasta: filtros.fecha_hasta,
+            },
+          );
         }
 
         // Entregado: consumibles salidos de bodega a técnico (CU-57/60)
@@ -352,12 +372,17 @@ export class ReportesService {
           entregadoQb.andWhere('sb.id_empresa = :idEmpresa', { idEmpresa });
         }
         if (tieneDesde) {
-          entregadoQb.andWhere('sb.fecha_hora >= :desde', { desde: filtros.fecha_desde });
+          entregadoQb.andWhere('sb.fecha_hora >= :desde', {
+            desde: filtros.fecha_desde,
+          });
         }
         if (tieneHasta) {
-          entregadoQb.andWhere('sb.fecha_hora < (:hasta::date + INTERVAL \'1 day\')', {
-            hasta: filtros.fecha_hasta,
-          });
+          entregadoQb.andWhere(
+            "sb.fecha_hora < (:hasta::date + INTERVAL '1 day')",
+            {
+              hasta: filtros.fecha_hasta,
+            },
+          );
         }
 
         // Devuelto: consumibles retornados de préstamos externos (CU-82)
@@ -373,12 +398,17 @@ export class ReportesService {
           devueltoQb.andWhere('pe.id_empresa = :idEmpresa', { idEmpresa });
         }
         if (tieneDesde) {
-          devueltoQb.andWhere('pr.fecha_retorno >= :desde', { desde: filtros.fecha_desde });
+          devueltoQb.andWhere('pr.fecha_retorno >= :desde', {
+            desde: filtros.fecha_desde,
+          });
         }
         if (tieneHasta) {
-          devueltoQb.andWhere('pr.fecha_retorno < (:hasta::date + INTERVAL \'1 day\')', {
-            hasta: filtros.fecha_hasta,
-          });
+          devueltoQb.andWhere(
+            "pr.fecha_retorno < (:hasta::date + INTERVAL '1 day')",
+            {
+              hasta: filtros.fecha_hasta,
+            },
+          );
         }
 
         const [ingresado, entregado, devuelto] = await Promise.all([
@@ -403,7 +433,8 @@ export class ReportesService {
           cantidad_usada_en_cierres: usadoEnCierres,
           cantidad_devuelta: devueltoNum,
           diferencia,
-          desvio: ingresadoNum > 0 && Math.abs(diferencia) > ingresadoNum * 0.15,
+          desvio:
+            ingresadoNum > 0 && Math.abs(diferencia) > ingresadoNum * 0.15,
         };
       }),
     );
@@ -418,6 +449,7 @@ export class ReportesService {
     return filas;
   }
 
+  //CU-85
   async getStockReport(filtros: FiltrosStock, actor: Actor): Promise<any[]> {
     const esSuperusuario = actor.roles?.includes('SUPERUSUARIO') ?? false;
 
@@ -558,6 +590,7 @@ export class ReportesService {
     return resultado;
   }
 
+  //CU-86
   async getMovementsReport(
     filtros: FiltrosMovimientos,
     actor: Actor,
@@ -654,6 +687,7 @@ export class ReportesService {
     return resultado;
   }
 
+  //CU-88
   async getGarantiasReport(
     filtros: FiltrosGarantias,
     actor: Actor,
