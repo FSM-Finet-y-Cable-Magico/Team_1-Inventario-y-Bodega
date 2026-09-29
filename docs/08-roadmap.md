@@ -13,9 +13,9 @@ no esté reflejado aquí.
 ## Resumen
 
 - **Total de casos de uso:** 96
-- **Implementados por T1:** 83 (CU-01 a CU-48, CU-49 a CU-62, CU-64, CU-68, CU-72, CU-74 a CU-84, CU-85, CU-86, CU-88, CU-89, CU-91, CU-94, CU-96) — incluye CU-47, CU-48, CU-57..62, CU-61, CU-64 y CU-68; en `dev` (hasta CU-68) y en la rama `feat/javier-cus` (CU-48 y CU-61)
+- **Implementados por T1:** 86 (CU-01 a CU-48, CU-49 a CU-62, CU-64, CU-68, CU-72, CU-74 a CU-84, CU-85, CU-86, CU-87, CU-88, CU-89, CU-90, CU-91, CU-92, CU-94, CU-96) — incluye CU-87, CU-90 y CU-92 en la rama `Kevin` (PR activa); en `dev` (hasta CU-68, CU-72, CU-74..84, CU-94, CU-96) y en la rama `feat/javier-cus` (CU-48 y CU-61)
 - **Tomados por G3 (no los implementa T1):** 4 (CU-63, CU-65, CU-66, CU-67) — verificados contra `Team-3-FSM` (26-sept-2026), evidencia en `docs/11` §6
-- **Pendientes (Incremento 3):** 9 (CU-69, CU-70, CU-71, CU-73, CU-87, CU-90, CU-92, CU-93, CU-95) — tickets **sc-147 a sc-157** con responsable asignado (ver columna Notas)
+- **Pendientes (Incremento 3):** 6 (CU-69, CU-70, CU-71, CU-73, CU-93, CU-95) — tickets **sc-147 a sc-150, sc-154, sc-156** con responsable asignado (ver columna Notas)
 - **Integración con otros grupos (fuera del conteo de 96):** **sc-158/sc-159** (G8 CRM, acuerdo v1 ratificado 24-sept-2026 · Javier) — sc-158 (P0) y sc-159 (P1) implementados en `feat/javier-cus`; pendiente solo la API key de G8. **sc-113** (G3, implementado)
 
 ## Leyenda
@@ -179,12 +179,12 @@ no esté reflejado aquí.
 |----|--------|--------|-------|
 | CU-85 | Generando reporte de stock actual | [x] Implementado | Grupo 5 · RF-60 · `/reportes/stock` · filtros, estados, umbral y auditoría |
 | CU-86 | Generando reporte de movimientos de inventario | [x] Implementado | Grupo 5 · RF-61 · `/reportes` · filtros, rango máximo 365 días, aislamiento y auditoría |
-| CU-87 | Generando reporte de equipos instalados por cliente | [ ] Pendiente | Incremento 3 · sc-151 (Kevin) |
+| CU-87 | Generando reporte de equipos instalados por cliente | [x] Implementado | Kevin · RF-62 · endpoint `/api/reportes/equipos-instalados` y pestaña Equipos por cliente |
 | CU-88 | Generando reporte de garantías | [x] Implementado | Grupo 5 · RF-63 · `/api/reportes/garantias` · filtro por empresa, tipo y período, empty state y auditoría |
 | CU-89 | Generando reporte de inventario actual de técnicos | [x] Implementado | Grupo 5 · RF-64 · endpoint `/api/reportes/tecnicos/inventario` y pestaña en `/reportes` |
-| CU-90 | Generando reporte de productividad de técnicos | [ ] Pendiente | Incremento 3 · sc-152 (Kevin) |
+| CU-90 | Generando reporte de productividad de técnicos | [x] Implementado | Kevin · RF-65 · endpoint `/api/reportes/tecnicos/productividad` y pestaña Productividad |
 | CU-91 | Generando reporte de consumo de consumibles | [x] Implementado | Grupo 5 · RF-66 · endpoint `/api/reportes/consumo` y pestaña Consumo de consumibles |
-| CU-92 | Exportando reporte a Excel | [ ] Pendiente | Incremento 3 · sc-153 (Kevin) |
+| CU-92 | Exportando reporte a Excel | [x] Implementado | Kevin · RF-67 · endpoint `/api/reportes/exportar/excel` · exportación a .xlsx de 7 reportes con encabezados en negrita, nombre de hoja ReporteYYYYMMDD, timeout de 15s (E1) y auditoría |
 | CU-93 | Exportando reporte a PDF | [ ] Pendiente | Incremento 3 · sc-154 (Tomás) |
 
 ### Alertas y notificaciones

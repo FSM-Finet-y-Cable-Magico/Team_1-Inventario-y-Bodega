@@ -91,11 +91,11 @@
 | 77 | Consultando listado de equipos en revisión | `inventario/units` | `/unidades/en-revision` |
 | 85 | Reporte de stock actual | `reportes`, `bodegas`, `inventario`, `auditoria` | `/reportes/stock` |
 | 86 | Reporte de movimientos de inventario | `reportes`, `transferencias` | `/reportes` |
+| 87 | Reporte de equipos instalados por cliente | `reportes`, `inventario`, `auditoria` | `/reportes` (pestaña Equipos por cliente) |
 | 88 | Reporte de garantías | `reportes`, `inventario`, `auditoria` | `/reportes` (pestaña Garantías) |
 | 89 | Reporte de inventario actual de técnicos | `reportes`, `salidas`, `inventario`, `auditoria` | `/reportes` (pestaña Inventario de técnicos) |
+| 90 | Reporte de productividad de técnicos | `reportes`, `integraciones`, `auditoria` | `/reportes` (pestaña Productividad) |
 | 91 | Reporte de consumo de consumibles | `reportes`, `salidas`, `auditoria` | `/reportes` (pestaña Consumo de consumibles) |
-| 94 | Alertas activas en el dashboard (stock bajo umbral, garantía con defecto, préstamo vencido, revisión prolongada) | `alertas` (reutiliza `companies`, `inventario/units`, `prestamos`) | `/dashboard` (sección Alertas activas) |
-| 96 | Notificaciones visuales en la campana (préstamo vencido + stock bajo umbral, persistidas y marcables como leídas) | `notificaciones` (reutiliza `companies`, `prestamos`, `alertas`) | `Header` (campana, sección "Notificaciones del sistema") |
 | 78 | Baja definitiva de equipo (directa o por solicitud del técnico) | `bajas`, `inventario/units`, `companies` | `/unidades/[id]`, `/bajas`, `Header` (campana) |
 | 79 | Acciones automáticas posteriores a la baja (exclusión del inventario activo) | `inventario/units`, `bodegas`, `companies` | `/dashboard`, `/bodegas`, `/unidades` (sin UI propia) |
 | 80 | Donación de equipos dados de baja + resumen en PDF | `donaciones` | `/bajas` (pestaña Donaciones) |
@@ -103,6 +103,9 @@
 | 82 | Retorno total o parcial de préstamo externo | `prestamos`, `inventario/units`, `bodegas` | `/prestamos` |
 | 83 | Tabla de préstamos externos activos (días restantes, filtros) | `prestamos` | `/prestamos` |
 | 84 | Trazabilidad de la devolución (validaciones del retorno) | `prestamos` | `/prestamos` (errores por ítem en el modal) |
+| 92 | Exportando reporte a Excel | `reportes`, `auditoria` | `/reportes/stock`, `/reportes` (botón Exportar → Excel en cada reporte) |
+| 94 | Alertas activas en el dashboard (stock bajo umbral, garantía con defecto, préstamo vencido, revisión prolongada) | `alertas` (reutiliza `companies`, `inventario/units`, `prestamos`) | `/dashboard` (sección Alertas activas) |
+| 96 | Notificaciones visuales en la campana (préstamo vencido + stock bajo umbral, persistidas y marcables como leídas) | `notificaciones` (reutiliza `companies`, `prestamos`, `alertas`) | `Header` (campana, sección "Notificaciones del sistema") |
 
 ## 3. Diagramas disponibles (referencia para CUs pendientes)
 

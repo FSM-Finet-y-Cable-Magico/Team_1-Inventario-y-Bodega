@@ -464,6 +464,55 @@ export interface ReporteConsumoFila {
 	desvio: boolean;
 }
 
+// CU-87: fila del reporte de equipos instalados por cliente
+export interface ReporteEquiposInstaladosFila {
+	id_unidad: number;
+	numero_servicio: string;
+	rut_cliente: string;
+	nombre_cliente: string;
+	direccion_instalacion: string;
+	tipo_equipo: string;
+	numero_serie: string;
+	fecha_instalacion: string;
+	tecnico_instalacion: string;
+	id_empresa: number;
+}
+
+export interface FiltrosReporteEquiposInstalados {
+	rut?: string;
+	nombre?: string;
+	numero_serie?: string;
+	ns?: string;
+	id_empresa?: string | number;
+}
+
+// CU-90: reporte de productividad de técnicos
+export interface ConsumibleAgrupado {
+	tipo_consumible: string;
+	cantidad: number;
+	unidad_medida: string;
+}
+
+export interface ReporteProductividadTecnicoFila {
+	id_tecnico: number;
+	nombre_completo: string;
+	id_empresa: number;
+	empresa: string;
+	instalaciones_cerradas: number;
+	reparaciones_cerradas: number;
+	metros_fibra_optica: number;
+	unidades_conectores: number;
+	otros_consumibles: ConsumibleAgrupado[];
+	otros_consumibles_resumen: string;
+}
+
+export interface FiltrosProductividadTecnicos {
+	id_empresa?: string | number;
+	id_tecnico?: string | number;
+	fecha_desde?: string;
+	fecha_hasta?: string;
+}
+
 // Respuesta de GET /transferencias (CU-23)
 export interface Transferencia {
 	id_transferencia: number;

@@ -1553,6 +1553,148 @@ async function main() {
   // revisión/reparación, bajas, donaciones, préstamos y movimientos)
   await seedIncremento2(ds);
 
+  // CU-87: asegurar unidades de equipo instaladas con datos canónicos de CU-64
+  const UNIDADES_INSTALADAS_QA = [
+    {
+      numero_serie: 'HW-ONT-99001',
+      tipo: 'ONT QA Finet',
+      modelo: 'HG8245H',
+      estado: 'Instalado en cliente',
+      srv: 'SRV-2026-00101',
+      cliente_rut: '12345678-5',
+      cliente_nombre: 'Juan Pérez González',
+      direccion_instalacion: 'Av. Libertador Bernardo O Higgins 1234, Depto 402',
+      comuna_instalacion: 'Santiago',
+      fecha_instalacion: '2026-03-15',
+      tecnico_usuario: 'tecnico_qa',
+      id_empresa: 1,
+      id_ot: 101,
+    },
+    {
+      numero_serie: 'HW-ONT-99002',
+      tipo: 'ONT QA Finet',
+      modelo: 'HG8245H',
+      estado: 'Instalado en cliente',
+      srv: 'SRV-2026-00102',
+      cliente_rut: '98765432-1',
+      cliente_nombre: 'María José López Rodríguez',
+      direccion_instalacion: 'Calle Los Alerces 567',
+      comuna_instalacion: 'Providencia',
+      fecha_instalacion: '2026-03-20',
+      tecnico_usuario: 'tecnico_qa',
+      id_empresa: 1,
+      id_ot: 102,
+    },
+    {
+      numero_serie: 'HW-ONT-99003',
+      tipo: 'ONT QA Cable Mágico',
+      modelo: 'HG8245H',
+      estado: 'Instalado en cliente',
+      srv: 'SRV-2026-00103',
+      cliente_rut: '11223344-K',
+      cliente_nombre: 'Carlos Muñoz Valenzuela',
+      direccion_instalacion: 'Pasaje Las Flores 89',
+      comuna_instalacion: 'Maipú',
+      fecha_instalacion: '2026-03-22',
+      tecnico_usuario: 'tecnico_cable',
+      id_empresa: 2,
+      id_ot: 103,
+    },
+  ];
+
+  for (const u of UNIDADES_INSTALADAS_QA) {
+    const tipo = await ds.query(
+      'SELECT id_tipo_equipo FROM tipo_equipo WHERE nombre = $1 AND id_empresa = $2',
+      [u.tipo, u.id_empresa],
+    );
+    const idTipo = tipo.length ? tipo[0].id_tipo_equipo : null;
+    if (!idTipo) continue;
+
+    const tecnicoRow = await ds.query(
+      'SELECT id_usuario FROM usuario WHERE nombre_usuario = $1',
+      [u.tecnico_usuario],
+    );
+    const idTecnico = tecnicoRow.length ? tecnicoRow[0].id_usuario : null;
+
+    let idUnidad: number;
+    const existe = await ds.query(
+      'SELECT id_unidad FROM unidad_equipo WHERE numero_serie = $1',
+      [u.numero_serie],
+    );
+    if (!existe.length) {
+      const ins = await ds.query(
+        `INSERT INTO unidad_equipo (
+          id_tipo_equipo, id_empresa, numero_serie, modelo, estado,
+          srv, cliente_rut, cliente_nombre, direccion_instalacion, comuna_instalacion,
+          fecha_adquisicion, fecha_venc_garantia, proveedor
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, '2026-01-10', '2027-01-10', 'Proveedor QA')
+        RETURNING id_unidad`,
+        [
+          idTipo,
+          u.id_empresa,
+          u.numero_serie,
+          u.modelo,
+          u.estado,
+          u.srv,
+          u.cliente_rut,
+          u.cliente_nombre,
+          u.direccion_instalacion,
+          u.comuna_instalacion,
+        ],
+      );
+      idUnidad = ins[0].id_unidad;
+      console.log(`✓ unidad instalada ${u.numero_serie} creada (cliente: ${u.cliente_nombre})`);
+    } else {
+      idUnidad = existe[0].id_unidad;
+      await ds.query(
+        `UPDATE unidad_equipo SET
+          srv = $1, cliente_rut = $2, cliente_nombre = $3,
+          direccion_instalacion = $4, comuna_instalacion = $5, estado = $6
+         WHERE id_unidad = $7`,
+        [u.srv, u.cliente_rut, u.cliente_nombre, u.direccion_instalacion, u.comuna_instalacion, u.estado, idUnidad],
+      );
+    }
+
+    const existeHist = await ds.query(
+      `SELECT id_historial FROM historial_estado_equipo
+       WHERE id_unidad = $1 AND estado_nuevo = 'Instalado en cliente'`,
+      [idUnidad],
+    );
+    if (!existeHist.length) {
+      await ds.query(
+        `INSERT INTO historial_estado_equipo (id_unidad, id_usuario, estado_anterior, estado_nuevo, motivo, fecha_hora)
+         VALUES ($1, $2, 'Asignado a técnico', 'Instalado en cliente', 'Instalación en domicilio de cliente', $3::timestamptz)`,
+        [idUnidad, idTecnico, `${u.fecha_instalacion} 11:00:00-03`],
+      );
+    }
+
+    const existeCierre = await ds.query(
+      'SELECT id_cierre FROM integracion_cierre WHERE srv = $1',
+      [u.srv],
+    );
+    if (!existeCierre.length) {
+      await ds.query(
+        `INSERT INTO integracion_cierre (
+          clave_idempotencia, id_ot, id_empresa, tipo_ot, srv, id_tecnico,
+          estado_proceso, fecha_proceso, payload
+        ) VALUES ($1, $2, $3, 'INSTALACION', $4, $5, 'PROCESADO', $6::timestamptz, $7::jsonb)`,
+        [
+          `CU87-SEED-${u.srv}`,
+          u.id_ot,
+          u.id_empresa,
+          u.srv,
+          idTecnico,
+          `${u.fecha_instalacion} 11:00:00-03`,
+          JSON.stringify({
+            id_ot: u.id_ot,
+            id_tecnico: idTecnico,
+            cliente: { rut: u.cliente_rut, nombre: u.cliente_nombre },
+            direccion: { direccion: u.direccion_instalacion, comuna: u.comuna_instalacion },
+          }),
+        ],
+      );
+    }
+  }
   await ds.destroy();
 }
 

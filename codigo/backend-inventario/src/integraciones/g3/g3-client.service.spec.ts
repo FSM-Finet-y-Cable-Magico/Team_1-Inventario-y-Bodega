@@ -87,7 +87,76 @@ describe('G3ClientService', () => {
     const service = crearServicio('https://g3.test/api/integraciones', 'k1');
 
     await expect(
-      service.consultarOrdenes({ idTecnico: 45, idEmpresa: 1, fecha: '2026-09-26' }),
+      service.consultarOrdenes({
+        idTecnico: 45,
+        idEmpresa: 1,
+        fecha: '2026-09-26',
+      }),
     ).resolves.toEqual({ ok: false, data: null });
+  });
+
+  it('buscarClientes valida longitud mínima y consulta con query param', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        data: [
+          { id_cliente: 10, rut: '12345678-9', nombre_completo: 'Juan Perez' },
+        ],
+      }),
+    }) as never;
+    const service = crearServicio('https://g3.test/api/integraciones', 'k1');
+
+    // Menos de 3 caracteres retorna vacío sin llamar
+    const corto = await service.buscarClientes('ju', 1);
+    expect(corto).toEqual([]);
+    expect(global.fetch).not.toHaveBeenCalled();
+
+    // Con 3 o más caracteres consulta a G3
+    const resultado = await service.buscarClientes('juan', 1);
+    expect(resultado).toHaveLength(1);
+    expect(resultado[0].nombre_completo).toBe('Juan Perez');
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/clientes?busqueda=juan&id_empresa=1'),
+      expect.anything(),
+    );
+  });
+
+  it('consultarOrdenesCerradas consulta estado CERRADA y normaliza materiales', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        data: [
+          {
+            id_ot: 101,
+            tipo_ot: 'INSTALACION',
+            id_tecnico: 5,
+            id_empresa: 1,
+            materiales: [
+              { id_tipo_equipo: 2, nombre: 'Conector SC/APC', cantidad: 4 },
+            ],
+          },
+        ],
+      }),
+    }) as never;
+    const service = crearServicio('https://g3.test/api/integraciones', 'k1');
+
+    const ordenes = await service.consultarOrdenesCerradas({
+      id_tecnico: 5,
+      fecha_desde: '2026-09-01',
+      fecha_hasta: '2026-09-15',
+      id_empresa: 1,
+    });
+
+    expect(ordenes).toHaveLength(1);
+    expect(ordenes[0].id_ot).toBe(101);
+    expect(ordenes[0].id_tecnico).toBe(5);
+    expect(ordenes[0].materiales).toHaveLength(1);
+    expect(ordenes[0].materiales[0].cantidad).toBe(4);
+
+    const callUrl = (global.fetch as jest.Mock).mock.calls[0][0] as string;
+    expect(callUrl).toContain('estado=CERRADA');
+    expect(callUrl).toContain('id_tecnico=5');
+    expect(callUrl).toContain('fecha_desde=2026-09-01');
+    expect(callUrl).toContain('fecha_hasta=2026-09-15');
   });
 });

@@ -1,0 +1,73 @@
+@startuml CU92-normal
+title CU-92 — Exportando reporte a Excel (flujo normal)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+<style>
+sequenceDiagram {
+  participant { Margin 25 }
+  actor { Margin 20 }
+}
+</style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador / Admin Bodega / Superusuario" as user
+participant "V_Reportes" as view
+participant "C_ReportesController" as ctrl
+participant "C_ReportesService" as svc
+participant "C_ExcelExportService" as xlsx
+participant "C_TypeORM" as orm
+database "PostgreSQL" as db
+participant "log_auditoria" as aent
+
+user -> view : Con reporte visible en pantalla, selecciona "Exportar → Excel"
+activate view
+
+view -> ctrl : GET /api/reportes/exportar/excel?tipo=stock&id_bodega=1...\n[Authorization: Bearer <jwt>]
+activate ctrl
+
+ctrl -> ctrl : Valida token JWT y roles (ADMIN_BODEGA, ADMIN, SUPERUSUARIO)
+ctrl -> svc : exportarReporteExcel(query, req.user)
+activate svc
+
+svc -> svc : Valida aislamiento por empresa y permisos del reporte
+svc -> svc : Inicia promesa con temporizador de 15 segundos (E1)
+
+svc -> orm : Consulta datos del reporte (stock, movimientos, garantias, etc.)
+activate orm
+orm -> db : SELECT ... (filtros aplicados)
+activate db
+db --> orm : Filas de datos
+deactivate db
+orm --> svc : Registros obtenidos
+deactivate orm
+
+svc -> svc : Mapea registros a filas y define columnas\nCalcula nombre de hoja: "[TipoReporte]YYYYMMDD"
+svc -> xlsx : generateXlsx({ sheetName, columns, rows })
+activate xlsx
+
+xlsx -> xlsx : Genera estructura OpenXML (.xlsx):\n- xl/styles.xml: estilo 1 con fuente negrita (<b/>)\n- xl/worksheets/sheet1.xml: encabezados en negrita (s="1"), datos (s="0")\n- xl/workbook.xml: nombre de hoja sanitizado (<= 31 chars)\n- Compresión Deflate y ensamblado PKZip en buffer
+xlsx --> svc : Buffer .xlsx generado
+deactivate xlsx
+
+svc -> aent : create({ id_usuario, accion: 'EXPORTAR_REPORTE_EXCEL',\n         entidad_afectada: 'reporte_stock',\n         valor_nuevo: { tipo, filtros, filas, archivo } })
+activate aent
+aent --> svc : Auditoría registrada
+deactivate aent
+
+svc --> ctrl : { buffer, filename: "reporte-stock-YYYYMMDD.xlsx", sheetName }
+deactivate svc
+
+ctrl --> view : 200 OK\nContent-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\nContent-Disposition: attachment; filename="reporte-stock-YYYYMMDD.xlsx"\n[Buffer binario]
+deactivate ctrl
+
+view -> view : Crea Blob en memoria y genera descarga en navegador
+view --> user : Ofrece descarga del archivo .xlsx con encabezados en negrita y hoja nombrada
+deactivate view
+
+@enduml
