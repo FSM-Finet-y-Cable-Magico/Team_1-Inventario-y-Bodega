@@ -1,0 +1,42 @@
+@startuml CU64-exc-fallo-accion
+title CU-64 — Ejecutando acciones atómicas del cierre de instalación (excepción: una acción falla → rollback total)
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style>
+sequenceDiagram {
+  participant {
+    margin 30
+  }
+  actor {
+    margin 12
+  }
+}
+</style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Técnico de terreno (G3)" as g3
+participant "C_IntegracionesService" as svc
+participant "C_TypeORM (transacción)" as orm
+participant "integracion_cierre" as cierre
+participant "unidad_equipo" as uni
+participant "inventario_personal_tecnico" as inv
+
+g3 -> svc : POST /api/integraciones/ordenes/781/cierre (INSTALACION)
+activate svc
+svc -> orm : startTransaction()
+svc -> cierre : INSERT (clave UNIQUE, payload)
+svc -> uni : UPDATE estado = 'Instalado en cliente' (acción A/B OK)
+svc -> orm : INSERT historial_estado_equipo
+orm --> svc : ✗ fallo inesperado (p. ej. error de BD)
+note right : Excepción 1 (E1): "alguna acción falla" →
+svc -> orm : ROLLBACK total (QueryRunner)
+note right : ninguna acción parcial queda aplicada:\nla unidad vuelve a 'Asignado a técnico' y el material no se descuenta
+svc --> g3 : 5xx con el error específico (G3 reintenta con backoff;\nun 4xx de payload malformado no se reintenta)
+deactivate svc
+@enduml

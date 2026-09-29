@@ -182,3 +182,69 @@ de un técnico, y consumo de stock por OT. El detalle va en otro documento cuand
 > incremento y sin el acuerdo de estados/descuento no se puede implementar el cierre completo).
 > Los ítems 1, 2, 5, 6 ya están cumplidos por G3 según su código; solo falta el acceso/confirmación
 > formal. El ítem 4 es un ajuste menor a su listado.
+
+---
+
+## 7. Integración inversa — acuerdo G8 CRM (v1 aceptado por G8 y ratificado por G1)
+
+> **Contexto (23-sept-2026):** G8 envió el borrador *"Acuerdo técnico — Integración G8 CRM ↔
+> G1 Inventario y Bodega"* (fecha 12-sept-2026; copia local en
+> `local/acuerdo-g8-borrador-original.md`). G8 acepta el principio de ownership: **G1 es la
+> fuente de verdad del inventario; G8 solo consulta** (no crea unidades, no edita stock, no
+> cambia estados, no da de baja, no mueve bodega, no administra garantía). Esto confirma desde su
+> lado el desistimiento de su módulo "Gestión de Inventario" (`docs/13` §5.3).
+>
+> **Respuesta de T1:** enviada el 23-sept-2026 (`local/respuesta-t1-g8-inventario.md`).
+> **G8 aceptó y devolvió el acuerdo actualizado** (`Acuerdo_Actualizado_G8_G1_Incremento3_v1.md`,
+> 24-sept-2026; copia en `local/acuerdo-g8-actualizado-v1-original.md`).
+> **✅ Ratificado por G1 (jefe de grupo) el 24-sept-2026 — incluida la aclaración: la tabla
+> `asignacion_equipo_servicio` es de G1** (la escribimos nosotros; G8 solo la alimenta vía el
+> evento de activación y la lee por API). Único pendiente operativo: API key de G8 (canal
+> aparte) y construcción (sc-158/159).
+>
+> **Tickets:** Shortcut **sc-158** (P0) y **sc-159** (P1) en el épico Programación.
+>
+> **✅ Implementado P0 (sc-158, rama `feat/javier-cus`, 25-sept-2026):** los 4 ítems G8-A..G8-D
+> están en código (backend `src/integraciones/`), con tablas nuevas en `scripts/migrar.ts` +
+> `database/init.sql` y tests en `integraciones.service.spec.ts` (18 casos). Falta solo la key
+> real de G8 (canal aparte) y el P1 (sc-159).
+
+### 7.1 Lo que G8 pide y lo que T1 responde (P0)
+
+| Ítem | Endpoint / cambio de T1 | Estado previo | Respuesta T1 |
+|------|--------------------------|---------------|--------------|
+| G8-A | `GET /api/integraciones/tipos-equipo?id_empresa=&categoria=&buscar=&activo=` (server-to-server) | nuevo (hoy `/api/catalogo` es JWT/roles) | **Sí · ✅ Implementado (sc-158)** — wrapper S2S sobre `CatalogService.consultar`; mismos campos del catálogo |
+| G8-B | Ampliar `GET /api/integraciones/unidades/{numeroSerie}` (G1-2) con `id_unidad`, tipo detallado, `mac_address`, `id_bodega_actual`, `fecha_adquisicion`, `garantia{vencimiento,vigente}` y `asignacion_actual{cliente,servicio,contrato,ot}` externos | G1-2 existe (sc-113) con 4 campos | **Sí · ✅ Implementado (sc-158)** — respuesta extendida; `asignacion_actual` = `null` sin asignación activa |
+| G8-C | Tabla `asignacion_equipo_servicio` histórica (equipo ↔ servicio; IDs de G8 como referencias externas **sin FK**) | ningún CU de T1 lo cubre | **Sí · ✅ Implementado (sc-158)** — tabla de G1; `unidad_equipo.id_cliente_instalado` se mantiene por compatibilidad |
+| G8-D | `POST /api/integraciones/activaciones` (G8 avisa tras crear cliente/servicio, post-cierre) | nuevo | **Sí · ✅ Implementado (sc-158)** — payload v1 `{event_id, trace_id, id_empresa, id_ot, id_cliente, rut_cliente, id_servicio, id_contrato, equipos[]}`; cabecera `integracion_activacion` con `event_id` UNIQUE + `UNIQUE(event_id, id_unidad)`; tolera ambos órdenes cierre/activación (`PENDIENTE_CIERRE` / `PENDIENTE_ACTIVACION` / `COMPLETO` / `CON_DISCREPANCIAS`); el estado físico lo define **siempre** el cierre |
+
+### 7.2 P1 y fuera de alcance
+
+| Ítem | Endpoint | Respuesta T1 |
+|------|----------|--------------|
+| G8-E | `GET /api/integraciones/equipos?id_empresa=&id_servicio=` | **Sí · ✅ Implementado (sc-159)** — desde `asignacion_equipo_servicio` (solo activas) |
+| G8-F | `GET /api/integraciones/stock?id_empresa=&id_tipo_equipo=` o `&categoria=` | **Sí · ✅ Implementado (sc-159)** — **informativo** (`disponible/reservado/total`); CRM no reserva ni descuenta |
+| G8-G | Garantía (`GET /unidades/{serie}/garantia` o dentro de la unidad) | Ya incluida en G8-B; endpoint dedicado **solo si G8 lo pide** (prioridad baja, G1-6) |
+| G8-H | Reportes avanzados | **P2 — fuera del backlog de T1**; se evalúa aparte con el jefe |
+
+### 7.3 Condiciones y contra-preguntas de T1 — **respondidas por G8 (v1, 24-sept-2026) y ratificadas por G1**
+
+1. **RUT** → ✅ la activación trae `id_cliente` **+ `rut_cliente`**.
+2. **Reemplazos** → ✅ los determina el cierre G3/G1; G8 solo asocia el **servicio definitivo**.
+   Implementación T1: al activar un `id_servicio` con asignaciones activas previas, se desactivan
+   (`activa=false` + `fecha_retiro`) y se activan las unidades del evento.
+3. **`id_contrato`** → ✅ obligatorio en el flujo de activación de G8 (nuestro endpoint: `400` si falta).
+4. **G8 no escribe tablas de inventario** → ✅ reafirmado.
+5. **API key** → ✅ `X-API-KEY` por grupo/empresa, por canal aparte (mecanismo `INTEGRACION_API_KEYS` de sc-113).
+
+### 7.4 Reglas que NO cambian
+
+- Los **6 literales oficiales** de estado de T1 (con tildes) y la máquina de estados son nuestros;
+  `Bloqueado` (G8-CU-22) sigue **pendiente de decisión del jefe** como 7º estado o modelo aparte.
+- **Contrato API común**: `X-API-KEY`, `id_empresa` obligatorio con scope, envelope
+  `{success, data, message}`, errores 400/401/403/404/409 (ya implementado en sc-113).
+- **Sin FK cross-domain**: los IDs de G8 se guardan como referencias externas.
+- **Idempotencia multi-equipo (v1):** cabecera de evento `integracion_activacion` con `event_id`
+  UNIQUE + `UNIQUE(event_id, id_unidad)` en las filas de asignación.
+- **Despliegue (v1):** migraciones anunciadas vía `scripts/migrar.ts` + `database/init.sql`;
+  sin `db push` ni `migrate dev` en producción.

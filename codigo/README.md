@@ -73,6 +73,32 @@ docker compose down
 docker compose down -v
 ```
 
+## Solución de problemas
+
+### macOS: "Apple no puede comprobar que no contenga software malicioso"
+
+Es el aviso normal de **Gatekeeper** para archivos descargados (ZIP, Drive, WhatsApp,
+etc.). El script no es malicioso; macOS solo no puede verificarlo porque no está firmado.
+Se soluciona de cualquiera de estas formas:
+
+1. **Clic derecho** en `Iniciar.command` → **Abrir** → **Abrir de todos modos** (solo la primera vez).
+2. En **Ajustes del Sistema → Privacidad y seguridad**, bajar hasta el aviso del archivo y
+   pulsar **Abrir de todos modos**.
+3. O desde Terminal, dentro de esta carpeta (la Terminal no pasa por Gatekeeper):
+
+   ```bash
+   xattr -dr com.apple.quarantine .
+   ./Iniciar.command
+   ```
+
+> Recomendación: si pueden, bajen el proyecto con `git clone` en vez de ZIP; así los
+> archivos no quedan en cuarentena.
+
+### Windows: "Windows protegió tu PC" al abrir `Iniciar.bat`
+
+Es el aviso de SmartScreen por el mismo motivo. Pulsar **Más información → Ejecutar de
+todas formas** (solo la primera vez).
+
 ## Configuración opcional
 
 Todas las opciones tienen valores por defecto; no hace falta configurar nada.

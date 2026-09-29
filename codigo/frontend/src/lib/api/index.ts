@@ -1,5 +1,5 @@
 import { api } from './client';
-import type { LoginDto, LoginResponse, Usuario, EquipoEnRevision, VerificacionSerie, ItemSalida, SalidaResumen, InventarioTecnico, ReporteStock, AlertaActiva, NotificacionesNoLeidas } from '$lib/types';
+import type { LoginDto, LoginResponse, Usuario, EquipoEnRevision, VerificacionSerie, ItemSalida, SalidaResumen, InventarioTecnico, JornadaTecnico, ReporteStock, AlertaActiva, NotificacionesNoLeidas } from '$lib/types';
 
 export async function login(dto: LoginDto): Promise<LoginResponse> {
 	return api.post<LoginResponse>('/auth/login', dto);
@@ -494,4 +494,9 @@ export function listarSalidas(): Promise<SalidaResumen[]> {
 export function getInventarioTecnico(id: number, empresa?: number): Promise<InventarioTecnico> {
 	const qs = empresa !== undefined ? `?empresa=${empresa}` : '';
 	return api.get<InventarioTecnico>(`/tecnicos/${id}/inventario${qs}`);
+}
+
+// CU-61: jornada del técnico autenticado (trabajos del día de G3 + inventario propio)
+export function getMiJornada(): Promise<JornadaTecnico> {
+	return api.get<JornadaTecnico>('/tecnicos/me/jornada');
 }

@@ -16,6 +16,7 @@ import { ReportesService } from './reportes.service';
 export class ReportesController {
   constructor(private readonly reportesService: ReportesService) {}
 
+  //CU-85
   @Get('stock')
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   getStock(
@@ -34,6 +35,7 @@ export class ReportesController {
     );
   }
 
+  //CU-86
   @Get('movimientos')
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   getMovimientos(
@@ -60,6 +62,7 @@ export class ReportesController {
     );
   }
 
+  //CU-88
   @Get('garantias')
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   getGarantias(
@@ -78,6 +81,7 @@ export class ReportesController {
     );
   }
 
+  //CU-89
   @Get('tecnicos/inventario')
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   getInventarioTecnicos(
@@ -94,6 +98,7 @@ export class ReportesController {
     );
   }
 
+  //CU-91
   @Get('consumo')
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   getConsumo(

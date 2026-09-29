@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, In } from 'typeorm';
+import { G3ClientService } from '../integraciones/g3/g3-client.service';
 import { UnidadEquipo } from './entities/unidad-equipo.entity';
 import { TipoEquipo } from './entities/tipo-equipo.entity';
 import { Bodega } from '../bodegas/entities/bodega.entity';
@@ -46,6 +47,7 @@ export class UnitsService {
     private readonly dataSource: DataSource,
     private readonly auditoriaService: AuditoriaService,
     private readonly proveedoresService: ProveedoresService,
+    private readonly g3Client: G3ClientService,
   ) {}
 
   async listarUnidades(
@@ -1154,6 +1156,7 @@ export class UnitsService {
     };
   }
 
+  //CU-72
   async registrarResultadoRevision(
     unitId: number,
     dto: {
@@ -1350,6 +1353,8 @@ export class UnitsService {
       );
     }
 
+    // CU-48: ubicación externa resuelta según el estado (técnico/cliente/préstamo).
+    const ubicacionExterna = await this.resolverUbicacionExterna(unidad);
     let alertaGarantia = {
       posee_garantia: false,
       garantia_vigente: false,
@@ -1444,7 +1449,118 @@ export class UnitsService {
       numero_poste: unidad.numeroPoste ?? null,
       id_cliente_instalado: unidad.id_cliente_instalado ?? null,
       id_caja_nap: unidad.id_caja_nap ?? null,
+      // CU-64: cliente/dirección persistidos del cierre de instalación y SRV vigente.
+      cliente_rut: unidad.clienteRut ?? null,
+      cliente_nombre: unidad.clienteNombre ?? null,
+      direccion_instalacion: unidad.direccionInstalacion ?? null,
+      comuna_instalacion: unidad.comunaInstalacion ?? null,
+      srv: unidad.srv ?? null,
+      // CU-48: ubicación externa (null en bodega o dado de baja).
+      ubicacion_externa: ubicacionExterna,
     };
+  }
+
+  // CU-48: resuelve la ubicación externa de una unidad fuera de bodega según su
+  // estado. Nunca falla: los campos sin dato quedan en `campos_faltantes` (E1).
+  async resolverUbicacionExterna(unidad: UnidadEquipo): Promise<{
+    tipo: 'TECNICO' | 'CLIENTE' | 'PRESTAMO_EXTERNO';
+    datos: Record<string, any>;
+    campos_faltantes: string[];
+  } | null> {
+    if (unidad.estado === 'Asignado a técnico') {
+      const tecnico = unidad.idTecnicoAsignado
+        ? await this.dataSource
+            .getRepository(Usuario)
+            .findOne({ where: { id_usuario: unidad.idTecnicoAsignado } })
+        : null;
+
+      const datos = {
+        id_usuario: tecnico?.id_usuario ?? unidad.idTecnicoAsignado ?? null,
+        nombre_completo: tecnico?.nombre_completo ?? null,
+        rut: tecnico?.rut ?? null,
+      };
+      return {
+        tipo: 'TECNICO',
+        datos,
+        campos_faltantes: [
+          ...(datos.nombre_completo ? [] : ['nombre_completo']),
+          ...(datos.rut ? [] : ['rut']),
+        ],
+      };
+    }
+
+    if (unidad.estado === 'Instalado en cliente') {
+      const datos: {
+        rut: string | null;
+        nombre: string | null;
+        direccion: string | null;
+        comuna: string | null;
+      } = {
+        rut: unidad.clienteRut ?? null,
+        nombre: unidad.clienteNombre ?? null,
+        direccion: unidad.direccionInstalacion ?? null,
+        comuna: unidad.comunaInstalacion ?? null,
+      };
+
+      // Enriquecimiento opcional con G3 (GET /clientes/rut/{rut}, X-API-KEY).
+      // Si G3 no responde o no está configurado se degrada a lo persistido por
+      // el cierre de instalación (CU-64).
+      if (datos.rut) {
+        const clienteG3 = await this.g3Client.consultarClientePorRut(
+          datos.rut,
+          unidad.id_empresa,
+        );
+        if (clienteG3) {
+          datos.nombre = datos.nombre ?? clienteG3.nombre_completo ?? null;
+          datos.rut = clienteG3.rut ?? datos.rut;
+          const direccionG3 = Array.isArray(clienteG3.direcciones)
+            ? clienteG3.direcciones[0]
+            : null;
+          if (!datos.direccion && direccionG3) {
+            datos.direccion = direccionG3.direccion ?? null;
+            datos.comuna = datos.comuna ?? direccionG3.comuna ?? null;
+          }
+        }
+      }
+
+      return {
+        tipo: 'CLIENTE',
+        datos,
+        campos_faltantes: [
+          ...(datos.nombre ? [] : ['nombre']),
+          ...(datos.rut ? [] : ['rut']),
+          ...(datos.direccion ? [] : ['direccion']),
+        ],
+      };
+    }
+
+    if (unidad.estado === 'En préstamo externo') {
+      const prestamo = await this.dataSource
+        .getRepository(PrestamoExterno)
+        .findOne({
+          where: { id_unidad: unidad.id_unidad, estado: 'ACTIVO' },
+          order: { id_prestamo: 'DESC' },
+        });
+
+      const datos = {
+        nombre_receptor: prestamo?.nombreReceptor ?? null,
+        rut_receptor: prestamo?.rutReceptor ?? null,
+        numero_prestamo: prestamo?.correlativo ?? null,
+        motivo: prestamo?.detalle ?? null,
+      };
+      return {
+        tipo: 'PRESTAMO_EXTERNO',
+        datos,
+        campos_faltantes: [
+          ...(datos.nombre_receptor ? [] : ['nombre_receptor']),
+          ...(datos.numero_prestamo ? [] : ['numero_prestamo']),
+          ...(datos.motivo ? [] : ['motivo']),
+        ],
+      };
+    }
+
+    // 'En bodega' y 'Dado de baja' no tienen ubicación externa.
+    return null;
   }
 
   async editarDatos(idUnidad: number, dto: EditarDatosUnidadDto, actor: any) {

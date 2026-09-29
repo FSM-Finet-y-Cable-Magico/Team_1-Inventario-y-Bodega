@@ -10,6 +10,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { SalidasService } from './salidas.service';
 import { InventarioPersonalService } from './inventario-personal.service';
+import { JornadaService } from './jornada.service';
 import { CompanyIsolationGuard } from 'src/auth/guards/company-isolation.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
@@ -51,7 +52,16 @@ export class SalidasController {
 export class TecnicosController {
   constructor(
     private readonly inventarioPersonalService: InventarioPersonalService,
+    private readonly jornadaService: JornadaService,
   ) {}
+
+  // CU-61: jornada del técnico autenticado (trabajos del día desde G3 +
+  // inventario personal de CU-58). Sin trabajos → 200 con lista vacía.
+  @Get('me/jornada')
+  @Roles('TECNICO_TERRENO', 'ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
+  async obtenerJornada(@CurrentUser() actor: any) {
+    return this.jornadaService.obtenerJornada(actor);
+  }
 
   @Get(':id/inventario')
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
