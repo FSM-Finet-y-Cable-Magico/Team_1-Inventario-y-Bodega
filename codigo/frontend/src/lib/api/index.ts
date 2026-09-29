@@ -337,6 +337,62 @@ export function generarReporteConsumo(params?: { id_empresa?: string; id_tipo_eq
 	return api.get<import('$lib/types').ReporteConsumoFila[]>(`/reportes/consumo${query ? '?' + query : ''}`);
 }
 
+// CU-87: reporte de equipos instalados por cliente
+export function generarReporteEquiposInstalados(params?: {
+	rut?: string;
+	nombre?: string;
+	numero_serie?: string;
+	id_empresa?: string;
+}) {
+	const qs = new URLSearchParams();
+	if (params?.rut) qs.set('rut', params.rut);
+	if (params?.nombre) qs.set('nombre', params.nombre);
+	if (params?.numero_serie) qs.set('numero_serie', params.numero_serie);
+	if (params?.id_empresa) qs.set('id_empresa', params.id_empresa);
+	const query = qs.toString();
+	return api.get<import('$lib/types').ReporteEquiposInstaladosFila[]>(
+		`/reportes/equipos-instalados${query ? '?' + query : ''}`,
+	);
+}
+
+// CU-90: reporte de productividad de técnicos
+export function generarReporteProductividadTecnicos(params?: {
+	id_empresa?: string;
+	id_tecnico?: string;
+	fecha_desde?: string;
+	fecha_hasta?: string;
+}) {
+	const qs = new URLSearchParams();
+	if (params?.id_empresa) qs.set('id_empresa', params.id_empresa);
+	if (params?.id_tecnico) qs.set('id_tecnico', params.id_tecnico);
+	if (params?.fecha_desde) qs.set('fecha_desde', params.fecha_desde);
+	if (params?.fecha_hasta) qs.set('fecha_hasta', params.fecha_hasta);
+	const query = qs.toString();
+	return api.get<import('$lib/types').ReporteProductividadTecnicoFila[]>(
+		`/reportes/tecnicos/productividad${query ? '?' + query : ''}`,
+	);
+}
+
+// CU-92: exportar reporte visible a Excel (.xlsx) compatible con Excel 2016+ y Calc 7.0+
+export function exportarReporteExcel(
+	tipo: string,
+	params?: Record<string, string | number | boolean | undefined | null>,
+	timeoutMs: number = 15000,
+) {
+	const qs = new URLSearchParams();
+	qs.set('tipo', tipo);
+	if (params) {
+		for (const [key, value] of Object.entries(params)) {
+			if (value !== undefined && value !== null && value !== '') {
+				qs.set(key, String(value));
+			}
+		}
+	}
+	const query = qs.toString();
+	const fallbackName = `reporte-${tipo}.xlsx`;
+	return api.download(`/reportes/exportar/excel?${query}`, fallbackName, timeoutMs);
+}
+
 // CU-23: filtros por estado, rango de fechas o empresa
 export function getTransfers(params?: { estado?: string; id_empresa?: string; fecha_inicio?: string; fecha_fin?: string }) {
 	const qs = new URLSearchParams();

@@ -1,0 +1,58 @@
+@startuml CU92-exc-timeout
+title CU-92 — Excepción 1: Tiempo límite de generación excedido (> 15 segundos)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+<style>
+sequenceDiagram {
+  participant { Margin 25 }
+  actor { Margin 20 }
+}
+</style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador / Admin Bodega / Superusuario" as user
+participant "V_Reportes" as view
+participant "C_ReportesController" as ctrl
+participant "C_ReportesService" as svc
+participant "C_TypeORM / DB" as db
+
+user -> view : Con reporte visible en pantalla, selecciona "Exportar → Excel"
+activate view
+
+view -> view : Inicia temporizador de descarga (timeout: 15000 ms con AbortController)
+view -> ctrl : GET /api/reportes/exportar/excel?tipo=stock&...
+activate ctrl
+
+ctrl -> svc : exportarReporteExcel(query, req.user)
+activate svc
+
+svc -> svc : Inicia Promise.race([procesarExportacionExcel(), timeoutPromise(15000ms)])
+
+svc -> db : Consulta de gran volumen de datos / bloqueo en base de datos
+activate db
+note over svc, db
+  La consulta o procesamiento de datos se demora
+  más de 15 segundos sin completarse
+end note
+
+svc -> svc : Expira temporizador de 15 segundos en el backend
+svc --x db : Cancela espera
+deactivate db
+
+svc --> ctrl : throw RequestTimeoutException(\n  "La generación del archivo superó los 15 segundos sin completarse.\n   Por favor intente nuevamente."\n)
+deactivate svc
+
+ctrl --> view : 408 Request Timeout\n{ statusCode: 408, message: "La generación del archivo superó los 15 segundos sin completarse..." }
+deactivate ctrl
+
+view -> view : Captura error (HTTP 408 o AbortError por timeout)
+view --> user : Muestra banner de error:\n"La generación del archivo superó los 15 segundos sin completarse. Por favor intente nuevamente."
+deactivate view
+
+@enduml

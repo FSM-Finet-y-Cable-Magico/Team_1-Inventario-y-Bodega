@@ -246,18 +246,22 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
 - Listas fijas de acciones y entidades (ver código). `limit = 30`.
 
 ### `/reportes/stock`
-- **CU:** CU-85 (reporte de stock actual).
-- **Endpoint:** `generarReporteStock()` → `GET /reportes/stock`.
+- **CUs:** CU-85 (reporte de stock actual), CU-92 (exportar reporte a Excel).
+- **Endpoint:** `generarReporteStock()` → `GET /reportes/stock`, `exportarReporteExcel()` → `GET /reportes/exportar/excel?tipo=stock`.
 - Filtros opcionales por empresa (solo SUPERUSUARIO), bodega y tipo de equipo.
 - Tabla por tipo y bodega con estados, total activo, umbral y alerta visual bajo umbral.
+- Botón "Exportar → Excel" habilitado al contar con resultados visibles; maneja timeout de 15s (E1) con banner de error.
 
 ### `/reportes`
-- **CUs:** CU-86 (movimientos), CU-88 (garantías), CU-89 (inventario de técnicos),
-  CU-91 (consumo de consumibles) — pestañas dentro del mismo hub de reportes.
-- **Endpoints:** `generarReporteMovimientos()`, `generarReporteGarantias()`,
-  `generarReporteInventarioTecnicos()`, `generarReporteConsumo()`.
-- Filtros por empresa, bodega, tipo, fechas, tipo de movimiento y usuario; el rango máximo de 365 días se valida en vivo.
-- Tabla con fecha/hora, movimiento, NS o consumible, cantidad, empresa, bodega, usuario y referencia.
+- **CUs:** CU-86 (movimientos), CU-87 (equipos instalados por cliente), CU-88 (garantías),
+  CU-89 (inventario de técnicos), CU-90 (productividad de técnicos),
+  CU-91 (consumo de consumibles), CU-92 (exportar reporte a Excel) — pestañas dentro del mismo hub de reportes.
+- **Endpoints:** `generarReporteMovimientos()`, `generarReporteEquiposInstalados()`, `generarReporteGarantias()`,
+  `generarReporteInventarioTecnicos()`, `generarReporteProductividadTecnicos()`, `generarReporteConsumo()`,
+  `exportarReporteExcel(tipo, params)`.
+- Cada pestaña cuenta con botón "Exportar → Excel" cuando el reporte ha sido generado y cuenta con datos en pantalla.
+- Descarga directa de archivo `.xlsx` nombrado con `reporte-[tipo]-[YYYYMMDD].xlsx` y hoja nombrada con tipo y fecha.
+- Manejo de timeout de 15 segundos (E1) con banner descriptivo ante retrasos en la generación.
 
 ---
 
