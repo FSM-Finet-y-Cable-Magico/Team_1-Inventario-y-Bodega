@@ -87,6 +87,27 @@ export class UnitsController {
     );
   }
 
+  // CU-71: búsqueda por NS para la devolución (valida 'Instalado en cliente')
+  @Get('devolucion/:numeroSerie')
+  @Roles('TECNICO_TERRENO', 'ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
+  async consultarParaDevolucion(
+    @Param('numeroSerie') numeroSerie: string,
+    @CurrentUser() actor: any,
+  ) {
+    return this.unitsService.consultarParaDevolucion(numeroSerie, actor);
+  }
+
+  // CU-71: registrar devolución de equipo desde cliente → 'En revisión'
+  @Post(':id/devolucion')
+  @Roles('TECNICO_TERRENO', 'ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
+  async registrarDevolucion(
+    @Param('id') id: string,
+    @Body() body: any,
+    @CurrentUser() actor: any,
+  ) {
+    return this.unitsService.registrarDevolucion(parseInt(id), body, actor);
+  }
+
   @Get(':id/ficha')
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
   async verFichaDeSeguimiento(
@@ -118,6 +139,7 @@ export class UnitsController {
     @Body('descripcionOtro') descripcionOtro: string,
     @Body('simularErrorHistorial') simularErrorHistorial: boolean,
     @Body('ubicacion_fisica') ubicacionFisica: string,
+    @Body('forzar_aviso_garantia') forzarAvisoGarantia: boolean,
     @CurrentUser() actor: any,
   ) {
     return this.unitsService.transicionarEstado(
@@ -129,6 +151,9 @@ export class UnitsController {
       descripcionOtro,
       simularErrorHistorial,
       ubicacionFisica,
+      undefined,
+      // CU-95: aviso de garantía vigente (confirmación explícita para continuar)
+      { forzar: forzarAvisoGarantia === true },
     );
   }
 

@@ -1,0 +1,82 @@
+@startuml CU73-normal
+title CU-73 — Mostrando información de equipo en devolución (flujo normal)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Técnico de terreno /\nAdministrador de bodega /\nAdministrador / Superusuario" as user
+participant "V_DevolucionEquipo" as view
+participant "C_RolesGuard" as guard
+participant "C_UnitsController" as ctrl
+participant "C_UnitsService" as svc
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as uent
+participant "integracion_cierre" as cent
+participant "historial_estado_equipo" as hent
+
+user -> view : Inicia la devolución (CU-71):\ningresa el NS y presiona "Buscar"
+activate view
+
+view -> guard : GET /unidades/devolucion/:numeroSerie
+activate guard
+guard --> view : Autorizado (TECNICO_TERRENO /\nADMIN_BODEGA / ADMIN / SUPERUSUARIO)
+deactivate guard
+
+view -> ctrl : consultarParaDevolucion(numeroSerie, actor)
+activate ctrl
+
+ctrl -> svc : consultarParaDevolucion(numeroSerie, actor)
+activate svc
+
+svc -> orm : findOne(numero_serie, id_empresa)\n+ tipoEquipo
+activate orm
+orm -> uent : SELECT unidad_equipo JOIN tipo_equipo\nWHERE numero_serie = :ns AND id_empresa = :idEmpresa
+activate uent
+uent --> orm : Datos unidad (estado = 'Instalado en cliente',\nfecha_adquisicion, fecha_venc_garantia)
+deactivate uent
+orm --> svc : unidad (existe)
+deactivate orm
+
+svc -> svc : Precondición CU-71: estado === 'Instalado en cliente'
+activate svc
+deactivate svc
+
+svc -> orm : buscarClienteInstalacion(ns, id_empresa)
+activate orm
+orm -> cent : SELECT integracion_cierre\nWHERE id_empresa = :idEmpresa\nAND acciones_aplicadas @> [{ numero_serie: :ns,\nestado_nuevo: 'Instalado en cliente' }]\nORDER BY fecha_proceso DESC LIMIT 1
+activate cent
+cent --> orm : payload.cliente.nombre_completo,\npayload.direccion
+deactivate cent
+orm --> svc : nombre_cliente, direccion_instalacion
+deactivate orm
+
+svc -> orm : historyRepository.find({ id_unidad },\norder: fecha_hora DESC, take: 5)
+activate orm
+orm -> hent : SELECT historial_estado_equipo\nWHERE id_unidad = :id\nORDER BY fecha_hora DESC LIMIT 5
+activate hent
+hent --> orm : Últimos 5 cambios de estado
+deactivate hent
+orm --> svc : ultimosCambios[]
+deactivate orm
+
+svc -> svc : formatearFechaDDMMYYYY(fecha_adquisicion)\nformatearFechaDDMMYYYY(fecha_venc_garantia)\n?? 'Sin garantía'\ncampos_no_registrados = [] (todos presentes)
+activate svc
+deactivate svc
+
+svc --> ctrl : 200 OK { numero_serie, tipo, marca, modelo,\nfecha_adquisicion: 'DD/MM/YYYY',\nfecha_venc_garantia: 'DD/MM/YYYY' | 'Sin garantía',\nnombre_cliente, direccion_instalacion,\nultimos_cambios_estado[5] { fecha_hora, estado_anterior,\nestado_nuevo, observacion }, campos_no_registrados: [] }
+deactivate svc
+ctrl --> view : 200 OK
+deactivate ctrl
+
+view --> user : Panel "Información del equipo": NS, tipo, marca,\nmodelo, fecha de adquisición, vencimiento de garantía,\ncliente, dirección y tabla "Últimos cambios de estado"\n(fecha/hora DD/MM/YYYY HH:MM:SS + observación);\nluego el formulario de devolución (CU-71)
+deactivate view
+
+@enduml

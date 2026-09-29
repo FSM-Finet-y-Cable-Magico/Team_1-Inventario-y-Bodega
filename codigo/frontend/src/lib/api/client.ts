@@ -6,11 +6,20 @@ const BASE = '/api';
 
 class ApiError extends Error {
 	status: number;
-	constructor(message: string, status: number) {
+	// CU-95: código opcional del backend (p. ej. 'AVISO_GARANTIA' en un 409)
+	codigo?: string;
+	constructor(message: string, status: number, codigo?: string) {
 		super(message);
 		this.name = 'ApiError';
 		this.status = status;
+		this.codigo = codigo;
 	}
+}
+
+// CU-95: el backend interrumpe con 409 + codigo 'AVISO_GARANTIA' cuando la unidad
+// tiene garantía vigente y el actor aún no eligió "Continuar sin garantía"
+export function esAvisoGarantia(err: unknown): err is ApiError {
+	return err instanceof ApiError && err.status === 409 && err.codigo === 'AVISO_GARANTIA';
 }
 
 async function request<T>(
@@ -56,7 +65,11 @@ async function request<T>(
 		const msg = Array.isArray(raw)
 			? [...new Set(raw)].join('. ')
 			: (raw as string) || 'Error del servidor';
-		throw new ApiError(msg, res.status);
+		const codigo =
+			typeof data === 'object' && data !== null
+				? ((data as Record<string, unknown>).codigo as string | undefined)
+				: undefined;
+		throw new ApiError(msg, res.status, codigo);
 	}
 
 	return data;
