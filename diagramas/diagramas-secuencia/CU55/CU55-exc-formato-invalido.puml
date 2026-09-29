@@ -1,0 +1,48 @@
+@startuml CU55-NumSerieRecepcion-Exc-FormatoInvalido
+title CU-55 — Ingresando números de serie en recepción de equipos (excepción: el NS no cumple el formato)
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style>
+sequenceDiagram {
+  participant {
+    margin 25
+  }
+  actor {
+    margin 20
+  }
+}
+</style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Admin/AdminBodega/\nSuperusuario" as user
+participant "V_OrdenIngresoDetalle" as view
+participant "C_OrdenesIngresoController" as ctrl
+participant "C_OrdenesIngresoService" as svc
+participant "C_CatalogService" as cat
+
+user -> view : Ingresa NS 'OK 99/1' (con barra\ny espacios) para un ítem individualizable
+activate view
+view -> ctrl : POST /api/ordenes-ingreso/{id}/recepcion\n{ fecha_recepcion, items: [{ id_detalle,\ncantidad_recibida: 1, numeros_serie: ['OK 99/1'] }] }
+activate ctrl
+ctrl -> svc : registrarRecepcion(id, dto, actor)
+activate svc
+
+svc -> cat : validarFormatoSerialNumber('OK 99/1')\n(CU-55 E1 reutiliza la validación de CU-28)
+activate cat
+cat -> cat : /^[A-Za-z0-9-]{4,30}$/ → falla\n(espacios y '/' no permitidos)
+cat --> svc : rechazo
+deactivate cat
+
+svc --> ctrl : 400 BadRequestException\n'El formato del número de serie es inválido.\nDebe contener entre 4 y 30 caracteres alfanuméricos\ny guiones. No se permiten espacios ni caracteres especiales.'
+deactivate svc
+ctrl --> view : 400
+deactivate ctrl
+view --> user : Banner con el mensaje exacto · la recepción\nno se registra (ni unidades ni stock y estado\n'Pendiente de recepción' sin cambios)
+deactivate view
+@enduml

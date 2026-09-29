@@ -115,6 +115,7 @@ export class BajasService {
     }
   }
 
+  //CU-78
   async registrar(
     dto: CreateBajaDto,
     actor: ActorJwt,
@@ -224,6 +225,7 @@ export class BajasService {
     };
   }
 
+  //CU-78
   async aprobar(
     idSolicitud: number,
     actor: ActorJwt,
@@ -269,6 +271,7 @@ export class BajasService {
     };
   }
 
+  //CU-78
   async rechazar(
     idSolicitud: number,
     motivoRechazo: string,

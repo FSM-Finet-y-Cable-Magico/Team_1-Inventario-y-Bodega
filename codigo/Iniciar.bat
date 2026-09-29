@@ -83,9 +83,13 @@ echo.
 echo   Levantando la aplicacion (la 1ra vez compila y puede tardar varios minutos)...
 docker compose up -d --build
 if errorlevel 1 (
-    echo   Error al levantar los servicios.
-    pause
-    exit /b 1
+    echo   No se pudo compilar ^(sin internet?^). Usando las imagenes ya construidas...
+    docker compose up -d
+    if errorlevel 1 (
+        echo   Error al levantar los servicios.
+        pause
+        exit /b 1
+    )
 )
 echo.
 echo   Esperando a que la aplicacion este lista...

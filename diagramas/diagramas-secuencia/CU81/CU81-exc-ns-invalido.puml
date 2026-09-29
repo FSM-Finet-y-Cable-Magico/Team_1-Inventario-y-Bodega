@@ -1,11 +1,20 @@
 @startuml CU81-exc-ns-invalido
-title CU-81 — Excepción 1: un NS no existe o no está en bodega
+title CU-81 — Registrando préstamo externo de equipos (excepción: NS no existe o no está en bodega)
 
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+<style>
+sequenceDiagram {
+  participant {
+    margin 35
+  }
+  actor {
+    margin 15
+  }
+}
+</style>
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black

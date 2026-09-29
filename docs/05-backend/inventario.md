@@ -150,6 +150,10 @@ Constante: `MAC_REGEX = /^([0-9A-Fa-f]{2}[:\\-]){5}[0-9A-Fa-f]{2}$/`.
     `America/Santiago`; `motivo` = `'Cambio de estado ordinario'` o
     `'Ingreso a taller técnico. Diagnóstico: ...'`. Si falla → `BadRequestException('Error al
     registrar el cambio en el historial...')`. Flag QA `simularErrorHistorial`.
+- **`listarEnRevision` (CU-77):** unidades `'En revisión'` (Superusuario: ambas empresas) con fecha
+  de ingreso a revisión (último cambio a ese estado en el historial) y `dias_en_revision`.
+  **CU-94** agregó `fecha_venc_garantia` a cada fila: el módulo `alertas` la usa para las alertas
+  "Garantía con defecto" y "Revisión prolongada" (`UnitsService` ya se exporta).
 - **`verFichaDetalle` (CU-33/CU-38):** ficha plana con bodega actual, empresa propietaria y alerta de
   garantía: sin fecha/garantía → `no_calculable: true` ('Garantía no calculable'); vigente → alerta
   con días restantes; expirada → `'COBERTURA EXPIRADA...'`.
@@ -242,3 +246,18 @@ CU-71 (devolución de equipo desde cliente → `'En revisión'`).
 CU-95 (aviso de garantía vigente al registrar `'Dado de baja'` o `'En revisión'`).
 
 CU-72 (resultado de revisión de equipo: operativo/reparación externa/baja).
+
+CU-48 (ubicación externa en la ficha — sc-139): `GET /api/unidades/:id/ficha` incluye
+`ubicacion_externa` resuelta por estado:
+- `Asignado a técnico` → `tipo: TECNICO` con nombre completo y RUT del `usuario` (nuevo campo
+  `usuario.rut`, migración `ADD COLUMN IF NOT EXISTS`; sin dato queda en `campos_faltantes`).
+- `Instalado en cliente` → `tipo: CLIENTE` con RUT/nombre/dirección/comuna persistidos por el
+  cierre (CU-64); si hay `G3_INTEGRACION_URL` + `G3_INTEGRACION_API_KEY`, enriquece con
+  `GET {G3}/clientes/rut/{rut}?id_empresa=N` (timeout 2 s) y **degrada a lo persistido** si G3 no
+  responde.
+- `En préstamo externo` → `tipo: PRESTAMO_EXTERNO` con receptor, RUT, `PE-XXXXX` (`correlativo`)
+  y motivo (`detalle`) del `prestamo_externo` ACTIVO de la unidad.
+- `En bodega` / `Dado de baja` → `null`.
+- Excepción 1: `campos_faltantes` lista las claves sin registrar y la ficha las marca
+  ("Campos sin registrar: ..."). Solo lectura, sin auditoría. Variables G3 por entorno (sin
+  credenciales en el repo).

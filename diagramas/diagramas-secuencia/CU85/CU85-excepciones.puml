@@ -6,8 +6,12 @@ skinparam monochrome true
 skinparam shadowing false
 <style>
 sequenceDiagram {
-  participant { Margin 25 }
-  actor { Margin 20 }
+  participant {
+    margin 25
+  }
+  actor {
+    margin 20
+  }
 }
 </style>
 skinparam sequence {

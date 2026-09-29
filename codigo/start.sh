@@ -39,7 +39,13 @@ echo "  OK: Docker está en ejecución."
 # 2) Levantar todos los servicios
 echo ""
 echo "  Levantando servicios (la 1ra vez compila y puede tardar varios minutos)..."
-docker compose up -d --build
+# Si no hay internet, --build puede fallar al descargar la imagen base o
+# dependencias; en ese caso se usan las imágenes ya construidas localmente.
+if ! docker compose up -d --build; then
+  echo ""
+  echo "  No se pudo compilar (¿sin internet?). Usando las imágenes ya construidas..."
+  docker compose up -d
+fi
 
 # 3) Esperar a que la aplicación responda
 echo ""

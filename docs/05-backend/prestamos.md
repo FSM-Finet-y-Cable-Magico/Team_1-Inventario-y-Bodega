@@ -130,6 +130,8 @@ Las validaciones de trazabilidad por ítem son **CU-84** (ver §9).
   solo lo aplica el Superusuario**: a los demás se les fija su propia empresa, así que pasar
   `id_empresa` de otra empresa no cambia nada.
 - Es una consulta: **no audita**.
+- **CU-94:** `PrestamosModule` exporta `PrestamosService`; el módulo `alertas` llama a `listar`
+  con `estado: 'ACTIVO'` y toma como "Préstamo vencido" las filas con `dias_restantes < 0`.
 - Excepción 1: la lista vacía no es error; el `EmptyState` del frontend muestra
   `No hay préstamos externos activos actualmente.` cuando el filtro activo es `Activo`.
 

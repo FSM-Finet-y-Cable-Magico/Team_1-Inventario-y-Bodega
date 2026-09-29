@@ -1,10 +1,19 @@
 @startuml CU60-exc-stock-insuficiente
-title CU-60 — Excepción 2: stock insuficiente (mensaje de CU-62)
+title CU-60 — Registrando salida de consumibles de bodega a técnico (excepción: stock insuficiente)
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-<style> sequenceDiagram { participant { Margin 30 } actor { Margin 12 } } </style>
+<style>
+sequenceDiagram {
+  participant {
+    margin 30
+  }
+  actor {
+    margin 12
+  }
+}
+</style>
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black
@@ -15,13 +24,13 @@ actor "Administrador de bodega" as user
 participant "V_Salidas" as view
 participant "C_SalidasService" as svc
 participant "C_TypeORM (transacción)" as orm
-database "postgres" as db
+participant "stock_consumible" as stock
 
 user -> view : Consumible x500 (hay 49.5)
 view -> svc : POST /api/salidas { items: [{ tipo: 'CONSUMIBLE', cantidad: 500 }] }
 activate svc
 svc -> orm : startTransaction · SELECT stock FOR UPDATE
-db --> orm : cantidad_disponible = 49.5
+stock --> orm : cantidad_disponible = 49.5
 svc -> svc : 49.5 < 500 → E2 (CU-62)
 svc --> view : 400 'Stock insuficiente de [Fibra drop QA]\nen [Bodega Central QA]. Disponible: 49.5 Metro.'
 svc -> orm : ROLLBACK

@@ -1,11 +1,20 @@
 @startuml CU47-exc-sin-ubicacion
-title CU-47 — Excepción 1: el actor no ingresa ubicación (aviso sin bloqueo)
+title CU-47 — Registrando ubicación física de equipo en bodega (excepción: el actor no ingresa ubicación)
 
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+<style>
+sequenceDiagram {
+  participant {
+    margin 35
+  }
+  actor {
+    margin 15
+  }
+}
+</style>
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black

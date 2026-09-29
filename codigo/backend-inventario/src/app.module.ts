@@ -22,6 +22,8 @@ import { ProveedoresModule } from './proveedores/proveedores.module';
 import { OrdenesIngresoModule } from './ordenes-ingreso/ordenes-ingreso.module';
 import { IntegracionesModule } from './integraciones/integraciones.module';
 import { SalidasModule } from './salidas/salidas.module';
+import { AlertasModule } from './alertas/alertas.module';
+import { NotificacionesModule } from './notificaciones/notificaciones.module';
 
 @Module({
   imports: [
@@ -60,6 +62,8 @@ import { SalidasModule } from './salidas/salidas.module';
     OrdenesIngresoModule,
     IntegracionesModule,
     SalidasModule,
+    AlertasModule,
+    NotificacionesModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],

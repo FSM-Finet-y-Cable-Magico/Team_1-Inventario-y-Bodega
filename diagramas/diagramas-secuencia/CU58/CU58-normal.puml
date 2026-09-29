@@ -4,7 +4,16 @@ skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-<style> sequenceDiagram { participant { Margin 30 } actor { Margin 12 } } </style>
+<style>
+sequenceDiagram {
+  participant {
+    margin 30
+  }
+  actor {
+    margin 12
+  }
+}
+</style>
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black
@@ -15,8 +24,8 @@ actor "Sistema" as sys #lightgrey
 participant "C_SalidasService" as svc
 participant "C_InventarioPersonalService" as ips
 participant "C_TypeORM" as orm
-database "postgres" as db
 actor "Administrador / Técnico" as user
+participant "inventario_personal_tecnico" as invp
 
 note over sys : Automático: se ejecuta con cada movimiento (CU-57/60 hoy;\nusos en cierres CU-64/68 y devoluciones CU-82 mañana)
 
@@ -25,7 +34,7 @@ activate svc
 svc -> ips : sumar(manager, id_tecnico, id_tipo_equipo, 25.5)
 activate ips
 ips -> orm : SELECT inventario_personal_tecnico FOR UPDATE\nWHERE (id_tecnico, id_tipo_equipo)
-db --> orm : fila existente (saldo 10) | sin filas
+invp --> orm : fila existente (saldo 10) | sin filas
 alt fila existente
     ips -> orm : UPDATE cantidad = 10 + 25.5 = 35.5
 else sin filas

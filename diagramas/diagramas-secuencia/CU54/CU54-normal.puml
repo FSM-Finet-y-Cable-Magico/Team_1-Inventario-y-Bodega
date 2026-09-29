@@ -5,8 +5,20 @@ skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
-skinparam sequence { MessageAlign center  LifeLineBorderColor black }
+<style>
+sequenceDiagram {
+  participant {
+    margin 35
+  }
+  actor {
+    margin 15
+  }
+}
+</style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
 hide footbox
 
 actor "Admin/AdminBodega/\nSuperusuario" as user
@@ -14,55 +26,102 @@ participant "V_OrdenIngresoDetalle" as view
 participant "C_OrdenesIngresoController" as ctrl
 participant "C_OrdenesIngresoService" as svc
 participant "C_AuditoriaService" as aud
+participant "C_TypeORM" as orm
 participant "C_QueryRunner" as qr
-database "postgres" as db
+participant "orden_ingreso" as oing
+participant "orden_ingreso_detalle" as odet
+participant "log_auditoria" as aent
 
 user -> view : Abre la ficha de una orden\n'Pendiente de recepción'\no 'Recepción parcial'
 activate view
 
-view -> user : Muestra los ítems con tipo de equipo,\ncantidad esperada y ya recibida
+view --> user : Muestra los ítems con tipo de equipo,\ncantidad esperada y ya recibida
 
 user -> view : Clic "Registrar recepción" e\nindica la cantidad recibida\nen esta instancia por ítem
 
 view -> view : Valida en cliente\n0 <= cantidad <= pendiente
+activate view
+deactivate view
 
-view -> ctrl : POST /api/ordenes-ingreso/{id}/recepcion\n{ items: [ { id_detalle, cantidad_recibida } ] }
+view -> ctrl : POST /api/ordenes-ingreso/{id}/recepcion\n{ fecha_recepcion, items: [ { id_detalle,\ncantidad_recibida, numeros_serie? } ] }
 activate ctrl
 
 ctrl -> svc : registrarRecepcion(id, dto, actor)
 activate svc
 
-svc -> svc : verificarPertenencia(id, actor)\n404 genérico si es de otra empresa
+svc -> orm : findOne(orden_ingreso)\nverificarPertenencia(id, actor)
+activate orm
+orm -> oing : SELECT * FROM orden_ingreso\nWHERE id_orden = ?
+activate oing
+oing --> orm : orden
+deactivate oing
+orm --> svc : orden (404 genérico si es de otra empresa)
+deactivate orm
 
-svc -> db : SELECT * FROM orden_ingreso\nWHERE id_orden = ?
-db --> svc : orden
+svc -> svc : Precondición:\nestado != 'Completada'
+activate svc
+deactivate svc
 
-svc -> svc : Precondición: estado != 'Completada'
-
-svc -> db : SELECT * FROM orden_ingreso_detalle\nWHERE id_orden = ?
-db --> svc : detalles[]
+svc -> orm : find(orden_ingreso_detalle, { id_orden })
+activate orm
+orm -> odet : SELECT * FROM orden_ingreso_detalle\nWHERE id_orden = ?
+activate odet
+odet --> orm : detalles[]
+deactivate odet
+orm --> svc : detalles[]
+deactivate orm
 
 svc -> svc : Valida TODOS los ítems antes de\nabrir la transacción:\n0 <= cantidad <= (esperada - recibida)
+activate svc
+deactivate svc
 
-svc -> svc : Calcula el estado resultante:\ntodos completos -> 'Completada'\nalgo pendiente -> 'Recepción parcial'\nnada recibido -> 'Pendiente de recepción'
+svc -> svc : Calcula el estado resultante:\ntodos completos -> 'Completada'\nalgo pendiente -> 'Recepción parcial'
+activate svc
+deactivate svc
 
-svc -> qr : startTransaction()
+svc -> qr : QueryRunner.connect()\n+ startTransaction()
 activate qr
+qr --> svc : Transacción iniciada
+deactivate qr
 
-qr -> db : UPDATE orden_ingreso_detalle\nSET cantidad_recibida = cantidad_recibida + ?\nWHERE id_detalle = ?   (x N ítems)
-db --> qr : ok
+svc -> qr : manager.increment(OrdenIngresoDetalle,\n{ id_detalle }, 'cantidad_recibida', ?)\n(x N ítems con cantidad > 0)
+activate qr
+qr -> odet : UPDATE orden_ingreso_detalle\nSET cantidad_recibida = cantidad_recibida + ?\nWHERE id_detalle = ?
+activate odet
+odet --> qr : filas actualizadas
+deactivate odet
+qr --> svc : ok
+deactivate qr
 
-qr -> db : UPDATE orden_ingreso\nSET estado = ?\nWHERE id_orden = ?
-db --> qr : ok
+svc -> qr : manager.update(OrdenIngreso, { id_orden },\n{ estado: nuevoEstado })  (si el estado cambió)
+activate qr
+qr -> oing : UPDATE orden_ingreso\nSET estado = ?\nWHERE id_orden = ?
+activate oing
+oing --> qr : fila actualizada
+deactivate oing
+qr --> svc : ok
+deactivate qr
 
-qr -> db : COMMIT
-qr --> svc : Transacción exitosa
+svc -> qr : QueryRunner.commitTransaction()
+activate qr
+qr --> svc : Commit OK
+deactivate qr
+
+svc -> qr : QueryRunner.release()
+activate qr
+qr --> svc : Conexión liberada
 deactivate qr
 
 svc -> aud : create({ accion: 'RECEPCION',\nentidad_afectada: 'orden_ingreso',\nvalor_anterior: estado previo,\nvalor_nuevo: items + estado })
 activate aud
-aud -> db : INSERT INTO log_auditoria
-db --> aud : ok
+aud -> orm : save(log)
+activate orm
+orm -> aent : INSERT INTO log_auditoria
+activate aent
+aent --> orm : Registrado
+deactivate aent
+orm --> aud : Log guardado
+deactivate orm
 aud --> svc : Auditoría registrada
 deactivate aud
 

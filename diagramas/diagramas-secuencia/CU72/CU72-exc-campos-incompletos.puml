@@ -1,11 +1,20 @@
 @startuml CU72-exc-campos-incompletos
-title CU-72 — Registrando resultado de revisión de equipo\n(excepción 2: campos obligatorios incompletos)
+title CU-72 — Registrando resultado de revisión de equipo (excepción 2: campos obligatorios incompletos)
 
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+<style>
+sequenceDiagram {
+  participant {
+    margin 35
+  }
+  actor {
+    margin 15
+  }
+}
+</style>
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black

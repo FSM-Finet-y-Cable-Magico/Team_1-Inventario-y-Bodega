@@ -15,7 +15,8 @@
 		PanelLeft,
 		Building2,
 		BarChart3,
-		ClipboardList
+		ClipboardList,
+		Smartphone
 	} from '@lucide/svelte';
 	import { authStore, userRoles } from '$lib/stores/auth';
 	import { goto } from '$app/navigation';
@@ -33,6 +34,8 @@
 
 	const navItems: NavItem[] = [
 		{ label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', roles: ['SUPERUSUARIO', 'ADMIN'] },
+		// CU-61: vista móvil del técnico (trabajos del día + inventario personal)
+		{ label: 'Mi jornada', icon: Smartphone, path: '/jornada', roles: ['TECNICO_TERRENO'] },
 		{ label: 'Usuarios', icon: Users, path: '/usuarios', roles: ['SUPERUSUARIO', 'ADMIN'] },
 		{ label: 'Catálogo', icon: Package, path: '/catalogo', roles: ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'] },
 		{ label: 'Unidades', icon: Wrench, path: '/unidades', roles: ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA', 'TECNICO_TERRENO'] },

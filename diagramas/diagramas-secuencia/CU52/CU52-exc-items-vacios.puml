@@ -1,12 +1,24 @@
 @startuml CU52-OrdenIngreso-Exc-ItemsVacios
-title CU-52 — Registrando orden de ingreso (excepción: listado de ítems vacío o campo obligatorio incompleto)
+title CU-52 — Registrando orden de ingreso desde proveedor (excepción: listado de ítems vacío o campo obligatorio incompleto)
 
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
-skinparam sequence { MessageAlign center  LifeLineBorderColor black }
+<style>
+sequenceDiagram {
+  participant {
+    margin 35
+  }
+  actor {
+    margin 15
+  }
+}
+</style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
 hide footbox
 
 actor "Usuario" as user

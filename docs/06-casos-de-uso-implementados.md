@@ -67,6 +67,7 @@
 | 45 | Stock por tipo/estado/unidad de medida | `bodegas` | `/bodegas/[id]` |
 | 46 | Umbral mínimo de stock + alertas | `bodegas`, `companies` | `/bodegas/[id]`, `/dashboard`, `Header` |
 | 47 | Ubicación física al ingresar/reingresar a bodega | `inventario/units` | `/unidades/[id]` |
+| 48 | Consultar ubicación externa (técnico/cliente/préstamo) | `inventario/units`, `usuarios`, `prestamos`, `integraciones` (G3) | `/unidades/[id]` |
 | 49 | Crear proveedor (CU-49) | `proveedores` | `/proveedores` |
 | 50 | Editar proveedor (CU-50) | `proveedores` | `/proveedores` |
 | 51 | Consultar listado de proveedores (CU-51) | `proveedores` | `/proveedores` |
@@ -79,7 +80,10 @@
 | 58 | Inventario personal del técnico (consulta) | `salidas` | `/salidas` (sección) |
 | 59 | Validación de NS en salida (en vivo + transacción) | `salidas`, `inventario/units` | `/salidas` |
 | 60 | Salida de consumibles a técnico | `salidas` | `/salidas` |
+| 61 | Vista móvil de trabajos e inventario del técnico | `salidas` (jornada), `integraciones` (G3) | `/jornada` |
 | 62 | Validación de stock con bloqueo de fila | `salidas` | `/salidas` (banner) |
+| 64 | Acciones atómicas del cierre de instalación (estado + cliente/dirección + materiales + SRV) | `integraciones` (webhook G3), `salidas`, `inventario` | `/unidades/[id]` (ficha) |
+| 68 | Verificación de saldo de consumibles en cierre (pre-check + transacción) | `integraciones` (webhook G3), `salidas` (`InventarioPersonalService`) | `/unidades/[id]` (sin UI propia; el cierre llega por webhook) |
 | 71 | Registrando devolución de equipo desde cliente (Instalado en cliente → En revisión) | `inventario/units`, `integraciones` (lectura de `integracion_cierre`) | `/unidades/devolucion` |
 | 72 | Registrando resultado de revisión (Operativo/Reparación externa/Baja) | `inventario/units` | `/unidades/[id]` |
 | 73 | Mostrando información de equipo en devolución (garantía, últimos 5 cambios, cliente, campos no registrados) | `inventario/units`, `integraciones` (lectura de `integracion_cierre`) | `/unidades/devolucion` |
@@ -92,7 +96,9 @@
 | 88 | Reporte de garantías | `reportes`, `inventario`, `auditoria` | `/reportes` (pestaña Garantías) |
 | 89 | Reporte de inventario actual de técnicos | `reportes`, `salidas`, `inventario`, `auditoria` | `/reportes` (pestaña Inventario de técnicos) |
 | 91 | Reporte de consumo de consumibles | `reportes`, `salidas`, `auditoria` | `/reportes` (pestaña Consumo de consumibles) |
+| 94 | Alertas activas en el dashboard (stock bajo umbral, garantía con defecto, préstamo vencido, revisión prolongada) | `alertas` (reutiliza `companies`, `inventario/units`, `prestamos`) | `/dashboard` (sección Alertas activas) |
 | 95 | Aviso de garantía vigente al registrar Dado de baja / En revisión (Continuar sin garantía / Cancelar) | `inventario/units` (`aviso-garantia.ts`), `bajas`, `prestamos`, `auditoria` | `/unidades/[id]`, `/unidades/devolucion`, `/prestamos` |
+| 96 | Notificaciones visuales en la campana (préstamo vencido + stock bajo umbral, persistidas y marcables como leídas) | `notificaciones` (reutiliza `companies`, `prestamos`, `alertas`) | `Header` (campana, sección "Notificaciones del sistema") |
 | 78 | Baja definitiva de equipo (directa o por solicitud del técnico) | `bajas`, `inventario/units`, `companies` | `/unidades/[id]`, `/bajas`, `Header` (campana) |
 | 79 | Acciones automáticas posteriores a la baja (exclusión del inventario activo) | `inventario/units`, `bodegas`, `companies` | `/dashboard`, `/bodegas`, `/unidades` (sin UI propia) |
 | 80 | Donación de equipos dados de baja + resumen en PDF | `donaciones` | `/bajas` (pestaña Donaciones) |

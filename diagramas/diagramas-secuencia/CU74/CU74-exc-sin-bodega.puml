@@ -1,11 +1,20 @@
 @startuml CU74-exc-sin-bodega
-title CU-74 — Reacondicionando equipo operativo desde revisión a bodega\n(excepción 1: no se selecciona bodega de destino)
+title CU-74 — Reacondicionando equipo operativo desde revisión a bodega (excepción 1: no se selecciona bodega de destino)
 
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+<style>
+sequenceDiagram {
+  participant {
+    margin 35
+  }
+  actor {
+    margin 15
+  }
+}
+</style>
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black

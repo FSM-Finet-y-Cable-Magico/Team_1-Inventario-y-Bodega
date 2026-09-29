@@ -1,0 +1,65 @@
+@startuml CU48-normal
+title CU-48 — Consultando ubicación externa de equipo fuera de bodega (flujo normal)
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style>
+sequenceDiagram {
+  participant {
+    margin 30
+  }
+  actor {
+    margin 12
+  }
+}
+</style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega" as user
+participant "V_UnidadDetalle" as view
+participant "C_UnitsController" as ctrl
+participant "C_UnitsService" as svc
+participant "C_DataSource" as orm
+participant "unidad_equipo" as uni
+participant "usuario" as usr
+participant "prestamo_externo" as pre
+participant "G3 FSM (externo)" as g3
+
+user -> view : Abre /unidades/[id] (equipo fuera de bodega)
+activate view
+view -> ctrl : GET /api/unidades/:id/ficha (JWT + rol)
+activate ctrl
+ctrl -> svc : verFichaDetalle(id, id_empresa)
+activate svc
+svc -> orm : SELECT unidad_equipo + tipo_equipo
+uni --> svc : estado actual (fuera de bodega)
+svc -> svc : resolverUbicacionExterna(unidad)
+alt estado = 'Asignado a técnico'
+  svc -> usr : SELECT nombre_completo, rut WHERE id_usuario = id_tecnico_asignado
+  usr --> svc : Pedro Técnico / 11111111-1
+  note right : tipo = TECNICO
+else estado = 'Instalado en cliente'
+  svc -> svc : datos persistidos del cierre (CU-64):\ncliente_rut, cliente_nombre, direccion_instalacion
+  opt G3 configurado y rut presente
+    svc -> g3 : GET /clientes/rut/{rut}?id_empresa=N (X-API-KEY, timeout 2 s)
+    g3 --> svc : cliente { nombre_completo, direcciones[] }
+    note right : si G3 no responde → degrada\na lo persistido (sin error)
+  end
+  note right : tipo = CLIENTE
+else estado = 'En préstamo externo'
+  svc -> pre : SELECT nombre_receptor, rut_receptor,\ncorrelativo (PE-XXXXX), detalle WHERE id_unidad + estado ACTIVO
+  pre --> svc : Empresa Reparadora Ltda. / PE-00010 / motivo
+  note right : tipo = PRESTAMO_EXTERNO
+end
+svc --> ctrl : ficha + ubicacion_externa { tipo, datos, campos_faltantes }
+deactivate svc
+ctrl --> view : 200 { success, data }
+deactivate ctrl
+view --> user : Sección "Ubicación externa" con los datos del responsable\n(la ficha carga en un solo request; solo lectura)
+deactivate view
+@enduml

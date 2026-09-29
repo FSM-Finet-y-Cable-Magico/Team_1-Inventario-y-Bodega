@@ -5,8 +5,20 @@ skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
-skinparam sequence { MessageAlign center  LifeLineBorderColor black }
+<style>
+sequenceDiagram {
+  participant {
+    margin 35
+  }
+  actor {
+    margin 15
+  }
+}
+</style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
 hide footbox
 
 actor "Admin/AdminBodega/\nSuperusuario" as user
@@ -15,7 +27,11 @@ participant "C_OrdenesIngresoController" as ctrl
 participant "C_OrdenesIngresoService" as svc
 participant "C_AuditoriaService" as aud
 participant "C_QueryRunner" as qr
-database "postgres" as db
+participant "orden_ingreso" as oing
+participant "orden_ingreso_detalle" as odet
+participant "log_auditoria" as aent
+participant "unidad_equipo" as uent
+participant "log_auditoria" as aent
 
 user -> view : Abre "Registrar recepción"
 activate view
@@ -43,12 +59,12 @@ svc -> svc : Excepción 2: compara la fecha\ncontra el reloj del SERVIDOR
 svc -> qr : startTransaction()
 activate qr
 
-qr -> db : UPDATE orden_ingreso_detalle\nSET cantidad_recibida = cantidad_recibida + ?
+qr -> odet : UPDATE orden_ingreso_detalle\nSET cantidad_recibida = cantidad_recibida + ?
 
-loop por cada unidad recibida
-  qr -> db : INSERT INTO unidad_equipo\n(fecha_adquisicion = '2026-08-25',\nfecha_venc_garantia = '2026-08-25'\n+ garantia_dias del ítem,\nestado = 'En bodega')
-  db --> qr : unidad creada
-end
+note over qr : inicio loop\n(por cada unidad recibida)
+  qr -> uent : INSERT INTO unidad_equipo\n(fecha_adquisicion = '2026-08-25',\nfecha_venc_garantia = '2026-08-25'\n+ garantia_dias del ítem,\nestado = 'En bodega')
+  uent --> qr : unidad creada
+note over qr : término loop
 
 note right of qr
   orden_ingreso.fecha_documento NO se toca:
@@ -56,15 +72,15 @@ note right of qr
   recepción real en cada unidad
 end note
 
-qr -> db : UPDATE orden_ingreso SET estado = ?
-qr -> db : COMMIT
+qr -> oing : UPDATE orden_ingreso SET estado = ?
+qr -> oing :COMMIT (sobre la orden_ingreso)
 qr --> svc : Transacción exitosa
 deactivate qr
 
 svc -> aud : create({ accion: 'RECEPCION',\nvalor_nuevo: { fecha_recepcion,\nfecha_documento_orden } })
 activate aud
-aud -> db : INSERT INTO log_auditoria
-db --> aud : ok
+aud -> aent : INSERT INTO log_auditoria
+aent --> aud : ok
 aud --> svc : Auditoría registrada
 deactivate aud
 

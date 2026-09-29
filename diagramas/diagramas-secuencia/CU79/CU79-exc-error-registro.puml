@@ -1,11 +1,20 @@
 @startuml CU79-exc-error-registro
-title CU-79 — Excepción 1: error al registrar la baja (rollback y reintento)
+title CU-79 — Ejecutando acciones posteriores a baja definitiva (excepción: error al registrar la baja)
 
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+<style>
+sequenceDiagram {
+  participant {
+    margin 35
+  }
+  actor {
+    margin 15
+  }
+}
+</style>
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black
@@ -27,7 +36,7 @@ activate bsvc
 bsvc -> svc : transicionarEstado(id, 'Dado de baja', ...)
 activate svc
 
-loop hasta 3 intentos (backoff 100ms × intento)
+note over svc : inicio loop\n(hasta 3 intentos, backoff 100ms × intento)
     svc -> orm : queryRunner.startTransaction()\nsave(unidad)
     activate orm
     orm -> uent : UPDATE unidad_equipo\nSET estado = 'Dado de baja'
@@ -54,7 +63,7 @@ loop hasta 3 intentos (backoff 100ms × intento)
     deactivate uent
     orm --> svc : Transacción revertida
     deactivate orm
-end
+note over svc : término loop
 
 svc --> bsvc : 400 BadRequestException\n'Error al registrar el cambio en el historial.\nEl sistema reintentó la escritura\npero el error persiste.'
 deactivate svc

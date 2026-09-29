@@ -33,6 +33,19 @@
 	const isDev = import.meta.env.DEV;
 	const roles = $derived($userRoles);
 	const puedeEditarUnidad = $derived(roles.some((r) => ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'].includes(r)));
+
+	// CU-48 (E1): etiquetas legibles de los campos sin registrar de la ubicación externa
+	const ETIQUETAS_CAMPO_UBICACION: Record<string, string> = {
+		nombre_completo: 'nombre del técnico',
+		rut: 'RUT',
+		nombre: 'nombre del cliente',
+		direccion: 'dirección de instalación',
+		nombre_receptor: 'receptor',
+		numero_prestamo: 'N° de préstamo',
+		motivo: 'motivo'
+	};
+	const etiquetasFaltantes = (campos: string[]) =>
+		campos.map((c) => ETIQUETAS_CAMPO_UBICACION[c] ?? c).join(', ');
 	let changeError = $state('');
 	let changing = $state(false);
 
@@ -582,10 +595,47 @@ async function handleRegistrarRetorno(forzarAvisoGarantia = false) {
 								<p class="text-foreground">{unit.ubicacion_fisica || '-'}</p>
 							</div>
 						{:else}
-							<!-- CU-33: fuera de bodega se indica la ubicación externa según el estado -->
+							<!-- CU-33/CU-48: fuera de bodega se indica la ubicación externa según el estado -->
 							<div class="col-span-2">
 								<span class="text-muted">Ubicación externa:</span>
-								<p class="text-foreground">{unit.estado}{unit.estado === 'Instalado en cliente' && unit.id_cliente_instalado ? ` (cliente #${unit.id_cliente_instalado})` : ''}</p>
+								{#if unit.ubicacion_externa}
+									<div class="text-foreground mt-1 space-y-1">
+										{#if unit.ubicacion_externa.tipo === 'TECNICO'}
+											<p>
+												Técnico: {unit.ubicacion_externa.datos.nombre_completo || 'Sin registrar'}
+												· RUT: {unit.ubicacion_externa.datos.rut || 'Sin registrar'}
+											</p>
+										{:else if unit.ubicacion_externa.tipo === 'CLIENTE'}
+											<p>
+												Cliente: {unit.ubicacion_externa.datos.nombre || 'Sin registrar'}
+												{unit.ubicacion_externa.datos.rut ? `(${unit.ubicacion_externa.datos.rut})` : '· RUT: Sin registrar'}
+											</p>
+											<p>
+												Dirección: {unit.ubicacion_externa.datos.direccion || 'Sin registrar'}{unit.ubicacion_externa.datos.comuna ? `, ${unit.ubicacion_externa.datos.comuna}` : ''}
+											</p>
+											{#if unit.srv}
+												<p>Servicio: {unit.srv}</p>
+											{/if}
+										{:else}
+											<p>
+												Receptor: {unit.ubicacion_externa.datos.nombre_receptor || 'Sin registrar'}
+												{unit.ubicacion_externa.datos.rut_receptor ? `(${unit.ubicacion_externa.datos.rut_receptor})` : ''}
+											</p>
+											<p>
+												Préstamo: {unit.ubicacion_externa.datos.numero_prestamo || 'Sin N° registrado'}
+												· Motivo: {unit.ubicacion_externa.datos.motivo || 'Sin registrar'}
+											</p>
+										{/if}
+										<!-- CU-48 Excepción 1: campos del responsable externo sin registrar -->
+										{#if unit.ubicacion_externa.campos_faltantes.length > 0}
+											<p class="text-xs text-amber-700">
+												Campos sin registrar: {etiquetasFaltantes(unit.ubicacion_externa.campos_faltantes)}
+											</p>
+										{/if}
+									</div>
+								{:else}
+									<p class="text-foreground">{unit.estado}{unit.estado === 'Instalado en cliente' && unit.id_cliente_instalado ? ` (cliente #${unit.id_cliente_instalado})` : ''}</p>
+								{/if}
 							</div>
 						{/if}
 						{#if unit.estado === 'Dado de baja' && unit.motivo_baja}

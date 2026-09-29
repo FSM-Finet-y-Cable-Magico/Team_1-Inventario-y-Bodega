@@ -1,11 +1,20 @@
 @startuml CU78-normal-solicitud
-title CU-78 — Registrando baja definitiva (flujo normal: técnico solicita, Administrador aprueba)
+title CU-78 — Registrando baja definitiva de equipo (flujo normal: técnico solicita, Administrador aprueba)
 
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+<style>
+sequenceDiagram {
+  participant {
+    margin 35
+  }
+  actor {
+    margin 15
+  }
+}
+</style>
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black

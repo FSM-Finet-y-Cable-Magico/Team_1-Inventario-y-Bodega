@@ -1,11 +1,20 @@
 @startuml CU83-exc-sin-activos
-title CU-83 — Excepción 1: no hay préstamos externos activos
+title CU-83 — Consultando tabla de préstamos externos activos (excepción: no hay préstamos activos)
 
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+<style>
+sequenceDiagram {
+  participant {
+    margin 35
+  }
+  actor {
+    margin 15
+  }
+}
+</style>
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black

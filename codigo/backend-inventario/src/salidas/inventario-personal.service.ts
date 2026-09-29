@@ -71,6 +71,109 @@ export class InventarioPersonalService {
     await manager.save(row);
   }
 
+  // CU-68 (pre-check, sin bloqueo): saldo disponible del técnico para un tipo.
+  async saldoDisponible(
+    manager: EntityManager,
+    idTecnico: number,
+    idTipoEquipo: number,
+  ): Promise<number> {
+    const row = await manager.findOne(InventarioPersonal, {
+      where: { id_tecnico: idTecnico, id_tipo_equipo: idTipoEquipo },
+    });
+    return row ? Number(row.cantidad) : 0;
+  }
+
+  // CU-64 (C)/CU-68 (webhook): descuento que NUNCA rechaza. Con bloqueo de fila
+  // descuenta hasta el saldo disponible y devuelve el faltante como ajuste.
+  async descontarHasta(
+    manager: EntityManager,
+    idTecnico: number,
+    idTipoEquipo: number,
+    cantidad: number,
+  ): Promise<{ saldoAnterior: number; descontado: number; faltante: number }> {
+    const row = await manager.findOne(InventarioPersonal, {
+      where: { id_tecnico: idTecnico, id_tipo_equipo: idTipoEquipo },
+      lock: { mode: 'pessimistic_write' },
+    });
+    const saldoAnterior = row ? Number(row.cantidad) : 0;
+    const descontado = Math.min(saldoAnterior, cantidad);
+    const faltante = cantidad - descontado;
+    if (row && descontado > 0) {
+      row.cantidad = String(saldoAnterior - descontado);
+      await manager.save(row);
+    }
+    return { saldoAnterior, descontado, faltante: Number(faltante.toFixed(2)) };
+  }
+
+  // CU-68: compara el saldo con lo declarado y devuelve los insuficientes con el
+  // mensaje exacto de la Excepción 1 (sirve de pre-check antes de confirmar).
+  async detectarInsuficientes(
+    manager: EntityManager,
+    idTecnico: number,
+    materiales: { id_tipo_equipo: number; cantidad: number }[],
+  ): Promise<
+    {
+      id_tipo_equipo: number;
+      nombre: string;
+      disponible: number;
+      declarado: number;
+      unidad_medida: string;
+      mensaje: string;
+    }[]
+  > {
+    const insuficientes: {
+      id_tipo_equipo: number;
+      nombre: string;
+      disponible: number;
+      declarado: number;
+      unidad_medida: string;
+      mensaje: string;
+    }[] = [];
+    for (const material of materiales) {
+      const disponible = await this.saldoDisponible(
+        manager,
+        idTecnico,
+        material.id_tipo_equipo,
+      );
+      if (disponible < material.cantidad) {
+        const tipo = await manager.findOne(TipoEquipo, {
+          where: { id_tipo_equipo: material.id_tipo_equipo },
+        });
+        const nombre = tipo?.nombre ?? String(material.id_tipo_equipo);
+        const unidad = tipo?.unidadMedida ?? 'Unidad';
+        insuficientes.push({
+          id_tipo_equipo: material.id_tipo_equipo,
+          nombre,
+          disponible,
+          declarado: material.cantidad,
+          unidad_medida: unidad,
+          mensaje: `Saldo insuficiente de [${nombre}]: disponible ${disponible} ${unidad}, declarado ${material.cantidad} ${unidad}.`,
+        });
+      }
+    }
+    return insuficientes;
+  }
+
+  // CU-68: validación bloqueante para el flujo humano de confirmación del cierre
+  // (mensaje exacto de la Excepción 1). El webhook de G3 no la usa: ahí el saldo
+  // insuficiente se registra como ajuste/discrepancia, nunca rechazo.
+  async validarSaldo(
+    manager: EntityManager,
+    idTecnico: number,
+    materiales: { id_tipo_equipo: number; cantidad: number }[],
+  ): Promise<void> {
+    const insuficientes = await this.detectarInsuficientes(
+      manager,
+      idTecnico,
+      materiales,
+    );
+    if (insuficientes.length > 0) {
+      throw new BadRequestException(
+        insuficientes.map((i) => i.mensaje).join(' '),
+      );
+    }
+  }
+
   // CU-58: consulta del inventario de un técnico (NS asignados + saldos de consumibles).
   async consultar(idTecnico: number, idEmpresaContexto: number, actor: any) {
     const tecnico = await this.dataSource.getRepository(Usuario).findOne({

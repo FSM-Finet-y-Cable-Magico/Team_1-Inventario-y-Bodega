@@ -1,11 +1,20 @@
 @startuml CU84-exc-item-invalido
-title CU-84 — Excepción: un error por cada ítem inválido, sin procesar nada
+title CU-84 — Validando trazabilidad de devolución de préstamo externo (excepción: ítem inválido, no se procesa nada)
 
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+<style>
+sequenceDiagram {
+  participant {
+    margin 35
+  }
+  actor {
+    margin 15
+  }
+}
+</style>
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black

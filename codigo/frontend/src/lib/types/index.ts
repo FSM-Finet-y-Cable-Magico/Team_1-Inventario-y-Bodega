@@ -98,8 +98,40 @@ export type EstadoUnidad =
 	| 'En préstamo externo'
 	| 'Dado de baja';
 
-export interface UnidadEquipo {
-	id_unidad: number;
+// CU-48: ubicación externa de una unidad fuera de bodega, resuelta por el backend
+// según el estado (E1: campos_faltantes indica lo que no está registrado).
+export type UbicacionExterna =
+	| {
+			tipo: 'TECNICO';
+			datos: {
+				id_usuario: number | null;
+				nombre_completo: string | null;
+				rut: string | null;
+			};
+			campos_faltantes: string[];
+	  }
+	| {
+			tipo: 'CLIENTE';
+			datos: {
+				rut: string | null;
+				nombre: string | null;
+				direccion: string | null;
+				comuna: string | null;
+			};
+			campos_faltantes: string[];
+	  }
+	| {
+			tipo: 'PRESTAMO_EXTERNO';
+			datos: {
+				nombre_receptor: string | null;
+				rut_receptor: string | null;
+				numero_prestamo: string | null;
+				motivo: string | null;
+			};
+			campos_faltantes: string[];
+	  };
+
+export interface UnidadEquipo {	id_unidad: number;
 	id_tipo_equipo: number | null;
 	id_empresa: number | null;
 	numero_serie: string;
@@ -124,6 +156,14 @@ export interface UnidadEquipo {
 	marca?: string | null;
 	empresa?: string | null;
 	bodega?: string | null;
+	// CU-64: cliente/dirección persistidos del cierre de instalación y SRV vigente
+	cliente_rut?: string | null;
+	cliente_nombre?: string | null;
+	direccion_instalacion?: string | null;
+	comuna_instalacion?: string | null;
+	srv?: string | null;
+	// CU-48: ubicación externa resuelta por estado (técnico/cliente/préstamo)
+	ubicacion_externa?: UbicacionExterna | null;
 	garantia?: {
 		posee_garantia: boolean;
 		garantia_vigente: boolean;
@@ -595,6 +635,32 @@ export interface DashboardEmpresa {
 	total_bodegas: number;
 }
 
+// CU-94: alertas activas del dashboard (literales exactos del backend)
+export type TipoAlerta = 'Stock bajo umbral' | 'Garantía con defecto' | 'Préstamo vencido' | 'Revisión prolongada';
+
+export interface AlertaActiva {
+	tipo: TipoAlerta;
+	empresa: string;
+	descripcion: string;
+	fecha_hora: string;
+}
+
+// CU-96: notificación persistida de la campana (solo A: Stock bajo umbral y
+// C: Préstamo vencido, subconjunto de TipoAlerta). Todo lo que devuelve
+// GET /api/notificaciones está, por definición, sin leer.
+export interface NotificacionCampana {
+	id_notificacion: number;
+	tipo: TipoAlerta;
+	empresa: string;
+	descripcion: string;
+	fecha_hora: string;
+}
+
+export interface NotificacionesNoLeidas {
+	contador: number;
+	notificaciones: NotificacionCampana[];
+}
+
 export interface PaginatedResponse<T> {
 	data: T[];
 	total: number;
@@ -659,4 +725,32 @@ export interface InventarioTecnico {
 		saldo: number;
 		unidad_medida: string | null;
 	}[];
+}
+
+// CU-61: vista móvil del técnico — trabajos del día desde G3 + inventario personal
+export interface TrabajoDelDia {
+	id_ot: number | null;
+	tipo_ot: string | null;
+	estado: string | null;
+	prioridad: string | null;
+	fecha_programada: string | null;
+	observaciones: string | null;
+	cliente: {
+		id_cliente: number | null;
+		rut: string | null;
+		nombre_completo: string | null;
+		telefono: string | null;
+	};
+	direccion: {
+		direccion: string | null;
+		comuna: string | null;
+		referencia: string | null;
+	};
+}
+
+export interface JornadaTecnico {
+	fecha: string;
+	trabajos_estado: 'OK' | 'NO_DISPONIBLE';
+	trabajos: TrabajoDelDia[];
+	inventario: InventarioTecnico;
 }

@@ -1,11 +1,41 @@
 <script lang="ts">
 	import { userRoles } from '$lib/stores/auth';
-	import { getDashboard, getMyDashboard } from '$lib/api/index';
+	import { getDashboard, getMyDashboard, getAlertasActivas } from '$lib/api/index';
+	import type { AlertaActiva } from '$lib/types';
+	import EmptyState from '$lib/components/EmptyState.svelte';
 	import { onMount } from 'svelte';
-	import { Building2, Package, Warehouse, Boxes } from '@lucide/svelte';
+	import { Building2, Package, Warehouse, Boxes, Bell } from '@lucide/svelte';
 
 	let roles = $state<string[]>([]);
 	userRoles.subscribe((r) => (roles = r));
+
+	// CU-94: alertas activas, solo para Administrador de bodega, Administrador y Superusuario
+	const puedeVerAlertas = $derived(roles.some((r) => ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'].includes(r)));
+	let alertasActivas = $state<AlertaActiva[]>([]);
+	let loadingAlertas = $state(true);
+	let errorAlertas = $state('');
+
+	async function cargarAlertas() {
+		loadingAlertas = true;
+		errorAlertas = '';
+		try {
+			alertasActivas = await getAlertasActivas();
+		} catch (err: unknown) {
+			errorAlertas = err instanceof Error ? err.message : 'Error al cargar alertas activas';
+		} finally {
+			loadingAlertas = false;
+		}
+	}
+
+	// CU-94: fecha/hora de generación DD/MM/YYYY HH:MM:SS, zona America/Santiago
+	function fmtFechaHora(fecha: string | null): string {
+		if (!fecha) return '-';
+		return new Date(fecha).toLocaleString('en-GB', {
+			day: '2-digit', month: '2-digit', year: 'numeric',
+			hour: '2-digit', minute: '2-digit', second: '2-digit',
+			hour12: false, timeZone: 'America/Santiago'
+		}).replace(',', '');
+	}
 
 	let loading = $state(true);
 	let error = $state('');
@@ -31,6 +61,9 @@
 	}
 
 	onMount(async () => {
+		// CU-94: las alertas se consultan en cada navegación al dashboard, en paralelo
+		// a las estadísticas (un error en una no bloquea la otra)
+		if (puedeVerAlertas) cargarAlertas();
 		try {
 			if (roles.includes('SUPERUSUARIO')) {
 				const data = await getDashboard();
@@ -133,5 +166,51 @@
 				Para ver el dashboard consolidado de ambas empresas, se requiere rol SUPERUSUARIO.
 			</div>
 		{/if}
+	{/if}
+
+	<!-- CU-94: alertas activas (stock bajo umbral, garantía con defecto, préstamo vencido, revisión prolongada) -->
+	{#if puedeVerAlertas}
+		<div class="mt-6">
+			<div class="flex items-center gap-2 mb-3">
+				<Bell class="h-5 w-5 text-accent" />
+				<h2 class="text-base font-semibold text-foreground">Alertas activas</h2>
+			</div>
+
+			{#if errorAlertas}
+				<div class="bg-red-50 border border-red-200 text-destructive rounded-md p-4 text-sm mb-4">{errorAlertas}</div>
+			{/if}
+
+			<div class="bg-white rounded-lg border border-border overflow-hidden">
+				{#if loadingAlertas}
+					<div class="p-8 text-center text-sm text-muted">Cargando...</div>
+				{:else if alertasActivas.length === 0}
+					<!-- CU-94 Excepción 1 -->
+					<EmptyState message="No hay alertas activas actualmente." />
+				{:else}
+					<div class="overflow-x-auto">
+						<table class="w-full text-sm">
+							<thead>
+								<tr class="border-b border-border bg-surface/50">
+									<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Tipo de alerta</th>
+									<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Empresa</th>
+									<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Descripción</th>
+									<th class="text-left px-4 py-3 font-medium text-muted text-xs uppercase tracking-wider">Fecha/hora</th>
+								</tr>
+							</thead>
+							<tbody>
+								{#each alertasActivas as alerta, i}
+									<tr class="{i % 2 === 0 ? 'bg-white' : 'bg-surface/30'} border-b border-border">
+										<td class="px-4 py-3 font-bold text-foreground whitespace-nowrap">{alerta.tipo}</td>
+										<td class="px-4 py-3 text-muted whitespace-nowrap">{alerta.empresa}</td>
+										<td class="px-4 py-3 text-foreground">{alerta.descripcion}</td>
+										<td class="px-4 py-3 text-muted whitespace-nowrap">{fmtFechaHora(alerta.fecha_hora)}</td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
+				{/if}
+			</div>
+		</div>
 	{/if}
 </div>

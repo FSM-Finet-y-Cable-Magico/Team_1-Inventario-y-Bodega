@@ -327,5 +327,87 @@ CREATE TABLE IF NOT EXISTS inventario_personal_tecnico (
     CONSTRAINT uq_inventario_tecnico_tipo UNIQUE (id_tecnico, id_tipo_equipo)
 );
 
+-- Notificaciones de la campana del sistema (CU-96): préstamo vencido +
+-- stock bajo umbral. clave_dedupe es UNIQUE: garantiza no duplicar una
+-- notificación ya generada el mismo día para la misma referencia.
+CREATE TABLE IF NOT EXISTS notificacion (
+    id_notificacion   SERIAL PRIMARY KEY,
+    tipo              VARCHAR(40) NOT NULL,
+    id_empresa        INTEGER NOT NULL,
+    descripcion       VARCHAR(150) NOT NULL,
+    clave_dedupe      VARCHAR(120) NOT NULL UNIQUE,
+    leida             BOOLEAN NOT NULL DEFAULT false,
+    fecha_generacion  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    fecha_leida       TIMESTAMPTZ
+);
+
 -- CU-57: técnico que tiene asignada la unidad
 ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS id_tecnico_asignado INTEGER;
+
+-- sc-158 (acuerdo G8 v1): histórico equipo ↔ servicio. Los IDs de G8 son
+-- referencias externas sin FK; id_unidad sí referencia a unidad_equipo.
+CREATE TABLE IF NOT EXISTS asignacion_equipo_servicio (
+    id_asignacion         SERIAL PRIMARY KEY,
+    id_unidad             INTEGER NOT NULL,
+    id_empresa            INTEGER NOT NULL,
+    event_id              VARCHAR(100),
+    id_cliente_externo    INTEGER,
+    rut_cliente           VARCHAR(20),
+    id_servicio_externo   INTEGER NOT NULL,
+    id_contrato_externo   INTEGER,
+    id_ot                 INTEGER,
+    fecha_instalacion     TIMESTAMPTZ NOT NULL,
+    fecha_retiro          TIMESTAMPTZ,
+    activa                BOOLEAN NOT NULL DEFAULT TRUE,
+    origen                VARCHAR(30),
+    trace_id              VARCHAR(100),
+    CONSTRAINT fk_asignacion_unidad FOREIGN KEY (id_unidad) REFERENCES unidad_equipo (id_unidad)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS ux_asignacion_evento_unidad ON asignacion_equipo_servicio (event_id, id_unidad);
+CREATE INDEX IF NOT EXISTS ix_asignacion_empresa_servicio_activa ON asignacion_equipo_servicio (id_empresa, id_servicio_externo, activa);
+
+-- sc-158 (acuerdo G8 v1): cabecera del evento de activación (idempotencia por event_id).
+-- event_id nulo = registro PENDIENTE_ACTIVACION de un cierre al que aún no llega la activación.
+CREATE TABLE IF NOT EXISTS integracion_activacion (
+    id_activacion         SERIAL PRIMARY KEY,
+    event_id              VARCHAR(100) UNIQUE,
+    trace_id              VARCHAR(100),
+    id_empresa            INTEGER NOT NULL,
+    id_ot                 INTEGER,
+    id_cliente_externo    INTEGER,
+    rut_cliente           VARCHAR(20),
+    id_servicio_externo   INTEGER,
+    id_contrato_externo   INTEGER,
+    payload               JSONB,
+    estado_proceso        VARCHAR(40) NOT NULL,
+    equipos_asociados     JSONB,
+    discrepancias         JSONB,
+    fecha_proceso         TIMESTAMPTZ DEFAULT now()
+);
+
+-- CU-64 (D): SRV-YYYY-XXXXX y técnico del cierre + resultado de materiales.
+-- El SRV identifica el servicio (OT): un re-cierre conserva el SRV original,
+-- por eso no lleva UNIQUE por fila (la secuencia por empresa/año garantiza que
+-- dos OTs distintas nunca reciban el mismo SRV).
+ALTER TABLE integracion_cierre ADD COLUMN IF NOT EXISTS srv VARCHAR(20);
+ALTER TABLE integracion_cierre ADD COLUMN IF NOT EXISTS id_tecnico INTEGER;
+ALTER TABLE integracion_cierre ADD COLUMN IF NOT EXISTS materiales_aplicados JSONB;
+
+-- CU-64 (D): secuencia del identificador de servicio por empresa y año
+CREATE TABLE IF NOT EXISTS secuencia_srv (
+    id_empresa  INTEGER NOT NULL,
+    anio        INTEGER NOT NULL,
+    ultimo      INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (id_empresa, anio)
+);
+
+-- CU-64 (B): cliente/dirección persistidos del cierre de instalación + SRV vigente
+ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS cliente_rut VARCHAR(20);
+ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS cliente_nombre VARCHAR(150);
+ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS direccion_instalacion VARCHAR(300);
+ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS comuna_instalacion VARCHAR(100);
+ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS srv VARCHAR(20);
+
+-- CU-48: RUT del usuario para la ubicación externa de equipos asignados
+ALTER TABLE usuario ADD COLUMN IF NOT EXISTS rut VARCHAR(12);

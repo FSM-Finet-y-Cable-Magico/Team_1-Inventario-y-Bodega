@@ -1,10 +1,19 @@
 @startuml CU60-exc-cantidad-invalida
-title CU-60 — Excepción 1: cantidad 0 o negativa
+title CU-60 — Registrando salida de consumibles de bodega a técnico (excepción: cantidad cero o negativa)
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-<style> sequenceDiagram { participant { Margin 30 } actor { Margin 12 } } </style>
+<style>
+sequenceDiagram {
+  participant {
+    margin 30
+  }
+  actor {
+    margin 12
+  }
+}
+</style>
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black

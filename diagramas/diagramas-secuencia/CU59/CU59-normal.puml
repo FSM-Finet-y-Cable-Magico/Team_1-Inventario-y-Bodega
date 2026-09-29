@@ -4,7 +4,16 @@ skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-<style> sequenceDiagram { participant { Margin 30 } actor { Margin 12 } } </style>
+<style>
+sequenceDiagram {
+  participant {
+    margin 30
+  }
+  actor {
+    margin 12
+  }
+}
+</style>
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black
@@ -16,7 +25,7 @@ participant "V_Salidas" as view
 participant "C_UnitsController" as uctrl
 participant "C_UnitsService" as usvc
 participant "C_SalidasService" as svc
-database "postgres" as db
+participant "unidad_equipo" as uent
 
 user -> view : Agrega NS 'ONT-A1B2C3' (bodega ya elegida)
 activate view
@@ -24,8 +33,8 @@ view -> uctrl : GET /api/unidades/serie/{ns}?id_bodega=N
 activate uctrl
 uctrl -> usvc : verificarSerie(ns, id_empresa, id_bodega)
 activate usvc
-usvc -> db : SELECT unidad_equipo WHERE numero_serie AND id_empresa
-db --> usvc : unidad (estado 'En bodega', id_bodega_actual = N)
+usvc -> uent : SELECT unidad_equipo WHERE numero_serie AND id_empresa
+uent --> usvc : unidad (estado 'En bodega', id_bodega_actual = N)
 usvc --> uctrl : 200 { existe: true, estado: 'En bodega',\nid_bodega_actual: N, disponible: true }
 deactivate usvc
 uctrl --> view : 200
@@ -35,9 +44,9 @@ view --> user : NS marcado 'Disponible' (badge verde)
 user -> view : Confirma la salida
 view -> svc : POST /api/salidas (re-validación de verdad)
 activate svc
-svc -> db : SELECT unidad (transacción) → estado y bodega OK ✓
-db --> svc : unidad
-svc -> db : UPDATE unidad → 'Asignado a técnico' + id_tecnico_asignado
+svc -> uent : SELECT unidad (transacción) → estado y bodega OK ✓
+uent --> svc : unidad
+svc -> uent : UPDATE unidad → 'Asignado a técnico' + id_tecnico_asignado
 svc --> view : 200 { success, id_salida }
 deactivate svc
 view --> user : Salida confirmada
