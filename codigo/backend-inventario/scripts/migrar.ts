@@ -388,6 +388,22 @@ CREATE TABLE IF NOT EXISTS prestamo_retorno (
 );
 `;
 
+// CU-96: notificaciones persistidas de la campana (préstamo vencido + stock
+// bajo umbral). clave_dedupe es UNIQUE: es la que garantiza no duplicar una
+// notificación ya generada el mismo día para la misma referencia.
+const TABLAS_CU96_SQL = `
+CREATE TABLE IF NOT EXISTS notificacion (
+    id_notificacion   SERIAL PRIMARY KEY,
+    tipo              VARCHAR(40) NOT NULL,
+    id_empresa        INTEGER NOT NULL,
+    descripcion       VARCHAR(150) NOT NULL,
+    clave_dedupe      VARCHAR(120) NOT NULL UNIQUE,
+    leida             BOOLEAN NOT NULL DEFAULT false,
+    fecha_generacion  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    fecha_leida       TIMESTAMPTZ
+);
+`;
+
 async function main() {
   const ds = new DataSource({ type: 'postgres', url: process.env.DATABASE_URL });
   await ds.initialize();
@@ -407,6 +423,10 @@ async function main() {
   // CU-78/CU-80/CU-81: tablas de bajas, donaciones y detalle de préstamos
   await ds.query(TABLAS_G4_SQL);
   console.log('✓ Tablas solicitud_baja / donacion / prestamo_detalle inicializadas / comprobadas.');
+
+  // CU-96: tabla de notificaciones de la campana
+  await ds.query(TABLAS_CU96_SQL);
+  console.log('✓ Tabla notificacion inicializada / comprobada.');
 
   for (const sql of SENTENCIAS) {
     await ds.query(sql);

@@ -96,6 +96,9 @@ Controller-level: `@UseGuards(AuthGuard('jwt'), RolesGuard)`.
   - **CU-46:** `alertas_stock_minimo` — para tipos serializados el stock = conteo de unidades
     `'En bodega'`; para consumibles = `cantidad_disponible`. Solo considera umbrales
     `NOT NULL` y `> 0`.
+- **`getAlertasStockMinimo(id)`** (CU-46, pública desde CU-94): la regla anterior extraída a su
+  propio método (tipo `AlertaStockMinimo`). La usan `getEstadisticasEmpresa` y el módulo `alertas`
+  (CU-94), por eso `CompaniesModule` exporta `CompaniesService`.
 
 ---
 
@@ -115,4 +118,5 @@ Usado por el healthcheck de Docker (`docker-compose.yml`).
 ## CU cubiertos
 CU-06 (empresas en selector), CU-08 (ver log de auditoría), CU-09 (filtrar auditoría),
 CU-15 (dashboard consolidado), CU-16 (mi dashboard), CU-20 (transferencias pendientes + campana),
-CU-46 (alertas de stock en dashboard).
+CU-46 (alertas de stock en dashboard). La tabla "Alertas activas" del dashboard (CU-94) vive en el
+módulo `alertas` (ver `alertas.md`).

@@ -327,6 +327,20 @@ CREATE TABLE IF NOT EXISTS inventario_personal_tecnico (
     CONSTRAINT uq_inventario_tecnico_tipo UNIQUE (id_tecnico, id_tipo_equipo)
 );
 
+-- Notificaciones de la campana del sistema (CU-96): préstamo vencido +
+-- stock bajo umbral. clave_dedupe es UNIQUE: garantiza no duplicar una
+-- notificación ya generada el mismo día para la misma referencia.
+CREATE TABLE IF NOT EXISTS notificacion (
+    id_notificacion   SERIAL PRIMARY KEY,
+    tipo              VARCHAR(40) NOT NULL,
+    id_empresa        INTEGER NOT NULL,
+    descripcion       VARCHAR(150) NOT NULL,
+    clave_dedupe      VARCHAR(120) NOT NULL UNIQUE,
+    leida             BOOLEAN NOT NULL DEFAULT false,
+    fecha_generacion  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    fecha_leida       TIMESTAMPTZ
+);
+
 -- CU-57: técnico que tiene asignada la unidad
 ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS id_tecnico_asignado INTEGER;
 

@@ -612,6 +612,32 @@ export interface DashboardEmpresa {
 	total_bodegas: number;
 }
 
+// CU-94: alertas activas del dashboard (literales exactos del backend)
+export type TipoAlerta = 'Stock bajo umbral' | 'Garantía con defecto' | 'Préstamo vencido' | 'Revisión prolongada';
+
+export interface AlertaActiva {
+	tipo: TipoAlerta;
+	empresa: string;
+	descripcion: string;
+	fecha_hora: string;
+}
+
+// CU-96: notificación persistida de la campana (solo A: Stock bajo umbral y
+// C: Préstamo vencido, subconjunto de TipoAlerta). Todo lo que devuelve
+// GET /api/notificaciones está, por definición, sin leer.
+export interface NotificacionCampana {
+	id_notificacion: number;
+	tipo: TipoAlerta;
+	empresa: string;
+	descripcion: string;
+	fecha_hora: string;
+}
+
+export interface NotificacionesNoLeidas {
+	contador: number;
+	notificaciones: NotificacionCampana[];
+}
+
 export interface PaginatedResponse<T> {
 	data: T[];
 	total: number;

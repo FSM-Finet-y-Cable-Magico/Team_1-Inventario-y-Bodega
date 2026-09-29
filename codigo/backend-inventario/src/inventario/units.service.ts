@@ -240,6 +240,8 @@ export class UnitsService {
         fecha_ingreso_revision: fechaIngreso,
         dias_en_revision: diasEnRevision,
         diagnostico_tecnico: u.diagnosticoTecnico ?? null,
+        // CU-94 (B): permite detectar equipos en revisión con garantía vigente
+        fecha_venc_garantia: u.fechaVencGarantia ?? null,
       };
     });
   }

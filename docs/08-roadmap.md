@@ -13,9 +13,9 @@ no esté reflejado aquí.
 ## Resumen
 
 - **Total de casos de uso:** 96
-- **Implementados por T1:** 81 (CU-01 a CU-48, CU-49 a CU-62, CU-64, CU-68, CU-72, CU-74 a CU-84, CU-85, CU-86, CU-88, CU-89, CU-91) — incluye CU-47, CU-48, CU-57..62, CU-61, CU-64 y CU-68; en `dev` (hasta CU-68) y en la rama `feat/javier-cus` (CU-48 y CU-61)
+- **Implementados por T1:** 83 (CU-01 a CU-48, CU-49 a CU-62, CU-64, CU-68, CU-72, CU-74 a CU-84, CU-85, CU-86, CU-88, CU-89, CU-91, CU-94, CU-96) — incluye CU-47, CU-48, CU-57..62, CU-61, CU-64 y CU-68; en `dev` (hasta CU-68) y en la rama `feat/javier-cus` (CU-48 y CU-61)
 - **Tomados por G3 (no los implementa T1):** 4 (CU-63, CU-65, CU-66, CU-67) — verificados contra `Team-3-FSM` (26-sept-2026), evidencia en `docs/11` §6
-- **Pendientes (Incremento 3):** 11 (CU-69, CU-70, CU-71, CU-73, CU-87, CU-90, CU-92 a CU-96) — tickets **sc-147 a sc-157** con responsable asignado (ver columna Notas)
+- **Pendientes (Incremento 3):** 9 (CU-69, CU-70, CU-71, CU-73, CU-87, CU-90, CU-92, CU-93, CU-95) — tickets **sc-147 a sc-157** con responsable asignado (ver columna Notas)
 - **Integración con otros grupos (fuera del conteo de 96):** **sc-158/sc-159** (G8 CRM, acuerdo v1 ratificado 24-sept-2026 · Javier) — sc-158 (P0) y sc-159 (P1) implementados en `feat/javier-cus`; pendiente solo la API key de G8. **sc-113** (G3, implementado)
 
 ## Leyenda
@@ -191,6 +191,6 @@ no esté reflejado aquí.
 
 | CU | Nombre | Estado | Notas |
 |----|--------|--------|-------|
-| CU-94 | Consultando alertas activas en el dashboard | [ ] Pendiente | Incremento 3 · sc-155 (Uriel) |
+| CU-94 | Consultando alertas activas en el dashboard | [x] Implementado | Incremento 3 · sc-155 (Uriel) — PR #61 (`feat/runa`) |
 | CU-95 | Mostrando aviso de garantía vigente al cambiar estado | [ ] Pendiente | Incremento 3 · sc-156 (Javiera) |
-| CU-96 | Recibiendo notificaciones visuales en la campana del sistema | [ ] Pendiente | Incremento 3 · sc-157 (Uriel) |
+| CU-96 | Recibiendo notificaciones visuales en la campana del sistema | [x] Implementado | Incremento 3 · sc-157 (Uriel) — PR #61 (`feat/runa`) |

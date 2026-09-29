@@ -148,6 +148,10 @@ Constante: `MAC_REGEX = /^([0-9A-Fa-f]{2}[:\\-]){5}[0-9A-Fa-f]{2}$/`.
     `America/Santiago`; `motivo` = `'Cambio de estado ordinario'` o
     `'Ingreso a taller técnico. Diagnóstico: ...'`. Si falla → `BadRequestException('Error al
     registrar el cambio en el historial...')`. Flag QA `simularErrorHistorial`.
+- **`listarEnRevision` (CU-77):** unidades `'En revisión'` (Superusuario: ambas empresas) con fecha
+  de ingreso a revisión (último cambio a ese estado en el historial) y `dias_en_revision`.
+  **CU-94** agregó `fecha_venc_garantia` a cada fila: el módulo `alertas` la usa para las alertas
+  "Garantía con defecto" y "Revisión prolongada" (`UnitsService` ya se exporta).
 - **`verFichaDetalle` (CU-33/CU-38):** ficha plana con bodega actual, empresa propietaria y alerta de
   garantía: sin fecha/garantía → `no_calculable: true` ('Garantía no calculable'); vigente → alerta
   con días restantes; expirada → `'COBERTURA EXPIRADA...'`.

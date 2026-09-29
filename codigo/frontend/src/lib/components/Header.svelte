@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { currentUser } from '$lib/stores/auth';
-	import { getMyDashboard } from '$lib/api/index';
-	import { Building2, Bell } from '@lucide/svelte';
+	import { getMyDashboard, getNotificaciones, marcarNotificacionLeida, marcarTodasNotificacionesLeidas } from '$lib/api/index';
+	import type { NotificacionCampana } from '$lib/types';
+	import { Building2, Bell, Check, CheckCheck } from '@lucide/svelte';
 
 	let user = $state<{ nombre_completo: string; roles?: { nombre_rol: string }[]; empresa?: { id: number; nombre: string } | null } | null>(null);
 	currentUser.subscribe((u) => (user = u));
@@ -34,11 +35,23 @@
 	let transferenciasPendientes = $state<TransferenciaPendiente[]>([]);
 	let bajasPendientes = $state<BajaPendiente[]>([]);
 	let showNotificaciones = $state(false);
-	// total para el badge: alertas de stock (CU-46) + transferencias pendientes (CU-20)
-	// + solicitudes de baja pendientes (CU-78)
-	const totalNotificaciones = $derived(
+	// total del bloque "ad-hoc" ya existente (sin estado leída/no leída):
+	// decide si se muestra el mensaje genérico previo a CU-96
+	const totalAdHoc = $derived(
 		alertas.length + transferenciasPendientes.length + bajasPendientes.length
 	);
+
+	// CU-96: notificaciones persistidas de la campana (préstamo vencido +
+	// stock bajo umbral), con estado leída/no leída propio. Mismos actores
+	// que CU-46 (ADMIN_BODEGA/ADMIN/SUPERUSUARIO); un Técnico de terreno no
+	// llama al endpoint (le respondería 403).
+	const puedeVerNotificaciones = $derived(
+		(user?.roles ?? []).some((r) => ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'].includes(r.nombre_rol))
+	);
+	let notificaciones = $state<NotificacionCampana[]>([]);
+	let contadorNotificaciones = $state(0);
+	// total para el badge de la campana: bloque ad-hoc + notificaciones no leídas (CU-96)
+	const totalNotificaciones = $derived(totalAdHoc + contadorNotificaciones);
 
 	async function cargarAlertas() {
 		try {
@@ -52,14 +65,60 @@
 			transferenciasPendientes = [];
 			bajasPendientes = [];
 		}
+
+		if (!puedeVerNotificaciones) {
+			notificaciones = [];
+			contadorNotificaciones = 0;
+			return;
+		}
+		try {
+			const data = await getNotificaciones();
+			notificaciones = data.notificaciones;
+			contadorNotificaciones = data.contador;
+		} catch {
+			notificaciones = [];
+			contadorNotificaciones = 0;
+		}
 	}
 
 	onMount(cargarAlertas);
 
 	function toggleNotificaciones() {
 		showNotificaciones = !showNotificaciones;
-		// CU-46: las alertas se recalculan al abrir la campana
+		// CU-46/CU-96: se recalculan al abrir la campana
 		if (showNotificaciones) cargarAlertas();
+	}
+
+	// CU-96: marcar una notificación como leída (desaparece del contador,
+	// sigue en el historial 30 días)
+	async function marcarLeida(id: number) {
+		try {
+			await marcarNotificacionLeida(id);
+			notificaciones = notificaciones.filter((n) => n.id_notificacion !== id);
+			contadorNotificaciones = notificaciones.length;
+		} catch {
+			// si falla, se deja como estaba; el próximo refresco la vuelve a traer
+		}
+	}
+
+	async function marcarTodas() {
+		try {
+			await marcarTodasNotificacionesLeidas();
+			notificaciones = [];
+			contadorNotificaciones = 0;
+		} catch {
+			// idem: el próximo refresco recalcula el estado real
+		}
+	}
+
+	// CU-96: fecha/hora de generación DD/MM/YYYY HH:MM:SS, zona America/Santiago
+	// (mismo formato que CU-94 en /dashboard)
+	function fmtFechaHora(fecha: string): string {
+		return new Date(fecha).toLocaleString('en-GB', {
+			day: '2-digit', month: '2-digit', year: 'numeric',
+			hour: '2-digit', minute: '2-digit', second: '2-digit',
+			hour12: false, timeZone: 'America/Santiago'
+		}).replace(',', '');
 	}
 </script>
 
@@ -78,7 +137,8 @@
 	</div>
 
 	<div class="flex items-center gap-3">
-		<!-- CU-46: campana de notificaciones (alertas de stock bajo el umbral) -->
+		<!-- Campana: CU-46 (stock), CU-20/CU-78 (pendientes de aprobación) y
+		     CU-96 (notificaciones persistidas de préstamo vencido/stock) -->
 		<div class="relative">
 			<button onclick={toggleNotificaciones}
 				class="relative p-1.5 rounded-md hover:bg-surface-alt text-muted hover:text-foreground transition-colors"
@@ -99,7 +159,7 @@
 						<h3 class="text-sm font-semibold text-foreground">Notificaciones</h3>
 					</div>
 					<div class="max-h-80 overflow-y-auto">
-						{#if totalNotificaciones === 0}
+						{#if totalAdHoc === 0}
 							<p class="px-4 py-6 text-sm text-muted text-center">No hay alertas pendientes</p>
 						{:else}
 							<!-- CU-20: transferencias pendientes de aprobación -->
@@ -132,6 +192,34 @@
 									</p>
 								</div>
 							{/each}
+						{/if}
+						{#if puedeVerNotificaciones}
+							<!-- CU-96: notificaciones persistidas (préstamo vencido + stock bajo umbral) -->
+							{#if notificaciones.length > 0}
+								<div class="flex items-center justify-between px-4 py-2 border-b border-border bg-surface-alt/50">
+									<span class="text-xs font-medium text-muted uppercase tracking-wide">Notificaciones del sistema</span>
+									<button onclick={marcarTodas} class="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-light transition-colors">
+										<CheckCheck class="h-3.5 w-3.5" />
+										Marcar todas
+									</button>
+								</div>
+								{#each notificaciones as n}
+									<div class="flex items-start justify-between gap-2 px-4 py-3 border-b border-border last:border-0 text-sm">
+										<div>
+											<p class="font-medium text-amber-700">🔔 {n.tipo}</p>
+											<p class="text-foreground mt-0.5">{n.descripcion}</p>
+											<p class="text-xs text-muted mt-0.5">{n.empresa} · {fmtFechaHora(n.fecha_hora)}</p>
+										</div>
+										<button onclick={() => marcarLeida(n.id_notificacion)} title="Marcar como leída"
+											class="shrink-0 p-1 rounded text-muted hover:text-primary hover:bg-surface-alt transition-colors">
+											<Check class="h-4 w-4" />
+										</button>
+									</div>
+								{/each}
+							{:else}
+								<!-- CU-96 Excepción 1: mensaje exacto, independiente del bloque ad-hoc de arriba -->
+								<p class="px-4 py-3 text-xs text-muted text-center border-t border-border">No tiene notificaciones pendientes.</p>
+							{/if}
 						{/if}
 					</div>
 				</div>

@@ -44,9 +44,16 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
   incorrectos." (CU-01 Excepción 1).
 
 ### `/dashboard`
-- **CUs:** CU-15 (dashboard consolidado SUPERUSUARIO), CU-16 (mi dashboard), CU-46 (alertas stock).
-- **Endpoints:** `getDashboard()` (SUPERUSUARIO) o `getMyDashboard()` (resto).
+- **CUs:** CU-15 (dashboard consolidado SUPERUSUARIO), CU-16 (mi dashboard), CU-46 (alertas stock),
+  CU-94 (alertas activas).
+- **Endpoints:** `getDashboard()` (SUPERUSUARIO) o `getMyDashboard()` (resto); `getAlertasActivas()`
+  (CU-94, solo SUPERUSUARIO, ADMIN, ADMIN_BODEGA).
 - KPIs: total unidades, bodegas activas, stock consumible, alertas stock mínimo, equipos por estado.
+- **CU-94:** sección "Alertas activas" bajo las tarjetas, con tabla manual: tipo de alerta (en
+  negrita), empresa, descripción (≤100) y fecha/hora `DD/MM/YYYY HH:MM:SS` (`America/Santiago`).
+  Se carga en cada navegación, en paralelo a las estadísticas y con su propio loading/error.
+  Sin alertas → `EmptyState` con `No hay alertas activas actualmente.` (Excepción 1). Oculta para
+  TECNICO_TERRENO (no llama al endpoint).
 
 ### `/usuarios`
 - **CUs:** CU-04 (crear), CU-05 (listar/filtrar), CU-07 (desactivar).

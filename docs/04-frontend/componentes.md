@@ -79,9 +79,12 @@ Envoltura de campo de formulario (label + control + error/helper).
 ```
 
 ## `Header.svelte`
-Header de la app (en `+layout.svelte`). Muestra empresa, roles, **campana de notificaciones**
-(CU-20 transferencias pendientes + CU-46 alertas de stock) y usuario. Llama a
-`getMyDashboard()` al abrir la campana. Sin props.
+Header de la app (en `+layout.svelte`). Muestra empresa, roles, **campana de notificaciones** y
+usuario. Sin props. Al abrir la campana llama a `getMyDashboard()` (bloque ad-hoc, sin estado
+leída/no leída: CU-20 transferencias pendientes + CU-78 bajas pendientes + CU-46 alertas de
+stock) y, si el rol lo permite, a `getNotificaciones()` (CU-96: sección separada
+"Notificaciones del sistema", persistida, con `marcarNotificacionLeida()` /
+`marcarTodasNotificacionesLeidas()`). El badge numérico suma ambos bloques.
 
 ## `Modal.svelte`
 Modal base para formularios/detalles.
