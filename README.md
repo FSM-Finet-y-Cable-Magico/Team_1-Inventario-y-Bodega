@@ -1,7 +1,7 @@
 # Sistema de Inventario y Bodega
 
 Sistema fullstack de **inventario y bodega** para un ISP (empresas **Finet** y **Cable Mágico**).
-~46 de ~94 casos de uso implementados (Incremento 1: CU-01 a CU-46).
+**83 de 96 casos de uso implementados** (estado CU por CU en [`docs/08-roadmap.md`](docs/08-roadmap.md)).
 
 | Capa | Tecnología |
 |------|-----------|
@@ -23,8 +23,10 @@ Para agentes de IA: [`AGENTS.md`](AGENTS.md) es la guía de entrada obligatoria.
 | `docs/03-base-de-datos.md` | Esquema BDD, migraciones, seed. |
 | `docs/04-frontend/` | Convenciones, design system, componentes, API y rutas del frontend. |
 | `docs/05-backend/` | Convenciones y módulos del backend (endpoints, lógica, CU). |
-| `docs/06-casos-de-uso-implementados.md` | Estado CU-01..46 y mapa CU → módulos/rutas. |
+| `docs/06-casos-de-uso-implementados.md` | Estado de los CU implementados y mapa CU → módulos/rutas. |
 | `docs/07-guia-implementacion-cu.md` | Checklist paso a paso para implementar un CU nuevo. |
+| `docs/08-roadmap.md` | **Estado de los 96 CU** (implementado / en progreso / pendiente). Se actualiza en cada avance. |
+| `docs/09-…` a `docs/13-…` | Integración con los otros grupos (G2/G3/G8): CUs compartidos, trazabilidad y endpoints acordados. |
 | `codigo/README.md` | Guía operativa de Docker (levantar, scripts, credenciales). |
 
 La fuente de información de los casos de uso es `docs/casos-de-uso.json`
@@ -122,8 +124,8 @@ cd ../frontend && npm run check && npm run build
 
 ## Flujo de trabajo del equipo (resumen)
 
-1. **Siempre se trabaja sobre `dev`**; cada desarrollador crea su propia rama (p. ej.
-   `feat/CU-47-registrar-cliente`).
+1. **Siempre se trabaja sobre `dev`**; cada desarrollador mantiene **una sola rama propia**
+   desde `dev` donde acumula sus CUs (p. ej. `feat/javier-cus`). No se crea una rama por CU.
 2. **Un CU se implementa completo** (front + back + BDD si aplica) junto con sus restricciones.
 3. **Nunca push directo a `dev`**: todo llega vía **Pull Request** revisada por el jefe de grupo.
 4. Los desarrolladores solo trabajan en casos de uso; bugs/cambios de cliente los gestiona el
