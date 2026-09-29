@@ -1,0 +1,68 @@
+@startuml CU95-exc-cancelar
+title CU-95 — Mostrando aviso de garantía vigente al cambiar estado\n(excepción 1: el actor cancela la operación)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Técnico de terreno /\nAdministrador de bodega /\nAdministrador / Superusuario" as user
+participant "V_FichaUnidad" as view
+participant "C_BajasController" as ctrl
+participant "C_BajasService" as svc
+participant "aviso-garantia\n(helper)" as aviso
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as uent
+
+user -> view : Registra 'Dado de baja' (CU-78) sobre un\nequipo con garantía vigente y confirma
+activate view
+
+view -> ctrl : POST /bajas { id_unidad, motivo }
+activate ctrl
+ctrl -> svc : registrar(dto, actor)
+activate svc
+
+svc -> orm : findOne(id_unidad) + tipoEquipo
+activate orm
+orm -> uent : SELECT unidad_equipo JOIN tipo_equipo\nWHERE id_unidad = :id
+activate uent
+uent --> orm : unidad (garantía vigente)
+deactivate uent
+orm --> svc : unidad
+deactivate orm
+
+svc -> svc : validarMotivo + validarEstado\n(CU-78 Excepciones 1 y 3)
+activate svc
+deactivate svc
+
+svc -> aviso : exigirConfirmacionGarantia([unidad],\ndto.forzar_aviso_garantia = undefined)
+activate aviso
+aviso --> svc : throw ConflictException\n{ codigo: 'AVISO_GARANTIA', message: 'AVISO: ...' }
+deactivate aviso
+svc --> ctrl : 409 Conflict (sin cambios)
+deactivate svc
+ctrl --> view : 409 Conflict { codigo, message }
+deactivate ctrl
+
+view --> user : ConfirmDialog "Garantía vigente":\n'AVISO: El equipo [NS] ([MARCA] [MODELO]) tiene garantía\nvigente hasta [DD/MM/YYYY]. Considere contactar al proveedor\n[NOMBRE_PROVEEDOR] antes de proceder.\n¿Desea continuar de todas formas?'
+
+user -> view : Presiona "Cancelar"
+view -> view : avisoGarantia = null\n(no se envía nada al backend)
+activate view
+deactivate view
+
+view --> user : Se cierra el aviso; el equipo permanece en su\nestado actual, sin historial ni auditoría nuevos
+deactivate view
+
+note over view, uent
+  Excepción 1: la acción se revierte sin modificaciones al equipo. El primer intento
+  no ejecutó ningún cambio (409 antes de la transacción) y al cancelar no hay reenvío.
+end note
+
+@enduml

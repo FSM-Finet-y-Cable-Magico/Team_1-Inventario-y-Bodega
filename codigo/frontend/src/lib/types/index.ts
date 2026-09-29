@@ -328,6 +328,29 @@ export interface EquipoEnRevision {
 	diagnostico_tecnico: string | null;
 }
 
+// CU-71: datos del equipo mostrados al ingresar el NS en la devolución
+export interface EquipoDevolucion {
+	id_unidad: number;
+	numero_serie: string;
+	tipo: string | null;
+	marca: string | null;
+	modelo: string | null;
+	estado: string;
+	nombre_cliente: string | null;
+	direccion_instalacion: string | null;
+	// CU-73: fechas en DD/MM/YYYY ('Sin garantía' si no hay vencimiento),
+	// últimos 5 cambios de estado y campos no registrados (Excepción 1)
+	fecha_adquisicion: string | null;
+	fecha_venc_garantia: string;
+	ultimos_cambios_estado: {
+		fecha_hora: string;
+		estado_anterior: string | null;
+		estado_nuevo: string | null;
+		observacion: string | null;
+	}[];
+	campos_no_registrados: string[];
+}
+
 export interface Bodega {
 	id_bodega: number;
 	id_empresa: number | null;

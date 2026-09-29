@@ -85,8 +85,10 @@ Ambos usan `@UseGuards(AuthGuard('jwt'), CompanyIsolationGuard, RolesGuard)`.
 | PATCH | `/api/unidades/consumibles/:id_stock` | idem | CU-28/CU-31 editar consumible |
 | GET | `/api/unidades/:id/ficha` | 4 roles | CU-33 ver ficha detalle |
 | GET | `/api/unidades/:serialNumber/historial` | 4 roles | CU-36/CU-37 ver historial |
-| PATCH | `/api/unidades/:id/cambiar-estado` | 4 roles | CU-35/36/40/47 cambio de estado |
+| PATCH | `/api/unidades/:id/cambiar-estado` | 4 roles | CU-35/36/40/47 cambio de estado (CU-95: `forzar_aviso_garantia`) |
 | PATCH | `/api/unidades/:id` | `ADMIN`, `SUPERUSUARIO`, `ADMIN_BODEGA` | CU-34 editar datos |
+| GET | `/api/unidades/devolucion/:numeroSerie` | 4 roles | CU-71 buscar equipo por NS para la devolución |
+| POST | `/api/unidades/:id/devolucion` | 4 roles | CU-71 registrar devolución de equipo desde cliente |
 | POST | `/api/unidades/:id/resultado-revision` | `ADMIN_BODEGA`, `ADMIN`, `SUPERUSUARIO` | CU-72 registrar resultado de revisión |
 
 
@@ -162,6 +164,34 @@ Constante: `MAC_REGEX = /^([0-9A-Fa-f]{2}[:\\-]){5}[0-9A-Fa-f]{2}$/`.
   resuelve nombres de usuarios y empresa. Sin historial: unidad inexistente → **CU-33/CU-37 Excepción
   1** `'Número de serie no encontrado.'`; existente → `'El dispositivo se encuentra en su estado
   inicial de fábrica...'`.
+- **`consultarParaDevolucion` (CU-71):** busca la unidad por `numero_serie` + empresa (404
+  `'El equipo solicitado no existe.'`). **Excepción 1:** si el estado no es `'Instalado en cliente'`
+  → `'Transición de estado no permitida para este equipo. Estado actual: [ESTADO].'`. Devuelve NS,
+  tipo, marca, modelo, `nombre_cliente` y `direccion_instalacion`. El cliente y la dirección se leen
+  (helper privado `buscarClienteInstalacion`) del último registro de `integracion_cierre` de la
+  empresa cuyo `acciones_aplicadas` contiene esa serie con `estado_nuevo: 'Instalado en cliente'`
+  (`payload.cliente.nombre_completo`, `payload.direccion.direccion` + `comuna`); si no hay datos,
+  quedan `null` y el front muestra lo disponible ("No registrado").
+- **Aviso de garantía vigente (CU-95)** → `aviso-garantia.ts`: al registrar `'Dado de baja'` o
+  `'En revisión'` sobre una unidad con garantía vigente (hoy en `America/Santiago` ≤
+  `fecha_venc_garantia`), `exigirConfirmacionGarantia` responde **409** `{ codigo: 'AVISO_GARANTIA',
+  message }` sin ejecutar nada, con el texto exacto `'AVISO: El equipo [NS] ([MARCA] [MODELO]) tiene
+  garantía vigente hasta [DD/MM/YYYY]. Considere contactar al proveedor [NOMBRE_PROVEEDOR] antes de
+  proceder. ¿Desea continuar de todas formas?'` (proveedor vacío → `no registrado`; varias unidades →
+  un aviso por línea). Con `forzar_aviso_garantia: true` en el body, `auditarAvisoGarantiaIgnorado`
+  registra `AVISO_GARANTIA_IGNORADO` (NS, estado solicitado, vencimiento, proveedor, fecha/hora) y se
+  ejecuta la transición. Se aplica en `transicionarEstado` (solo desde `PATCH cambiar-estado`, vía el
+  parámetro `avisoGarantia`), `registrarDevolucion` (CU-71), `registrarResultadoRevision` Baja
+  (CU-72), `registrarRetornoReparacion` (CU-76), `BajasService.registrar` (CU-78, antes de la baja
+  directa o la solicitud del técnico; la aprobación posterior no repite el aviso) y
+  `PrestamosService.registrarRetorno` (CU-82). El webhook de G3 no lo aplica (no hay usuario).
+- **`registrarDevolucion` (CU-71):** misma precondición/Excepción 1. Valida `fecha_devolucion`
+  (YYYY-MM-DD, no futura según `America/Santiago`), `estado_visual` ∈ {`Sin daño visible`, `Daño
+  leve`, `Daño grave`, `No enciende`, `Incompleto`} (constante `ESTADOS_VISUALES_DEVOLUCION`),
+  `nombre_tecnico_retiro` obligatorio y bodega de destino activa de la empresa (reutiliza
+  `validarDestinoOperativo`). Transacción `QueryRunner`: estado → `'En revisión'`,
+  `id_bodega_actual` = bodega destino, historial con cliente, dirección, fecha DD/MM/YYYY, estado
+  visual, técnico y bodega. Audita `DEVOLUCION_CLIENTE` sobre `unidad_equipo`.
 - **`registrarResultadoRevision` (CU-72):** precondición estado `'En revisión'` (mensaje
   `'Transición de estado no permitida para este equipo. Estado actual: [ESTADO].'`, distinto al de
   CU-35). Tres resultados: (A) `OPERATIVO` → bodega destino activa + ubicación física (≤60,
@@ -169,7 +199,7 @@ Constante: `MAC_REGEX = /^([0-9A-Fa-f]{2}[:\\-]){5}[0-9A-Fa-f]{2}$/`.
   retorno (posterior a hoy), descripción de falla (5-300) → `'En préstamo externo'` + crea registro
   en `prestamo_externo` (`tipo: 'REPARACION_EXTERNA'`, entidad compartida con CU-75/81). (C) `BAJA`
   → motivo (obligatorio, ≤200); **Excepción 1:** si la garantía está vigente exige
-  `confirmar_garantia: true` en el body (el front ya preguntó) → `'Dado de baja'`. Transacción
+  `forzar_aviso_garantia: true` en el body (aviso unificado de CU-95; el front ya preguntó) → `'Dado de baja'`. Transacción
   `QueryRunner` (estado + historial + efecto del resultado). Audita `CAMBIAR_ESTADO` sobre
   `unidad_equipo`.
 
@@ -210,6 +240,10 @@ Constante: `MAC_REGEX = /^([0-9A-Fa-f]{2}[:\\-]){5}[0-9A-Fa-f]{2}$/`.
 CU-24..CU-31 (catálogo y ficha técnica), CU-32..CU-40 (unidades, estados, garantía, historial,
 diagnóstico). Detalle exacto de cada restricción en los diagramas de secuencia
 (`diagramas/diagramas-secuencia/CU24/` … `CU40/`).
+
+CU-71 (devolución de equipo desde cliente → `'En revisión'`).
+
+CU-95 (aviso de garantía vigente al registrar `'Dado de baja'` o `'En revisión'`).
 
 CU-72 (resultado de revisión de equipo: operativo/reparación externa/baja).
 
