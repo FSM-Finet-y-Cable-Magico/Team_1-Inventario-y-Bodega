@@ -64,7 +64,26 @@ marca el NS y deshabilita Confirmar). La validación de verdad es la del service
   doc 13) pendiente de implementar en el módulo `integraciones` (tarea 118 de sc-113).
 - CU-57/58/62 desbloquean los cruzados T1-CU-64 (descuento en cierre) y CU-68 (saldo).
 
+## 5.1 CU-61 — vista móvil del técnico (`jornada.service.ts`)
+
+- **`GET /api/tecnicos/me/jornada`** (JWT; roles TECNICO_TERRENO y de gestión para QA):
+  agrega en un request la jornada del usuario autenticado.
+  - **(A) Trabajos del día:** se consumen de G3 con `G3ClientService.consultarOrdenes`
+    (`GET {G3}/ordenes?id_empresa&id_tecnico&estado=PENDIENTE,EN_CURSO&desde&hasta&page&limit`,
+    X-API-KEY, timeout 3 s). Los datos de la OT no se duplican en nuestra BDD.
+  - **(B) Inventario personal:** reusa `InventarioPersonalService.consultar` (CU-58).
+- La respuesta incluye `trabajos_estado: OK | NO_DISPONIBLE` y `fecha` (hoy, America/Santiago).
+  Si G3 no responde o no está configurado, la jornada se devuelve igual con
+  `trabajos: []` y `NO_DISPONIBLE` (la UI lo avisa) — **nunca 5xx**.
+- Sin trabajos (G3 OK y lista vacía) → 200 con `trabajos: []`; la UI muestra el mensaje
+  exacto de E1: `No tiene trabajos asignados para hoy.`
+- Ruta UI `/jornada` ("Mi jornada" en el sidebar, visible para `TECNICO_TERRENO`), responsive.
+- Nota de integración: se envía nuestro `id_usuario` como `id_tecnico` a G3; si sus ids no
+  coinciden, falta una tabla de equivalencia (coordinar, sin bloquear el CU).
+
 ## 6. Pendientes
 
 - [ ] Capturas `Casos de uso/CU-57../CU-62/` (requieren navegador).
 - [ ] Devoluciones a bodega (CU-82) y uso en cierres (CU-64/68) para completar el ciclo del saldo.
+      (El uso en cierres quedó implementado por CU-64/CU-68.)
+- [ ] CU-61: capturas `Casos de uso/CU-61/` y validación de la jornada contra el deploy real de G3.

@@ -10,6 +10,7 @@ import { HistorialEstado } from './entities/historial-estado.entity';
 import { PrestamoExterno } from './entities/prestamo-externo.entity';
 import { AuditoriaModule } from 'src/auditoria/auditoria.module';
 import { ProveedoresModule } from 'src/proveedores/proveedores.module';
+import { G3ClientModule } from '../integraciones/g3/g3-client.module';
 
 @Module({
   imports: [
@@ -21,6 +22,8 @@ import { ProveedoresModule } from 'src/proveedores/proveedores.module';
     ]),
     AuditoriaModule,
     ProveedoresModule,
+    // CU-48: enriquecimiento opcional del cliente por RUT contra G3.
+    G3ClientModule,
   ],
   controllers: [CatalogController, UnitsController],
   providers: [CatalogService, UnitsService],

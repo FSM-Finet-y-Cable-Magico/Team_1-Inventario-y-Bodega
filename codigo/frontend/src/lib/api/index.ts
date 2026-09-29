@@ -1,5 +1,5 @@
 import { api } from './client';
-import type { LoginDto, LoginResponse, Usuario, EquipoEnRevision, VerificacionSerie, ItemSalida, SalidaResumen, InventarioTecnico, ReporteStock } from '$lib/types';
+import type { LoginDto, LoginResponse, Usuario, EquipoEnRevision, VerificacionSerie, ItemSalida, SalidaResumen, InventarioTecnico, JornadaTecnico, ReporteStock, AlertaActiva, NotificacionesNoLeidas } from '$lib/types';
 
 export async function login(dto: LoginDto): Promise<LoginResponse> {
 	return api.post<LoginResponse>('/auth/login', dto);
@@ -359,6 +359,25 @@ export function getMyDashboard() {
 	return api.get<any>('/empresas/mi-dashboard');
 }
 
+// CU-94: alertas activas del dashboard (el backend las calcula en cada consulta)
+export function getAlertasActivas(): Promise<AlertaActiva[]> {
+	return api.get<AlertaActiva[]>('/alertas');
+}
+
+// CU-96: campana del sistema (notificaciones persistidas, no leídas + contador).
+// Cada GET también dispara la generación con dedupe diario en el backend.
+export function getNotificaciones(): Promise<NotificacionesNoLeidas> {
+	return api.get<NotificacionesNoLeidas>('/notificaciones');
+}
+
+export function marcarNotificacionLeida(id: number) {
+	return api.patch<{ success: boolean }>(`/notificaciones/${id}/leer`);
+}
+
+export function marcarTodasNotificacionesLeidas() {
+	return api.patch<{ success: boolean; cantidad: number }>('/notificaciones/leer-todas');
+}
+
 export function getAuditLog(filters?: Record<string, string | number | undefined>) {
 	const qs = new URLSearchParams();
 	if (filters) {
@@ -475,4 +494,9 @@ export function listarSalidas(): Promise<SalidaResumen[]> {
 export function getInventarioTecnico(id: number, empresa?: number): Promise<InventarioTecnico> {
 	const qs = empresa !== undefined ? `?empresa=${empresa}` : '';
 	return api.get<InventarioTecnico>(`/tecnicos/${id}/inventario${qs}`);
+}
+
+// CU-61: jornada del técnico autenticado (trabajos del día de G3 + inventario propio)
+export function getMiJornada(): Promise<JornadaTecnico> {
+	return api.get<JornadaTecnico>('/tecnicos/me/jornada');
 }
