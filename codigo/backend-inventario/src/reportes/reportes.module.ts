@@ -11,6 +11,7 @@ import { G3ClientModule } from '../integraciones/g3/g3-client.module';
 import { ExcelExportService } from './excel-export.service';
 import { ReportesController } from './reportes.controller';
 import { ReportesService } from './reportes.service';
+import { ExportacionService } from './exportacion.service';
 
 @Module({
   imports: [
@@ -20,12 +21,13 @@ import { ReportesService } from './reportes.service';
       TipoEquipo,
       UnidadEquipo,
       MovimientoInventario,
+      // CU-93: nombre completo de quien exporta, para el encabezado del PDF.
       Usuario,
     ]),
     AuditoriaModule,
     G3ClientModule,
   ],
   controllers: [ReportesController],
-  providers: [ReportesService, ExcelExportService],
+  providers: [ReportesService, ExcelExportService, ExportacionService],
 })
 export class ReportesModule {}

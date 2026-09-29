@@ -116,4 +116,44 @@
 - Auditoría:
   - Registra evento con acción `EXPORTAR_REPORTE_EXCEL` en `log_auditoria` con la entidad afectada (`reporte_stock`, `reporte_movimientos`, etc.), el usuario responsable y los metadatos de la exportación (filtros, filas, nombre de archivo).
 
+## CU-93: exportación del reporte visible a PDF
 
+- `GET /api/reportes/exportar/:tipo/pdf` con los **mismos filtros** que el reporte en pantalla.
+  `tipo` es uno de `stock`, `movimientos`, `garantias`, `tecnicos-inventario`, `consumo`; otro
+  valor responde `400` con la lista de los válidos.
+- Roles: `ADMIN_BODEGA`, `ADMIN`, `SUPERUSUARIO`. Responde `application/pdf` con
+  `Content-Disposition: attachment; filename="reporte-<tipo>-AAAAMMDD.pdf"`.
+- **No se duplican las consultas:** `ExportacionService` llama al método del reporte que ya existe
+  (CU-85, CU-86, CU-88, CU-89, CU-91) con el mismo actor, así que el aislamiento por empresa y las
+  validaciones de filtros son las mismas de la pantalla. Solo se adapta la forma de las filas:
+  el inventario de técnicos se aplana (una fila por equipo y por consumible), y se arman las
+  columnas derivadas (`días restantes/vencidos`, `referencia`, indicador de desvío).
+- **Encabezado corporativo** (`pdf-reporte.ts`): logo de la empresa, nombre de la empresa, nombre
+  del reporte, filtros aplicados, fecha y hora `DD/MM/YYYY HH:MM:SS` y nombre completo de quien
+  exporta (el JWT solo trae el nombre de usuario, así que se busca en `usuario`).
+- **Tabla** con bordes, cabecera destacada y filas alternadas; la cabecera se repite en cada página
+  y el pie numera las páginas y el total de filas. El texto que no cabe en una columna se recorta.
+  Un reporte sin filas igual genera el PDF, con el aviso dentro de la tabla.
+- **Excepción 1:** la generación se corta a los 15 segundos (`Promise.race`) y responde `408` con
+  `La generación del archivo superó los 15 segundos. Intente nuevamente.`. El límite se puede
+  bajar por entorno con `EXPORT_PDF_TIMEOUT_MS` (solo para probar la excepción). Un intento que
+  vence **no** se audita: no hubo archivo.
+- **Auditoría:** `EXPORTAR_REPORTE_PDF` sobre la entidad del reporte, con `{tipo, formato, filtros,
+  filas}` en `valor_nuevo`.
+
+### Sobre el generador de PDF
+
+Se reutiliza el criterio de CU-80: **sin librerías externas** (una dependencia nueva requiere
+aprobación del jefe de grupo). El ensamblado común vive en `src/common/pdf-core.ts` (objetos,
+tabla de referencias cruzadas, escape de cadenas y fecha del formato) y lo usan el resumen de
+donación (CU-80) y el PDF de reportes.
+
+Dos límites conocidos, por si se retoman:
+
+- El **logo** es tipográfico: un recuadro con la inicial de la empresa. Incrustar un PNG exige un
+  stream de imagen con su filtro; si se aprueba una librería o se entrega el logo en JPEG, basta
+  con reemplazar `dibujarLogo`.
+- El archivo **no es PDF/A-1b conforme**, aunque lleva metadatos XMP e `/Info`: esa norma exige
+  incrustar las fuentes y un perfil de color ICC, y las base-14 (Helvetica) no se incrustan. Abre
+  sin problemas en Acrobat Reader DC 2020+ y en cualquier lector estándar (verificado con el motor
+  de Quartz/Vista Previa).

@@ -228,6 +228,42 @@ const SENTENCIAS = [
     acciones_aplicadas  JSONB,
     fecha_proceso       TIMESTAMPTZ DEFAULT now()
   )`,
+  // CU-69: cierre de trabajo de reparación recibido en el cierre de OT (doc-12 §1.3)
+  `CREATE TABLE IF NOT EXISTS cierre_reparacion (
+    id_cierre_reparacion SERIAL PRIMARY KEY,
+    id_cierre            INTEGER,
+    id_ot                INTEGER NOT NULL,
+    id_empresa           INTEGER NOT NULL,
+    id_tecnico           INTEGER,
+    rut_cliente          VARCHAR(12),
+    direccion_servicio   VARCHAR(200),
+    falla_reportada      VARCHAR(300) NOT NULL,
+    solucion_aplicada    VARCHAR(300) NOT NULL,
+    resultado            VARCHAR(30) NOT NULL,
+    resuelto_remotamente BOOLEAN NOT NULL DEFAULT false,
+    categoria_falla      VARCHAR(120),
+    equipos_retirados    JSONB,
+    equipos_instalados   JSONB,
+    consumibles          JSONB,
+    fecha_cierre         TIMESTAMPTZ,
+    fecha_registro       TIMESTAMPTZ DEFAULT now()
+  )`,
+  // CU-70: tipo de trabajo codificado con el que se cerró la reparación
+  `ALTER TABLE cierre_reparacion ADD COLUMN IF NOT EXISTS codigo_trabajo varchar(10)`,
+  // CU-70: borrador del cierre que el técnico prepara en terreno (uno por OT)
+  `CREATE TABLE IF NOT EXISTS borrador_cierre (
+    id_borrador         SERIAL PRIMARY KEY,
+    id_ot               INTEGER NOT NULL,
+    id_empresa          INTEGER NOT NULL,
+    id_tecnico          INTEGER NOT NULL,
+    codigo_trabajo      VARCHAR(10),
+    falla_reportada     VARCHAR(300),
+    solucion_aplicada   VARCHAR(300),
+    resultado           VARCHAR(30),
+    categoria_falla     VARCHAR(120),
+    fecha_actualizacion TIMESTAMPTZ DEFAULT now(),
+    CONSTRAINT uq_borrador_cierre_ot UNIQUE (id_ot, id_empresa)
+)`,
   // CU-57: técnico asignado a la unidad (estado 'Asignado a técnico')
   `ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS id_tecnico_asignado integer`,
   // CU-57: salidas de bodega a técnico (cabecera + detalle)

@@ -13,6 +13,7 @@ import type { Request, Response } from 'express';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Actor, ReportesService } from './reportes.service';
+import { ExportacionService } from './exportacion.service';
 
 interface AuthenticatedRequest extends Request {
   user: Actor;
@@ -36,7 +37,34 @@ interface RawExportQuery {
 @Controller('reportes')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class ReportesController {
-  constructor(private readonly reportesService: ReportesService) {}
+  constructor(
+    private readonly reportesService: ReportesService,
+    private readonly exportacionService: ExportacionService,
+  ) {}
+
+  // CU-93: exportación a PDF del reporte visible, con sus mismos filtros.
+  // El tipo es el del reporte: stock | movimientos | garantias |
+  // tecnicos-inventario | consumo.
+  @Get('exportar/:tipo/pdf')
+  @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
+  async exportarPdf(
+    @Param('tipo') tipo: string,
+    @Query() query: Record<string, string>,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: Response,
+  ) {
+    const { archivo, nombre } = await this.exportacionService.exportarPdf(
+      tipo,
+      this.filtrosDeQuery(query),
+      req.user,
+    );
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${nombre}"`,
+      'Content-Length': archivo.length.toString(),
+    });
+    res.end(archivo);
+  }
 
   //CU-85
   @Get('stock')
@@ -311,6 +339,25 @@ export class ReportesController {
     );
     res.setHeader('Content-Length', result.buffer.length);
     res.end(result.buffer);
+  }
+
+  // Los filtros llegan igual que en el reporte visible; los identificadores se
+  // validan con la misma regla y el resto viaja como texto.
+  private filtrosDeQuery(query: Record<string, string>) {
+    const numericos = [
+      'id_empresa',
+      'id_bodega',
+      'id_tipo_equipo',
+      'id_usuario',
+    ];
+    const filtros: Record<string, any> = {};
+    for (const [clave, valor] of Object.entries(query)) {
+      if (valor === undefined || valor === '') continue;
+      filtros[clave] = numericos.includes(clave)
+        ? this.parseOptionalId(valor, clave.replace('id_', ''))
+        : valor;
+    }
+    return filtros;
   }
 
   private parseOptionalId(

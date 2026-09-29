@@ -8,6 +8,9 @@ import { TipoEquipo } from '../inventario/entities/tipo-equipo.entity';
 import { StockConsumible } from '../bodegas/entities/stock-consumible.entity';
 import { InventarioPersonal } from '../salidas/entities/inventario-personal.entity';
 import { InventarioPersonalService } from '../salidas/inventario-personal.service';
+import { CierreReparacion } from './entities/cierre-reparacion.entity';
+import { BorradorCierre } from './entities/borrador-cierre.entity';
+import { CierresTrabajoService } from './cierres-trabajo.service';
 import { IntegracionContexto } from './guards/api-key.guard';
 
 // sc-158: pruebas del acuerdo G8. El service trabaja dentro de una transacción,
@@ -24,6 +27,8 @@ const PK: Record<string, string> = {
   InventarioPersonal: 'id_inventario',
   TipoEquipo: 'id_tipo_equipo',
   StockConsumible: 'id_stock',
+  CierreReparacion: 'id_cierre_reparacion',
+  BorradorCierre: 'id_borrador',
 };
 
 class FakeManager {
@@ -162,6 +167,16 @@ function crearServicio(
   const stockRepository = {
     find: jest.fn((opciones: any) => manager.find(StockConsumible, opciones)),
   };
+  // CU-69: cierres de reparación registrados junto al cierre de OT.
+  const reparacionRepository = {
+    findOne: jest.fn((opciones: any) => manager.findOne(CierreReparacion, opciones)),
+  };
+  const auditoriaService = { create: jest.fn() };
+  // CU-70: el cierre consulta el borrador del técnico (catálogo T-01..T-10).
+  const cierresTrabajoService = new CierresTrabajoService(
+    { findOne: jest.fn((opciones: any) => manager.findOne(BorradorCierre, opciones)) } as never,
+    auditoriaService as never,
+  );
   const catalogService = { consultar: jest.fn().mockResolvedValue([]) };
   // CU-64/CU-68: se usa el servicio real de inventario personal contra el
   // FakeManager (sus métodos de descuento no tocan los repositorios inyectados).
@@ -173,6 +188,9 @@ function crearServicio(
     cierreRepository as never,
     activacionRepository as never,
     asignacionRepository as never,
+    reparacionRepository as never,
+    auditoriaService as never,
+    cierresTrabajoService,
     unitRepository as never,
     tipoRepository as never,
     stockRepository as never,
@@ -180,7 +198,14 @@ function crearServicio(
     inventario as never,
     dataSource as never,
   );
-  return { service, manager, queryRunner, catalogService, activacionRepository };
+  return {
+    service,
+    manager,
+    queryRunner,
+    catalogService,
+    activacionRepository,
+    auditoriaService,
+  };
 }
 
 const G8: IntegracionContexto = { grupo: 'G8', empresas: [1] };
@@ -1006,6 +1031,303 @@ describe('IntegracionesService — sc-159 (acuerdo G8 P1)', () => {
       await expect(
         service.consultarStock(1, { id_tipo_equipo: 'abc' }),
       ).rejects.toThrow('El parámetro id_tipo_equipo debe ser numérico.');
+    });
+  });
+
+  // CU-69: el cierre de OT de reparación registra la parte de inventario (estados,
+  // consumibles y auditoría); el cierre de la OT en sí lo ejecuta G3 (doc-12 §1.3).
+  describe('CU-69 — Registrando cierre de trabajo de reparación', () => {
+    const TIPO_FIBRA: Fila = {
+      id_tipo_equipo: 7,
+      id_empresa: 1,
+      nombre: 'Fibra drop QA',
+      unidadMedida: 'Metro',
+      requiereSerialNumber: false,
+    };
+
+    const payloadReparacion = (overrides: Fila = {}) => ({
+      clave_idempotencia: `900:${Math.random()}`,
+      id_ot: 900,
+      id_empresa: 1,
+      tipo_ot: 'REPARACION',
+      id_tecnico: 45,
+      fecha_completada: '2026-09-25T10:00:00Z',
+      cliente: { rut: '12345678-5', nombre_completo: 'Juan Pérez' },
+      direccion: { direccion_completa: 'Av. Siempre Viva 742', comuna: 'Santiago' },
+      reparacion: {
+        falla_reportada: 'Sin señal óptica en la ONT del cliente',
+        solucion_aplicada: 'Se limpió el conector y se reconfiguró el equipo',
+        resultado: 'RESUELTO',
+      },
+      ...overrides,
+    });
+
+    const unidad = (serie: string, estado: string): Fila => ({
+      ...UNIDAD_INSTALADA,
+      id_unidad: serie === 'NS-RET-001' ? 601 : 602,
+      serialNumber: serie,
+      estado,
+      idTecnicoAsignado: 45,
+      tipoEquipo: undefined,
+    });
+
+    const seed = (extra: Record<string, Fila[]> = {}) => ({
+      TipoEquipo: [{ ...TIPO_FIBRA }],
+      InventarioPersonal: [
+        { id_inventario: 1, id_tecnico: 45, id_tipo_equipo: 7, cantidad: '50.5' },
+      ],
+      ...extra,
+    });
+
+    const cierre = (manager: FakeManager): Fila =>
+      manager.tabla(CierreReparacion)[0];
+
+    it('flujo normal: registra el cierre con el resultado y los datos del cliente', async () => {
+      const { service, manager } = crearServicio(seed());
+
+      const respuesta = await service.recibirCierreOt(900, payloadReparacion(), G8);
+
+      expect(respuesta.data.estado_proceso).toBe('PROCESADO');
+      expect(respuesta.data.id_cierre_reparacion).toBe(
+        cierre(manager).id_cierre_reparacion,
+      );
+      expect(cierre(manager)).toMatchObject({
+        resultado: 'Resuelto',
+        fallaReportada: 'Sin señal óptica en la ONT del cliente',
+        rutCliente: '12345678-5',
+        direccionServicio: 'Av. Siempre Viva 742',
+        id_tecnico: 45,
+      });
+    });
+
+    it('con retiro: la unidad pasa a En revisión (CU-71) sin que G3 mande accion', async () => {
+      const { service, manager } = crearServicio(
+        seed({ UnidadEquipo: [unidad('NS-RET-001', 'Instalado en cliente')] }),
+      );
+
+      await service.recibirCierreOt(
+        900,
+        payloadReparacion({ equipos_retirados: [{ numero_serie: 'NS-RET-001' }] }),
+        G8,
+      );
+
+      expect(manager.tabla(UnidadEquipo)[0].estado).toBe('En revisión');
+      expect(cierre(manager).equiposRetirados).toEqual([
+        {
+          numero_serie: 'NS-RET-001',
+          estado_anterior: 'Instalado en cliente',
+          estado_nuevo: 'En revisión',
+        },
+      ]);
+      expect(cierre(manager).equiposInstalados).toEqual([]);
+    });
+
+    it('con reemplazo: retiro a revisión e instalación del equipo del técnico', async () => {
+      const { service, manager } = crearServicio(
+        seed({
+          UnidadEquipo: [
+            unidad('NS-RET-001', 'Instalado en cliente'),
+            unidad('NS-NEW-002', 'Asignado a técnico'),
+          ],
+        }),
+      );
+
+      await service.recibirCierreOt(
+        900,
+        payloadReparacion({
+          equipos_retirados: [{ numero_serie: 'NS-RET-001' }],
+          equipos_instalados: [{ numero_serie: 'NS-NEW-002' }],
+        }),
+        G8,
+      );
+
+      const unidades = manager.tabla(UnidadEquipo);
+      const porSerie = (serie: string) =>
+        unidades.find((u) => u.serialNumber === serie)?.estado;
+      expect(porSerie('NS-RET-001')).toBe('En revisión');
+      expect(porSerie('NS-NEW-002')).toBe('Instalado en cliente');
+      expect(cierre(manager).equiposRetirados).toHaveLength(1);
+      expect(cierre(manager).equiposInstalados).toHaveLength(1);
+    });
+
+    it('mapea los tres resultados de G3 a los literales del CU', async () => {
+      for (const [g3, esperado] of [
+        ['RESUELTO', 'Resuelto'],
+        ['PARCIAL', 'Resuelto parcialmente'],
+        ['SIN_SOLUCION', 'Sin solución'],
+      ]) {
+        const { service, manager } = crearServicio(seed());
+        await service.recibirCierreOt(
+          900,
+          payloadReparacion({
+            reparacion: {
+              falla_reportada: 'Sin señal óptica en la ONT del cliente',
+              solucion_aplicada: 'Se limpió el conector y se reconfiguró el equipo',
+              resultado: g3,
+            },
+          }),
+          G8,
+        );
+        expect(cierre(manager).resultado).toBe(esperado);
+      }
+    });
+
+    it('deja en el cierre los consumibles descontados del inventario del técnico (CU-58/CU-68)', async () => {
+      const { service, manager } = crearServicio(seed());
+
+      await service.recibirCierreOt(
+        900,
+        payloadReparacion({ materiales: [{ id_tipo_equipo: 7, cantidad: 10.5 }] }),
+        G8,
+      );
+
+      expect(Number(manager.tabla(InventarioPersonal)[0].cantidad)).toBe(40);
+      expect(cierre(manager).consumibles).toEqual([
+        {
+          id_tipo_equipo: 7,
+          tipo_equipo: 'Fibra drop QA',
+          cantidad: 10.5,
+          descontado: true,
+          saldo_resultante: 40,
+        },
+      ]);
+    });
+
+    it('Excepción 1: saldo insuficiente queda como ajuste en el cierre, sin rechazarlo', async () => {
+      const { service, manager } = crearServicio(
+        seed({
+          InventarioPersonal: [
+            { id_inventario: 1, id_tecnico: 45, id_tipo_equipo: 7, cantidad: '2' },
+          ],
+        }),
+      );
+
+      const respuesta = await service.recibirCierreOt(
+        900,
+        payloadReparacion({ materiales: [{ id_tipo_equipo: 7, cantidad: 5 }] }),
+        G8,
+      );
+
+      expect(respuesta.data.estado_proceso).toBe('PROCESADO_CON_DISCREPANCIAS');
+      expect(respuesta.data.discrepancias[0].codigo).toBe(
+        'SALDO_INSUFICIENTE_AJUSTADO',
+      );
+      expect(cierre(manager).consumibles).toContainEqual(
+        expect.objectContaining({ descontado: false, cantidad: 5 }),
+      );
+    });
+
+    it('Excepción 1: NS inexistente queda como discrepancia y el cierre igual se registra', async () => {
+      const { service, manager } = crearServicio(seed());
+
+      const respuesta = await service.recibirCierreOt(
+        900,
+        payloadReparacion({ equipos_retirados: [{ numero_serie: 'NS-NO-EXISTE' }] }),
+        G8,
+      );
+
+      expect(respuesta.data.discrepancias[0]).toMatchObject({
+        codigo: 'SERIE_NO_EXISTE',
+        numero_serie: 'NS-NO-EXISTE',
+      });
+      expect(cierre(manager)).toBeDefined();
+    });
+
+    it('sin falla o solución válidas no registra el cierre y lo informa como discrepancia', async () => {
+      const { service, manager } = crearServicio(seed());
+
+      const respuesta = await service.recibirCierreOt(
+        900,
+        payloadReparacion({
+          reparacion: {
+            falla_reportada: 'ok',
+            solucion_aplicada: '',
+            resultado: 'RESUELTO',
+          },
+        }),
+        G8,
+      );
+
+      expect(cierre(manager)).toBeUndefined();
+      expect(respuesta.data.discrepancias[0].codigo).toBe(
+        'DATOS_REPARACION_INCOMPLETOS',
+      );
+    });
+
+    it('audita el cierre con el técnico como actor', async () => {
+      const { service, auditoriaService, manager } = crearServicio(seed());
+
+      await service.recibirCierreOt(900, payloadReparacion(), G8);
+
+      expect(auditoriaService.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id_usuario: 45,
+          accion: 'CIERRE_REPARACION',
+          entidad_afectada: 'cierre_reparacion',
+          id_entidad_afectada: cierre(manager).id_cierre_reparacion,
+        }),
+      );
+    });
+
+    // CU-70: el tipo de trabajo que el técnico dejó preparado completa el cierre.
+    it('completa falla, solución y resultado desde el borrador del técnico (CU-70)', async () => {
+      const { service, manager } = crearServicio(
+        seed({
+          BorradorCierre: [
+            {
+              id_borrador: 10,
+              id_ot: 900,
+              id_empresa: 1,
+              id_tecnico: 45,
+              codigoTrabajo: 'T-06',
+              fallaReportada: 'Corte de fibra en el poste frente al domicilio',
+            },
+          ],
+        }),
+      );
+
+      await service.recibirCierreOt(
+        900,
+        payloadReparacion({ reparacion: {} }),
+        G8,
+      );
+
+      expect(cierre(manager)).toMatchObject({
+        codigoTrabajo: 'T-06',
+        fallaReportada: 'Corte de fibra en el poste frente al domicilio',
+        resultado: 'Resuelto',
+        categoriaFalla: 'Corte de fibra',
+      });
+      expect(cierre(manager).solucionAplicada).toContain('empalme');
+    });
+
+    // Excepción 1 del CU-70: sin tipo de trabajo ni borrador, el cierre necesita
+    // los datos de G3; si tampoco vienen, queda la discrepancia de CU-69.
+    it('sin borrador ni datos de G3 no inventa el cierre (E1)', async () => {
+      const { service, manager } = crearServicio(seed());
+
+      const respuesta = await service.recibirCierreOt(
+        900,
+        payloadReparacion({ reparacion: {} }),
+        G8,
+      );
+
+      expect(cierre(manager)).toBeUndefined();
+      expect(respuesta.data.discrepancias[0].codigo).toBe(
+        'DATOS_REPARACION_INCOMPLETOS',
+      );
+    });
+
+    it('un cierre de instalación no registra reparación', async () => {
+      const { service, manager } = crearServicio(seed());
+
+      await service.recibirCierreOt(
+        901,
+        payloadReparacion({ id_ot: 901, tipo_ot: 'INSTALACION', reparacion: undefined }),
+        G8,
+      );
+
+      expect(cierre(manager)).toBeUndefined();
     });
   });
 });

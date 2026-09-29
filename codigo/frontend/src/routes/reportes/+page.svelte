@@ -1,14 +1,14 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { getCatalog, getEmpresas, getUsers, getWarehouses, generarReporteGarantias, generarReporteMovimientos, generarReporteInventarioTecnicos, generarReporteConsumo, generarReporteEquiposInstalados, generarReporteProductividadTecnicos, exportarReporteExcel } from '$lib/api/index';
+	import { getCatalog, getEmpresas, getUsers, getWarehouses, generarReporteGarantias, generarReporteMovimientos, generarReporteInventarioTecnicos, generarReporteConsumo, generarReporteEquiposInstalados, generarReporteProductividadTecnicos, exportarReportePdf, exportarReporteExcel } from '$lib/api/index';
 	import type { Bodega, Empresa, ReporteConsumoFila, ReporteGarantiaFila, ReporteInventarioTecnico, ReporteMovimientoFila, ReporteEquiposInstaladosFila, ReporteProductividadTecnicoFila, TipoEquipo, Usuario } from '$lib/types';
 	import Badge from '$lib/components/Badge.svelte';
 	import Button from '$lib/components/Button.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import SearchInput from '$lib/components/SearchInput.svelte';
 	import { userRoles, currentUser } from '$lib/stores/auth';
-	import { Filter, RotateCw, FileSpreadsheet } from '@lucide/svelte';
+	import { Filter, RotateCw, FileDown, FileSpreadsheet } from '@lucide/svelte';
 
 	const tiposMovimiento = [
 		'INGRESO', 'ASIGNACION', 'SALIDA_A_TECNICO', 'DEVOLUCION', 'BAJA',
@@ -159,6 +159,42 @@
 	const fechasIncoherentes = $derived(filters.fecha_desde && filters.fecha_hasta && filters.fecha_desde > filters.fecha_hasta);
 	const consumoRangoInvalido = $derived(consumoFilters.fecha_desde && consumoFilters.fecha_hasta && differenceInDays(consumoFilters.fecha_desde, consumoFilters.fecha_hasta) > 365);
 	const consumoFechasIncoherentes = $derived(consumoFilters.fecha_desde && consumoFilters.fecha_hasta && consumoFilters.fecha_desde > consumoFilters.fecha_hasta);
+
+	// CU-93: exportación a PDF del reporte visible, con los filtros de su pestaña.
+	let exportando = $state(false);
+	let errorExportacion = $state('');
+
+	const filtrosDeLaPestana = $derived.by(() => {
+		if (activeTab === 'movimientos') return filters;
+		if (activeTab === 'garantias') return garantiaFilters;
+		if (activeTab === 'inventario-tecnicos') return inventarioTecnicosFilters;
+		return consumoFilters;
+	});
+
+	// Las pestañas de Excel que no tienen reporte PDF (equipos-cliente y
+	// productividad) devuelven null y el botón no existe en ellas.
+	const tipoReportePdf = $derived.by(() => {
+		if (activeTab === 'movimientos') return 'movimientos' as const;
+		if (activeTab === 'garantias') return 'garantias' as const;
+		if (activeTab === 'inventario-tecnicos') return 'tecnicos-inventario' as const;
+		if (activeTab === 'consumo') return 'consumo' as const;
+		return null;
+	});
+
+	async function exportarPdf() {
+		if (!tipoReportePdf) return;
+		exportando = true;
+		errorExportacion = '';
+		try {
+			await exportarReportePdf(tipoReportePdf, { ...filtrosDeLaPestana });
+		} catch (err: unknown) {
+			// Excepción 1: el backend responde 408 si la generación pasa de 15 segundos.
+			errorExportacion =
+				err instanceof Error ? err.message : 'No se pudo exportar el reporte a PDF.';
+		} finally {
+			exportando = false;
+		}
+	}
 
 	function differenceInDays(from: string, to: string) {
 		return (Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86400000;
@@ -529,8 +565,15 @@
 						{exporting ? 'Exportando...' : 'Exportar → Excel'}
 					</Button>
 				{/if}
+				<!-- CU-93: exporta a PDF lo que está visible, con los mismos filtros -->
+				<Button variant="secondary" onclick={exportarPdf} disabled={exportando}>
+					<FileDown class="h-4 w-4" />{exportando ? 'Exportando...' : 'Exportar a PDF'}
+				</Button>
 			</div>
 		</div>
+		{#if errorExportacion}
+			<div class="bg-red-50 border border-red-200 text-destructive rounded-md p-4 text-sm mb-4">{errorExportacion}</div>
+		{/if}
 
 		<div class="bg-white border border-border rounded-lg p-4 mb-6">
 			<div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
@@ -561,8 +604,15 @@
 						{exporting ? 'Exportando...' : 'Exportar → Excel'}
 					</Button>
 				{/if}
+				<!-- CU-93: exporta a PDF lo que está visible, con los mismos filtros -->
+				<Button variant="secondary" onclick={exportarPdf} disabled={exportando}>
+					<FileDown class="h-4 w-4" />{exportando ? 'Exportando...' : 'Exportar a PDF'}
+				</Button>
 			</div>
 		</div>
+		{#if errorExportacion}
+			<div class="bg-red-50 border border-red-200 text-destructive rounded-md p-4 text-sm mb-4">{errorExportacion}</div>
+		{/if}
 
 		<div class="bg-white border border-border rounded-lg p-4 mb-6">
 			<div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
@@ -664,8 +714,15 @@
 						{exporting ? 'Exportando...' : 'Exportar → Excel'}
 					</Button>
 				{/if}
+				<!-- CU-93: exporta a PDF lo que está visible, con los mismos filtros -->
+				<Button variant="secondary" onclick={exportarPdf} disabled={exportando}>
+					<FileDown class="h-4 w-4" />{exportando ? 'Exportando...' : 'Exportar a PDF'}
+				</Button>
 			</div>
 		</div>
+		{#if errorExportacion}
+			<div class="bg-red-50 border border-red-200 text-destructive rounded-md p-4 text-sm mb-4">{errorExportacion}</div>
+		{/if}
 
 		<div class="bg-white border border-border rounded-lg p-4 mb-6">
 			<div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
@@ -733,8 +790,15 @@
 						{exporting ? 'Exportando...' : 'Exportar → Excel'}
 					</Button>
 				{/if}
+				<!-- CU-93: exporta a PDF lo que está visible, con los mismos filtros -->
+				<Button variant="secondary" onclick={exportarPdf} disabled={exportando}>
+					<FileDown class="h-4 w-4" />{exportando ? 'Exportando...' : 'Exportar a PDF'}
+				</Button>
 			</div>
 		</div>
+		{#if errorExportacion}
+			<div class="bg-red-50 border border-red-200 text-destructive rounded-md p-4 text-sm mb-4">{errorExportacion}</div>
+		{/if}
 
 		<div class="bg-white border border-border rounded-lg p-4 mb-6">
 			<div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">

@@ -1,0 +1,79 @@
+@startuml CU93-normal
+title CU-93 — Exportando reporte a PDF (flujo normal)
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style>
+sequenceDiagram {
+  participant {
+    margin 30
+  }
+  actor {
+    margin 12
+  }
+}
+</style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega" as adm
+participant "V_Reportes" as vista
+participant "C_ReportesController" as ctrl
+participant "C_ExportacionService" as exp
+participant "C_ReportesService" as rep
+participant "C_PdfReporte" as pdf
+participant "usuario" as uent
+participant "log_auditoria" as aud
+
+note over adm : Precondición: el reporte ya está generado y visible en pantalla
+
+adm -> vista : "Exportar a PDF" en la pestaña visible
+activate vista
+vista -> ctrl : GET /api/reportes/exportar/garantias/pdf\n(los mismos filtros del reporte en pantalla)
+activate ctrl
+ctrl -> ctrl : valida los identificadores de los filtros\ncon la misma regla del reporte
+ctrl -> exp : exportarPdf('garantias', filtros, actor)
+activate exp
+
+exp -> exp : inicia el límite de 15 s (Excepción 1)
+
+exp -> rep : getGarantiasReport(filtros, actor)
+activate rep
+note right of rep
+  El reporte es el mismo de CU-88: se reutiliza tal cual,
+  con sus reglas de aislamiento por empresa.
+end note
+rep --> exp : filas del reporte
+deactivate rep
+
+exp -> exp : adapta las filas a la tabla\n(días restantes/vencidos, referencias, aplanado)
+exp -> uent : SELECT nombre_completo del actor
+activate uent
+uent --> exp : 'Admin Finet QA'
+deactivate uent
+
+exp -> pdf : construirPdfReporte(encabezado, columnas, filas)
+activate pdf
+pdf -> pdf : encabezado corporativo:\nlogo, empresa, nombre del reporte, filtros,\nfecha DD/MM/YYYY HH:MM:SS y usuario
+pdf -> pdf : tabla con bordes y filas alternadas,\ncon la cabecera repetida en cada página
+pdf -> pdf : metadatos del documento (/Info) y XMP
+pdf --> exp : archivo PDF
+deactivate pdf
+
+exp -> aud : auditoriaService.create({ accion: 'EXPORTAR_REPORTE_PDF' })
+activate aud
+aud --> exp : evento registrado
+deactivate aud
+
+exp --> ctrl : { archivo, nombre: 'reporte-garantias-AAAAMMDD.pdf' }
+deactivate exp
+ctrl --> vista : 200 application/pdf\nContent-Disposition: attachment
+deactivate ctrl
+vista --> adm : el navegador descarga el archivo
+deactivate vista
+
+@enduml

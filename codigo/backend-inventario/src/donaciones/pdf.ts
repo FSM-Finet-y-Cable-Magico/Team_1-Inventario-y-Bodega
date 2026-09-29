@@ -11,6 +11,8 @@
  * sin tocar el resto del módulo.
  */
 
+import { ensamblarPdf, escaparTextoPdf } from '../common/pdf-core';
+
 const ANCHO_PAGINA = 595; // A4 en puntos
 const ALTO_PAGINA = 842;
 const MARGEN = 56;
@@ -25,13 +27,6 @@ export type LineaPdf = {
   mono?: boolean;
 };
 
-// Los paréntesis y la barra invertida delimitan las cadenas del formato PDF
-function escapar(texto: string): string {
-  return texto
-    .replace(/\\/g, '\\\\')
-    .replace(/\(/g, '\\(')
-    .replace(/\)/g, '\\)');
-}
 
 function contenidoDePagina(lineas: LineaPdf[]): string {
   const partes: string[] = ['BT'];
@@ -47,7 +42,7 @@ function contenidoDePagina(lineas: LineaPdf[]): string {
     const tamano = linea.tamano ?? 11;
     partes.push(`${fuente} ${tamano} Tf`);
     partes.push(`1 0 0 1 ${MARGEN} ${y} Tm`);
-    partes.push(`(${escapar(linea.texto)}) Tj`);
+    partes.push(`(${escaparTextoPdf(linea.texto)}) Tj`);
     y -= INTERLINEADO;
   }
   partes.push('ET');
@@ -102,20 +97,6 @@ export function construirPdf(lineas: LineaPdf[]): Buffer {
     `<< /Type /Font /Subtype /Type1 /BaseFont /Courier-Bold /Encoding /WinAnsiEncoding >>`,
   );
 
-  // Ensamblado con la tabla de referencias cruzadas (offsets absolutos en bytes)
-  let pdf = '%PDF-1.4\n';
-  const offsets: number[] = [];
-  objetos.forEach((cuerpo, i) => {
-    offsets.push(Buffer.byteLength(pdf, 'latin1'));
-    pdf += `${i + 1} 0 obj\n${cuerpo}\nendobj\n`;
-  });
-
-  const inicioXref = Buffer.byteLength(pdf, 'latin1');
-  pdf += `xref\n0 ${objetos.length + 1}\n0000000000 65535 f \n`;
-  for (const offset of offsets) {
-    pdf += `${offset.toString().padStart(10, '0')} 00000 n \n`;
-  }
-  pdf += `trailer\n<< /Size ${objetos.length + 1} /Root 1 0 R >>\nstartxref\n${inicioXref}\n%%EOF\n`;
-
-  return Buffer.from(pdf, 'latin1');
+  // Ensamblado con la tabla de referencias cruzadas (común a los PDF del sistema)
+  return ensamblarPdf(objetos);
 }

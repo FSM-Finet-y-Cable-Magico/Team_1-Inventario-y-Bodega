@@ -1,0 +1,65 @@
+@startuml CU70-exc-sin-tipo-aplicable
+title CU-70 — Seleccionando tipo de trabajo codificado para cierre (Excepción 1: ningún código aplica)
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style>
+sequenceDiagram {
+  participant {
+    margin 30
+  }
+  actor {
+    margin 12
+  }
+}
+</style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Técnico de terreno" as tec
+participant "V_MiJornada" as vista
+participant "C_CierresTrabajoController" as ctrl
+participant "C_CierresTrabajoService" as svc
+participant "borrador_cierre" as bor
+participant "log_auditoria" as aud
+
+tec -> vista : Abre "Preparar cierre" de la OT 900
+activate vista
+vista --> tec : Select con "Sin tipo (completar manualmente)"\ny los códigos T-01..T-10
+
+tec -> vista : Ninguno de los códigos describe el trabajo:\ndeja el select sin tipo y escribe los campos
+note right of vista
+  Excepción 1 del CU: el formulario no bloquea.
+  Sin código no hay precompletado; el técnico
+  completa falla y solución a mano.
+end note
+
+tec -> vista : Guarda el cierre preparado
+vista -> ctrl : PATCH /api/cierres-trabajo/borradores/900\n{ codigo_trabajo: null, falla, solución }
+activate ctrl
+ctrl -> svc : guardarBorrador(900, datos, actor)
+activate svc
+svc -> svc : codigoValido(null) → null (permitido)
+svc -> bor : INSERT borrador sin codigo_trabajo
+activate bor
+bor --> svc : id_borrador
+deactivate bor
+svc -> aud : auditoriaService.create(CREAR_BORRADOR_CIERRE)
+svc --> ctrl : borrador guardado
+deactivate svc
+ctrl --> vista : 200 borrador
+deactivate ctrl
+vista --> tec : "Cierre preparado. Se aplicará cuando G3 cierre la OT."
+deactivate vista
+
+note over ctrl, svc
+  Un código que no existe en el catálogo sí se rechaza (400):
+  'El tipo de trabajo [T-99] no existe en el catálogo (T-01 a T-10).'
+  Lo que no bloquea es la ausencia de código.
+end note
+
+@enduml

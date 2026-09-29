@@ -40,6 +40,9 @@ services:
       # CU-48: G3 como consumidor saliente (enriquecimiento del cliente por RUT en la ficha).
       # Sin valores por defecto: si no están definidas, la ficha degrada a lo persistido.
       # Las credenciales reales se definen por entorno (Railway) y nunca se commitean.
+      # CU-93: límite de la exportación a PDF en ms (por defecto 15000, el del CU).
+      # Bajarlo permite provocar la Excepción 1 en pruebas.
+      EXPORT_PDF_TIMEOUT_MS: ${EXPORT_PDF_TIMEOUT_MS:-}
       G3_INTEGRACION_URL: ${G3_INTEGRACION_URL:-}
       G3_INTEGRACION_API_KEY: ${G3_INTEGRACION_API_KEY:-}
     depends_on:

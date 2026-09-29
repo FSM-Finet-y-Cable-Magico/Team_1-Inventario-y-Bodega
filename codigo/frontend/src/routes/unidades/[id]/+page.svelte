@@ -6,10 +6,10 @@
 		getUnit, changeUnitState, getUnitHistory, getWarehouses, updateUnit,
 		registrarBaja, registrarDonacion, validarDatosDonacion,
 		registrarResultadoRevision, reacondicionarUnidad, enviarAReparacionExterna, registrarRetornoReparacion,
-		esAvisoGarantia
+		getCierresReparacion, esAvisoGarantia
 	} from '$lib/api/index';
 	import { userRoles } from '$lib/stores/auth';
-	import type { UnidadEquipo, HistorialEstado, EstadoUnidad, Bodega } from '$lib/types';
+	import type { UnidadEquipo, HistorialEstado, EstadoUnidad, Bodega, CierreReparacion } from '$lib/types';
 	import { MOTIVOS_BAJA } from '$lib/types';
 	import Button from '$lib/components/Button.svelte';
 	import Modal from '$lib/components/Modal.svelte';
@@ -20,6 +20,8 @@
 
 	let unit = $state<UnidadEquipo | null>(null);
 	let history = $state<HistorialEstado[]>([]);
+	// CU-69: cierres de reparación en los que participó esta unidad (retiro o reemplazo)
+	let cierresReparacion = $state<CierreReparacion[]>([]);
 	let warehouses = $state<Bodega[]>([]);
 	let loading = $state(true);
 	let error = $state('');
@@ -174,9 +176,13 @@
 		try {
 			const unitData = await getUnit(id);
 			unit = unitData;
-			const [histData, whData] = await Promise.all([
+			const [histData, whData, cierresData] = await Promise.all([
 				unitData.numero_serie ? getUnitHistory(unitData.numero_serie).catch(() => null) : null,
-				getWarehouses({ activa: true })
+				getWarehouses({ activa: true }),
+				// CU-69: la vista es informativa; si falla, la ficha se muestra igual
+				unitData.numero_serie
+					? getCierresReparacion({ numero_serie: unitData.numero_serie }).catch(() => [])
+					: []
 			]);
 			// CU-37: el backend responde { historial_transiciones: [...] }
 			const transiciones_hist = (histData as any)?.historial_transiciones ?? [];
@@ -190,6 +196,7 @@
 				empresa: h.empresa
 			}));
 			warehouses = whData;
+			cierresReparacion = cierresData;
 		} catch (err: unknown) {
 			error = err instanceof Error ? err.message : 'Error al cargar unidad';
 		} finally {
@@ -751,6 +758,73 @@ async function handleRegistrarRetorno(forzarAvisoGarantia = false) {
 						</div>
 					{/if}
 				</div>
+				<!-- CU-69: cierres de trabajo de reparación en los que participó esta unidad -->
+				{#if cierresReparacion.length > 0}
+					<div class="bg-white rounded-lg border border-border p-6">
+						<h2 class="text-base font-semibold text-foreground mb-4">Cierres de reparación</h2>
+						<div class="space-y-4">
+							{#each cierresReparacion as cierre}
+								<div class="pb-4 border-b border-border last:border-0 last:pb-0">
+									<div class="flex items-center gap-2 flex-wrap">
+										<Badge variant={cierre.resultado === 'Resuelto' ? 'success' : cierre.resultado === 'Resuelto parcialmente' ? 'warning' : 'danger'}>
+											{cierre.resultado}
+										</Badge>
+										<span class="text-sm text-muted">OT #{cierre.id_ot}</span>
+										{#if cierre.codigoTrabajo}
+											<!-- CU-70: tipo de trabajo codificado con el que se preparó el cierre -->
+											<span class="text-sm text-muted">· {cierre.codigoTrabajo}</span>
+										{/if}
+										{#if cierre.resueltoRemotamente}
+											<Badge variant="info">Resuelta en remoto</Badge>
+										{/if}
+									</div>
+									<dl class="mt-2 space-y-1 text-sm">
+										<div>
+											<dt class="text-muted inline">Falla reportada:</dt>
+											<dd class="inline text-foreground">{cierre.fallaReportada}</dd>
+										</div>
+										<div>
+											<dt class="text-muted inline">Solución aplicada:</dt>
+											<dd class="inline text-foreground">{cierre.solucionAplicada}</dd>
+										</div>
+										{#if cierre.categoriaFalla}
+											<div>
+												<dt class="text-muted inline">Categoría de falla:</dt>
+												<dd class="inline text-foreground">{cierre.categoriaFalla}</dd>
+											</div>
+										{/if}
+									</dl>
+									{#each cierre.equiposRetirados ?? [] as equipo}
+										<p class="text-xs text-muted mt-1">
+											Retirado {equipo.numero_serie} ({equipo.estado_anterior} → {equipo.estado_nuevo})
+										</p>
+									{/each}
+									{#each cierre.equiposInstalados ?? [] as equipo}
+										<p class="text-xs text-muted mt-1">
+											Instalado en reemplazo {equipo.numero_serie} ({equipo.estado_anterior} → {equipo.estado_nuevo})
+										</p>
+									{/each}
+									{#if (cierre.consumibles ?? []).length > 0}
+										<ul class="text-xs text-muted mt-2 space-y-0.5">
+											{#each cierre.consumibles ?? [] as consumible}
+												<li>
+													{consumible.tipo_equipo ?? `Tipo ${consumible.id_tipo_equipo}`}: {consumible.cantidad}
+													{consumible.unidad_medida ?? ''}
+													{#if consumible.descontado}
+														· descontado del inventario del técnico
+													{:else}
+														· {consumible.detalle ?? 'no descontado'}
+													{/if}
+												</li>
+											{/each}
+										</ul>
+									{/if}
+									<p class="text-xs text-muted mt-2">{fmtFechaHora(cierre.fechaCierre ?? cierre.fechaRegistro)}</p>
+								</div>
+							{/each}
+						</div>
+					</div>
+				{/if}
 			</div>
 
 			<div class="bg-white rounded-lg border border-border p-6 h-fit">

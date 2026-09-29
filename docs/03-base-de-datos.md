@@ -157,6 +157,29 @@ el mismo día para la misma referencia (préstamo, o bodega+tipo de equipo) inte
 misma clave y se ignora. Las notificaciones `leida=true` se purgan a los 30 días de
 `fecha_generacion` (no hay endpoint de historial: es limpieza de tabla, no algo visible).
 
+### `cierre_reparacion` — parte de inventario del cierre de reparación (CU-69)
+`id_cierre_reparacion` PK · `id_cierre` (el `integracion_cierre` que lo originó) · `id_ot` ·
+`id_empresa` · `id_tecnico` · `rut_cliente` · `direccion_servicio` · `falla_reportada` /
+`solucion_aplicada` varchar(300) · `resultado` varchar(30) (`'Resuelto'`,
+`'Resuelto parcialmente'`, `'Sin solución'`) · `resuelto_remotamente` · `categoria_falla` ·
+`equipos_retirados` / `equipos_instalados` / `consumibles` JSONB · `codigo_trabajo` varchar(10)
+(CU-70) · `fecha_cierre` · `fecha_registro`.
+
+El cierre de la OT lo ejecuta G3; esta tabla guarda lo que nos toca (qué se retiró, qué se instaló
+en reemplazo y qué consumibles se descontaron). Sin FK a `integracion_cierre`, igual que el resto
+de las tablas de integración.
+
+### `borrador_cierre` — cierre preparado por el técnico (CU-70)
+`id_borrador` PK · `id_ot` · `id_empresa` · `id_tecnico` · `codigo_trabajo` varchar(10)
+(`'T-01'`..`'T-10'`, nullable por la Excepción 1: el técnico completa a mano) · `falla_reportada` /
+`solucion_aplicada` varchar(300) · `resultado` varchar(30) (`RESUELTO` | `PARCIAL` |
+`SIN_SOLUCION`, los literales que envía G3) · `categoria_falla` varchar(120) ·
+`fecha_actualizacion`. **UNIQUE(id_ot, id_empresa)**: un borrador por OT, que el técnico edita
+hasta que llega el cierre.
+
+El catálogo T-01..T-10 **no es una tabla**: son los 10 códigos fijos de la especificación y viven
+en `src/integraciones/tipos-trabajo.ts` con los campos que precompletan cada cierre.
+
 
 ---
 
