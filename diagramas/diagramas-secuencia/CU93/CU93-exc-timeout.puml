@@ -1,0 +1,64 @@
+@startuml CU93-exc-timeout
+title CU-93 — Exportando reporte a PDF (Excepción 1: la generación supera los 15 segundos)
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style>
+sequenceDiagram {
+  participant {
+    margin 30
+  }
+  actor {
+    margin 12
+  }
+}
+</style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega" as adm
+participant "V_Reportes" as vista
+participant "C_ReportesController" as ctrl
+participant "C_ExportacionService" as exp
+participant "C_ReportesService" as rep
+participant "log_auditoria" as aud
+
+adm -> vista : "Exportar a PDF"
+activate vista
+vista -> ctrl : GET /api/reportes/exportar/movimientos/pdf
+activate ctrl
+ctrl -> exp : exportarPdf('movimientos', filtros, actor)
+activate exp
+
+exp -> exp : Promise.race( generación , límite de 15 s )
+exp -> rep : getMovementsReport(filtros, actor)
+activate rep
+
+note right of rep
+  Consulta muy grande (rango amplio, sin filtros):
+  sigue en curso pasados los 15 segundos.
+end note
+
+exp -> exp : vence el límite antes de que el reporte responda
+exp -> exp : registra el aviso en el log del servidor
+
+note right of exp
+  No se audita la exportación: no hubo archivo generado.
+  El evento de auditoría solo acompaña a una exportación completada.
+end note
+
+exp --> ctrl : RequestTimeoutException\n'La generación del archivo superó los 15 segundos.\nIntente nuevamente.'
+deactivate exp
+deactivate rep
+ctrl --> vista : 408 Request Timeout
+deactivate ctrl
+vista --> adm : muestra el mensaje y permite reintentar\n(con filtros más acotados)
+deactivate vista
+
+note over aud : Sin registro de exportación para este intento
+
+@enduml

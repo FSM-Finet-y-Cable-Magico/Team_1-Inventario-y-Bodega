@@ -302,6 +302,24 @@ export function generarReporteGarantias(params?: { id_empresa?: string; id_tipo_
 	return api.get<import('$lib/types').ReporteGarantiaFila[]>(`/reportes/garantias${query ? '?' + query : ''}`);
 }
 
+// CU-93: exportación a PDF del reporte visible, con sus mismos filtros.
+// El navegador descarga el archivo; un 408 es la Excepción 1 (más de 15 s).
+export function exportarReportePdf(
+	tipo: 'stock' | 'movimientos' | 'garantias' | 'tecnicos-inventario' | 'consumo',
+	filtros: Record<string, string | undefined>
+) {
+	const qs = new URLSearchParams();
+	for (const [clave, valor] of Object.entries(filtros)) {
+		if (valor) qs.set(clave, valor);
+	}
+	const query = qs.toString();
+	const marca = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+	return api.download(
+		`/reportes/exportar/${tipo}/pdf${query ? '?' + query : ''}`,
+		`reporte-${tipo}-${marca}.pdf`
+	);
+}
+
 // CU-89: inventario actual de técnicos, por empresa y técnico opcional
 export function generarReporteInventarioTecnicos(params?: { id_empresa?: string; id_usuario?: string }) {
 	const qs = new URLSearchParams();
@@ -496,7 +514,51 @@ export function getInventarioTecnico(id: number, empresa?: number): Promise<Inve
 	return api.get<InventarioTecnico>(`/tecnicos/${id}/inventario${qs}`);
 }
 
-// CU-61: jornada del técnico autenticado (trabajos del día de G3 + inventario propio)
-export function getMiJornada(): Promise<JornadaTecnico> {
-	return api.get<JornadaTecnico>('/tecnicos/me/jornada');
+// CU-61: jornada del técnico autenticado (trabajos del día de G3 + inventario propio).
+// El endpoint responde con el envoltorio {success, data} del módulo de integraciones.
+export async function getMiJornada(): Promise<JornadaTecnico> {
+	const respuesta = await api.get<{ data: JornadaTecnico } | JornadaTecnico>(
+		'/tecnicos/me/jornada'
+	);
+	return 'data' in respuesta ? respuesta.data : respuesta;
+}
+
+// CU-70: catálogo codificado de tipos de trabajo para el cierre (T-01..T-10).
+export function getTiposTrabajo(tipoOt?: string) {
+	const qs = tipoOt ? `?tipo_ot=${encodeURIComponent(tipoOt)}` : '';
+	return api.get<import('$lib/types').TipoTrabajo[]>(`/tipos-trabajo${qs}`);
+}
+
+// CU-70: borrador del cierre que el técnico dejó preparado para una OT.
+export function getBorradorCierre(idOt: number) {
+	return api.get<import('$lib/types').BorradorCierre | null>(
+		`/cierres-trabajo/borradores/${idOt}`
+	);
+}
+
+export function guardarBorradorCierre(
+	idOt: number,
+	datos: {
+		codigo_trabajo?: string | null;
+		falla_reportada?: string | null;
+		solucion_aplicada?: string | null;
+		resultado?: string | null;
+		categoria_falla?: string | null;
+	}
+) {
+	return api.patch<import('$lib/types').BorradorCierre>(
+		`/cierres-trabajo/borradores/${idOt}`,
+		datos
+	);
+}
+
+// CU-69: cierres de reparación de una unidad (o de una OT).
+export function getCierresReparacion(params: { numero_serie?: string; id_ot?: number }) {
+	const qs = new URLSearchParams();
+	if (params.numero_serie) qs.set('numero_serie', params.numero_serie);
+	if (params.id_ot !== undefined) qs.set('id_ot', String(params.id_ot));
+	const query = qs.toString();
+	return api.get<import('$lib/types').CierreReparacion[]>(
+		`/cierres-reparacion${query ? '?' + query : ''}`
+	);
 }

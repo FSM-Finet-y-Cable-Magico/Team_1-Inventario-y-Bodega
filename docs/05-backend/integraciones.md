@@ -10,7 +10,10 @@
 | Método | Ruta | Auth | Para qué |
 |--------|------|------|----------|
 | GET | `/api/integraciones/unidades/:numeroSerie?id_empresa=N` | `X-API-KEY` | G3 valida la serie **antes** de que el técnico cierre la OT; G8 la usa para validar equipo/estado/empresa (sc-158 amplió la respuesta) |
-| POST | `/api/integraciones/ordenes/:idOt/cierre` | `X-API-KEY` | Webhook receptor del cierre de OT de G3 (push). Base del procesamiento del CU-64 |
+| POST | `/api/integraciones/ordenes/:idOt/cierre` | `X-API-KEY` | Webhook receptor del cierre de OT de G3 (push). Base del procesamiento del CU-64 y del CU-69 |
+| GET | `/api/cierres-reparacion?numero_serie=&id_ot=` | JWT + roles | CU-69: cierres de reparación para la UI (aislados por empresa salvo Superusuario) |
+| GET | `/api/tipos-trabajo?tipo_ot=` | JWT + roles | CU-70: catálogo codificado T-01..T-10 con los campos que precompletan el cierre |
+| GET·PATCH | `/api/cierres-trabajo/borradores/:idOt` | JWT + roles | CU-70: cierre que el técnico deja preparado para una OT (uno por OT y empresa) |
 | GET | `/api/integraciones/tipos-equipo?id_empresa=N&categoria=&buscar=&activo=` | `X-API-KEY` | Catálogo S2S para los planes comerciales de G8 (G1-7 · sc-158) |
 | POST | `/api/integraciones/activaciones` | `X-API-KEY` | Evento de activación de G8: asocia cliente/servicio/contrato externos a las unidades instaladas (G1-8 · sc-158) |
 | GET | `/api/integraciones/equipos?id_empresa=N&id_servicio=S` | `X-API-KEY` | Equipos activos de un servicio para el perfil del servicio en el CRM (G1-9 · sc-159) |
@@ -92,10 +95,39 @@ otros datos de activación. Respuestas envueltas `{ success, data }`.
   - En el **webhook** el saldo insuficiente **nunca rechaza**: se descuenta lo disponible, el
     faltante queda en `materiales.ajustes` y como discrepancia `SALDO_INSUFICIENTE_AJUSTADO`
     (acuerdo Opción A con G3). `cantidad <= 0` es payload inválido (400).
+- **CU-69 (cierre de reparación · sc-147):** cuando el cierre trae `tipo_ot: 'REPARACION'` o el
+  bloque `reparacion` (doc-12 §1.3), la misma transacción registra `cierre_reparacion`:
+  - **Acción de cada equipo:** manda la `accion` que envía G3. Su `CerrarOtDto` la incluye por
+    ítem (`numero_serie` + `accion` + `diagnostico`, verificado el 26-sept-2026 contra
+    `Team-3-FSM` — ver `docs/11` §5). `ACCION_POR_CAMPO` es solo el respaldo para un cierre que
+    llegue sin ese campo: entonces la define el arreglo de origen, `equipos_retirados` →
+    `RETIRADO_PARA_DIAGNOSTICO` (retiro del cliente, CU-71) y `equipos_instalados` →
+    `INSTALADO_EN_CLIENTE` (reemplazo). Pendiente de confirmar con el payload real de un cierre
+    de reparación, que todavía no existe en su código (ver §5).
+  - **Datos del cierre:** `falla_reportada` y `solucion_aplicada` (5 a 300 caracteres, obligatorias)
+    y `resultado`, mapeado a los literales del CU (`RESULTADOS_G3`): `RESUELTO` → `Resuelto`,
+    `PARCIAL` → `Resuelto parcialmente`, `SIN_SOLUCION` → `Sin solución`. Si falta alguno, el cierre
+    de reparación **no** se registra y queda la discrepancia `DATOS_REPARACION_INCOMPLETOS`
+    (el cierre de OT sí se procesa: el contrato con G3 es 2xx siempre).
+  - **Consumibles:** no se descuentan aparte; el registro guarda el detalle de lo ya descontado por
+    CU-64/CU-68, marcando `descontado: false` en lo que quedó como ajuste por saldo insuficiente.
+  - **Auditoría:** `CIERRE_REPARACION` sobre `cierre_reparacion` tras el commit, con el técnico como
+    actor (sin `id_tecnico` no se audita: no hay a quién imputar el evento). Es la única ruta de
+    integración que escribe en `log_auditoria`, porque el actor es identificable.
+- **CU-70 (tipo de trabajo codificado · sc-148):** el catálogo T-01..T-10 vive en
+  `tipos-trabajo.ts` como **constante**, no como tabla: son 10 códigos fijos de la especificación,
+  sin administración ni dueño que los edite (si G3 publica su catálogo de categorías, doc-12 §1.2,
+  se mapea contra estos códigos). `CierresTrabajoService` lo expone y guarda el **borrador** que el
+  técnico prepara en `/jornada` (tabla `borrador_cierre`, una fila por OT y empresa, auditada).
+  Al recibir el cierre, `completarDesdeBorrador` rellena lo que G3 no envía: primero lo que el
+  técnico escribió, después los campos predefinidos del código. El código usado queda en
+  `cierre_reparacion.codigo_trabajo` y en la auditoría del cierre. Sin código y sin borrador no se
+  inventa nada: si G3 tampoco manda los datos, queda `DATOS_REPARACION_INCOMPLETOS`.
 - **Respuesta 2xx del cierre (sc-142):** `data = {duplicado, id_ot, clave_idempotencia,
-  estado_proceso, srv, id_tecnico, acciones_aplicadas, discrepancias, materiales{descontados,ajustes}}`
-  (el antiguo flag `materiales_pendientes_descuento` fue retirado).
-- Sin `log_auditoria` en el procesamiento (no hay usuario actor); la trazabilidad vive en
+  estado_proceso, srv, id_tecnico, acciones_aplicadas, discrepancias, materiales{descontados,ajustes},
+  id_cierre_reparacion}` (el antiguo flag `materiales_pendientes_descuento` fue retirado;
+  `id_cierre_reparacion` es `null` en los cierres de instalación).
+- Sin `log_auditoria` en el procesamiento salvo el cierre de reparación (CU-69); la trazabilidad vive en
   `integracion_cierre`/`integracion_activacion` (payload + discrepancias + acciones) y en el
   historial de estados.
 
@@ -151,6 +183,11 @@ otros datos de activación. Respuestas envueltas `{ success, data }`.
   `id_servicio_externo`, `id_contrato_externo`, `id_ot`, `fecha_instalacion`, `fecha_retiro`,
   `activa`, `origen` (`ACTIVACION_G8`), `trace_id`. Los IDs de G8 son referencias externas
   **sin FK**. Índices: `UNIQUE(event_id, id_unidad)` + `(id_empresa, id_servicio_externo, activa)`.
+- `cierre_reparacion` (`entities/cierre-reparacion.entity.ts`, CU-69): `id_cierre_reparacion`,
+  `id_cierre` (cierre de integración que lo originó), `id_ot`, `id_empresa`, `id_tecnico`,
+  `rut_cliente`, `direccion_servicio`, `falla_reportada`, `solucion_aplicada`, `resultado`,
+  `resuelto_remotamente`, `categoria_falla`, `equipos_retirados` / `equipos_instalados` /
+  `consumibles` (JSONB), `fecha_cierre`, `fecha_registro`. Sin FK (patrón del repo).
 - `secuencia_srv` (CU-64): contador por `(id_empresa, anio)` del identificador `SRV-YYYY-XXXXX`.
 - `unidad_equipo` (CU-64): columnas `cliente_rut`, `cliente_nombre`, `direccion_instalacion`,
   `comuna_instalacion`, `srv` con la ubicación vigente cuando la unidad está instalada.
@@ -163,6 +200,14 @@ otros datos de activación. Respuestas envueltas `{ success, data }`.
 
 - [x] Diagnóstico en `RETIRADO_PARA_DIAGNOSTICO`: acordado con G3 (08-sept) — `categoria_falla` del cierre.
 - [x] Descuento/validación de materiales (CU-64/CU-68 · sc-142/sc-146).
+- [x] Cierre de trabajo de reparación (CU-69 · sc-147): registro, retiro/reemplazo y auditoría.
+- [ ] **Confirmar con G3 el bloque `reparacion` del cierre** (doc-12 §1.3): su `CerrarOtDto`
+      verificado el 26-sept-2026 trae materiales, equipos, potencia y `resultado_llamada`, pero
+      **no** `falla_reportada` / `solucion_aplicada` / `resultado`. Hasta que lo envíen, CU-69
+      solo se ha probado con cierres simulados y se apoya en el borrador del técnico (CU-70).
+- [x] Tipo de trabajo codificado T-01..T-10 (CU-70 · sc-148): catálogo, borrador y precompletado.
+- [ ] Preguntar a G3 si `GET /ordenes/categorias-falla` cubre tipos de instalación (doc-12 §1.2);
+      hoy el catálogo T-xx es propio y convive con el de ellos.
 - [ ] Coordinar con G3 que el payload incluya `id_tecnico` (hoy se infiere de las unidades; sin
       unidades ni `id_tecnico`, los materiales quedan como discrepancia `TECNICO_NO_IDENTIFICADO`).
 - [ ] `GET /tecnicos/{id}/inventario-personal` (después de CU-58).

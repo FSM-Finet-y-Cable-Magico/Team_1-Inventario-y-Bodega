@@ -23,6 +23,9 @@ import { TipoEquipo } from '../inventario/entities/tipo-equipo.entity';
 import { StockConsumible } from '../bodegas/entities/stock-consumible.entity';
 import { CatalogService } from '../inventario/catalog.service';
 import { InventarioPersonalService } from '../salidas/inventario-personal.service';
+import { CierreReparacion } from './entities/cierre-reparacion.entity';
+import { AuditoriaService } from '../auditoria/auditoria.service';
+import { CierresTrabajoService } from './cierres-trabajo.service';
 import { IntegracionContexto } from './guards/api-key.guard';
 
 // sc-113: mapeo de las acciones semánticas que emite G3 en el cierre de OT
@@ -45,6 +48,22 @@ const ACCIONES_G3: Record<string, { estado: string; origenes: string[] }> = {
     estado: 'Dado de baja',
     origenes: ['En bodega', 'En revisión'],
   },
+};
+
+// CU-69: respaldo para un cierre que llegue sin `accion` por ítem. G3 la envía en su
+// CerrarOtDto (verificado el 26-sept-2026, docs/11 §5) y esa siempre manda; si falta,
+// la define el arreglo de origen: lo retirado va a revisión (CU-71) y lo instalado en
+// reemplazo queda en el cliente.
+const ACCION_POR_CAMPO: Record<string, string> = {
+  equipos_instalados: 'INSTALADO_EN_CLIENTE',
+  equipos_retirados: 'RETIRADO_PARA_DIAGNOSTICO',
+};
+
+// CU-69: resultado de la reparación declarado por G3 → literal de pantalla del CU.
+const RESULTADOS_G3: Record<string, string> = {
+  RESUELTO: 'Resuelto',
+  PARCIAL: 'Resuelto parcialmente',
+  SIN_SOLUCION: 'Sin solución',
 };
 
 // Acuerdo con G3 (08-sept-2026): el diagnóstico del retiro para revisión es la
@@ -93,6 +112,10 @@ export class IntegracionesService {
     private readonly activacionRepository: Repository<IntegracionActivacion>,
     @InjectRepository(AsignacionEquipoServicio)
     private readonly asignacionRepository: Repository<AsignacionEquipoServicio>,
+    @InjectRepository(CierreReparacion)
+    private readonly reparacionRepository: Repository<CierreReparacion>,
+    private readonly auditoriaService: AuditoriaService,
+    private readonly cierresTrabajoService: CierresTrabajoService,
         @InjectRepository(UnidadEquipo)
         private readonly unitRepository: Repository<UnidadEquipo>,
         @InjectRepository(TipoEquipo)
@@ -603,7 +626,7 @@ export class IntegracionesService {
       where: { claveIdempotencia: clave },
     });
     if (previo) {
-      return this.respuestaCierre(previo, true);
+      return this.respuestaDuplicado(previo);
     }
 
     const queryRunner = this.dataSource.createQueryRunner();
@@ -673,6 +696,25 @@ export class IntegracionesService {
       discrepancias.push(...resultadoMateriales.discrepancias);
       accionesAplicadas.push(...resultadoMateriales.acciones);
 
+      // CU-69: cierre de trabajo de reparación. Registra falla, solución, resultado,
+      // equipos retirados/instalados y los consumibles ya descontados por CU-64/CU-68,
+      // dentro de esta misma transacción.
+      let reparacion: CierreReparacion | null = null;
+      if (this.esCierreDeReparacion(payload)) {
+        reparacion = await this.registrarCierreReparacion(
+          queryRunner.manager,
+          payload,
+          idOt,
+          idEmpresa,
+          cierreGuardado.id_cierre,
+          idTecnico,
+          categoriaFalla,
+          accionesAplicadas,
+          discrepancias,
+          resultadoMateriales.resumen,
+        );
+      }
+
       cierreGuardado.id_tecnico = idTecnico;
       cierreGuardado.srv = datosInstalacionConSrv.srv;
       cierreGuardado.materialesAplicados =
@@ -690,7 +732,35 @@ export class IntegracionesService {
       await this.correlacionarActivacion(queryRunner.manager, cierreGuardado);
 
       await queryRunner.commitTransaction();
-      return this.respuestaCierre(cierreGuardado, false);
+
+      // CU-69: auditoría tras el commit (patrón del resto de los módulos). El actor es el
+      // técnico que cerró la OT; sin id_tecnico no hay a quién imputar el evento y la
+      // trazabilidad queda en integracion_cierre y cierre_reparacion.
+      if (reparacion && Number.isInteger(reparacion.id_tecnico)) {
+        await this.auditoriaService.create({
+          id_usuario: reparacion.id_tecnico as number,
+          accion: 'CIERRE_REPARACION',
+          entidad_afectada: 'cierre_reparacion',
+          id_entidad_afectada: reparacion.id_cierre_reparacion,
+          valor_anterior: null,
+          valor_nuevo: {
+            id_ot: idOt,
+            id_empresa: idEmpresa,
+            resultado: reparacion.resultado,
+            // CU-70: el tipo de trabajo codificado queda en la auditoría del cierre.
+            codigo_trabajo: reparacion.codigoTrabajo ?? null,
+            equipos_retirados: reparacion.equiposRetirados ?? [],
+            equipos_instalados: reparacion.equiposInstalados ?? [],
+            consumibles: reparacion.consumibles ?? [],
+          },
+        });
+      }
+
+      return this.respuestaCierre(
+        cierreGuardado,
+        false,
+        reparacion?.id_cierre_reparacion ?? null,
+      );
     } catch (err) {
       await queryRunner.rollbackTransaction().catch(() => {
         /* la transacción ya puede estar abortada */
@@ -703,7 +773,7 @@ export class IntegracionesService {
           where: { claveIdempotencia: clave },
         });
         if (duplicado) {
-          return this.respuestaCierre(duplicado, true);
+          return this.respuestaDuplicado(duplicado);
         }
       }
       throw err;
@@ -738,6 +808,10 @@ export class IntegracionesService {
         throw new BadRequestException(
           `Cada equipo de ${item._campo} debe incluir un numero_serie (posición ${item._posicion}).`,
         );
+      }
+      // CU-69: sin `accion` explícita, la acción la define el arreglo de origen.
+      if (typeof item.accion !== 'string' || item.accion.trim() === '') {
+        item.accion = ACCION_POR_CAMPO[item._campo];
       }
       if (!ACCIONES_G3[item.accion]) {
         throw new BadRequestException(
@@ -1033,6 +1107,177 @@ export class IntegracionesService {
       acciones,
       resumen: { descontados, ajustes },
     };
+  }
+
+  // --- CU-69: cierre de trabajo de reparación --------------------------------
+
+  // Hay reparación cuando G3 marca tipo_ot REPARACION o adjunta el bloque.
+  private esCierreDeReparacion(payload: any): boolean {
+    const tipo =
+      typeof payload.tipo_ot === 'string'
+        ? payload.tipo_ot.trim().toUpperCase()
+        : '';
+    return (
+      tipo === 'REPARACION' ||
+      (payload.reparacion !== null &&
+        typeof payload.reparacion === 'object' &&
+        !Array.isArray(payload.reparacion))
+    );
+  }
+
+  // CU-69: falla reportada y solución aplicada son obligatorias, de 5 a 300 caracteres.
+  private textoObligatorio(valor: any): string | null {
+    if (typeof valor !== 'string') return null;
+    const limpio = valor.trim();
+    return limpio.length >= 5 && limpio.length <= 300 ? limpio : null;
+  }
+
+  // CU-69: registra el cierre de reparación dentro de la transacción del webhook.
+  // Los consumibles ya fueron descontados por procesarMateriales (CU-64/CU-68); aquí
+  // solo se guarda su detalle junto al cierre para la trazabilidad y la vista.
+  private async registrarCierreReparacion(
+    manager: EntityManager,
+    payload: any,
+    idOt: number,
+    idEmpresa: number,
+    idCierre: number,
+    idTecnico: number | null,
+    categoriaFalla: string | null,
+    accionesAplicadas: any[],
+    discrepancias: any[],
+    materiales: { descontados: any[]; ajustes: any[] },
+  ): Promise<CierreReparacion | null> {
+    const bloque = (payload.reparacion ?? {}) as any;
+
+    // CU-70: lo que el técnico dejó preparado para esta OT (tipo de trabajo
+    // codificado y sus campos) completa lo que G3 no envía en el cierre.
+    const preparado = await this.cierresTrabajoService.completarDesdeBorrador(
+      manager,
+      idOt,
+      idEmpresa,
+      payload.codigo_trabajo ?? bloque.codigo_trabajo,
+    );
+    const predefinido = preparado?.campos ?? {};
+
+    const falla =
+      this.textoObligatorio(bloque.falla_reportada) ??
+      this.textoObligatorio(predefinido.falla_reportada);
+    const solucion =
+      this.textoObligatorio(bloque.solucion_aplicada) ??
+      this.textoObligatorio(predefinido.solucion_aplicada);
+    const resultado =
+      RESULTADOS_G3[String(bloque.resultado ?? '').trim().toUpperCase()] ??
+      RESULTADOS_G3[String(predefinido.resultado ?? '').trim().toUpperCase()];
+
+    const faltantes = [
+      falla ? null : 'falla_reportada (5 a 300 caracteres)',
+      solucion ? null : 'solucion_aplicada (5 a 300 caracteres)',
+      resultado ? null : `resultado (${Object.keys(RESULTADOS_G3).join(' | ')})`,
+    ].filter(Boolean);
+
+    // Contrato con G3: el cierre nunca se rechaza; lo que falta queda como discrepancia.
+    if (faltantes.length > 0) {
+      discrepancias.push({
+        codigo: 'DATOS_REPARACION_INCOMPLETOS',
+        detalle: `El cierre de reparación no se registró: falta ${faltantes.join(', ')}. Revisar manualmente.`,
+      });
+      return null;
+    }
+
+    // Las acciones aplicadas se reparten por destino: lo instalado en el cliente es el
+    // reemplazo y todo lo demás (revisión, bodega, baja) es retiro.
+    const equipos = (instalados: boolean) =>
+      accionesAplicadas
+        .filter(
+          (accion) =>
+            (accion.accion === 'INSTALADO_EN_CLIENTE') === instalados &&
+            accion.numero_serie !== undefined,
+        )
+        .map((accion) => ({
+          numero_serie: accion.numero_serie,
+          estado_anterior: accion.estado_anterior,
+          estado_nuevo: accion.estado_nuevo,
+        }));
+
+    const consumibles = [
+      ...materiales.descontados.map((d) => ({
+        id_tipo_equipo: d.id_tipo_equipo,
+        tipo_equipo: d.nombre,
+        cantidad: d.cantidad,
+        descontado: true,
+        saldo_resultante: d.saldo_nuevo,
+      })),
+      ...materiales.ajustes.map((a) => ({
+        id_tipo_equipo: a.id_tipo_equipo,
+        tipo_equipo: a.nombre,
+        cantidad: a.declarado,
+        unidad_medida: a.unidad_medida,
+        descontado: false,
+        codigo: 'SALDO_INSUFICIENTE_AJUSTADO',
+        detalle: `Disponible ${a.disponible} ${a.unidad_medida}, declarado ${a.declarado} ${a.unidad_medida}; faltante ${a.faltante}.`,
+      })),
+    ];
+
+    const texto = (valor: any, largo: number): string | null =>
+      typeof valor === 'string' && valor.trim() !== ''
+        ? valor.trim().slice(0, largo)
+        : null;
+    const fecha = this.parsearFecha(payload.fecha_completada);
+
+    return await manager.save(CierreReparacion, {
+      id_cierre: idCierre,
+      id_ot: idOt,
+      id_empresa: idEmpresa,
+      id_tecnico: idTecnico,
+      rutCliente: texto(payload.cliente?.rut, 12),
+      direccionServicio:
+        texto(payload.direccion?.direccion_completa, 200) ??
+        texto(payload.direccion?.direccion, 200),
+      fallaReportada: falla as string,
+      solucionAplicada: solucion as string,
+      resultado,
+      resueltoRemotamente: bloque.resuelto_remotamente === true,
+      categoriaFalla: categoriaFalla ?? predefinido.categoria_falla ?? null,
+      // CU-70: tipo de trabajo codificado con el que se cerró (null si el técnico
+      // completó el cierre a mano, Excepción 1).
+      codigoTrabajo: preparado?.codigo_trabajo ?? null,
+      equiposRetirados: equipos(false),
+      equiposInstalados: equipos(true),
+      consumibles,
+      fechaCierre: fecha,
+    });
+  }
+
+  // CU-69 (vista): cierres de reparación para la UI autenticada, aislados por empresa.
+  async listarCierresReparacion(
+    filtros: { numero_serie?: string; id_ot?: number },
+    actor: { id_empresa: number; roles?: string[] },
+  ) {
+    const esSuperusuario = (actor?.roles ?? []).includes('SUPERUSUARIO');
+    const query = this.reparacionRepository
+      .createQueryBuilder('c')
+      .orderBy('c.fechaRegistro', 'DESC')
+      .limit(200);
+
+    if (!esSuperusuario) {
+      query.andWhere('c.id_empresa = :idEmpresa', {
+        idEmpresa: actor.id_empresa,
+      });
+    }
+    if (Number.isInteger(filtros.id_ot)) {
+      query.andWhere('c.id_ot = :idOt', { idOt: filtros.id_ot });
+    }
+
+    const serie = (filtros.numero_serie ?? '').trim();
+    if (serie !== '') {
+      const contiene = JSON.stringify([{ numero_serie: serie }]);
+      query.andWhere(
+        '(c.equipos_retirados @> :contiene::jsonb OR c.equipos_instalados @> :contiene::jsonb)',
+        { contiene },
+      );
+    }
+
+    return query.getMany();
   }
 
   // CU-64 (D): SRV-YYYY-XXXXX con secuencia atómica por empresa/año. Un re-cierre
@@ -1383,7 +1628,24 @@ export class IntegracionesService {
     };
   }
 
-  private respuestaCierre(cierre: IntegracionCierre, duplicado: boolean) {
+  // CU-69: en un reenvío del mismo cierre la respuesta conserva el id del cierre
+  // de reparación ya registrado (no se vuelve a procesar nada).
+  private async respuestaDuplicado(cierre: IntegracionCierre) {
+    const reparacion = await this.reparacionRepository.findOne({
+      where: { id_cierre: cierre.id_cierre },
+    });
+    return this.respuestaCierre(
+      cierre,
+      true,
+      reparacion?.id_cierre_reparacion ?? null,
+    );
+  }
+
+  private respuestaCierre(
+    cierre: IntegracionCierre,
+    duplicado: boolean,
+    idCierreReparacion: number | null = null,
+  ) {
     return {
       success: true,
       data: {
@@ -1401,6 +1663,8 @@ export class IntegracionesService {
           descontados: [],
           ajustes: [],
         },
+        // CU-69: registro del cierre de reparación (null en cierres de instalación).
+        id_cierre_reparacion: idCierreReparacion,
       },
     };
   }

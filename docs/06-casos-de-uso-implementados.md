@@ -103,6 +103,9 @@
 | 82 | Retorno total o parcial de préstamo externo | `prestamos`, `inventario/units`, `bodegas` | `/prestamos` |
 | 83 | Tabla de préstamos externos activos (días restantes, filtros) | `prestamos` | `/prestamos` |
 | 84 | Trazabilidad de la devolución (validaciones del retorno) | `prestamos` | `/prestamos` (errores por ítem en el modal) |
+| 69 | Cierre de trabajo de reparación desde el cierre de OT de G3 (retiro, reemplazo y consumibles) | `integraciones`, `inventario/units`, `salidas`, `auditoria` | `/unidades/[id]` (sección Cierres de reparación) |
+| 70 | Tipo de trabajo codificado (T-01..T-10) que precompleta el cierre | `integraciones` (`cierres-trabajo`), `auditoria` | `/jornada` (panel Preparar cierre) |
+| 93 | Exportación a PDF del reporte visible (encabezado corporativo, tabla y auditoría) | `reportes` (`exportacion`), `auditoria` | `/reportes` y `/reportes/stock` (botón Exportar a PDF) |
 
 ## 3. Diagramas disponibles (referencia para CUs pendientes)
 

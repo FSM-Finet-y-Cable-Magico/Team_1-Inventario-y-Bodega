@@ -731,3 +731,65 @@ export interface JornadaTecnico {
 	trabajos: TrabajoDelDia[];
 	inventario: InventarioTecnico;
 }
+
+// CU-70: catálogo codificado de tipos de trabajo (T-01..T-10) para el cierre.
+export interface TipoTrabajo {
+	codigo: string;
+	nombre: string;
+	tipo_ot: 'INSTALACION' | 'REPARACION' | 'AMBOS';
+	campos: {
+		falla_reportada?: string;
+		solucion_aplicada?: string;
+		resultado?: string;
+		categoria_falla?: string;
+	};
+	materiales_sugeridos: string[];
+}
+
+// CU-70: borrador del cierre que el técnico prepara para una OT.
+export interface BorradorCierre {
+	id_borrador: number;
+	id_ot: number;
+	id_empresa: number;
+	id_tecnico: number;
+	codigoTrabajo: string | null;
+	fallaReportada: string | null;
+	solucionAplicada: string | null;
+	resultado: string | null;
+	categoriaFalla: string | null;
+	fechaActualizacion: string;
+}
+
+// CU-69: cierre de trabajo de reparación registrado desde el cierre de OT de G3.
+export interface CierreReparacion {
+	id_cierre_reparacion: number;
+	id_ot: number;
+	id_empresa: number;
+	id_tecnico: number | null;
+	// El endpoint devuelve la entidad, así que los campos viajan en camelCase.
+	rutCliente: string | null;
+	direccionServicio: string | null;
+	fallaReportada: string;
+	solucionAplicada: string;
+	// 'Resuelto' | 'Resuelto parcialmente' | 'Sin solución'
+	resultado: string;
+	resueltoRemotamente: boolean;
+	categoriaFalla: string | null;
+	// CU-70: tipo de trabajo codificado con el que se preparó el cierre.
+	codigoTrabajo: string | null;
+	equiposRetirados: { numero_serie: string; estado_anterior: string; estado_nuevo: string }[] | null;
+	equiposInstalados: { numero_serie: string; estado_anterior: string; estado_nuevo: string }[] | null;
+	consumibles:
+		| {
+				id_tipo_equipo: number;
+				tipo_equipo?: string;
+				cantidad: number;
+				unidad_medida?: string;
+				descontado: boolean;
+				codigo?: string;
+				detalle?: string;
+		  }[]
+		| null;
+	fechaCierre: string | null;
+	fechaRegistro: string;
+}

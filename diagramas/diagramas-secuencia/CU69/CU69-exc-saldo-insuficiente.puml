@@ -1,0 +1,83 @@
+@startuml CU69-exc-saldo-insuficiente
+title CU-69 — Registrando cierre de trabajo de reparación (excepción 1: saldo de consumible insuficiente o NS inválido)
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style>
+sequenceDiagram {
+  participant {
+    margin 30
+  }
+  actor {
+    margin 12
+  }
+}
+</style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "G3 (FSM) — cierre de OT" as g3
+participant "C_IntegracionesController" as ctrl
+participant "C_IntegracionesService" as svc
+participant "C_TypeORM (transacción)" as orm
+participant "unidad_equipo" as uent
+participant "tipo_equipo" as tent
+participant "inventario_personal_tecnico" as invp
+participant "cierre_reparacion" as crep
+
+g3 -> ctrl : POST /api/integraciones/ordenes/125/cierre\n{ equipos_retirados: ['NS-NO-EXISTE'],\nmateriales: [{ id_tipo_equipo: 7, cantidad: 5 }] }
+activate ctrl
+ctrl -> svc : recibirCierreOt(125, payload, integracion)
+activate svc
+
+svc -> orm : startTransaction() · INSERT integracion_cierre
+activate orm
+
+group NS inválido: no existe en la empresa
+  svc -> orm : SELECT unidad_equipo WHERE numero_serie = 'NS-NO-EXISTE'
+  orm -> uent : consulta
+  activate uent
+  uent --> orm : sin filas
+  deactivate uent
+  svc -> svc : discrepancia SERIE_NO_EXISTE\n(ninguna unidad cambia de estado)
+end
+
+group Saldo insuficiente del consumible (CU-68)
+  svc -> orm : SELECT tipo_equipo WHERE id_tipo_equipo = 7
+  orm -> tent : consulta
+  activate tent
+  tent --> orm : tipo 'Fibra drop QA' · unidad 'Metro'
+  deactivate tent
+  svc -> orm : InventarioPersonalService.descontarHasta(...)\nSELECT inventario_personal_tecnico FOR UPDATE
+  orm -> invp : consulta con bloqueo de fila
+  activate invp
+  invp --> orm : saldo 2 Metro < 5 declarados
+  deactivate invp
+  svc -> orm : UPDATE inventario_personal_tecnico SET cantidad = 0\n(se descuenta lo disponible; faltante 3 Metro)
+  svc -> svc : discrepancia SALDO_INSUFICIENTE_AJUSTADO:\n'Saldo insuficiente de [Fibra drop QA]: disponible 2 Metro,\ndeclarado 5 Metro. Se descontó lo disponible y el faltante\nquedó como ajuste.'
+end
+
+note right of svc
+  Acuerdo con G3 (integraciones.md §3.3, Opción A):
+  el cierre nunca se rechaza; cada ítem con problema
+  queda como discrepancia para revisión manual
+end note
+
+svc -> orm : INSERT cierre_reparacion\n(el consumible ajustado queda con descontado: false y su detalle)
+orm -> crep : registro insertado
+svc -> orm : commitTransaction()
+orm --> svc : transacción confirmada
+deactivate orm
+
+svc --> ctrl : 200 { estado_proceso: 'PROCESADO_CON_DISCREPANCIAS',\ndiscrepancias: [SERIE_NO_EXISTE, SALDO_INSUFICIENTE_AJUSTADO],\nid_cierre_reparacion }
+deactivate svc
+ctrl --> g3 : 200 OK
+deactivate ctrl
+
+note over g3 : En el flujo propio de la UI (cierre desde el sistema, CU-63/CU-68)\nla misma validación se muestra como error y no permite confirmar
+
+@enduml

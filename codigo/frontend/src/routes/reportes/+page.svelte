@@ -1,14 +1,14 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { getCatalog, getEmpresas, getUsers, getWarehouses, generarReporteGarantias, generarReporteMovimientos, generarReporteInventarioTecnicos, generarReporteConsumo } from '$lib/api/index';
+	import { getCatalog, getEmpresas, getUsers, getWarehouses, generarReporteGarantias, generarReporteMovimientos, generarReporteInventarioTecnicos, generarReporteConsumo, exportarReportePdf } from '$lib/api/index';
 	import type { Bodega, Empresa, ReporteConsumoFila, ReporteGarantiaFila, ReporteInventarioTecnico, ReporteMovimientoFila, TipoEquipo, Usuario } from '$lib/types';
 	import Badge from '$lib/components/Badge.svelte';
 	import Button from '$lib/components/Button.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import SearchInput from '$lib/components/SearchInput.svelte';
 	import { userRoles, currentUser } from '$lib/stores/auth';
-	import { Filter, RotateCw } from '@lucide/svelte';
+	import { Filter, RotateCw, FileDown } from '@lucide/svelte';
 
 	const tiposMovimiento = [
 		'INGRESO', 'ASIGNACION', 'SALIDA_A_TECNICO', 'DEVOLUCION', 'BAJA',
@@ -58,6 +58,35 @@
 	const fechasIncoherentes = $derived(filters.fecha_desde && filters.fecha_hasta && filters.fecha_desde > filters.fecha_hasta);
 	const consumoRangoInvalido = $derived(consumoFilters.fecha_desde && consumoFilters.fecha_hasta && differenceInDays(consumoFilters.fecha_desde, consumoFilters.fecha_hasta) > 365);
 	const consumoFechasIncoherentes = $derived(consumoFilters.fecha_desde && consumoFilters.fecha_hasta && consumoFilters.fecha_desde > consumoFilters.fecha_hasta);
+
+	// CU-93: exportación a PDF del reporte visible, con los filtros de su pestaña.
+	let exportando = $state(false);
+	let errorExportacion = $state('');
+
+	const filtrosDeLaPestana = $derived.by(() => {
+		if (activeTab === 'movimientos') return filters;
+		if (activeTab === 'garantias') return garantiaFilters;
+		if (activeTab === 'inventario-tecnicos') return inventarioTecnicosFilters;
+		return consumoFilters;
+	});
+
+	const tipoReportePdf = $derived(
+		activeTab === 'inventario-tecnicos' ? 'tecnicos-inventario' : activeTab
+	);
+
+	async function exportarPdf() {
+		exportando = true;
+		errorExportacion = '';
+		try {
+			await exportarReportePdf(tipoReportePdf, { ...filtrosDeLaPestana });
+		} catch (err: unknown) {
+			// Excepción 1: el backend responde 408 si la generación pasa de 15 segundos.
+			errorExportacion =
+				err instanceof Error ? err.message : 'No se pudo exportar el reporte a PDF.';
+		} finally {
+			exportando = false;
+		}
+	}
 
 	function differenceInDays(from: string, to: string) {
 		return (Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86400000;
@@ -266,8 +295,17 @@
 	{#if activeTab === 'movimientos'}
 		<div class="flex items-center justify-between mb-6">
 			<div><h2 class="text-lg font-semibold text-foreground">Movimientos</h2></div>
-			<Button variant="secondary" onclick={loadReport}><RotateCw class="h-4 w-4" />Actualizar</Button>
+			<div class="flex gap-2">
+				<Button variant="secondary" onclick={loadReport}><RotateCw class="h-4 w-4" />Actualizar</Button>
+				<!-- CU-93: exporta a PDF lo que está visible, con los mismos filtros -->
+				<Button variant="secondary" onclick={exportarPdf} disabled={exportando}>
+					<FileDown class="h-4 w-4" />{exportando ? 'Exportando...' : 'Exportar a PDF'}
+				</Button>
+			</div>
 		</div>
+		{#if errorExportacion}
+			<div class="bg-red-50 border border-red-200 text-destructive rounded-md p-4 text-sm mb-4">{errorExportacion}</div>
+		{/if}
 
 		<div class="bg-white border border-border rounded-lg p-4 mb-6">
 			<div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
@@ -290,8 +328,17 @@
 	{:else if activeTab === 'garantias'}
 		<div class="flex items-center justify-between mb-6">
 			<div><h2 class="text-lg font-semibold text-foreground">Garantías</h2></div>
-			<Button variant="secondary" onclick={loadGarantiaReport}><RotateCw class="h-4 w-4" />Actualizar</Button>
+			<div class="flex gap-2">
+				<Button variant="secondary" onclick={loadGarantiaReport}><RotateCw class="h-4 w-4" />Actualizar</Button>
+				<!-- CU-93: exporta a PDF lo que está visible, con los mismos filtros -->
+				<Button variant="secondary" onclick={exportarPdf} disabled={exportando}>
+					<FileDown class="h-4 w-4" />{exportando ? 'Exportando...' : 'Exportar a PDF'}
+				</Button>
+			</div>
 		</div>
+		{#if errorExportacion}
+			<div class="bg-red-50 border border-red-200 text-destructive rounded-md p-4 text-sm mb-4">{errorExportacion}</div>
+		{/if}
 
 		<div class="bg-white border border-border rounded-lg p-4 mb-6">
 			<div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
@@ -385,8 +432,17 @@
 	{:else if activeTab === 'inventario-tecnicos'}
 		<div class="flex items-center justify-between mb-6">
 			<div><h2 class="text-lg font-semibold text-foreground">Inventario de técnicos</h2></div>
-			<Button variant="secondary" onclick={loadInventarioTecnicosReport}><RotateCw class="h-4 w-4" />Actualizar</Button>
+			<div class="flex gap-2">
+				<Button variant="secondary" onclick={loadInventarioTecnicosReport}><RotateCw class="h-4 w-4" />Actualizar</Button>
+				<!-- CU-93: exporta a PDF lo que está visible, con los mismos filtros -->
+				<Button variant="secondary" onclick={exportarPdf} disabled={exportando}>
+					<FileDown class="h-4 w-4" />{exportando ? 'Exportando...' : 'Exportar a PDF'}
+				</Button>
+			</div>
 		</div>
+		{#if errorExportacion}
+			<div class="bg-red-50 border border-red-200 text-destructive rounded-md p-4 text-sm mb-4">{errorExportacion}</div>
+		{/if}
 
 		<div class="bg-white border border-border rounded-lg p-4 mb-6">
 			<div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
@@ -446,8 +502,17 @@
 	{:else}
 		<div class="flex items-center justify-between mb-6">
 			<div><h2 class="text-lg font-semibold text-foreground">Consumo de consumibles</h2></div>
-			<Button variant="secondary" onclick={loadConsumoReport}><RotateCw class="h-4 w-4" />Actualizar</Button>
+			<div class="flex gap-2">
+				<Button variant="secondary" onclick={loadConsumoReport}><RotateCw class="h-4 w-4" />Actualizar</Button>
+				<!-- CU-93: exporta a PDF lo que está visible, con los mismos filtros -->
+				<Button variant="secondary" onclick={exportarPdf} disabled={exportando}>
+					<FileDown class="h-4 w-4" />{exportando ? 'Exportando...' : 'Exportar a PDF'}
+				</Button>
+			</div>
 		</div>
+		{#if errorExportacion}
+			<div class="bg-red-50 border border-red-200 text-destructive rounded-md p-4 text-sm mb-4">{errorExportacion}</div>
+		{/if}
 
 		<div class="bg-white border border-border rounded-lg p-4 mb-6">
 			<div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">

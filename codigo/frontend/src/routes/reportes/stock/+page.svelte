@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { getEmpresas, generarReporteStock, getWarehouses, getCatalog } from '$lib/api/index';
+	import { getEmpresas, generarReporteStock, getWarehouses, getCatalog, exportarReportePdf } from '$lib/api/index';
 	import type { Bodega, Empresa, ReporteStockFila, TipoEquipo } from '$lib/types';
 	import Button from '$lib/components/Button.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import { userRoles, currentUser } from '$lib/stores/auth';
-	import { RotateCw, Filter } from '@lucide/svelte';
+	import { RotateCw, Filter, FileDown } from '@lucide/svelte';
 
 	let filas = $state<ReporteStockFila[]>([]);
 	let empresas = $state<Empresa[]>([]);
@@ -51,6 +51,24 @@
 			tipos = await getCatalog();
 		} catch {
 			tipos = [];
+		}
+	}
+
+	// CU-93: exporta a PDF el reporte visible, con los mismos filtros.
+	let exportando = $state(false);
+	let errorExportacion = $state('');
+
+	async function exportarPdf() {
+		exportando = true;
+		errorExportacion = '';
+		try {
+			await exportarReportePdf('stock', { ...filters });
+		} catch (err: unknown) {
+			// Excepción 1: el backend responde 408 si la generación pasa de 15 segundos.
+			errorExportacion =
+				err instanceof Error ? err.message : 'No se pudo exportar el reporte a PDF.';
+		} finally {
+			exportando = false;
 		}
 	}
 
@@ -104,8 +122,17 @@
 				<RotateCw class="h-4 w-4" />
 				Actualizar
 			</Button>
+			<!-- CU-93: exporta a PDF lo que está visible, con los mismos filtros -->
+			<Button variant="secondary" onclick={exportarPdf} disabled={exportando}>
+				<FileDown class="h-4 w-4" />
+				{exportando ? 'Exportando...' : 'Exportar a PDF'}
+			</Button>
 		</div>
 	</div>
+
+	{#if errorExportacion}
+		<div class="bg-red-50 border border-red-200 text-destructive rounded-md p-4 text-sm mb-4">{errorExportacion}</div>
+	{/if}
 
 	<div class="bg-white border border-border rounded-lg p-4 mb-6">
 		<div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">

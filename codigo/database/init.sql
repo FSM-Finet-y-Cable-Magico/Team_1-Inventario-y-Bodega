@@ -297,6 +297,43 @@ CREATE TABLE IF NOT EXISTS integracion_cierre (
     fecha_proceso       TIMESTAMPTZ DEFAULT now()
 );
 
+-- CU-69: cierre de trabajo de reparación (parte de inventario del cierre de OT de G3)
+CREATE TABLE IF NOT EXISTS cierre_reparacion (
+    id_cierre_reparacion SERIAL PRIMARY KEY,
+    id_cierre            INTEGER,
+    id_ot                INTEGER NOT NULL,
+    id_empresa           INTEGER NOT NULL,
+    id_tecnico           INTEGER,
+    rut_cliente          VARCHAR(12),
+    direccion_servicio   VARCHAR(200),
+    falla_reportada      VARCHAR(300) NOT NULL,
+    solucion_aplicada    VARCHAR(300) NOT NULL,
+    resultado            VARCHAR(30) NOT NULL,
+    resuelto_remotamente BOOLEAN NOT NULL DEFAULT false,
+    categoria_falla      VARCHAR(120),
+    equipos_retirados    JSONB,
+    equipos_instalados   JSONB,
+    consumibles          JSONB,
+    codigo_trabajo       VARCHAR(10),
+    fecha_cierre         TIMESTAMPTZ,
+    fecha_registro       TIMESTAMPTZ DEFAULT now()
+);
+
+-- CU-70: borrador del cierre preparado por el técnico con el catálogo T-01..T-10
+CREATE TABLE IF NOT EXISTS borrador_cierre (
+    id_borrador         SERIAL PRIMARY KEY,
+    id_ot               INTEGER NOT NULL,
+    id_empresa          INTEGER NOT NULL,
+    id_tecnico          INTEGER NOT NULL,
+    codigo_trabajo      VARCHAR(10),
+    falla_reportada     VARCHAR(300),
+    solucion_aplicada   VARCHAR(300),
+    resultado           VARCHAR(30),
+    categoria_falla     VARCHAR(120),
+    fecha_actualizacion TIMESTAMPTZ DEFAULT now(),
+    CONSTRAINT uq_borrador_cierre_ot UNIQUE (id_ot, id_empresa)
+);
+
 -- Salidas de bodega a técnico (CU-57/59/60/62)
 CREATE TABLE IF NOT EXISTS salida_bodega (
     id_salida           SERIAL PRIMARY KEY,
