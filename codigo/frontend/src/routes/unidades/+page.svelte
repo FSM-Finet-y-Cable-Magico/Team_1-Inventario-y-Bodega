@@ -42,6 +42,8 @@
 	const roles = $derived($userRoles);
 	const puedeCrearUnidad = $derived(roles.some((r) => ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'].includes(r)));
 	const puedeVerEnRevision = $derived(roles.some((r) => ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'].includes(r)));
+	// CU-71: la devolución desde cliente la registran los 4 roles
+	const puedeRegistrarDevolucion = $derived(roles.some((r) => ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA', 'TECNICO_TERRENO'].includes(r)));
 	const puedeEditarConsumible = $derived(roles.some((r) => ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'].includes(r)));
 	let createError = $state('');
 	let creating = $state(false);
@@ -163,6 +165,11 @@
 				<RotateCw class="h-4 w-4" />
 				Actualizar
 			</Button>
+			{#if puedeRegistrarDevolucion}
+				<Button variant="secondary" onclick={() => goto('/unidades/devolucion')}>
+					Devolución desde cliente
+				</Button>
+			{/if}
 			{#if puedeVerEnRevision}
 				<Button variant="secondary" onclick={() => goto('/unidades/en-revision')}>
 					Equipos en revisión

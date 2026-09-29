@@ -6,7 +6,7 @@
 		getUnit, changeUnitState, getUnitHistory, getWarehouses, updateUnit,
 		registrarBaja, registrarDonacion, validarDatosDonacion,
 		registrarResultadoRevision, reacondicionarUnidad, enviarAReparacionExterna, registrarRetornoReparacion,
-		getCierresReparacion
+		getCierresReparacion, esAvisoGarantia
 	} from '$lib/api/index';
 	import { userRoles } from '$lib/stores/auth';
 	import type { UnidadEquipo, HistorialEstado, EstadoUnidad, Bodega, CierreReparacion } from '$lib/types';
@@ -89,8 +89,10 @@
 	});
 	let resultadoError = $state('');
 	let resultadoGuardando = $state(false);
-	// E1: aviso de garantía vigente al intentar dar de baja
-	let showConfirmGarantia = $state(false);
+	// CU-95: aviso de garantía vigente (lo devuelve el backend con 409) al registrar
+	// 'Dado de baja' o 'En revisión'; "Continuar sin garantía" reenvía con confirmación
+	// explícita y "Cancelar" no envía nada más (Excepción 1)
+	let avisoGarantia = $state<{ mensaje: string; continuar: () => void } | null>(null);
 
 	// CU-74: reacondicionar equipo "En revisión" directo a "En bodega" (atajo del resultado Operativo de CU-72)
 	let showReacondicionar = $state(false);
@@ -293,7 +295,7 @@
 		showConfirmBaja = true;
 	}
 
-	async function handleBaja() {
+	async function handleBaja(forzarAvisoGarantia = false) {
 		if (!unit) return;
 		showConfirmBaja = false;
 		registrandoBaja = true;
@@ -301,7 +303,9 @@
 			const resultado = await registrarBaja({
 				id_unidad: unit.id_unidad,
 				motivo: bajaForm.motivo,
-				descripcion_otro: bajaForm.motivo === 'Otro' ? bajaForm.descripcion_otro.trim() : undefined
+				descripcion_otro: bajaForm.motivo === 'Otro' ? bajaForm.descripcion_otro.trim() : undefined,
+				// CU-95: el actor eligió "Continuar sin garantía"
+				...(forzarAvisoGarantia ? { forzar_aviso_garantia: true } : {})
 			});
 			// CU-80: con el motivo de donación, la baja continúa registrando la
 			// donación del equipo recién dado de baja (el backend exige que ya lo esté)
@@ -323,6 +327,11 @@
 			success = (resultado?.message ?? 'Baja definitiva registrada correctamente') + mensajeDonacion;
 			await load();
 		} catch (err: unknown) {
+			// CU-78 Excepción 2 / CU-95: aviso de garantía vigente antes de ejecutar la baja
+			if (esAvisoGarantia(err)) {
+				avisoGarantia = { mensaje: err.message, continuar: () => handleBaja(true) };
+				return;
+			}
 			const mensaje = err instanceof Error ? err.message : 'Error al registrar la baja definitiva';
 			// La baja es irreversible: si falló el registro de la donación hay que
 			// avisar que el equipo ya quedó dado de baja
@@ -335,7 +344,7 @@
 		}
 	}
 
-	async function handleChangeState() {
+	async function handleChangeState(forzarAvisoGarantia = false) {
 		if (!unit) return;
 		changeError = '';
 		changing = true;
@@ -359,19 +368,25 @@
 			if (isDev && changeForm.simularErrorHistorial) {
 				payload.simularErrorHistorial = true;
 			}
+			// CU-95: el actor eligió "Continuar sin garantía"
+			if (forzarAvisoGarantia) payload.forzar_aviso_garantia = true;
 			await changeUnitState(unit.id_unidad, payload);
 			showChangeState = false;
 			success = 'Estado actualizado correctamente';
 			changeForm = { estado_nuevo: '', diagnostico: '', motivoPayload: '', observacion: '', ubicacion_fisica: '', simularErrorHistorial: false };
 			await load();
 		} catch (err: unknown) {
+			if (esAvisoGarantia(err)) {
+				avisoGarantia = { mensaje: err.message, continuar: () => handleChangeState(true) };
+				return;
+			}
 			changeError = err instanceof Error ? err.message : 'Error al cambiar estado';
 		} finally {
 			changing = false;
 		}
 	}
 
-	async function enviarResultadoRevision(confirmarGarantia = false) {
+	async function enviarResultadoRevision(forzarAvisoGarantia = false) {
 		if (!unit || !resultadoForm.resultado) return;
 		resultadoError = '';
 		resultadoGuardando = true;
@@ -386,16 +401,19 @@
 				payload.descripcion_falla = resultadoForm.descripcion_falla.trim();
 			} else if (resultadoForm.resultado === 'BAJA') {
 				payload.motivo = resultadoForm.motivo.trim();
-				if (confirmarGarantia) payload.confirmar_garantia = true;
+				// CU-72 Excepción 1 / CU-95: el actor eligió "Continuar sin garantía"
+				if (forzarAvisoGarantia) payload.forzar_aviso_garantia = true;
 			}
 			await registrarResultadoRevision(unit.id_unidad, payload);
 			showResultado = false;
-			showConfirmGarantia = false;
 			success = 'Resultado de revisión registrado correctamente';
 			resultadoForm = { resultado: '', id_bodega_actual: 0, ubicacion_fisica: '', nombre_receptor: '', fecha_retorno_estimada: '', descripcion_falla: '', motivo: '' };
 			await load();
 		} catch (err: unknown) {
-			showConfirmGarantia = false;
+			if (esAvisoGarantia(err)) {
+				avisoGarantia = { mensaje: err.message, continuar: () => enviarResultadoRevision(true) };
+				return;
+			}
 			resultadoError = err instanceof Error ? err.message : 'Error al registrar el resultado';
 		} finally {
 			resultadoGuardando = false;
@@ -403,11 +421,8 @@
 }
 
 function handleSubmitResultado() {
-	// E1: si es Baja y el equipo tiene garantía vigente, primero se pide confirmación
-	if (resultadoForm.resultado === 'BAJA' && unit?.garantia?.garantia_vigente) {
-		showConfirmGarantia = true;
-		return;
-	}
+	// E1: si es Baja y el equipo tiene garantía vigente, el backend responde el
+	// aviso de CU-95 y se pide confirmación antes de reenviar
 	enviarResultadoRevision(false);
 }
 
@@ -464,7 +479,7 @@ async function handleEnviarReparacionExterna() {
 }
 
 // CU-76: registrar retorno de reparación externa
-async function handleRegistrarRetorno() {
+async function handleRegistrarRetorno(forzarAvisoGarantia = false) {
 	if (!unit) return;
 	// E1: mensaje exacto del CU, no permite confirmar con observación corta
 	if (retornoForm.observacion.trim().length < 5) {
@@ -476,13 +491,19 @@ async function handleRegistrarRetorno() {
 	try {
 		await registrarRetornoReparacion(unit.id_unidad, {
 			resultado: retornoForm.resultado,
-			observacion: retornoForm.observacion.trim()
+			observacion: retornoForm.observacion.trim(),
+			// CU-95: el actor eligió "Continuar sin garantía"
+			...(forzarAvisoGarantia ? { forzar_aviso_garantia: true } : {})
 		});
 		showRetorno = false;
 		success = 'Retorno de reparación externa registrado correctamente';
 		retornoForm = { resultado: '', observacion: '' };
 		await load();
 	} catch (err: unknown) {
+		if (esAvisoGarantia(err)) {
+			avisoGarantia = { mensaje: err.message, continuar: () => handleRegistrarRetorno(true) };
+			return;
+		}
 		retornoError = err instanceof Error ? err.message : 'Error al registrar el retorno';
 	} finally {
 		registrandoRetorno = false;
@@ -930,22 +951,16 @@ async function handleRegistrarRetorno() {
 </Modal>
 
 <!-- CU-78: confirmación fuerte de una operación irreversible; con garantía vigente
-     (Excepción 2) el aviso permite continuar de todas formas o cancelar -->
+     (Excepción 2) el backend responde el aviso unificado de CU-95 -->
 <ConfirmDialog
 	open={showConfirmBaja}
-	title={unit?.garantia?.garantia_vigente ? 'Equipo con garantía vigente' : 'Confirmar baja definitiva'}
-	message={unit?.garantia?.garantia_vigente
-		? `El equipo ${unit?.numero_serie} tiene garantía vigente hasta ${fmtFecha(unit?.fecha_venc_garantia)}. La baja definitiva es irreversible. ¿Desea continuar de todas formas?`
-		: pasoDonacion
-			? `El equipo ${unit?.numero_serie} quedará dado de baja de forma irreversible y se registrará su donación a ${donacionForm.nombre_institucion.trim()}. ¿Confirma la operación?`
-			: `El equipo ${unit?.numero_serie} quedará dado de baja de forma irreversible. ¿Confirma la operación?`}
-	confirmlabel={unit?.garantia?.garantia_vigente
-		? 'Continuar de todas formas'
-		: pasoDonacion
-			? 'Registrar baja y donación'
-			: 'Registrar baja'}
+	title="Confirmar baja definitiva"
+	message={pasoDonacion
+		? `El equipo ${unit?.numero_serie} quedará dado de baja de forma irreversible y se registrará su donación a ${donacionForm.nombre_institucion.trim()}. ¿Confirma la operación?`
+		: `El equipo ${unit?.numero_serie} quedará dado de baja de forma irreversible. ¿Confirma la operación?`}
+	confirmlabel={pasoDonacion ? 'Registrar baja y donación' : 'Registrar baja'}
 	cancellabel="Cancelar"
-	onconfirm={handleBaja}
+	onconfirm={() => handleBaja()}
 	oncancel={() => (showConfirmBaja = false)}
 />
 
@@ -1293,14 +1308,19 @@ async function handleRegistrarRetorno() {
 	</form>
 </Modal>
 
-<!-- CU-72 Excepción 1: aviso de garantía vigente antes de dar de baja -->
+<!-- CU-95 (y CU-72 Excepción 1 / CU-78 Excepción 2): aviso de garantía vigente
+     al registrar 'Dado de baja' o 'En revisión'. Cancelar no envía nada (Excepción 1) -->
 <ConfirmDialog
-	open={showConfirmGarantia}
+	open={avisoGarantia !== null}
 	title="Garantía vigente"
-	message="El equipo tiene garantía vigente. ¿Desea continuar de todas formas con la baja?"
-	confirmlabel="Continuar"
+	message={avisoGarantia?.mensaje ?? ''}
+	confirmlabel="Continuar sin garantía"
 	cancellabel="Cancelar"
 	variant="destructive"
-	onconfirm={() => enviarResultadoRevision(true)}
-	oncancel={() => (showConfirmGarantia = false)}
+	onconfirm={() => {
+		const continuar = avisoGarantia?.continuar;
+		avisoGarantia = null;
+		continuar?.();
+	}}
+	oncancel={() => (avisoGarantia = null)}
 />

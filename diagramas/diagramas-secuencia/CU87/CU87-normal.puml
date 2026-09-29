@@ -1,0 +1,69 @@
+@startuml CU87-normal
+title CU-87 — Generando reporte de equipos instalados por cliente (flujo normal)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+<style>
+sequenceDiagram {
+  participant { Margin 25 }
+  actor { Margin 20 }
+}
+</style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega / Administrador / Superusuario" as user
+participant "V_ReportesEquiposCliente" as view
+participant "C_ReportesController" as ctrl
+participant "C_ReportesService" as svc
+participant "C_ClientesG3Service" as g3svc
+participant "G3_API_Clientes" as g3api
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as uent
+participant "log_auditoria" as aent
+
+user -> view : Ingresa criterio (RUT, nombre y/o NS) y pulsa Buscar
+activate view
+view -> ctrl : GET /api/reportes/equipos-instalados\n?rut=&nombre=&numero_serie=
+activate ctrl
+ctrl -> svc : getEquiposInstaladosReport(filtros, req.user)
+activate svc
+svc -> svc : Valida rol, aislamiento por empresa y formato de criterios
+alt Filtro por RUT o Nombre especificado
+  svc -> g3svc : Consultar clientes externos
+  activate g3svc
+  g3svc -> g3api : GET /clientes/rut/{rut} o /clientes?busqueda={texto}
+  activate g3api
+  g3api --> g3svc : 200 OK: Lista de clientes (RUT, nombre, dirección)
+  deactivate g3api
+  g3svc --> svc : Mapa de clientes normalizados
+  deactivate g3svc
+end
+
+svc -> orm : Consulta unidades con estado 'Instalado en cliente'
+activate orm
+orm -> uent : SELECT unidad_equipo WHERE estado = 'Instalado en cliente'
+activate uent
+uent --> orm : Unidades instaladas
+deactivate uent
+orm --> svc : Lista de unidades instaladas
+deactivate orm
+
+svc -> svc : Cruza unidades con clientes G3 / datos locales\n(formatea SRV-YYYY-XXXXX, fecha DD/MM/YYYY)
+svc -> aent : INSERT log_auditoria\n(GENERAR_REPORTE, reporte_equipos_instalados)
+activate aent
+aent --> svc : Auditoría registrada
+deactivate aent
+
+svc --> ctrl : 200 OK: Filas del reporte (8 columnas)
+deactivate svc
+ctrl --> view : 200 OK: Filas del reporte
+deactivate ctrl
+view --> user : Renderiza tabla con 8 columnas requeridas
+deactivate view
+
+@enduml

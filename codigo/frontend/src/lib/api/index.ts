@@ -1,5 +1,7 @@
 import { api } from './client';
-import type { LoginDto, LoginResponse, Usuario, EquipoEnRevision, VerificacionSerie, ItemSalida, SalidaResumen, InventarioTecnico, JornadaTecnico, ReporteStock, AlertaActiva, NotificacionesNoLeidas } from '$lib/types';
+// CU-95: detección del 409 de aviso de garantía vigente
+export { esAvisoGarantia } from './client';
+import type { LoginDto, LoginResponse, Usuario, EquipoEnRevision, EquipoDevolucion, VerificacionSerie, ItemSalida, SalidaResumen, InventarioTecnico, JornadaTecnico, ReporteStock, AlertaActiva, NotificacionesNoLeidas } from '$lib/types';
 
 export async function login(dto: LoginDto): Promise<LoginResponse> {
 	return api.post<LoginResponse>('/auth/login', dto);
@@ -150,9 +152,22 @@ export function registrarRetornoReparacion(id: number, data: Record<string, unkn
 	return api.post<any>(`/unidades/${id}/retorno-reparacion`, data);
 }
 
+// CU-71: buscar equipo por NS para la devolución (valida "Instalado en cliente")
+export function getEquipoParaDevolucion(numeroSerie: string) {
+	return api.get<EquipoDevolucion>(`/unidades/devolucion/${encodeURIComponent(numeroSerie)}`);
+}
+
+// CU-71: registrar devolución de equipo desde cliente (equipo → "En revisión")
+export function registrarDevolucion(
+	id: number,
+	data: { fecha_devolucion: string; estado_visual: string; nombre_tecnico_retiro: string; id_bodega_destino: number; forzar_aviso_garantia?: boolean }
+) {
+	return api.post<any>(`/unidades/${id}/devolucion`, data);
+}
+
 // CU-78: registrar baja definitiva (ADMIN/SUPERUSUARIO/ADMIN_BODEGA la aplican
 // directo; el técnico de terreno genera una solicitud pendiente de aprobación)
-export function registrarBaja(data: { id_unidad: number; motivo: string; descripcion_otro?: string }) {
+export function registrarBaja(data: { id_unidad: number; motivo: string; descripcion_otro?: string; forzar_aviso_garantia?: boolean }) {
 	return api.post<any>('/bajas', data);
 }
 
@@ -236,7 +251,7 @@ export function registrarPrestamo(data: {
 // CU-82: retorno total o parcial de un préstamo externo
 export function registrarRetornoPrestamo(
 	id: number,
-	data: { fecha_retorno: string; observacion?: string; items: { id_detalle?: number; numero_serie?: string; cantidad?: number }[] }
+	data: { fecha_retorno: string; observacion?: string; items: { id_detalle?: number; numero_serie?: string; cantidad?: number }[]; forzar_aviso_garantia?: boolean }
 ) {
 	return api.post<any>(`/prestamos/${id}/retorno`, data);
 }
@@ -338,6 +353,62 @@ export function generarReporteConsumo(params?: { id_empresa?: string; id_tipo_eq
 	if (params?.fecha_hasta) qs.set('fecha_hasta', params.fecha_hasta);
 	const query = qs.toString();
 	return api.get<import('$lib/types').ReporteConsumoFila[]>(`/reportes/consumo${query ? '?' + query : ''}`);
+}
+
+// CU-87: reporte de equipos instalados por cliente
+export function generarReporteEquiposInstalados(params?: {
+	rut?: string;
+	nombre?: string;
+	numero_serie?: string;
+	id_empresa?: string;
+}) {
+	const qs = new URLSearchParams();
+	if (params?.rut) qs.set('rut', params.rut);
+	if (params?.nombre) qs.set('nombre', params.nombre);
+	if (params?.numero_serie) qs.set('numero_serie', params.numero_serie);
+	if (params?.id_empresa) qs.set('id_empresa', params.id_empresa);
+	const query = qs.toString();
+	return api.get<import('$lib/types').ReporteEquiposInstaladosFila[]>(
+		`/reportes/equipos-instalados${query ? '?' + query : ''}`,
+	);
+}
+
+// CU-90: reporte de productividad de técnicos
+export function generarReporteProductividadTecnicos(params?: {
+	id_empresa?: string;
+	id_tecnico?: string;
+	fecha_desde?: string;
+	fecha_hasta?: string;
+}) {
+	const qs = new URLSearchParams();
+	if (params?.id_empresa) qs.set('id_empresa', params.id_empresa);
+	if (params?.id_tecnico) qs.set('id_tecnico', params.id_tecnico);
+	if (params?.fecha_desde) qs.set('fecha_desde', params.fecha_desde);
+	if (params?.fecha_hasta) qs.set('fecha_hasta', params.fecha_hasta);
+	const query = qs.toString();
+	return api.get<import('$lib/types').ReporteProductividadTecnicoFila[]>(
+		`/reportes/tecnicos/productividad${query ? '?' + query : ''}`,
+	);
+}
+
+// CU-92: exportar reporte visible a Excel (.xlsx) compatible con Excel 2016+ y Calc 7.0+
+export function exportarReporteExcel(
+	tipo: string,
+	params?: Record<string, string | number | boolean | undefined | null>,
+	timeoutMs: number = 15000,
+) {
+	const qs = new URLSearchParams();
+	qs.set('tipo', tipo);
+	if (params) {
+		for (const [key, value] of Object.entries(params)) {
+			if (value !== undefined && value !== null && value !== '') {
+				qs.set(key, String(value));
+			}
+		}
+	}
+	const query = qs.toString();
+	const fallbackName = `reporte-${tipo}.xlsx`;
+	return api.download(`/reportes/exportar/excel?${query}`, fallbackName, timeoutMs);
 }
 
 // CU-23: filtros por estado, rango de fechas o empresa

@@ -1,0 +1,59 @@
+@startuml CU71-exc-estado-no-permitido
+title CU-71 — Registrando devolución de equipo desde cliente\n(excepción 1: el equipo no está en estado 'Instalado en cliente')
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Técnico de terreno /\nAdministrador de bodega /\nAdministrador / Superusuario" as user
+participant "V_DevolucionEquipo" as view
+participant "C_UnitsController" as ctrl
+participant "C_UnitsService" as svc
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as uent
+
+user -> view : Ingresa el NS de un equipo que NO está\n"Instalado en cliente" y presiona "Buscar"
+activate view
+
+view -> ctrl : GET /unidades/devolucion/:numeroSerie
+activate ctrl
+
+ctrl -> svc : consultarParaDevolucion(numeroSerie, actor)
+activate svc
+
+svc -> orm : findOne(numero_serie, id_empresa)
+activate orm
+orm -> uent : SELECT unidad_equipo\nWHERE numero_serie = :ns AND id_empresa = :idEmpresa
+activate uent
+uent --> orm : Datos unidad (estado = p. ej. 'En bodega')
+deactivate uent
+orm --> svc : unidad (existe)
+deactivate orm
+
+svc -> svc : estado !== 'Instalado en cliente' → true
+activate svc
+deactivate svc
+
+svc --> ctrl : throw BadRequestException\n('Transición de estado no permitida para este\nequipo. Estado actual: [ESTADO].')
+deactivate svc
+ctrl --> view : 400 Bad Request
+deactivate ctrl
+
+view --> user : Muestra: 'Transición de estado no permitida\npara este equipo. Estado actual: En bodega.'\n(no se muestra el formulario de devolución)
+deactivate view
+
+note over view, svc
+  Defensa en profundidad: POST /unidades/:id/devolucion vuelve a
+  validar el estado y responde el mismo mensaje (p. ej. si el equipo
+  ya fue devuelto: 'Estado actual: En revisión.'). No se modifica la
+  unidad ni se registra historial ni auditoría.
+end note
+
+@enduml
