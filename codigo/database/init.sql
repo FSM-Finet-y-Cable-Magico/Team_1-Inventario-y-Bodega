@@ -230,27 +230,6 @@ CREATE TABLE IF NOT EXISTS donacion_detalle (
     CONSTRAINT fk_donacion_detalle_unidad   FOREIGN KEY (id_unidad)   REFERENCES unidad_equipo (id_unidad)
 );
 
--- CU-81/CU-82: ítems y retornos de los préstamos externos por lote
-CREATE TABLE IF NOT EXISTS prestamo_detalle (
-    id_detalle         SERIAL PRIMARY KEY,
-    id_prestamo        INTEGER NOT NULL,
-    id_unidad          INTEGER,
-    id_tipo_equipo     INTEGER,
-    cantidad           NUMERIC(10,2),
-    cantidad_retornada NUMERIC(10,2) DEFAULT 0,
-    CONSTRAINT fk_prestamo_detalle_prestamo FOREIGN KEY (id_prestamo) REFERENCES prestamo_externo (id_prestamo) ON DELETE CASCADE,
-    CONSTRAINT fk_prestamo_detalle_unidad   FOREIGN KEY (id_unidad)   REFERENCES unidad_equipo (id_unidad)
-);
-CREATE TABLE IF NOT EXISTS prestamo_retorno (
-    id_retorno     SERIAL PRIMARY KEY,
-    id_detalle     INTEGER NOT NULL,
-    cantidad       NUMERIC(10,2),
-    fecha_retorno  TIMESTAMPTZ NOT NULL,
-    observacion    VARCHAR(300),
-    id_usuario     INTEGER NOT NULL,
-    CONSTRAINT fk_prestamo_retorno_detalle FOREIGN KEY (id_detalle) REFERENCES prestamo_detalle (id_detalle) ON DELETE CASCADE
-);
-
 -- Stock de consumibles por bodega
 CREATE TABLE IF NOT EXISTS stock_consumible (
     id_stock             SERIAL PRIMARY KEY,
@@ -280,6 +259,28 @@ CREATE TABLE IF NOT EXISTS prestamo_externo (
     -- CU-81: préstamos por lote sobre la misma cabecera
     correlativo             VARCHAR(12) UNIQUE,
     id_bodega_origen        INTEGER
+);
+
+-- CU-81/CU-82: ítems y retornos de los préstamos externos por lote.
+-- La tabla detalle va después de prestamo_externo porque depende de su PK.
+CREATE TABLE IF NOT EXISTS prestamo_detalle (
+    id_detalle         SERIAL PRIMARY KEY,
+    id_prestamo        INTEGER NOT NULL,
+    id_unidad          INTEGER,
+    id_tipo_equipo     INTEGER,
+    cantidad           NUMERIC(10,2),
+    cantidad_retornada NUMERIC(10,2) DEFAULT 0,
+    CONSTRAINT fk_prestamo_detalle_prestamo FOREIGN KEY (id_prestamo) REFERENCES prestamo_externo (id_prestamo) ON DELETE CASCADE,
+    CONSTRAINT fk_prestamo_detalle_unidad   FOREIGN KEY (id_unidad)   REFERENCES unidad_equipo (id_unidad)
+);
+CREATE TABLE IF NOT EXISTS prestamo_retorno (
+    id_retorno     SERIAL PRIMARY KEY,
+    id_detalle     INTEGER NOT NULL,
+    cantidad       NUMERIC(10,2),
+    fecha_retorno  TIMESTAMPTZ NOT NULL,
+    observacion    VARCHAR(300),
+    id_usuario     INTEGER NOT NULL,
+    CONSTRAINT fk_prestamo_retorno_detalle FOREIGN KEY (id_detalle) REFERENCES prestamo_detalle (id_detalle) ON DELETE CASCADE
 );
 
 -- Cierres de OT recibidos por integración (webhook de G3) — sc-113
