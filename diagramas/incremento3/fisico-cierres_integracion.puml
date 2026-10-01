@@ -1,0 +1,126 @@
+@startuml
+
+!theme plain
+
+hide circle
+
+skinparam linetype ortho
+
+skinparam shadowing false
+
+skinparam roundcorner 4
+
+skinparam classFontSize 11
+
+skinparam classFontName "Helvetica,Arial,sans-serif"
+
+skinparam arrowColor #333333
+
+skinparam packageBackgroundColor transparent
+
+skinparam class {
+
+    BackgroundColor #FFFFFF
+
+    BorderColor #2B5797
+
+    HeaderBackgroundColor #E8EEF7
+
+}
+
+title Modelo físico — detalle cierres y integracion (dev)
+entity "integracion_cierre" as integracion_cierre {
+  * id_cierre : integer <<PK>>
+  * clave_idempotencia : varchar(120)
+  * id_ot : integer
+  * id_empresa : integer
+  tipo_ot : varchar(30)
+  * payload : jsonb
+  * estado_proceso : varchar(40)
+  discrepancias : jsonb
+  acciones_aplicadas : jsonb
+  fecha_proceso : timestamptz
+  srv : varchar(20)
+  id_tecnico : integer
+  materiales_aplicados : jsonb
+}
+entity "integracion_activacion" as integracion_activacion {
+  * id_activacion : integer <<PK>>
+  event_id : varchar(100)
+  trace_id : varchar(100)
+  * id_empresa : integer
+  id_ot : integer
+  id_cliente_externo : integer
+  rut_cliente : varchar(20)
+  id_servicio_externo : integer
+  id_contrato_externo : integer
+  payload : jsonb
+  * estado_proceso : varchar(40)
+  equipos_asociados : jsonb
+  discrepancias : jsonb
+  fecha_proceso : timestamptz
+}
+entity "asignacion_equipo_servicio" as asignacion_equipo_servicio {
+  * id_asignacion : integer <<PK>>
+  * id_unidad : integer
+  * id_empresa : integer
+  event_id : varchar(100)
+  id_cliente_externo : integer
+  rut_cliente : varchar(20)
+  * id_servicio_externo : integer
+  id_contrato_externo : integer
+  id_ot : integer
+  * fecha_instalacion : timestamptz
+  fecha_retiro : timestamptz
+  * activa : boolean
+  origen : varchar(30)
+  trace_id : varchar(100)
+}
+entity "cierre_reparacion" as cierre_reparacion {
+  * id_cierre_reparacion : integer <<PK>>
+  id_cierre : integer
+  * id_ot : integer
+  * id_empresa : integer
+  id_tecnico : integer
+  rut_cliente : varchar(12)
+  direccion_servicio : varchar(200)
+  * falla_reportada : varchar(300)
+  * solucion_aplicada : varchar(300)
+  * resultado : varchar(30)
+  * resuelto_remotamente : boolean
+  categoria_falla : varchar(120)
+  equipos_retirados : jsonb
+  equipos_instalados : jsonb
+  consumibles : jsonb
+  codigo_trabajo : varchar(10)
+  fecha_cierre : timestamptz
+  fecha_registro : timestamptz
+}
+entity "borrador_cierre" as borrador_cierre {
+  * id_borrador : integer <<PK>>
+  * id_ot : integer
+  * id_empresa : integer
+  * id_tecnico : integer
+  codigo_trabajo : varchar(10)
+  falla_reportada : varchar(300)
+  solucion_aplicada : varchar(300)
+  resultado : varchar(30)
+  categoria_falla : varchar(120)
+  fecha_actualizacion : timestamptz
+}
+entity "secuencia_srv" as secuencia_srv {
+  * id_empresa : integer <<PK>>
+  * anio : integer <<PK>>
+  * ultimo : integer
+}
+entity "notificacion" as notificacion {
+  * id_notificacion : integer <<PK>>
+  * tipo : varchar(40)
+  * id_empresa : integer
+  * descripcion : varchar(150)
+  * clave_dedupe : varchar(120)
+  * leida : boolean
+  * fecha_generacion : timestamptz
+  fecha_leida : timestamptz
+}
+@enduml

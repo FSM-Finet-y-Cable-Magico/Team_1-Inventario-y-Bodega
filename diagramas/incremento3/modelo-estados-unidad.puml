@@ -1,0 +1,24 @@
+@startuml
+!theme plain
+skinparam shadowing false
+skinparam monochrome true
+title Estados de unidad_equipo — modelo persistente en dev
+state "En bodega" as B
+state "Asignado a técnico" as T
+state "Instalado en cliente" as I
+state "En revisión" as R
+state "En préstamo externo" as P
+state "Dado de baja" as D
+B --> T
+B --> P
+B --> D
+T --> I
+T --> B
+T --> R
+I --> R
+R --> B
+R --> P
+R --> D
+P --> B
+P --> R
+@enduml

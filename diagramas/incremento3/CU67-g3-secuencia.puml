@@ -1,0 +1,28 @@
+@startuml
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+hide footbox
+title CU-67 — Consultando datos y equipos del cliente (implementación G3 verificada)
+actor Administrador
+participant "Vista G3" as V
+participant "ClientesController" as C
+participant "ClientesService" as S
+database "PostgreSQL G3 / Prisma" as DB
+Administrador -> V : Introduce criterios/datos del cliente
+V -> C : GET /api/clientes/rut/:rut (JWT)
+C -> S : consultarPorRut(datos, actor.id_empresa)
+S -> S : Valida formato, rol y empresa
+S -> DB : SELECT cliente + direccion + servicios
+alt Datos válidos
+DB --> S : Registro(s) persistidos/consultados
+S --> C : Datos de cliente
+C --> V : HTTP 200
+V --> Administrador : Muestra resultado
+else Validación o cliente no encontrado
+S --> C : 404 Cliente no encontrado
+C --> V : Error de negocio
+V --> Administrador : Mensaje de validación
+end
+@enduml
