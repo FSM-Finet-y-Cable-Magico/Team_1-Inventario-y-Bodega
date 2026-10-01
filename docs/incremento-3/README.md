@@ -15,7 +15,7 @@
 - [Shortcut: revisión sin asignar](https://app.shortcut.com/ing-de-software/story/160).
 - [PR 67: documentación, modelos y corrección de inicialización](https://github.com/FSM-Finet-y-Cable-Magico/Team_1-Inventario-y-Bodega/pull/67).
 
-El documento mantiene la plantilla del Incremento 2 e incluye los 19 casos extendidos, requerimientos, Scrum++, vistas 4+1, secuencias, pantallas, pruebas, retrospectiva y anexos. El informe final tiene 187 páginas, 87 figuras y 155 tablas; incluye 24 vistas actuales explicadas. Los índices se contrastaron con el PDF y no hay páginas vacías. Las capturas se completaron el 1 de octubre de 2026.
+El documento mantiene la plantilla del Incremento 2 e incluye los 19 casos extendidos, requerimientos, Scrum++, vistas 4+1, secuencias, pantallas, pruebas, retrospectiva y anexos. El informe final tiene 240 páginas, 87 figuras y 175 tablas; incluye 24 vistas actuales explicadas. Los índices se contrastaron con el PDF y no hay páginas vacías. Las capturas se completaron el 1 de octubre de 2026.
 
 Las tareas se titulan «Revisar» y permanecen sin asignación. No se inventan actas, horas históricas ni aprobaciones del equipo.
 
@@ -28,8 +28,9 @@ Las tareas se titulan «Revisar» y permanecen sin asignación. No se inventan a
 | `pruebas-api.json` | 47 | 47 cumplen la expectativa registrada |
 | `pruebas-g3.json` | 10 | 10 cumplen; G3 real |
 | `pruebas-extra.json` | 5 | 5 cumplen; devolución y límite de exportación |
+| `pruebas-auditoria.json` | 2 | 2 cumplen; rango >90 días y contacto inválido G3 |
 
-El total de **62 escenarios** no equivale a 62 CU ni a una repetición exhaustiva de todos los caminos de los 96 CU. Las capturas históricas de `Casos de uso/` se identifican por separado en el informe.
+El total de **64 escenarios** no equivale a 62 CU ni a una repetición exhaustiva de todos los caminos de los 96 CU. Las capturas históricas de `Casos de uso/` se identifican por separado en el informe.
 
 ### Pruebas de integración
 
@@ -54,6 +55,10 @@ El total de **62 escenarios** no equivale a 62 CU ni a una repetición exhaustiv
 - Diccionario observado: `resultados/esquema.json` y anexo del informe.
 
 Las FNs describen dependencias y descomposición de cabecera/detalle. No se afirma 3FN universal: existen instantáneas de datos de cliente y JSONB de integración/auditoría. La lectura de notificaciones se persiste por registro y empresa, no por usuario individual.
+
+## Auditoría de rúbrica
+
+La [matriz de 64 criterios](auditoria-rubrica.md) registra fuente, evidencia, estado y acción pendiente. Se recuperaron 11 UR ESA, RF-43, los 10 RNF y la cobertura exacta de excepciones. **No se acredita cumplimiento integral todavía**: quedan condiciones de prueba/RNF, registros Scrum reales, parte del formato Draw.io, PPT y revisión acumulada, además de las actuaciones del equipo. Las secciones 13.4–13.8 del informe explican cada brecha.
 
 ## Acciones personales del equipo
 

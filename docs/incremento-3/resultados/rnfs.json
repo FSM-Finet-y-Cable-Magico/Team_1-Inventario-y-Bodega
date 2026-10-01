@@ -1,0 +1,72 @@
+[
+  [
+    "RNF-01",
+    "El sistema debe funcionar correctamente en las versiones vigentes de los navegadores Google Chrome (versión 110 o superior), Mozilla Firefox (versión 110 o superior) y Microsoft Edge (versión 110 o superior), en sistemas operativos Windows 10, Windows 11 y distribuciones Linux de escritorio (Ubuntu 20.04 o superior). No se requiere compatibilidad con Safari ni con Internet Explorer. El sistema no debe requerir la instalación de ningún complemento, extensión o software adicional en el navegador del usuario.",
+    "E",
+    "C",
+    "RNF"
+  ],
+  [
+    "RNF-02",
+    "La interfaz del sistema debe ser responsiva (adaptable a distintos tamaños de pantalla). La resolución mínima soportada para uso en escritorio es 1280 x 720 píxeles. Para uso en dispositivos móviles —en particular la vista del técnico de terreno (RF-39)— la resolución mínima soportada es 360 x 640 píxeles (tamaño típico de smartphone de gama baja). En resoluciones móviles, los formularios, tablas y botones deben ser legibles y operables con interacción táctil (tapping), sin necesidad de hacer zoom. Las tablas con muchas columnas pueden transformarse en tarjetas apiladas verticalmente en la vista móvil. No se requiere funcionamiento sin conexión a internet.",
+    "E",
+    "C",
+    "RNF"
+  ],
+  [
+    "RNF-03",
+    "El sistema debe desplegarse en el datacenter ubicado en La Florida, Santiago, utilizando un servidor virtual (VPS). Los requisitos mínimos del servidor son: 2 vCPU (CPU virtual, unidad de procesamiento asignada al servidor virtual), 4 GB de RAM (memoria de acceso aleatorio), 50 GB de almacenamiento en disco SSD y conexión a internet de al menos 10 Mbps simétrico. El sistema debe operar bajo el sistema operativo Ubuntu Server 22.04 LTS o posterior.",
+    "E",
+    "C",
+    "RNF"
+  ],
+  [
+    "RNF-04",
+    "El sistema debe almacenar todos los datos en una única base de datos relacional PostgreSQL versión 14 o superior. Una base de datos relacional organiza la información en tablas (filas y columnas) vinculadas entre sí mediante claves primarias y foráneas, garantizando integridad referencial. Las dos empresas (Finet y Cable Mágico) deben estar separadas en esquemas distintos dentro de la misma instancia de base de datos. La codificación de la base de datos debe ser UTF-8 para garantizar el correcto almacenamiento de caracteres especiales, tildes y eñes.",
+    "E",
+    "S",
+    "RNF"
+  ],
+  [
+    "RNF-05",
+    "El sistema debe almacenar las contraseñas de los usuarios aplicando el algoritmo bcrypt con un factor de costo (cost factor) mínimo de 12. El algoritmo bcrypt transforma la contraseña en una cadena de 60 caracteres de longitud fija que no puede revertirse a la contraseña original; esto garantiza que si la base de datos es comprometida, las contraseñas no queden expuestas. Bajo ninguna circunstancia el sistema debe almacenar contraseñas en texto plano o codificadas en Base64.",
+    "E",
+    "S",
+    "RNF"
+  ],
+  [
+    "RNF-06",
+    "El sistema debe responder a las siguientes operaciones en los tiempos máximos indicados, medidos bajo condiciones normales de red (latencia menor a 50 ms entre cliente y servidor) con hasta 20 usuarios concurrentes: consulta de stock actual: máximo 3 segundos; búsqueda de equipo por número de serie: máximo 2 segundos; registro de cierre de instalación: máximo 4 segundos; generación de reporte sin exportación: máximo 8 segundos; exportación de reporte a Excel o PDF: máximo 15 segundos.",
+    "E",
+    "C",
+    "RNF"
+  ],
+  [
+    "RNF-07",
+    "La comunicación entre el navegador del usuario y el servidor del sistema debe realizarse íntegramente a través del protocolo HTTPS (HTTP sobre TLS 1.2 o superior). HTTPS cifra todos los datos transmitidos, impidiendo que terceros intercepten información sensible como credenciales o datos del inventario. El sistema no debe operar en HTTP puro bajo ninguna circunstancia en el ambiente de producción.",
+    "E",
+    "S",
+    "RNF"
+  ],
+  [
+    "RNF-08",
+    "El sistema debe ejecutar una copia de seguridad (backup) automática de la base de datos completa una vez al día, programada a las 02:00 horas en zona horaria America/Santiago (UTC-4 en horario estándar, UTC-3 en horario de verano). Cada backup se almacena en el mismo servidor en una carpeta separada del directorio de la aplicación, comprimido en formato .gz. El sistema debe conservar los últimos 7 backups diarios, eliminando automáticamente los anteriores. En caso de falla durante el backup, el sistema debe registrar el error en el log de auditoría con el mensaje: 'Backup automático fallido: [DESCRIPCION_DEL_ERROR]'.",
+    "D",
+    "S",
+    "RNF"
+  ],
+  [
+    "RNF-09",
+    "El sistema debe mantener dos conjuntos de datos completamente separados, uno para Finet y otro para Cable Mágico, implementados como esquemas independientes dentro de la misma instancia de base de datos PostgreSQL. Esta separación debe garantizar que ninguna consulta, reporte ni operación realizada en el contexto de una empresa acceda, modifique o elimine datos de la otra empresa, ni siquiera en caso de error en la lógica de la aplicación. El aislamiento se aplica a nivel de esquema de base de datos; la aplicación debe incluir validaciones que impidan consultas cruzadas accidentales.",
+    "E",
+    "C",
+    "RNF"
+  ],
+  [
+    "RNF-10",
+    "El sistema debe desarrollarse utilizando la siguiente pila tecnológica: (A) Frontend: Svelte versión 4 o superior, framework de componentes reactivos basado en JavaScript que compila a código nativo del navegador sin necesidad de una librería de tiempo de ejecución. (B) Backend: NestJS versión 10 o superior, framework de servidor escrito en TypeScript que corre sobre Node.js versión 20 LTS o superior, proporcionando una arquitectura modular y tipado estático. (C) Base de datos: PostgreSQL versión 14 o superior (según RNF-04). Todo el código fuente se debe versionar en un repositorio Git accesible por todos los integrantes del equipo de desarrollo.",
+    "E",
+    "S",
+    "RNF"
+  ]
+]

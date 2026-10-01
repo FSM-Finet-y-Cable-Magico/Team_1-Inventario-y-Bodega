@@ -1,0 +1,97 @@
+[
+  [
+    "CU-48\nE1: Los datos del responsable externo están incompletos.",
+    "P48-E1: ubicación incompleta",
+    "Cubierta; consulta no modifica la unidad."
+  ],
+  [
+    "CU-61\nE1: No hay trabajos asignados para el día.",
+    "P61-E1; captura móvil vacía",
+    "Cubierta; G3 indisponible se prueba adicionalmente."
+  ],
+  [
+    "CU-63\nE1: El RUT del cliente no supera la validación del dígito verificador.; E2: El saldo de algún consumible es insuficiente.; E3: El RUT ingresado no existe como cliente en el sistema.",
+    "G3-63-N; E1 sin foto; E2 repetición; G3-65-E2 RUT inválido",
+    "Parcial. No son las mismas tres excepciones de la especificación: la validación RUT ocurre antes del cierre y saldo insuficiente tiene un contrato distinto. Falta acreditar cliente desconocido en el recorrido real y su equivalencia acordada."
+  ],
+  [
+    "CU-64\nE1: Alguna de las acciones falla durante la ejecución (por ejemplo, saldo insuficiente detectado al confirmar).",
+    "P64-E1 rollback SQL; P64-ID idempotencia",
+    "Cubierta la atomicidad ante fallo provocado. No confundir rollback con rechazo por falta de saldo, que tiene otro contrato."
+  ],
+  [
+    "CU-65\nE1: Campos obligatorios inválidos o RUT ya registrado en la misma empresa.",
+    "G3-65-E1 duplicado; G3-65-E2 RUT inválido",
+    "Cubiertas estas condiciones; no implica probar cada longitud y campo obligatorio."
+  ],
+  [
+    "CU-66\nE1: Los campos modificados no cumplen las validaciones de formato o longitud.",
+    "AUD66-E1: correo y teléfono inválidos; consulta posterior",
+    "Condición de formato cubierta en auditoría. G3-66-E1 anterior solo probaba cliente inexistente, no esta excepción."
+  ],
+  [
+    "CU-67\nE1: El cliente no existe en el sistema o no tiene equipos registrados.",
+    "G3-67-E1 404; G3-67-N ficha",
+    "Parcial. Cliente inexistente devuelve404; no hay evidencia específica de cliente existente sin equipos ni lista completa de servicios/equipos exigida por RF-43."
+  ],
+  [
+    "CU-68\nE1: Saldo insuficiente de algún consumible.",
+    "P68-E1: PROCESADO_CON_DISCREPANCIAS",
+    "Diferencia contractual. Cumple la expectativa del comportamiento implementado, pero no el rechazo previsto por la especificación original."
+  ],
+  [
+    "CU-69\nE1: Saldo de consumible insuficiente o NS de equipo inválido o no asignado al técnico.",
+    "P69-E1 serie no encontrada; P69-N retiro/reemplazo",
+    "Parcial. Serie inexistente se registra como discrepancia; no se acreditan separadamente serie de otro técnico y saldo insuficiente dentro de reparación."
+  ],
+  [
+    "CU-70\nE1: Ningún código del catálogo aplica a la situación del actor.",
+    "P70-E1 borrador manual sin código",
+    "Cubierta la alternativa manual; código inexistente400 es prueba adicional."
+  ],
+  [
+    "CU-71\nE1: El equipo no está en estado 'Instalado en cliente'.",
+    "P71-E1 y P71-E1-POST estado no instalado",
+    "Cubierta; P71-N confirma devolución y persistencia En revisión."
+  ],
+  [
+    "CU-73\nE1: Algunos datos de la unidad están incompletos.",
+    "P73-E1 consulta de unidad incompleta",
+    "Cubierta con datos QA incompletos y respuesta documentada."
+  ],
+  [
+    "CU-87\nE1: No se encontraron registros que coincidan con el criterio ingresado.",
+    "P87-E1 sin coincidencias",
+    "Cubierta; resultado vacío registrado."
+  ],
+  [
+    "CU-90\nE1: El rango de fechas supera los 90 días.",
+    "AUD90-E1: 01-01 a30-09-2026, HTTP400 y mensaje90 días",
+    "Cubierta en esta auditoría. El anterior P90-E1 solo acreditaba inicio posterior al fin."
+  ],
+  [
+    "CU-92\nE1: La generación del archivo supera los 15 segundos sin completarse.",
+    "P92-E1: HTTP408 tras bloqueo QA, duración registrada",
+    "Cubierta la generación que supera15s; XLSXnormal tiene firmaPK."
+  ],
+  [
+    "CU-93\nE1: La generación del archivo supera los 15 segundos sin completarse.",
+    "P93-E1: HTTP408 tras bloqueo QA, duración registrada",
+    "Cubierta la generación que supera15s; PDFnormal tiene firma%PDF."
+  ],
+  [
+    "CU-94\nE1: No existen alertas activas.",
+    "P94-N alertas existentes",
+    "No ejecutada la condición sin alertas activas. Marcar notificaciones como leídas en CU-96 no es equivalente."
+  ],
+  [
+    "CU-95\nE1: El actor cancela la operación.",
+    "P95-CANCEL y captura de cancelación",
+    "Cubierta; estado anterior conservado al cancelar."
+  ],
+  [
+    "CU-96\nE1: No hay notificaciones pendientes.",
+    "P96-E1 marcar todas; captura sin pendientes",
+    "Cubierta ausencia de notificaciones persistidas pendientes. Las alertas de stock derivadas pueden continuar visibles."
+  ]
+]
