@@ -20,7 +20,7 @@
     "pagina_rubrica": "2, 12",
     "criterio": "Índice de figuras",
     "estado": "Comprobado",
-    "evidencia": "Preliminares; 87 figuras identificadas.",
+    "evidencia": "Índice de figuras con referencias contrastadas con el PDF; incluye proceso final y asignación Shortcut.",
     "cierre": "Sin acción adicional en esta auditoría."
   },
   {
@@ -68,8 +68,8 @@
     "pagina_rubrica": "3",
     "criterio": "Planificación del sprint y tiempo estimado",
     "estado": "Parcial",
-    "evidencia": "3.1–3.2 contiene horas de revisión propuestas; no estimaciones originales del desarrollo.",
-    "cierre": "Recuperar planificación real desde registros del equipo; no reconstruirla como si hubiera sido previa."
+    "evidencia": "3.1–3.2: criterio I2 de 2 HH/CU aplicado a 19 CU (38 HH); 19 tickets con responsables y fechas reales.",
+    "cierre": "Shortcut permanece Unestimated; no presentar las horas referenciales como estimación histórica registrada."
   },
   {
     "id": "R10",
@@ -124,8 +124,8 @@
     "pagina_rubrica": "1, 9",
     "criterio": "Requerimientos no funcionales aplicables",
     "estado": "Parcial",
-    "evidencia": "2.4: RNF-01 a RNF-10 y estado de verificación incorporados.",
-    "cierre": "Compatibilidad, carga, despliegue, HTTPS y backup no quedan acreditados por pruebas locales."
+    "evidencia": "2.4 y 10.6: diez RNF, cinco ensayos de 20 solicitudes simultáneas; duraciones registradas.",
+    "cierre": "Restan carga de cierre, sesiones reales, navegadores/SO, despliegue, HTTPS productivo, backup y separación por esquemas."
   },
   {
     "id": "R17",
@@ -188,40 +188,40 @@
     "pagina_rubrica": "3",
     "criterio": "Evidencia de cada prueba ejecutada",
     "estado": "Comprobado",
-    "evidencia": "Capítulo 10; 62 registros previos más 2 pruebas exactas de esta auditoría, con respuestas y fechas.",
-    "cierre": "Sin acción adicional en esta auditoría."
+    "evidencia": "Capítulo 10: 70 registros, 65 escenarios funcionales y cinco ensayos de concurrencia; fechas y respuestas adjuntas.",
+    "cierre": "Sin acción adicional documental."
   },
   {
     "id": "R25",
     "pagina_rubrica": "3",
     "criterio": "Cobertura de flujos y excepciones especificados",
     "estado": "Parcial",
-    "evidencia": "Matriz 13.6: identifica equivalencias, diferencias y condiciones no ejecutadas.",
-    "cierre": "CU-94 sin alertas no ejecutado; CU-63/67/68/69 conservan diferencias o cobertura parcial. No afirmar exhaustividad."
+    "evidencia": "13.6: CU94 sin alertas comprobado; acuerdos #141/#145/#146/#147 recuperados.",
+    "cierre": "Mantener límites exactos de CU63/67/69; no declarar pruebas no ejecutadas."
   },
   {
     "id": "R26",
     "pagina_rubrica": "5",
     "criterio": "Daily diario: avance, siguiente trabajo e impedimentos",
-    "estado": "Pendiente de evidencia",
-    "evidencia": "3.3 es bitácora Git, declarada expresamente como tal.",
-    "cierre": "Recuperar registros reales de Daily con fecha, participantes y acuerdos; no sustituirlos por commits."
+    "estado": "Parcial",
+    "evidencia": "3.3: proceso de reuniones igual a I2 confirmado por jefe de grupo; seguimiento, próximos pasos e impedimentos trazados con Shortcut.",
+    "cierre": "Frecuencia semanal frente a diaria de la rúbrica; no existen fechas/asistencias individuales de actas."
   },
   {
     "id": "R27",
     "pagina_rubrica": "5–6",
     "criterio": "Sprint Review con equipo y Product Owner",
-    "estado": "Pendiente del equipo",
-    "evidencia": "3.4 prepara la revisión técnica; no hay acta de cierre ni aceptación del cliente.",
-    "cierre": "Registrar asistentes, objetivos logrados/no logrados, observaciones, carencias, nuevas tareas y backlog revisado."
+    "estado": "Parcial",
+    "evidencia": "3.4: Review técnica con objetivos, resultados, cambios del backlog, problemas y mejoras; tickets In Review.",
+    "cierre": "Aceptación formal del Product Owner no registrada."
   },
   {
     "id": "R28",
     "pagina_rubrica": "6",
     "criterio": "Retrospectiva: inspección y plan de mejora",
-    "estado": "Parcial",
-    "evidencia": "Capítulo 12 aporta hechos, causas, acciones y criterios de cierre.",
-    "cierre": "La participación y los acuerdos reales del equipo aún deben registrarse; no se atribuyen a una reunión inexistente."
+    "estado": "Comprobado",
+    "evidencia": "3.7 y 12: procedimiento I2 confirmado, inspección de hechos y plan de mejora con revisores asignados.",
+    "cierre": "La revisión humana de acciones permanece por realizar."
   },
   {
     "id": "R29",
@@ -235,9 +235,9 @@
     "id": "R30",
     "pagina_rubrica": "7",
     "criterio": "PPT: portada, índice, alcance y traza Scrum++",
-    "estado": "Parcial",
-    "evidencia": "Presentación de 13 diapositivas: portada/índice/alcance/traza RF–CU. Scrum++ está principalmente en notas del orador.",
-    "cierre": "Añadir evidencia visible de backlog, Review y retrospectiva a las diapositivas, además de las notas."
+    "estado": "Corregido",
+    "evidencia": "Diapositiva 13: Planning 19 CU/38 HH, backlog #139–157, Review, retrospectiva y reparto de #160–173 visibles.",
+    "cierre": "La presentación conserva la plantilla del I2."
   },
   {
     "id": "R31",
@@ -299,9 +299,9 @@
     "id": "R38",
     "pagina_rubrica": "9",
     "criterio": "Archivos Draw.io de secuencias, objetos y otros",
-    "estado": "Parcial",
-    "evidencia": "ZIP contiene Draw.io de árbol y despliegue; secuencias, clases, objetos y modelos se conservan principalmente en PlantUML + PNG.",
-    "cierre": "El formato Draw.io literal no está cubierto para todos los diagramas de diseño. No contar PNG incrustado como edición por objetos."
+    "estado": "Corregido",
+    "evidencia": "234 archivos Draw.io con 31.414 objetos y textos editables, además de fuentes originales y árbol/despliegue.",
+    "cierre": "Se conservan las geometrías de los SVG de PlantUML; las primitivas se pueden editar en Draw.io."
   },
   {
     "id": "R39",
@@ -355,17 +355,17 @@
     "id": "R45",
     "pagina_rubrica": "9–10",
     "criterio": "Excel: capítulo, contenido, autores y revisores",
-    "estado": "Parcial",
-    "evidencia": "XLSX organización: capítulos, elaboración asistida y fuentes; revisores Sin asignar.",
-    "cierre": "Registrar quién efectivamente revisó y su conformidad cuando ocurra, sin asignar ahora por instrucción del usuario."
+    "estado": "Corregido",
+    "evidencia": "Excel: capítulos, elaboración/fuentes, revisores asignados y 19 registros de desarrollo Shortcut.",
+    "cierre": "La columna de revisión realizada permanece Pendiente hasta conformidad real."
   },
   {
     "id": "R46",
     "pagina_rubrica": "12",
     "criterio": "Invocar y explicar cada figura/tabla antes de aparecer",
-    "estado": "Parcial",
-    "evidencia": "Figuras con explicación; tablas invocadas. Varias introducciones de tablas siguen siendo genéricas.",
-    "cierre": "Sustituir las introducciones genéricas por interpretación específica donde la tabla lo requiera; la mera frase organiza antecedentes no prueba explicación suficiente."
+    "estado": "Corregido",
+    "evidencia": "Invocaciones previas a tablas explican campos y propósito; figuras contextualizadas antes de aparecer.",
+    "cierre": "Validar continuidad visual en la renderización final."
   },
   {
     "id": "R47",
@@ -427,25 +427,25 @@
     "id": "R54",
     "pagina_rubrica": "13–14",
     "criterio": "APA vigente y referencias al final",
-    "estado": "Parcial",
-    "evidencia": "13.9: referencias del proyecto; procedencia de imágenes reforzada.",
-    "cierre": "Revisión bibliográfica formal pendiente; las referencias locales sin URL/fecha de publicación completa requieren completar metadatos verificables."
+    "estado": "Corregido",
+    "evidencia": "Referencias ordenadas por autor, año, título, tipo y enlace cuando existe, con sangría francesa.",
+    "cierre": "Documentos internos sin URL pública conservan identificación y procedencia; no se inventan DOI ni fecha exacta."
   },
   {
     "id": "R55",
     "pagina_rubrica": "4",
     "criterio": "Levantamiento de procesos con sistema terminado",
-    "estado": "Condicional pendiente",
-    "evidencia": "La rúbrica lo exige al último incremento. El calendario reserva I4 para noviembre, pero I3 ya declara 100 %.",
-    "cierre": "Preparar BPMN final y su archivo Bizagi; no cerrar el criterio automáticamente alegando que será I4."
+    "estado": "Parcial",
+    "evidencia": "13.9: proceso final, comparación con proceso inicial, PNG, Draw.io y BPMN 2.0 con geometría.",
+    "cierre": "Importación en Bizagi y guardado propietario .bpm no verificados; aplicación no disponible en este equipo."
   },
   {
     "id": "R56",
     "pagina_rubrica": "1, 9",
     "criterio": "Complementos Documento 0: BPMN Bizagi, análisis, costos, CV y aceptación",
-    "estado": "No auditado integralmente",
-    "evidencia": "La carpeta raíz conserva Documento 0; esta auditoría revisa I3 y su arrastre documental.",
-    "cierre": "Verificar el paquete acumulado antes del envío. No implicar que su mera presencia acredita sus anexos y correcciones."
+    "estado": "Parcial",
+    "evidencia": "13.10: Doc0 contiene análisis, modelos iniciales, CV, aceptación inicial, costos y planificación. Se identificaron figuras y secciones.",
+    "cierre": "No se localizó .bpm editable; mención de 2025 en descripción A18 contradice planificación 2026. La aceptación inicial no sustituye cierre I3."
   },
   {
     "id": "R57",
@@ -500,15 +500,15 @@
     "pagina_rubrica": "Observación8",
     "criterio": "Evidencias de pruebas por incremento",
     "estado": "Parcial",
-    "evidencia": "10.4 inventaría 96 CU; muestras históricas y 64 escenarios actuales.",
-    "cierre": "Las capturas históricas no sustituyen la reejecución; completar condiciones exactas marcadas en 13.6."
+    "evidencia": "Inventario de los 96 CU, evidencias históricas y 70 registros actuales, incluido CU94 vacío.",
+    "cierre": "Persisten condiciones exactas no ejecutadas de integración; ver 13.6."
   },
   {
     "id": "D09",
     "pagina_rubrica": "Observación9",
     "criterio": "Retrospectiva",
-    "estado": "Parcial",
-    "evidencia": "12.1: análisis documental y plan de acciones.",
-    "cierre": "Registrar revisión y acuerdos del equipo, sin inventar una ceremonia."
+    "estado": "Comprobado",
+    "evidencia": "Capítulo 12 y 3.7: retrospectiva, acciones y responsables de revisión; proceso confirmado por el jefe.",
+    "cierre": "Conformidad humana se conserva como pendiente."
   }
 ]

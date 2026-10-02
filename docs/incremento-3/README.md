@@ -12,12 +12,12 @@
 
 - [Informe en Drive](https://docs.google.com/document/d/1OkxhjvTPfQbadXeKDR3hmWowumHwDbxH/edit).
 - [Carpeta de Incremento 3](https://drive.google.com/drive/folders/12HV-c5VJi4wnbOLoio0mt7d2E6ROdOTl).
-- [Shortcut: revisión sin asignar](https://app.shortcut.com/ing-de-software/story/160).
+- [Shortcut: revisión asignada](https://app.shortcut.com/ing-de-software/story/160).
 - [PR 67: documentación, modelos y corrección de inicialización](https://github.com/FSM-Finet-y-Cable-Magico/Team_1-Inventario-y-Bodega/pull/67).
 
-El documento mantiene la plantilla del Incremento 2 e incluye los 19 casos extendidos, requerimientos, Scrum++, vistas 4+1, secuencias, pantallas, pruebas, retrospectiva y anexos. El informe final tiene 240 páginas, 87 figuras y 175 tablas; incluye 24 vistas actuales explicadas. Los índices se contrastaron con el PDF y no hay páginas vacías. Las capturas se completaron el 1 de octubre de 2026.
+El documento mantiene la plantilla del Incremento 2 e incluye los 19 casos extendidos, requerimientos, Scrum++, vistas 4+1, secuencias, pantallas, pruebas, retrospectiva y anexos. El informe ampliado incorpora siete apartados de Scrum, proceso final y auditoría acumulada; incluye 24 vistas actuales explicadas. La edición publicada tiene 265 páginas, 89 figuras y 189 tablas; el manifiesto identifica los archivos. Los índices se contrastaron con el PDF y no hay páginas vacías. Las capturas se completaron el 1 de octubre de 2026.
 
-Las tareas se titulan «Revisar» y permanecen sin asignación. No se inventan actas, horas históricas ni aprobaciones del equipo.
+Las tareas se titulan «Revisar» y se asignaron a los cinco integrantes (3/3/3/3/2). No se inventan actas, horas históricas ni aprobaciones del equipo.
 
 ## Evidencias
 
@@ -29,8 +29,9 @@ Las tareas se titulan «Revisar» y permanecen sin asignación. No se inventan a
 | `pruebas-g3.json` | 10 | 10 cumplen; G3 real |
 | `pruebas-extra.json` | 5 | 5 cumplen; devolución y límite de exportación |
 | `pruebas-auditoria.json` | 2 | 2 cumplen; rango >90 días y contacto inválido G3 |
+| `pruebas-cierre.json` | 6 | CU94 sin alertas y cinco ensayos de 20 solicitudes HTTP simultáneas |
 
-El total de **64 escenarios** no equivale a 62 CU ni a una repetición exhaustiva de todos los caminos de los 96 CU. Las capturas históricas de `Casos de uso/` se identifican por separado en el informe.
+El total de **70 registros** (65 escenarios funcionales y cinco ensayos de concurrencia) no equivale a 70 CU ni a una repetición exhaustiva de todos los caminos de los 96 CU. Las capturas históricas de `Casos de uso/` se identifican por separado en el informe.
 
 ### Pruebas de integración
 
@@ -58,7 +59,7 @@ Las FNs describen dependencias y descomposición de cabecera/detalle. No se afir
 
 ## Auditoría de rúbrica
 
-La [matriz de 64 criterios](auditoria-rubrica.md) registra fuente, evidencia, estado y acción pendiente. Se recuperaron 11 UR ESA, RF-43, los 10 RNF y la cobertura exacta de excepciones. **No se acredita cumplimiento integral todavía**: quedan condiciones de prueba/RNF, registros Scrum reales, parte del formato Draw.io, PPT y revisión acumulada, además de las actuaciones del equipo. Las secciones 13.4–13.8 del informe explican cada brecha.
+La [matriz de 64 criterios](auditoria-rubrica.md) registra fuente, evidencia, estado y acción pendiente. Se recuperaron 11 UR ESA, RF-43, los 10 RNF y la cobertura exacta de excepciones. **No se acredita cumplimiento integral todavía**: quedan condiciones de prueba/RNF, aceptación formal del cliente, importación Bizagi y correcciones de copias históricas, además de las actuaciones del equipo. Las secciones 13.4–13.11 del informe explican cada brecha.
 
 ## Acciones personales del equipo
 
@@ -72,3 +73,10 @@ Revisar los artefactos, registrar conformidad, grabar instalación/funcionalidad
 - [Informe PDF](https://drive.google.com/file/d/1F41RrChmofTdiQcT7jU8LOqx1N5hG2-0/view).
 
 La imagen adjunta a la OT 1 de G3 es un archivo ficticio de prueba (captura de login). Permite probar la recepción de evidencia; no acredita una instalación en terreno.
+
+## Registros de esta pasada
+
+- `resultados/shortcut-scrum.json`: 19 tickets del I3, acuerdos de integración y responsables de revisión.
+- `diagramas/editables-drawio/`: 234 archivos con textos y primitivas vectoriales editables. Los conectores conservan geometría; cambios estructurales se regeneran desde PlantUML.
+- `diagramas/incremento3/proceso-final-incremento3.*`: BPMN 2.0, Draw.io y PNG con flujo de terreno/inventario. Bizagi no disponible para guardar `.bpm`.
+- Los ensayos concurrentes usan una misma cuenta QA y base pequeña; no acreditan la matriz completa de RNF-06.

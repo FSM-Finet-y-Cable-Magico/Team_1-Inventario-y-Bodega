@@ -32,17 +32,17 @@
   [
     "CU-67\nE1: El cliente no existe en el sistema o no tiene equipos registrados.",
     "G3-67-E1 404; G3-67-N ficha",
-    "Parcial. Cliente inexistente devuelve404; no hay evidencia específica de cliente existente sin equipos ni lista completa de servicios/equipos exigida por RF-43."
+    "Parcial. Cliente inexistente devuelve404; no hay evidencia específica de cliente existente sin equipos ni lista completa de servicios/equipos exigida por RF-43. Shortcut #145 ubica la lista de equipos en CU-87/ficha T1, no en el endpoint de G3."
   ],
   [
     "CU-68\nE1: Saldo insuficiente de algún consumible.",
     "P68-E1: PROCESADO_CON_DISCREPANCIAS",
-    "Diferencia contractual. Cumple la expectativa del comportamiento implementado, pero no el rechazo previsto por la especificación original."
+    "Diferencia contractual. Cumple la expectativa del comportamiento implementado, pero no el rechazo previsto por la especificación original. Acuerdo explícito Shortcut #146: el webhook continúa con discrepancia."
   ],
   [
     "CU-69\nE1: Saldo de consumible insuficiente o NS de equipo inválido o no asignado al técnico.",
     "P69-E1 serie no encontrada; P69-N retiro/reemplazo",
-    "Parcial. Serie inexistente se registra como discrepancia; no se acreditan separadamente serie de otro técnico y saldo insuficiente dentro de reparación."
+    "Parcial. Serie inexistente se registra como discrepancia; no se acreditan separadamente serie de otro técnico y saldo insuficiente dentro de reparación. El alcance ajustado de Shortcut #147 admite datos de reparación opcionales en el payload real G3."
   ],
   [
     "CU-70\nE1: Ningún código del catálogo aplica a la situación del actor.",
@@ -81,8 +81,8 @@
   ],
   [
     "CU-94\nE1: No existen alertas activas.",
-    "P94-N alertas existentes",
-    "No ejecutada la condición sin alertas activas. Marcar notificaciones como leídas en CU-96 no es equivalente."
+    "P94-N y CI94-E1: cuenta Cable Mágico sin alertas, HTTP200 []",
+    "Cubierta la condición de lista vacía con datos QA reales."
   ],
   [
     "CU-95\nE1: El actor cancela la operación.",
