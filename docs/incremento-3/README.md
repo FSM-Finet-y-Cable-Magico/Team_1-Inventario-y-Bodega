@@ -43,7 +43,8 @@ El total de **70 registros** (65 escenarios funcionales y cinco ensayos de concu
 
 ### Calidad técnica
 
-- Backend Jest: **128/137** pruebas y **14/23** suites correctas. Nueve suites fallan por dependencias/mocks del andamiaje; detalle en `unitarios.log`.
+- Backend Jest (02-10-2026): **140/140** pruebas y **23/23** suites correctas sobre dev a810aa40 con nueve archivos de prueba corregidos en PR 67. Se añadieron dobles de dependencias y tres verificaciones de salud; no se modificó el código funcional. Evidencia: `unitarios-dev-corregidos.log/json`. El registro previo fallido permanece en `unitarios.log`.
+- Los nueve archivos de prueba corregidos pasan ESLint y el build backend finaliza. El lint global mantiene **1203 errores y 118 advertencias**, detallados en `lint-resumen-cierre.json`.
 - Frontend con `npm ci` en checkout QA: **0 errores y 2 advertencias** en `svelte-check`; build correcto. El error inicial de tipos Node era del entorno de dependencias.
 - El reporte de lint previo registra deuda técnica; no se declara el repositorio completamente libre de errores estáticos.
 - Revisar diferencias de contrato de G3, cantidades declaradas frente a consumos aplicados y presentación de fechas de garantía.
