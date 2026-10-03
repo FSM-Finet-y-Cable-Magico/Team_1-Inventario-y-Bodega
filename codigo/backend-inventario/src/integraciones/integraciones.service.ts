@@ -674,6 +674,7 @@ export class IntegracionesService {
           idEmpresa,
           categoriaFalla,
           datosInstalacionConSrv,
+          idTecnico,
         );
         if (resultado.id_tecnico && idTecnico === null) {
           idTecnico = resultado.id_tecnico;
@@ -835,6 +836,7 @@ export class IntegracionesService {
       comunaInstalacion: string | null;
       srv: string | null;
     },
+    idTecnicoCierre: number | null = null,
   ): Promise<{ aplicada?: any; discrepancia?: any; id_tecnico?: number | null }> {
     const serie = item.numero_serie.trim();
     const regla = ACCIONES_G3[item.accion];
@@ -863,6 +865,24 @@ export class IntegracionesService {
           detalle: `La unidad está en estado [${unidad.estado}] y la acción requiere origen en: ${regla.origenes.join(', ')}. Revisar manualmente.`,
         },
         id_tecnico: unidad.idTecnicoAsignado ?? null,
+      };
+    }
+
+    // CU-64/CU-69: una serie asignada a otro técnico no puede usarse en este
+    // cierre; queda como discrepancia y la unidad no cambia de estado.
+    if (
+      idTecnicoCierre !== null &&
+      unidad.estado === 'Asignado a técnico' &&
+      unidad.idTecnicoAsignado != null &&
+      unidad.idTecnicoAsignado !== idTecnicoCierre
+    ) {
+      return {
+        discrepancia: {
+          numero_serie: serie,
+          accion: item.accion,
+          codigo: 'SERIE_DE_OTRO_TECNICO',
+          detalle: `La unidad está asignada al técnico ${unidad.idTecnicoAsignado} y el cierre corresponde al técnico ${idTecnicoCierre}. Revisar manualmente.`,
+        },
       };
     }
 
