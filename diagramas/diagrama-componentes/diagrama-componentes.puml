@@ -1,118 +1,162 @@
 @startuml diagrama-componentes
-title Diagrama de componentes — Sistema de Gestión Integral de Inventario\nFinet & Cable Mágico Litoral — Incremento: CU-01 a CU-46
-
+title Diagrama de componentes — Sistema de Gestión Integral de Inventario\nFinet & Cable Mágico Litoral — I1 / I2 / I3 — CU-01 a CU-96
 skinparam monochrome true
 skinparam shadowing false
 skinparam componentStyle uml2
 skinparam defaultTextAlignment center
 skinparam packageStyle rectangle
-skinparam ArrowColor black
 skinparam linetype ortho
 top to bottom direction
-
-actor "Usuario\n(Técnico de terreno / Admin. de bodega /\nAdministrador / Superusuario)" as user
-
-package "Capa de Presentación — SPA SvelteKit" as pres {
-  component "V_Login" as vlogin
-  component "V_Dashboard" as vdash
-  component "V_Usuarios" as vusers
-  component "V_Auditoria" as vaudit
-  component "V_Catalogo" as vcat
-  component "V_Unidades" as vunits
-  component "V_Transferencias" as vtransf
-  component "V_Bodegas" as vbod
-  component "Store de sesión\n(auth.ts)" as store
-  component "C_ClienteAPI\n(client.ts)" as client
-
-  vlogin --> client
-  vdash --> client
-  vusers --> client
-  vaudit --> client
-  vcat --> client
-  vunits --> client
-  vtransf --> client
-  vbod --> client
-  client -left-> store : token JWT
+actor Usuario as user
+package "Capa de presentación — SvelteKit" as pres {
+ component "Vistas del sistema\nJornada, unidades, cierres, devolución\nReportes, alertas y campana [ampliaciones I3]" as vistas
+ component "Cliente API /api\nSesión JWT" as client
+ vistas --> client
 }
-
-interface "API REST\nHTTP / JSON" as api
-
-user --> pres
-client --> api
-
-package "Capa de Controladores — NestJS" as ctrls {
-  component "Seguridad transversal\nValidationPipe · JwtAuthGuard\nC_RolesGuard (CU-02, CU-03)\nC_CompanyIsolationGuard (CU-17 a CU-19)" as sec
-
-  component "C_AuthController\n/auth\nCU-01, 10, 11, 12" as cauth
-  component "C_UsuariosController\n/usuario\nCU-04 a 07" as cusers
-  component "C_RolesController\n/roles\n(soporte RBAC)" as croles
-  component "C_AuditoriaController\n/auditoria\nCU-09" as caudit
-  component "C_CompaniesController\n/empresas\nCU-13 a 16" as ccomp
-  component "C_CatalogController\n/catalogo\nCU-24 a 31" as ccat
-  component "C_UnitsController\n/unidades\nCU-32 a 40" as cunits
-  component "C_TransferenciasController\n/transferencias\nCU-20 a 23" as ctransf
-  component "C_BodegasController\n/bodegas\nCU-41 a 46" as cbod
+package "Controladores — NestJS" {
+ component "AlertasController\n/alertas" as AlertasController
+ component "AppController" as AppController
+ component "AuditoriaController\n/auditoria" as AuditoriaController
+ component "AuthController\n/auth" as AuthController
+ component "BajasController\n/bajas" as BajasController
+ component "BodegasController\n/bodegas" as BodegasController
+ component "CatalogController\n/catalogo" as CatalogController
+ component "CierresReparacionController\n/cierres-reparacion" as CierresReparacionController
+ component "CierresTrabajoController" as CierresTrabajoController
+ component "CompaniesController\n/empresas" as CompaniesController
+ component "DonacionesController\n/donaciones" as DonacionesController
+ component "HealthController\n/health" as HealthController
+ component "IntegracionesController\n/integraciones" as IntegracionesController
+ component "NotificacionesController\n/notificaciones" as NotificacionesController
+ component "OrdenesIngresoController\n/ordenes-ingreso" as OrdenesIngresoController
+ component "PrestamosController\n/prestamos" as PrestamosController
+ component "ProveedoresController\n/proveedores" as ProveedoresController
+ component "ReportesController\n/reportes" as ReportesController
+ component "RolesController\n/roles" as RolesController
+ component "SalidasController\n/salidas" as SalidasController
+ component "TecnicosController\n/salidas" as TecnicosController
+ component "TransferenciasController\n/transferencias" as TransferenciasController
+ component "UnitsController\n/unidades" as UnitsController
+ component "UsuariosController\n/usuario" as UsuariosController
 }
-
-api --> sec
-sec --> cauth
-sec --> cusers
-sec --> croles
-sec --> caudit
-sec --> ccomp
-sec --> ccat
-sec --> cunits
-sec --> ctransf
-sec --> cbod
-
-package "Capa de Servicios (lógica de negocio) — NestJS" as svcs {
-  component "C_AuthService\nbcrypt · JwtService" as sauth
-  component "C_UsuariosService" as susers
-  component "C_RolesService" as sroles
-  component "C_AuditoriaService\nCU-08 (registro de eventos)" as saudit
-  component "C_CompaniesService" as scomp
-  component "C_CatalogService" as scat
-  component "C_UnitsService" as sunits
-  component "C_TransferenciasService" as stransf
-  component "C_BodegasService" as sbod
+package "Servicios — NestJS" {
+ component "AlertasService" as AlertasService
+ component "AppService" as AppService
+ component "AuditoriaService" as AuditoriaService
+ component "AuthService" as AuthService
+ component "BajasService" as BajasService
+ component "BodegasService" as BodegasService
+ component "CatalogService" as CatalogService
+ component "CierresTrabajoService" as CierresTrabajoService
+ component "CompaniesService" as CompaniesService
+ component "DonacionesService" as DonacionesService
+ component "ExcelExportService" as ExcelExportService
+ component "ExportacionService" as ExportacionService
+ component "G3ClientService" as G3ClientService
+ component "IntegracionesService" as IntegracionesService
+ component "InventarioPersonalService" as InventarioPersonalService
+ component "JornadaService" as JornadaService
+ component "NotificacionesService" as NotificacionesService
+ component "OrdenesIngresoService" as OrdenesIngresoService
+ component "PrestamosService" as PrestamosService
+ component "ProveedoresService" as ProveedoresService
+ component "ReportesService" as ReportesService
+ component "RolesService" as RolesService
+ component "SalidasService" as SalidasService
+ component "TransferenciasService" as TransferenciasService
+ component "UnitsService" as UnitsService
+ component "UsuariosService" as UsuariosService
 }
-
-cauth --> sauth
-cusers --> susers
-croles --> sroles
-caudit --> saudit
-ccomp --> scomp
-ccat --> scat
-cunits --> sunits
-ctransf --> stransf
-cbod --> sbod
-
-sauth ..> saudit : registra evento\nen auditoría
-susers ..> saudit
-sroles ..> saudit
-scat ..> saudit
-sunits ..> saudit
-stransf ..> saudit
-sbod ..> saudit
-
-package "Capa de Persistencia" as pers {
-  component "C_TypeORM\nRepository<T> · DataSource" as orm
+package "Persistencia" {
+ component "TypeORM\nRepository / DataSource" as orm
+ database "PostgreSQL\n32 tablas: 12 I1 / 14 I2 / 6 I3" as db
+ orm --> db
 }
-
-sauth --> orm
-susers --> orm
-sroles --> orm
-saudit --> orm
-scomp --> orm
-scat --> orm
-sunits --> orm
-stransf --> orm
-sbod --> orm
-
-database "PostgreSQL" as db {
-  component "Entidades (tablas)\nusuario · usuario_rol · rol\nlog_auditoria · bodega · stock_consumible\ntipo_equipo · unidad_equipo · historial_estado_equipo\ntransferencia_equipo · movimiento_inventario" as tablas
-}
-
-orm --> tablas : SQL
-
+user --> vistas
+client --> AppController
+AppController --> AppService
+client --> NotificacionesController
+NotificacionesController --> NotificacionesService
+client --> AuthController
+AuthController --> AuthService
+client --> BodegasController
+BodegasController --> BodegasService
+client --> SalidasController
+SalidasController --> InventarioPersonalService
+SalidasController --> JornadaService
+SalidasController --> SalidasService
+client --> TecnicosController
+TecnicosController --> InventarioPersonalService
+TecnicosController --> JornadaService
+TecnicosController --> SalidasService
+client --> HealthController
+client --> ReportesController
+ReportesController --> ReportesService
+ReportesController --> ExportacionService
+client --> TransferenciasController
+TransferenciasController --> TransferenciasService
+client --> RolesController
+RolesController --> RolesService
+client --> AlertasController
+AlertasController --> AlertasService
+client --> UsuariosController
+UsuariosController --> UsuariosService
+client --> IntegracionesController
+IntegracionesController --> IntegracionesService
+client --> CierresReparacionController
+CierresReparacionController --> IntegracionesService
+client --> CierresTrabajoController
+CierresTrabajoController --> CierresTrabajoService
+client --> ProveedoresController
+ProveedoresController --> ProveedoresService
+client --> CatalogController
+CatalogController --> CatalogService
+client --> UnitsController
+UnitsController --> UnitsService
+client --> DonacionesController
+DonacionesController --> DonacionesService
+client --> OrdenesIngresoController
+OrdenesIngresoController --> OrdenesIngresoService
+client --> PrestamosController
+PrestamosController --> PrestamosService
+client --> AuditoriaController
+AuditoriaController --> AuditoriaService
+client --> CompaniesController
+CompaniesController --> CompaniesService
+client --> BajasController
+BajasController --> BajasService
+NotificacionesService --> orm
+AuthService --> orm
+BodegasService --> orm
+InventarioPersonalService --> orm
+SalidasService --> orm
+ReportesService --> orm
+ExportacionService --> orm
+TransferenciasService --> orm
+RolesService --> orm
+UsuariosService --> orm
+CierresTrabajoService --> orm
+IntegracionesService --> orm
+ProveedoresService --> orm
+CatalogService --> orm
+UnitsService --> orm
+DonacionesService --> orm
+OrdenesIngresoService --> orm
+PrestamosService --> orm
+AuditoriaService --> orm
+CompaniesService --> orm
+BajasService --> orm
+component "G3 — clientes y órdenes" as g3
+component "G8 — activación" as g8
+g3 --> IntegracionesController : webhook / API key
+G3ClientService --> g3 : HTTP
+IntegracionesService --> g8 : HTTP
+note bottom of CompaniesService
+ EMPRESAS configuradas en código.
+ No administra una tabla.
+end note
+note bottom of IntegracionesController
+ JWT y roles en las rutas internas.
+ API key y alcance por empresa en integración.
+end note
 @enduml

@@ -1,17 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <mxfile host="app.diagrams.net" agent="Mozilla/5.0">
   <diagram name="Diagrama de Componentes - Inventario y Bodega" id="comp_inv_g1">
     <mxGraphModel dx="2568" dy="1429" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="titulo" parent="1" style="text;html=1;align=center;fontSize=14;fontStyle=1" value="Diagrama de Componentes - Sistema de Gestión Integral de Inventario y Bodega - FiNet y Cable Mágico Litoral" vertex="1">
+        <mxCell id="titulo" parent="1" style="text;html=1;align=center;fontSize=14;fontStyle=1" value="Diagrama de Componentes - Inventario y Bodega - Incremento 3 (dev)" vertex="1">
           <mxGeometry height="30" width="1200" x="310" y="10" as="geometry" />
         </mxCell>
-        <mxCell id="actor_user" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;labelBackgroundColor=none;verticalAlign=top;html=1;outlineConnect=0;" value="Usuario&#xa;(Técnico / Admin. de Bodega / Administrador / Superusuario)" vertex="1">
+        <mxCell id="actor_user" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;labelBackgroundColor=none;verticalAlign=top;html=1;outlineConnect=0;" value="Usuario&#10;(Técnico / Admin. de Bodega / Administrador / Superusuario)" vertex="1">
           <mxGeometry height="80" width="40" x="80" y="410" as="geometry" />
         </mxCell>
-        <mxCell id="lbl_ingreso" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=0" value="Ingresar al sistema&#xa;(web / móvil)" vertex="1">
+        <mxCell id="lbl_ingreso" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=0" value="Ingresar al sistema&#10;(web / móvil)" vertex="1">
           <mxGeometry height="40" width="140" x="60" y="350" as="geometry" />
         </mxCell>
         <mxCell id="eUse" edge="1" parent="1" source="actor_user" style="endArrow=open;endSize=12;dashed=1;html=1;rounded=0;entryX=0;entryY=0.367;entryDx=0;entryDy=0;entryPerimeter=0;" target="vFrame" value="Use">
@@ -28,7 +28,7 @@
             <mxPoint x="-24" y="4" as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="mV1" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="Vistas del Sistema" vertex="1">
+        <mxCell id="mV1" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="Vistas del Sistema&lt;br&gt;Jornada y cierres [I3]&lt;br&gt;Devolución y reportes [I3]" vertex="1">
           <mxGeometry height="80" width="110" x="330" y="310" as="geometry" />
         </mxCell>
         <mxCell id="mV1i" parent="mV1" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
@@ -36,7 +36,7 @@
             <mxPoint x="-27" y="7" as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="mV2" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="Store de sesión&#xa;(auth.ts)" vertex="1">
+        <mxCell id="mV2" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="Store de sesión&#10;(auth.ts)" vertex="1">
           <mxGeometry height="75" width="110" x="330" y="405" as="geometry" />
         </mxCell>
         <mxCell id="mV2i" parent="mV2" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
@@ -44,7 +44,7 @@
             <mxPoint x="-27" y="7" as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="mV3" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="Componentes UI" vertex="1">
+        <mxCell id="mV3" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="Componentes UI&lt;br&gt;Alertas y campana [I3]" vertex="1">
           <mxGeometry height="80" width="110" x="330" y="500" as="geometry" />
         </mxCell>
         <mxCell id="mV3i" parent="mV3" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
@@ -105,7 +105,7 @@
         <mxCell id="mwGrp" connectable="0" parent="1" style="group" value="" vertex="1">
           <mxGeometry height="92.5" width="240" x="1170" y="293.75" as="geometry" />
         </mxCell>
-        <mxCell id="mwBox" parent="mwGrp" style="html=1;dropTarget=0;whiteSpace=wrap;" value="&lt;span style=&quot;font-weight: 700; white-space: nowrap;&quot;&gt;«Middleware»&lt;/span&gt;&lt;br style=&quot;padding: 0px; margin: 0px; font-weight: 700; white-space: nowrap;&quot;&gt;&lt;span style=&quot;font-weight: 700; white-space: nowrap;&quot;&gt;API NestJS / ValidationPipe&lt;/span&gt;&lt;br style=&quot;padding: 0px; margin: 0px; font-weight: 700; white-space: nowrap;&quot;&gt;&lt;span style=&quot;font-weight: 700; white-space: nowrap;&quot;&gt;(JWT Auth · Roles · Empresa)&lt;/span&gt;" vertex="1">
+        <mxCell id="mwBox" parent="mwGrp" style="html=1;dropTarget=0;whiteSpace=wrap;" value="&lt;b&gt;API NestJS / ValidationPipe&lt;/b&gt;&lt;br&gt;JWT / Roles (usuario)&lt;br&gt;API Key / empresa (S2S)" vertex="1">
           <mxGeometry height="92.5" width="220" x="10" as="geometry" />
         </mxCell>
         <mxCell id="mwBoxi" parent="mwBox" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
@@ -126,7 +126,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="ctrlFrame" parent="1" style="align=left;overflow=fill;html=1;dropTarget=0;whiteSpace=wrap;" value="&lt;p style=&quot;margin:0px;margin-top:6px;text-align:center;&quot;&gt;&lt;b&gt;Capa Controladores NestJS&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:8px;&quot;&gt;&lt;br&gt;&lt;/p&gt;" vertex="1">
-          <mxGeometry height="660" width="520" x="1770" y="210" as="geometry" />
+          <mxGeometry height="780" width="520" x="1770" y="210" as="geometry" />
         </mxCell>
         <mxCell id="ctrlFrameIcon" parent="ctrlFrame" style="shape=component;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
           <mxGeometry height="20" relative="1" width="20" x="1" as="geometry">
@@ -280,8 +280,8 @@
             <mxPoint x="-27" y="7" as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="extSys" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="Sistemas externos&#xa;(G3 Terreno · G8 CRM)" vertex="1">
-          <mxGeometry height="70" width="210" x="2040" y="940" as="geometry" />
+        <mxCell id="extSys" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="G3: clientes y OT&lt;br&gt;G8: activación y consulta de stock" vertex="1">
+          <mxGeometry height="70" width="210" x="2040" y="1030" as="geometry" />
         </mxCell>
         <mxCell id="extSyi" parent="extSys" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
           <mxGeometry height="20" relative="1" width="20" x="1" as="geometry">
@@ -357,7 +357,7 @@
             <mxPoint x="-27" y="7" as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="s6" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="Servicio Catálogo&#xa;de Equipos" vertex="1">
+        <mxCell id="s6" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="Servicio Catálogo&#10;de Equipos" vertex="1">
           <mxGeometry height="65" width="144.74" x="1279.7" y="982.5" as="geometry" />
         </mxCell>
         <mxCell id="s6i" parent="s6" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
@@ -365,7 +365,7 @@
             <mxPoint x="-27" y="7" as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="s7" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="Servicio Unidades&#xa;de Equipo" vertex="1">
+        <mxCell id="s7" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="UnitsService&lt;br&gt;Ubicación / devolución&lt;br&gt;Garantía [I3]" vertex="1">
           <mxGeometry height="65" width="144.74" x="1279.7" y="1085" as="geometry" />
         </mxCell>
         <mxCell id="s7i" parent="s7" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
@@ -397,7 +397,7 @@
             <mxPoint x="-27" y="7" as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="s11" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="Servicio Órdenes&#xa;de Ingreso" vertex="1">
+        <mxCell id="s11" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="Servicio Órdenes&#10;de Ingreso" vertex="1">
           <mxGeometry height="65" width="144.74" x="1474.7" y="1082.5" as="geometry" />
         </mxCell>
         <mxCell id="s11i" parent="s11" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
@@ -405,7 +405,7 @@
             <mxPoint x="-27" y="7" as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="s12" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="Servicio Salidas&#xa;a Técnicos" vertex="1">
+        <mxCell id="s12" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="Servicio Salidas&#10;a Técnicos" vertex="1">
           <mxGeometry height="65" width="144.74" x="1474.7" y="1182.5" as="geometry" />
         </mxCell>
         <mxCell id="s12i" parent="s12" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
@@ -437,7 +437,7 @@
             <mxPoint x="-27" y="7" as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="s16" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="&lt;span style=&quot;text-wrap-mode: nowrap;&quot;&gt;Servicio Reportes&lt;/span&gt;" vertex="1">
+        <mxCell id="s16" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="ReportesService&lt;br&gt;Cliente / técnico&lt;br&gt;Excel y PDF [I3]" vertex="1">
           <mxGeometry height="65" width="144.74" x="1474.7" y="1582.5" as="geometry" />
         </mxCell>
         <mxCell id="s16i" parent="s16" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
@@ -445,7 +445,7 @@
             <mxPoint x="-27" y="7" as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="s17" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="&lt;span style=&quot;text-wrap-mode: nowrap;&quot;&gt;Servicio Integraciones&lt;/span&gt;" vertex="1">
+        <mxCell id="s17" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="IntegracionesService&lt;br&gt;Cierres / G8 [ampliado I3]" vertex="1">
           <mxGeometry height="65" width="144.74" x="1474.7" y="1682.5" as="geometry" />
         </mxCell>
         <mxCell id="s17i" parent="s17" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
@@ -498,7 +498,7 @@
         <mxCell id="dbCube" parent="dbGrp" style="verticalAlign=top;align=center;spacingTop=8;spacingLeft=2;spacingRight=12;shape=cube;size=10;direction=south;fontStyle=4;html=1;whiteSpace=wrap;" value="Servidor DB" vertex="1">
           <mxGeometry height="120" width="180" as="geometry" />
         </mxCell>
-        <mxCell id="dbMod" parent="dbGrp" style="html=1;dropTarget=0;whiteSpace=wrap;" value="&lt;span style=&quot;white-space: nowrap;&quot;&gt;PostgreSQL&lt;/span&gt;&lt;br style=&quot;padding: 0px; margin: 0px; white-space: nowrap;&quot;&gt;&lt;span style=&quot;text-wrap-mode: nowrap;&quot;&gt;Tablas del inventario&lt;/span&gt;" vertex="1">
+        <mxCell id="dbMod" parent="dbGrp" style="html=1;dropTarget=0;whiteSpace=wrap;" value="PostgreSQL&lt;br&gt;32 tablas&lt;br&gt;Migraciones explícitas" vertex="1">
           <mxGeometry height="65" width="140" x="20" y="40" as="geometry" />
         </mxCell>
         <mxCell id="dbModi" parent="dbMod" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
@@ -509,7 +509,31 @@
         <mxCell id="pDb" parent="dbGrp" style="fontStyle=0;labelPosition=right;verticalLabelPosition=middle;align=left;verticalAlign=middle;spacingLeft=2;" value="" vertex="1">
           <mxGeometry height="20" width="20" x="173.86" y="50" as="geometry" />
         </mxCell>
-      </root>
+      <mxCell id="c19" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="CierresTrabajoController [I3]" vertex="1">
+          <mxGeometry height="50" width="210" x="1815" y="790" as="geometry" />
+        </mxCell>
+        <mxCell id="c20" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="CierresReparacionController [I3]" vertex="1">
+          <mxGeometry height="50" width="210" x="2040" y="790" as="geometry" />
+        </mxCell>
+        <mxCell id="c21" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="AlertasController [I3]" vertex="1">
+          <mxGeometry height="50" width="210" x="1815" y="850" as="geometry" />
+        </mxCell>
+        <mxCell id="c22" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="NotificacionesController [I3]" vertex="1">
+          <mxGeometry height="50" width="210" x="2040" y="850" as="geometry" />
+        </mxCell>
+        <mxCell id="c23" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="HealthController" vertex="1">
+          <mxGeometry height="50" width="210" x="1815" y="910" as="geometry" />
+        </mxCell>
+        <mxCell id="s18" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="CierresTrabajoService&lt;br&gt;[I3]" vertex="1">
+          <mxGeometry height="65" width="150" x="1065" y="1490" as="geometry" />
+        </mxCell>
+        <mxCell id="s19" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="AlertasService&lt;br&gt;[I3]" vertex="1">
+          <mxGeometry height="65" width="150" x="1065" y="1585" as="geometry" />
+        </mxCell>
+        <mxCell id="s20" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="NotificacionesService&lt;br&gt;[I3]" vertex="1">
+          <mxGeometry height="65" width="150" x="1065" y="1680" as="geometry" />
+        </mxCell>
+        </root>
     </mxGraphModel>
   </diagram>
 </mxfile>

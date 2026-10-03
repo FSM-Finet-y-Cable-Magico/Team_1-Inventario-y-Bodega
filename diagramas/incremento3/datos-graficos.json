@@ -1,0 +1,70 @@
+[
+  [
+    "burn-up-i3",
+    "Burn-up del Incremento 3",
+    [
+      "Inicio I3",
+      "Cierre I3"
+    ],
+    [
+      0,
+      19
+    ],
+    19,
+    "CU implementados",
+    "#B76A00"
+  ],
+  [
+    "burn-down-i3",
+    "Burn-down del Incremento 3",
+    [
+      "Inicio I3",
+      "Cierre I3"
+    ],
+    [
+      19,
+      0
+    ],
+    19,
+    "CU restantes",
+    "#B3263A"
+  ],
+  [
+    "burn-up-proyecto",
+    "Burn-up del proyecto completo",
+    [
+      "Inicio",
+      "Cierre I1",
+      "Cierre I2",
+      "Cierre I3"
+    ],
+    [
+      0,
+      46,
+      77,
+      96
+    ],
+    96,
+    "CU implementados",
+    "#2865A5"
+  ],
+  [
+    "burn-down-proyecto",
+    "Burn-down del proyecto completo",
+    [
+      "Inicio",
+      "Cierre I1",
+      "Cierre I2",
+      "Cierre I3"
+    ],
+    [
+      96,
+      50,
+      19,
+      0
+    ],
+    96,
+    "CU restantes",
+    "#288453"
+  ]
+]

@@ -5,58 +5,58 @@
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="n0" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;" value="&lt;b&gt;Raíz&lt;/b&gt;&lt;br&gt;/ (redirección según sesión)" vertex="1">
+        <mxCell id="n0" parent="1" style="rounded=1;whiteSpace=wrap;html=1;;fillColor=#8eb7ff;strokeColor=#526579;" value="&lt;b&gt;Raíz&lt;/b&gt;&lt;br&gt;/ (redirección según sesión)" vertex="1">
           <mxGeometry height="92" width="480" x="660" y="138" as="geometry" />
         </mxCell>
-        <mxCell id="n1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;" value="&lt;b&gt;Inicio de sesión&lt;/b&gt;&lt;br&gt;/login&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento I&lt;/font&gt;" vertex="1">
+        <mxCell id="n1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;;fillColor=#8eb7ff;strokeColor=#526579;" value="&lt;b&gt;Inicio de sesión&lt;/b&gt;&lt;br&gt;/login&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento I&lt;/font&gt;" vertex="1">
           <mxGeometry height="92" width="480" x="253" y="266" as="geometry" />
         </mxCell>
-        <mxCell id="n2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;" value="&lt;b&gt;Menú principal&lt;/b&gt;&lt;br&gt;Layout autenticado (Sidebar + Header)&lt;br&gt;&lt;font style='font-size:9px'&gt;CU-11 y CU-12: cierre por inactividad&lt;/font&gt;" vertex="1">
+        <mxCell id="n2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;;fillColor=#8eb7ff;strokeColor=#526579;" value="&lt;b&gt;Menú principal&lt;/b&gt;&lt;br&gt;Layout autenticado (Sidebar + Header)&lt;br&gt;&lt;font style='font-size:9px'&gt;CU-11 y CU-12: cierre por inactividad&lt;/font&gt;" vertex="1">
           <mxGeometry height="114" width="640" x="580" y="394" as="geometry" />
         </mxCell>
-        <mxCell id="n3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;" value="Cerrar sesión (vuelve a /login)" vertex="1">
+        <mxCell id="n3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;;fillColor=#8eb7ff;strokeColor=#526579;" value="Cerrar sesión (vuelve a /login)" vertex="1">
           <mxGeometry height="66" width="430" x="1236" y="279" as="geometry" />
         </mxCell>
-        <mxCell id="n4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;" value="&lt;b&gt;Dashboard&lt;/b&gt;&lt;br&gt;/dashboard&lt;br&gt;&lt;font style='font-size:9px'&gt;SUPERUSUARIO, ADMIN&lt;/font&gt;&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento I · evolución III: alertas CU-94&lt;/font&gt;" vertex="1">
+        <mxCell id="n4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;;fillColor=#8eb7ff;strokeColor=#B76A00;" value="&lt;b&gt;Dashboard&lt;/b&gt;&lt;br&gt;/dashboard&lt;br&gt;&lt;font style='font-size:9px'&gt;SUPERUSUARIO, ADMIN&lt;/font&gt;&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento I · evolución III: alertas CU-94&lt;/font&gt;" vertex="1">
           <mxGeometry height="96" width="536" x="60" y="518" as="geometry" />
         </mxCell>
-        <mxCell id="n5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;" value="&lt;b&gt;Usuarios&lt;/b&gt;&lt;br&gt;/usuarios&lt;br&gt;&lt;font style='font-size:9px'&gt;SUPERUSUARIO, ADMIN&lt;/font&gt;&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento I&lt;/font&gt;" vertex="1">
+        <mxCell id="n5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;;fillColor=#8eb7ff;strokeColor=#526579;" value="&lt;b&gt;Usuarios&lt;/b&gt;&lt;br&gt;/usuarios&lt;br&gt;&lt;font style='font-size:9px'&gt;SUPERUSUARIO, ADMIN&lt;/font&gt;&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento I&lt;/font&gt;" vertex="1">
           <mxGeometry height="96" width="536" x="60" y="657" as="geometry" />
         </mxCell>
-        <mxCell id="n6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;" value="Modal: Nuevo usuario&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento I&lt;/font&gt;" vertex="1">
+        <mxCell id="n6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;;fillColor=#8eb7ff;strokeColor=#526579;" value="Modal: Nuevo usuario&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento I&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="106" y="775" as="geometry" />
         </mxCell>
-        <mxCell id="n7" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;" value="Diálogo: Desactivar usuario&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento I&lt;/font&gt;" vertex="1">
+        <mxCell id="n7" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;;fillColor=#8eb7ff;strokeColor=#526579;" value="Diálogo: Desactivar usuario&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento I&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="106" y="849" as="geometry" />
         </mxCell>
-        <mxCell id="n8" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" value="&lt;b&gt;Detalle de usuario&lt;/b&gt;&lt;br&gt;/usuarios/[id]&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento I&lt;/font&gt;" vertex="1">
+        <mxCell id="n8" parent="1" style="rounded=1;whiteSpace=wrap;html=1;;fillColor=#8eb7ff;strokeColor=#526579;" value="&lt;b&gt;Detalle de usuario&lt;/b&gt;&lt;br&gt;/usuarios/[id]&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento I&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="106" y="917" as="geometry" />
         </mxCell>
-        <mxCell id="n9" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;" value="Diálogo: Restablecer contraseña&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento I&lt;/font&gt;" vertex="1">
+        <mxCell id="n9" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;;fillColor=#8eb7ff;strokeColor=#526579;" value="Diálogo: Restablecer contraseña&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento I&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="106" y="989" as="geometry" />
         </mxCell>
-        <mxCell id="n10" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;" value="&lt;b&gt;Catálogo de Equipos&lt;/b&gt;&lt;br&gt;/catalogo&lt;br&gt;&lt;font style='font-size:9px'&gt;SUPERUSUARIO, ADMIN, ADMIN_BODEGA&lt;/font&gt;&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento I&lt;/font&gt;" vertex="1">
+        <mxCell id="n10" parent="1" style="rounded=1;whiteSpace=wrap;html=1;;fillColor=#8eb7ff;strokeColor=#526579;" value="&lt;b&gt;Catálogo de Equipos&lt;/b&gt;&lt;br&gt;/catalogo&lt;br&gt;&lt;font style='font-size:9px'&gt;SUPERUSUARIO, ADMIN, ADMIN_BODEGA&lt;/font&gt;&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento I&lt;/font&gt;" vertex="1">
           <mxGeometry height="96" width="536" x="60" y="1066" as="geometry" />
         </mxCell>
-        <mxCell id="n11" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;" value="Modal: Nuevo tipo de equipo&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento I&lt;/font&gt;" vertex="1">
+        <mxCell id="n11" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;;fillColor=#8eb7ff;strokeColor=#526579;" value="Modal: Nuevo tipo de equipo&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento I&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="106" y="1174" as="geometry" />
         </mxCell>
-        <mxCell id="n12" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;" value="Diálogo: Desactivar tipo de equipo&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento I&lt;/font&gt;" vertex="1">
+        <mxCell id="n12" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;;fillColor=#8eb7ff;strokeColor=#526579;" value="Diálogo: Desactivar tipo de equipo&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento I&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="106" y="1246" as="geometry" />
         </mxCell>
-        <mxCell id="n13" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" value="&lt;b&gt;Detalle de tipo de equipo&lt;/b&gt;&lt;br&gt;/catalogo/[id]&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento I&lt;/font&gt;" vertex="1">
+        <mxCell id="n13" parent="1" style="rounded=1;whiteSpace=wrap;html=1;;fillColor=#8eb7ff;strokeColor=#526579;" value="&lt;b&gt;Detalle de tipo de equipo&lt;/b&gt;&lt;br&gt;/catalogo/[id]&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento I&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="106" y="1318" as="geometry" />
         </mxCell>
-        <mxCell id="n14" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;" value="&lt;b&gt;Bodegas&lt;/b&gt;&lt;br&gt;/bodegas&lt;br&gt;&lt;font style='font-size:9px'&gt;SUPERUSUARIO, ADMIN, ADMIN_BODEGA&lt;/font&gt;&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento I&lt;/font&gt;" vertex="1">
+        <mxCell id="n14" parent="1" style="rounded=1;whiteSpace=wrap;html=1;;fillColor=#8eb7ff;strokeColor=#526579;" value="&lt;b&gt;Bodegas&lt;/b&gt;&lt;br&gt;/bodegas&lt;br&gt;&lt;font style='font-size:9px'&gt;SUPERUSUARIO, ADMIN, ADMIN_BODEGA&lt;/font&gt;&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento I&lt;/font&gt;" vertex="1">
           <mxGeometry height="96" width="536" x="60" y="1442" as="geometry" />
         </mxCell>
-        <mxCell id="n15" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;" value="Modal: Nueva bodega&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento I&lt;/font&gt;" vertex="1">
+        <mxCell id="n15" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;;fillColor=#8eb7ff;strokeColor=#526579;" value="Modal: Nueva bodega&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento I&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="106" y="1556" as="geometry" />
         </mxCell>
-        <mxCell id="n16" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;" value="Diálogo: Desactivar bodega&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento I&lt;/font&gt;" vertex="1">
+        <mxCell id="n16" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;;fillColor=#8eb7ff;strokeColor=#526579;" value="Diálogo: Desactivar bodega&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento I&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="106" y="1632" as="geometry" />
         </mxCell>
-        <mxCell id="n17" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" value="&lt;b&gt;Detalle de bodega&lt;/b&gt;&lt;br&gt;/bodegas/[id]&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento I&lt;/font&gt;" vertex="1">
+        <mxCell id="n17" parent="1" style="rounded=1;whiteSpace=wrap;html=1;;fillColor=#8eb7ff;strokeColor=#526579;" value="&lt;b&gt;Detalle de bodega&lt;/b&gt;&lt;br&gt;/bodegas/[id]&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento I&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="106" y="1710" as="geometry" />
         </mxCell>
         <mxCell id="rUITH6gsOqDvc6aQbsOj-7" edge="1" parent="1" source="n18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="n20" value="">
@@ -67,130 +67,130 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="n18" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;" value="Modal: Editar bodega&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento I&lt;/font&gt;" vertex="1">
+        <mxCell id="n18" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;;fillColor=#8eb7ff;strokeColor=#526579;" value="Modal: Editar bodega&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento I&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="106" y="1784" as="geometry" />
         </mxCell>
-        <mxCell id="n19" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;" value="Modal: Configurar umbral de stock&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento I&lt;/font&gt;" vertex="1">
+        <mxCell id="n19" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;;fillColor=#8eb7ff;strokeColor=#526579;" value="Modal: Configurar umbral de stock&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento I&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="106" y="1864" as="geometry" />
         </mxCell>
-        <mxCell id="n20" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;" value="&lt;b&gt;Auditoría&lt;/b&gt;&lt;br&gt;/auditoria&lt;br&gt;&lt;font style='font-size:9px'&gt;SUPERUSUARIO, ADMIN&lt;/font&gt;&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento I&lt;/font&gt;" vertex="1">
+        <mxCell id="n20" parent="1" style="rounded=1;whiteSpace=wrap;html=1;;fillColor=#8eb7ff;strokeColor=#526579;" value="&lt;b&gt;Auditoría&lt;/b&gt;&lt;br&gt;/auditoria&lt;br&gt;&lt;font style='font-size:9px'&gt;SUPERUSUARIO, ADMIN&lt;/font&gt;&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento I&lt;/font&gt;" vertex="1">
           <mxGeometry height="96" width="536" x="60" y="1952" as="geometry" />
         </mxCell>
-        <mxCell id="n21" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=3;strokeColor=#1A7F4B;" value="&lt;b&gt;Unidades de Equipo&lt;/b&gt;&lt;br&gt;/unidades&lt;br&gt;&lt;font style='font-size:9px'&gt;Todos los roles&lt;/font&gt;&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento I · evolución III: CU-48 y CU-95&lt;/font&gt;" vertex="1">
+        <mxCell id="n21" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=3;;fillColor=#8eb7ff;strokeColor=#B76A00;" value="&lt;b&gt;Unidades de Equipo&lt;/b&gt;&lt;br&gt;/unidades&lt;br&gt;&lt;font style='font-size:9px'&gt;Todos los roles&lt;/font&gt;&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento I · evolución III: CU-48 y CU-95&lt;/font&gt;" vertex="1">
           <mxGeometry height="96" width="536" x="646" y="531" as="geometry" />
         </mxCell>
-        <mxCell id="n22" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;" value="Modal: Registrar unidad&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento I&lt;/font&gt;" vertex="1">
+        <mxCell id="n22" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;;fillColor=#8eb7ff;strokeColor=#526579;" value="Modal: Registrar unidad&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento I&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="694" y="649" as="geometry" />
         </mxCell>
-        <mxCell id="n23" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=3;strokeColor=#1A7F4B;" value="&lt;b&gt;Detalle de unidad&lt;/b&gt;&lt;br&gt;/unidades/[id]" vertex="1">
+        <mxCell id="n23" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=3;;fillColor=#8eb7ff;strokeColor=#526579;" value="&lt;b&gt;Detalle de unidad&lt;/b&gt;&lt;br&gt;/unidades/[id]" vertex="1">
           <mxGeometry height="60" width="490" x="692" y="732" as="geometry" />
         </mxCell>
-        <mxCell id="n24" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;strokeWidth=3;strokeColor=#1A7F4B;" value="Modal: Cambiar estado  ·  ubicación física (CU-47)&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento II · CU-47&lt;/font&gt;" vertex="1">
+        <mxCell id="n24" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;strokeWidth=3;;fillColor=#8dd6b0;strokeColor=#526579;" value="Modal: Cambiar estado  ·  ubicación física (CU-47)&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento II · CU-47&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="694" y="812" as="geometry" />
         </mxCell>
-        <mxCell id="n25" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;strokeWidth=3;strokeColor=#1A7F4B;" value="Modal: Registrar resultado de revisión (CU-72)&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento II · CU-72&lt;/font&gt;" vertex="1">
+        <mxCell id="n25" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;strokeWidth=3;;fillColor=#8dd6b0;strokeColor=#526579;" value="Modal: Registrar resultado de revisión (CU-72)&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento II · CU-72&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="694" y="883" as="geometry" />
         </mxCell>
-        <mxCell id="n26" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;strokeWidth=3;strokeColor=#1A7F4B;" value="Modal: Reacondicionar a bodega (CU-74)&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento II · CU-74&lt;/font&gt;" vertex="1">
+        <mxCell id="n26" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;strokeWidth=3;;fillColor=#8dd6b0;strokeColor=#526579;" value="Modal: Reacondicionar a bodega (CU-74)&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento II · CU-74&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="694" y="954" as="geometry" />
         </mxCell>
-        <mxCell id="n27" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;strokeWidth=3;strokeColor=#1A7F4B;" value="Modal: Enviar a reparación externa (CU-75)&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento II · CU-75&lt;/font&gt;" vertex="1">
+        <mxCell id="n27" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;strokeWidth=3;;fillColor=#8dd6b0;strokeColor=#526579;" value="Modal: Enviar a reparación externa (CU-75)&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento II · CU-75&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="694" y="1026" as="geometry" />
         </mxCell>
-        <mxCell id="n28" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;strokeWidth=3;strokeColor=#1A7F4B;" value="Modal: Reingreso desde reparación (CU-76)&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento II · CU-76&lt;/font&gt;" vertex="1">
+        <mxCell id="n28" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;strokeWidth=3;;fillColor=#8dd6b0;strokeColor=#526579;" value="Modal: Reingreso desde reparación (CU-76)&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento II · CU-76&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="694" y="1098" as="geometry" />
         </mxCell>
-        <mxCell id="n29" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;strokeWidth=3;strokeColor=#1A7F4B;" value="Modal: Registrar baja definitiva (CU-78)&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento II · CU-78&lt;/font&gt;" vertex="1">
+        <mxCell id="n29" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;strokeWidth=3;;fillColor=#8dd6b0;strokeColor=#526579;" value="Modal: Registrar baja definitiva (CU-78)&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento II · CU-78&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="694" y="1169" as="geometry" />
         </mxCell>
-        <mxCell id="n30" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;strokeWidth=3;strokeColor=#1A7F4B;" value="Modal: Datos de la donación (CU-80)&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento II · CU-80&lt;/font&gt;" vertex="1">
+        <mxCell id="n30" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;strokeWidth=3;;fillColor=#8dd6b0;strokeColor=#526579;" value="Modal: Datos de la donación (CU-80)&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento II · CU-80&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="694" y="1243" as="geometry" />
         </mxCell>
-        <mxCell id="n31" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=3;strokeColor=#1A7F4B;" value="&lt;b&gt;Equipos en revisión (CU-77)&lt;/b&gt;&lt;br&gt;/unidades/en-revision&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento II · CU-77&lt;/font&gt;" vertex="1">
+        <mxCell id="n31" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=3;;fillColor=#8dd6b0;strokeColor=#526579;" value="&lt;b&gt;Equipos en revisión (CU-77)&lt;/b&gt;&lt;br&gt;/unidades/en-revision&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento II · CU-77&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="694" y="1316" as="geometry" />
         </mxCell>
-        <mxCell id="n32" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;" value="&lt;b&gt;Transferencias&lt;/b&gt;&lt;br&gt;/transferencias&lt;br&gt;&lt;font style='font-size:9px'&gt;SUPERUSUARIO, ADMIN&lt;/font&gt;&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento I&lt;/font&gt;" vertex="1">
+        <mxCell id="n32" parent="1" style="rounded=1;whiteSpace=wrap;html=1;;fillColor=#8eb7ff;strokeColor=#526579;" value="&lt;b&gt;Transferencias&lt;/b&gt;&lt;br&gt;/transferencias&lt;br&gt;&lt;font style='font-size:9px'&gt;SUPERUSUARIO, ADMIN&lt;/font&gt;&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento I&lt;/font&gt;" vertex="1">
           <mxGeometry height="96" width="536" x="648" y="1392" as="geometry" />
         </mxCell>
-        <mxCell id="n33" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;" value="Modal: Nueva transferencia&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento I&lt;/font&gt;" vertex="1">
+        <mxCell id="n33" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;;fillColor=#8eb7ff;strokeColor=#526579;" value="Modal: Nueva transferencia&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento I&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="694" y="1509" as="geometry" />
         </mxCell>
-        <mxCell id="n34" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;" value="Modal: Detalle de transferencia&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento I&lt;/font&gt;" vertex="1">
+        <mxCell id="n34" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;;fillColor=#8eb7ff;strokeColor=#526579;" value="Modal: Detalle de transferencia&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento I&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="694" y="1590" as="geometry" />
         </mxCell>
-        <mxCell id="n35" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;" value="Modal: Rechazar transferencia&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento I&lt;/font&gt;" vertex="1">
+        <mxCell id="n35" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;;fillColor=#8eb7ff;strokeColor=#526579;" value="Modal: Rechazar transferencia&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento I&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="694" y="1664" as="geometry" />
         </mxCell>
-        <mxCell id="n36" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=3;strokeColor=#1A7F4B;" value="&lt;b&gt;Salidas a técnico&lt;/b&gt;&lt;br&gt;/salidas&lt;br&gt;&lt;font style='font-size:9px'&gt;Todos los roles  ·  registro: S, A, B&lt;/font&gt;&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento II&lt;/font&gt;" vertex="1">
+        <mxCell id="n36" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=3;;fillColor=#8dd6b0;strokeColor=#526579;" value="&lt;b&gt;Salidas a técnico&lt;/b&gt;&lt;br&gt;/salidas&lt;br&gt;&lt;font style='font-size:9px'&gt;Todos los roles  ·  registro: S, A, B&lt;/font&gt;&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento II&lt;/font&gt;" vertex="1">
           <mxGeometry height="96" width="536" x="648" y="1738" as="geometry" />
         </mxCell>
-        <mxCell id="n37" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;strokeWidth=3;strokeColor=#1A7F4B;" value="Formulario: Salida de equipos y consumibles (CU-57, CU-59, CU-60, CU-62)&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento II · CU-57/59/60/62&lt;/font&gt;" vertex="1">
+        <mxCell id="n37" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;strokeWidth=3;;fillColor=#8dd6b0;strokeColor=#526579;" value="Formulario: Salida de equipos y consumibles (CU-57, CU-59, CU-60, CU-62)&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento II · CU-57/59/60/62&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="694" y="1862" as="geometry" />
         </mxCell>
-        <mxCell id="n38" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;strokeWidth=3;strokeColor=#1A7F4B;" value="Panel: Inventario personal del técnico (CU-58)&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento II · CU-58&lt;/font&gt;" vertex="1">
+        <mxCell id="n38" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;strokeWidth=3;;fillColor=#8dd6b0;strokeColor=#526579;" value="Panel: Inventario personal del técnico (CU-58)&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento II · CU-58&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="694" y="1943" as="geometry" />
         </mxCell>
-        <mxCell id="n39" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=3;strokeColor=#1A7F4B;" value="&lt;b&gt;Proveedores&lt;/b&gt;&lt;br&gt;/proveedores&lt;br&gt;&lt;font style='font-size:9px'&gt;SUPERUSUARIO, ADMIN, ADMIN_BODEGA&lt;/font&gt;&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento II&lt;/font&gt;" vertex="1">
+        <mxCell id="n39" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=3;;fillColor=#8dd6b0;strokeColor=#526579;" value="&lt;b&gt;Proveedores&lt;/b&gt;&lt;br&gt;/proveedores&lt;br&gt;&lt;font style='font-size:9px'&gt;SUPERUSUARIO, ADMIN, ADMIN_BODEGA&lt;/font&gt;&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento II&lt;/font&gt;" vertex="1">
           <mxGeometry height="96" width="536" x="1236" y="518" as="geometry" />
         </mxCell>
-        <mxCell id="n40" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;strokeWidth=3;strokeColor=#1A7F4B;" value="Modal: Nuevo proveedor (CU-49)&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento II · CU-49&lt;/font&gt;" vertex="1">
+        <mxCell id="n40" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;strokeWidth=3;;fillColor=#8dd6b0;strokeColor=#526579;" value="Modal: Nuevo proveedor (CU-49)&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento II · CU-49&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="1282" y="642" as="geometry" />
         </mxCell>
-        <mxCell id="n41" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;strokeWidth=3;strokeColor=#1A7F4B;" value="Modal: Editar proveedor (CU-50)&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento II · CU-50&lt;/font&gt;" vertex="1">
+        <mxCell id="n41" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;strokeWidth=3;;fillColor=#8dd6b0;strokeColor=#526579;" value="Modal: Editar proveedor (CU-50)&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento II · CU-50&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="1282" y="715" as="geometry" />
         </mxCell>
-        <mxCell id="n42" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=3;strokeColor=#1A7F4B;" value="&lt;b&gt;Órdenes de ingreso&lt;/b&gt;&lt;br&gt;/ordenes-ingreso&lt;br&gt;&lt;font style='font-size:9px'&gt;SUPERUSUARIO, ADMIN, ADMIN_BODEGA&lt;/font&gt;&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento II&lt;/font&gt;" vertex="1">
+        <mxCell id="n42" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=3;;fillColor=#8dd6b0;strokeColor=#526579;" value="&lt;b&gt;Órdenes de ingreso&lt;/b&gt;&lt;br&gt;/ordenes-ingreso&lt;br&gt;&lt;font style='font-size:9px'&gt;SUPERUSUARIO, ADMIN, ADMIN_BODEGA&lt;/font&gt;&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento II&lt;/font&gt;" vertex="1">
           <mxGeometry height="96" width="536" x="1236" y="792" as="geometry" />
         </mxCell>
-        <mxCell id="n43" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;strokeWidth=3;strokeColor=#1A7F4B;" value="Modal: Nueva orden de ingreso (CU-52)&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento II · CU-52&lt;/font&gt;" vertex="1">
+        <mxCell id="n43" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;strokeWidth=3;;fillColor=#8dd6b0;strokeColor=#526579;" value="Modal: Nueva orden de ingreso (CU-52)&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento II · CU-52&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="1282" y="917" as="geometry" />
         </mxCell>
-        <mxCell id="n44" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=3;strokeColor=#1A7F4B;" value="&lt;b&gt;Detalle de orden de ingreso (CU-53)&lt;/b&gt;&lt;br&gt;/ordenes-ingreso/[id]&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento II · CU-53&lt;/font&gt;" vertex="1">
+        <mxCell id="n44" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=3;;fillColor=#8dd6b0;strokeColor=#526579;" value="&lt;b&gt;Detalle de orden de ingreso (CU-53)&lt;/b&gt;&lt;br&gt;/ordenes-ingreso/[id]&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento II · CU-53&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="1282" y="989" as="geometry" />
         </mxCell>
-        <mxCell id="n45" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;strokeWidth=3;strokeColor=#1A7F4B;" value="Modal: Registrar recepción  ·  N.º de serie y fecha (CU-54, CU-55, CU-56)&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento II · CU-54/55/56&lt;/font&gt;" vertex="1">
+        <mxCell id="n45" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;strokeWidth=3;;fillColor=#8dd6b0;strokeColor=#526579;" value="Modal: Registrar recepción  ·  N.º de serie y fecha (CU-54, CU-55, CU-56)&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento II · CU-54/55/56&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="1282" y="1061" as="geometry" />
         </mxCell>
-        <mxCell id="n46" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=3;strokeColor=#1A7F4B;" value="&lt;b&gt;Bajas&lt;/b&gt;&lt;br&gt;/bajas&lt;br&gt;&lt;font style='font-size:9px'&gt;Todos los roles  ·  resolver: S, A&lt;/font&gt;&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento II&lt;/font&gt;" vertex="1">
+        <mxCell id="n46" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=3;;fillColor=#8dd6b0;strokeColor=#526579;" value="&lt;b&gt;Bajas&lt;/b&gt;&lt;br&gt;/bajas&lt;br&gt;&lt;font style='font-size:9px'&gt;Todos los roles  ·  resolver: S, A&lt;/font&gt;&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento II&lt;/font&gt;" vertex="1">
           <mxGeometry height="96" width="536" x="1236" y="1138" as="geometry" />
         </mxCell>
-        <mxCell id="n47" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=3;strokeColor=#1A7F4B;" value="Pestaña: Solicitudes de baja (CU-78)&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento II · CU-78&lt;/font&gt;" vertex="1">
+        <mxCell id="n47" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=3;;fillColor=#8dd6b0;strokeColor=#526579;" value="Pestaña: Solicitudes de baja (CU-78)&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento II · CU-78&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="1282" y="1258" as="geometry" />
         </mxCell>
-        <mxCell id="n48" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;strokeWidth=3;strokeColor=#1A7F4B;" value="Diálogo: Aprobar baja  ·  irreversible&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento II · CU-78&lt;/font&gt;" vertex="1">
+        <mxCell id="n48" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;strokeWidth=3;;fillColor=#8dd6b0;strokeColor=#526579;" value="Diálogo: Aprobar baja  ·  irreversible&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento II · CU-78&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="1282" y="1332" as="geometry" />
         </mxCell>
-        <mxCell id="n49" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;strokeWidth=3;strokeColor=#1A7F4B;" value="Modal: Rechazar baja  ·  motivo&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento II · CU-78&lt;/font&gt;" vertex="1">
+        <mxCell id="n49" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;strokeWidth=3;;fillColor=#8dd6b0;strokeColor=#526579;" value="Modal: Rechazar baja  ·  motivo&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento II · CU-78&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="1282" y="1404" as="geometry" />
         </mxCell>
-        <mxCell id="n50" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=3;strokeColor=#1A7F4B;" value="Pestaña: Donaciones (CU-80)&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento II · CU-80&lt;/font&gt;" vertex="1">
+        <mxCell id="n50" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=3;;fillColor=#8dd6b0;strokeColor=#526579;" value="Pestaña: Donaciones (CU-80)&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento II · CU-80&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="1282" y="1476" as="geometry" />
         </mxCell>
-        <mxCell id="n51" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;strokeWidth=3;strokeColor=#1A7F4B;" value="Modal: Registrar donación  ·  PDF&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento II · CU-80&lt;/font&gt;" vertex="1">
+        <mxCell id="n51" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;strokeWidth=3;;fillColor=#8dd6b0;strokeColor=#526579;" value="Modal: Registrar donación  ·  PDF&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento II · CU-80&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="1282" y="1548" as="geometry" />
         </mxCell>
-        <mxCell id="n52" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=3;strokeColor=#1A7F4B;" value="&lt;b&gt;Préstamos externos&lt;/b&gt;&lt;br&gt;/prestamos&lt;br&gt;&lt;font style='font-size:9px'&gt;SUPERUSUARIO, ADMIN, ADMIN_BODEGA&lt;/font&gt;&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento II&lt;/font&gt;" vertex="1">
+        <mxCell id="n52" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=3;;fillColor=#8dd6b0;strokeColor=#526579;" value="&lt;b&gt;Préstamos externos&lt;/b&gt;&lt;br&gt;/prestamos&lt;br&gt;&lt;font style='font-size:9px'&gt;SUPERUSUARIO, ADMIN, ADMIN_BODEGA&lt;/font&gt;&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento II&lt;/font&gt;" vertex="1">
           <mxGeometry height="96" width="536" x="1236" y="1628" as="geometry" />
         </mxCell>
-        <mxCell id="n53" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;strokeWidth=3;strokeColor=#1A7F4B;" value="Modal: Nuevo préstamo externo (CU-81)&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento II · CU-81&lt;/font&gt;" vertex="1">
+        <mxCell id="n53" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;strokeWidth=3;;fillColor=#8dd6b0;strokeColor=#526579;" value="Modal: Nuevo préstamo externo (CU-81)&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento II · CU-81&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="1282" y="1753" as="geometry" />
         </mxCell>
         <mxCell id="rUITH6gsOqDvc6aQbsOj-6" edge="1" parent="1" source="n54" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="n55" value="">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="n54" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;strokeWidth=3;strokeColor=#1A7F4B;" value="Modal: Ver detalle del préstamo (CU-83)&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento II · CU-83&lt;/font&gt;" vertex="1">
+        <mxCell id="n54" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;strokeWidth=3;;fillColor=#8dd6b0;strokeColor=#526579;" value="Modal: Ver detalle del préstamo (CU-83)&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento II · CU-83&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="1282" y="1834" as="geometry" />
         </mxCell>
-        <mxCell id="n55" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;strokeWidth=3;strokeColor=#1A7F4B;" value="Modal: Registrar retorno (CU-82, CU-84)&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento II · CU-82/84&lt;/font&gt;" vertex="1">
+        <mxCell id="n55" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;strokeWidth=3;;fillColor=#8dd6b0;strokeColor=#526579;" value="Modal: Registrar retorno (CU-82, CU-84)&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento II · CU-82/84&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="1282" y="1920" as="geometry" />
         </mxCell>
-        <mxCell id="n56" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=3;strokeColor=#1A7F4B;" value="&lt;b&gt;Reportes&lt;/b&gt;&lt;br&gt;/reportes&lt;br&gt;&lt;font style='font-size:9px'&gt;SUPERUSUARIO, ADMIN, ADMIN_BODEGA&lt;/font&gt;&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento II · evolución III: CU-92 y CU-93&lt;/font&gt;" vertex="1">
+        <mxCell id="n56" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=3;;fillColor=#8dd6b0;strokeColor=#B76A00;" value="&lt;b&gt;Reportes&lt;/b&gt;&lt;br&gt;/reportes&lt;br&gt;&lt;font style='font-size:9px'&gt;SUPERUSUARIO, ADMIN, ADMIN_BODEGA&lt;/font&gt;&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento II · evolución III: CU-92 y CU-93&lt;/font&gt;" vertex="1">
           <mxGeometry height="96" width="536" x="1236" y="2007" as="geometry" />
         </mxCell>
-        <mxCell id="n57" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;strokeWidth=3;strokeColor=#1A7F4B;" value="Pestañas: movimientos (CU-86), garantías (CU-88), técnicos (CU-89), consumo (CU-91)&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento II&lt;/font&gt;" vertex="1">
+        <mxCell id="n57" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;strokeWidth=3;;fillColor=#8dd6b0;strokeColor=#526579;" value="Pestañas: movimientos (CU-86), garantías (CU-88), técnicos (CU-89), consumo (CU-91)&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento II&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="1282" y="2129" as="geometry" />
         </mxCell>
-        <mxCell id="n58" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=3;strokeColor=#1A7F4B;" value="&lt;b&gt;Reporte de stock actual (CU-85)&lt;/b&gt;&lt;br&gt;/reportes/stock&lt;br&gt;&lt;font style='font-size:9px;color:#1A7F4B'&gt;Incremento II&lt;/font&gt;" vertex="1">
+        <mxCell id="n58" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=3;;fillColor=#8dd6b0;strokeColor=#526579;" value="&lt;b&gt;Reporte de stock actual (CU-85)&lt;/b&gt;&lt;br&gt;/reportes/stock&lt;br&gt;&lt;font style='font-size:9px;color:#183650'&gt;Incremento II&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="490" x="1282" y="2208" as="geometry" />
         </mxCell>
         <mxCell id="e0" edge="1" parent="1" source="n0" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#3D4551;exitX=0.002;exitY=0.35;exitDx=0;exitDy=0;exitPerimeter=0;" target="n1">
@@ -607,16 +607,16 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="rUITH6gsOqDvc6aQbsOj-8" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="sin sesión" vertex="1">
+        <mxCell id="rUITH6gsOqDvc6aQbsOj-8" parent="1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;rounded=0;;fillColor=#8eb7ff;strokeColor=#526579;" value="sin sesión" vertex="1">
           <mxGeometry height="30" width="60" x="495" y="145" as="geometry" />
         </mxCell>
-        <mxCell id="rUITH6gsOqDvc6aQbsOj-9" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="credenciales válidas" vertex="1">
+        <mxCell id="rUITH6gsOqDvc6aQbsOj-9" parent="1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;rounded=0;;fillColor=#8eb7ff;strokeColor=#526579;" value="credenciales válidas" vertex="1">
           <mxGeometry height="30" width="126" x="440" y="379" as="geometry" />
         </mxCell>
-        <mxCell id="rUITH6gsOqDvc6aQbsOj-10" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="con sesión activa" vertex="1">
+        <mxCell id="rUITH6gsOqDvc6aQbsOj-10" parent="1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;rounded=0;;fillColor=#8eb7ff;strokeColor=#526579;" value="con sesión activa" vertex="1">
           <mxGeometry height="30" width="117" x="893" y="279" as="geometry" />
         </mxCell>
-      <mxCell id="n59" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=3;strokeColor=#1A7F4B;" value="&lt;b&gt;Jornada del técnico&lt;/b&gt;&lt;br&gt;/jornada&lt;br&gt;&lt;font style='font-size:9px'&gt;Incremento III · CU-61&lt;/font&gt;" vertex="1"><mxGeometry x="60" y="2350" width="536" height="96" as="geometry" /></mxCell><mxCell id="n60" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=3;strokeColor=#1A7F4B;" value="&lt;b&gt;Campana de notificaciones&lt;/b&gt;&lt;br&gt;Global en menú autenticado&lt;br&gt;&lt;font style='font-size:9px'&gt;Incremento III · CU-96&lt;/font&gt;" vertex="1"><mxGeometry x="648" y="2350" width="536" height="96" as="geometry" /></mxCell><mxCell id="n61" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=3;strokeColor=#1A7F4B;" value="&lt;b&gt;Cierres técnicos e integración&lt;/b&gt;&lt;br&gt;Validación de consumibles y cierre de instalación/reparación&lt;br&gt;&lt;font style='font-size:9px'&gt;Incremento III · CU-64, CU-68, CU-69 y CU-70&lt;/font&gt;" vertex="1"><mxGeometry x="1236" y="2350" width="536" height="96" as="geometry" /></mxCell><mxCell id="e59" edge="1" parent="1" source="n2" target="n59" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#1A7F4B;" value=""><mxGeometry relative="1" as="geometry" /></mxCell><mxCell id="e60" edge="1" parent="1" source="n2" target="n60" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#1A7F4B;" value=""><mxGeometry relative="1" as="geometry" /></mxCell><mxCell id="e61" edge="1" parent="1" source="n59" target="n61" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#1A7F4B;" value=""><mxGeometry relative="1" as="geometry" /></mxCell><mxCell id="n62" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=3;strokeColor=#1A7F4B;" value="&lt;b&gt;Lectura de etiquetas&lt;/b&gt;&lt;br&gt;I / II / III = incremento de incorporación de cada pantalla/acción&lt;br&gt;‘evolución III’ = funcionalidad ampliada en el Incremento 3&lt;br&gt;Los nodos de diálogos también indican explícitamente su incremento" vertex="1"><mxGeometry x="60" y="2470" width="1712" height="90" as="geometry" /></mxCell></root>
+      <mxCell id="n59" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=3;;fillColor=#ffc870;strokeColor=#526579;" value="&lt;b&gt;Jornada del técnico&lt;/b&gt;&lt;br&gt;/jornada&lt;br&gt;&lt;font style='font-size:9px'&gt;Incremento III · CU-61&lt;/font&gt;" vertex="1"><mxGeometry x="60" y="2350" width="536" height="96" as="geometry" /></mxCell><mxCell id="n60" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=3;;fillColor=#ffc870;strokeColor=#526579;" value="&lt;b&gt;Campana de notificaciones&lt;/b&gt;&lt;br&gt;Global en menú autenticado&lt;br&gt;&lt;font style='font-size:9px'&gt;Incremento III · CU-96&lt;/font&gt;" vertex="1"><mxGeometry x="648" y="2350" width="536" height="96" as="geometry" /></mxCell><mxCell id="n61" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=3;;fillColor=#ffc870;strokeColor=#526579;" value="&lt;b&gt;Cierres técnicos e integración&lt;/b&gt;&lt;br&gt;Preparación en T1; confirmación y webhook de G3&lt;br&gt;Incremento III · CU-64, CU-68, CU-69 y CU-70" vertex="1"><mxGeometry x="1236" y="2350" width="536" height="96" as="geometry" /></mxCell><mxCell id="e59" edge="1" parent="1" source="n2" target="n59" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#1A7F4B;" value=""><mxGeometry relative="1" as="geometry" /></mxCell><mxCell id="e60" edge="1" parent="1" source="n2" target="n60" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#1A7F4B;" value=""><mxGeometry relative="1" as="geometry" /></mxCell><mxCell id="e61" edge="1" parent="1" source="n59" target="n61" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#1A7F4B;" value=""><mxGeometry relative="1" as="geometry" /></mxCell><mxCell id="n62" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=3;;fillColor=#FFFFFF;strokeColor=#B76A00;" value="&lt;b&gt;Leyenda por incremento&lt;/b&gt;&lt;br&gt;Azul: I1 · Verde: I2 · Ámbar: I3&lt;br&gt;Borde ámbar: pantalla anterior ampliada en I3&lt;br&gt;El color indica origen, las etiquetas precisan CU y evolución" vertex="1"><mxGeometry x="60" y="2860" width="1712" height="90" as="geometry" /></mxCell><mxCell id="n63" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=3;;fillColor=#ffc870;strokeColor=#526579;" value="&lt;b&gt;Devolución desde cliente&lt;/b&gt;&lt;br&gt;/unidades/devolucion&lt;br&gt;Incremento III · CU-71 y CU-73" vertex="1"><mxGeometry x="60" y="2630" width="536" height="90" as="geometry" /></mxCell><mxCell id="edge-n63" parent="1" edge="1" source="n21" target="n63" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#526579;"><mxGeometry as="geometry" relative="1" /></mxCell><mxCell id="n64" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=3;;fillColor=#ffc870;strokeColor=#526579;" value="&lt;b&gt;Equipos por cliente y productividad&lt;/b&gt;&lt;br&gt;/reportes/equipos-instalados · /reportes/productividad&lt;br&gt;Incremento III · CU-87 y CU-90" vertex="1"><mxGeometry x="1236" y="2630" width="536" height="90" as="geometry" /></mxCell><mxCell id="edge-n64" parent="1" edge="1" source="n56" target="n64" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#526579;"><mxGeometry as="geometry" relative="1" /></mxCell><mxCell id="n65" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=3;;fillColor=#ffc870;strokeColor=#526579;" value="&lt;b&gt;Exportar Excel y PDF&lt;/b&gt;&lt;br&gt;Acciones dentro de reportes&lt;br&gt;Incremento III · CU-92 y CU-93" vertex="1"><mxGeometry x="1236" y="2740" width="536" height="90" as="geometry" /></mxCell><mxCell id="edge-n65" parent="1" edge="1" source="n56" target="n65" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#526579;"><mxGeometry as="geometry" relative="1" /></mxCell><mxCell id="n66" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=3;;fillColor=#ffc870;strokeColor=#526579;" value="&lt;b&gt;Ubicación externa y aviso de garantía&lt;/b&gt;&lt;br&gt;Detalle de unidad y confirmación de operación&lt;br&gt;Incremento III · CU-48 y CU-95" vertex="1"><mxGeometry x="60" y="2740" width="536" height="90" as="geometry" /></mxCell><mxCell id="edge-n66" parent="1" edge="1" source="n23" target="n66" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#526579;"><mxGeometry as="geometry" relative="1" /></mxCell></root>
     </mxGraphModel>
   </diagram>
 </mxfile>

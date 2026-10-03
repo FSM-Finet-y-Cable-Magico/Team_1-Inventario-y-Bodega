@@ -15,7 +15,7 @@
 - [Shortcut: revisión asignada](https://app.shortcut.com/ing-de-software/story/160).
 - [PR 67: documentación, modelos y corrección de inicialización](https://github.com/FSM-Finet-y-Cable-Magico/Team_1-Inventario-y-Bodega/pull/67).
 
-El documento mantiene la plantilla del Incremento 2 e incluye los 19 casos extendidos, requerimientos, Scrum++, vistas 4+1, secuencias, pantallas, pruebas, retrospectiva y anexos. El informe ampliado incorpora siete apartados de Scrum, proceso final y auditoría acumulada; incluye 24 vistas actuales explicadas. La edición publicada tiene 265 páginas, 89 figuras y 189 tablas; el manifiesto identifica los archivos. Los índices se contrastaron con el PDF y no hay páginas vacías. Las capturas se completaron el 1 de octubre de 2026.
+El documento mantiene la plantilla del Incremento 2 e incluye los 19 casos extendidos, requerimientos, Scrum++, vistas 4+1, secuencias, pantallas, pruebas, retrospectiva y anexos. El informe ampliado incorpora siete apartados de Scrum, proceso final y auditoría acumulada; incluye 24 vistas actuales explicadas. La edición revisada contiene 94 figuras y 193 tablas; la paginación y los archivos se identifican en el manifiesto. Los índices se contrastaron con el PDF y no hay páginas vacías. Las capturas se completaron el 1 de octubre de 2026.
 
 Las tareas se titulan «Revisar» y se asignaron a los cinco integrantes (3/3/3/3/2). No se inventan actas, horas históricas ni aprobaciones del equipo.
 
@@ -30,8 +30,9 @@ Las tareas se titulan «Revisar» y se asignaron a los cinco integrantes (3/3/3/
 | `pruebas-extra.json` | 5 | 5 cumplen; devolución y límite de exportación |
 | `pruebas-auditoria.json` | 2 | 2 cumplen; rango >90 días y contacto inválido G3 |
 | `pruebas-cierre.json` | 6 | CU94 sin alertas y cinco ensayos de 20 solicitudes HTTP simultáneas |
+| `pruebas-integracion.json` | 4 | 3 conformes; INT69-TECNICO no conforme, documentado en Shortcut 171 |
 
-El total de **70 registros** (65 escenarios funcionales y cinco ensayos de concurrencia) no equivale a 70 CU ni a una repetición exhaustiva de todos los caminos de los 96 CU. Las capturas históricas de `Casos de uso/` se identifican por separado en el informe.
+El total de **74 registros** (69 escenarios funcionales y cinco ensayos de concurrencia) no equivale a 74 CU ni a una repetición exhaustiva de todos los caminos de los 96 CU. Las capturas históricas de `Casos de uso/` se identifican por separado en el informe.
 
 ### Pruebas de integración
 
@@ -60,7 +61,7 @@ Las FNs describen dependencias y descomposición de cabecera/detalle. No se afir
 
 ## Auditoría de rúbrica
 
-La [matriz de 64 criterios](auditoria-rubrica.md) registra fuente, evidencia, estado y acción pendiente. Se recuperaron 11 UR ESA, RF-43, los 10 RNF y la cobertura exacta de excepciones. **No se acredita cumplimiento integral todavía**: quedan condiciones de prueba/RNF, aceptación formal del cliente, importación Bizagi y correcciones de copias históricas, además de las actuaciones del equipo. Las secciones 13.4–13.11 del informe explican cada brecha.
+La [matriz de 64 criterios](auditoria-rubrica.md) registra fuente, evidencia, estado y acción pendiente. Se recuperaron 11 UR ESA, RF-43, los 10 RNF y la cobertura exacta de excepciones. La documentación recoge el alcance completo y los límites técnicos observados. Persisten el hallazgo INT69-TECNICO y límites de RNF; no se presentan como pruebas aprobadas. Bizagi corresponde al Documento 0 y la aceptación formal a una etapa posterior. Videos y exposición son actividades del equipo. Las secciones 13.4–13.11 del informe explican cada brecha.
 
 ## Acciones personales del equipo
 
@@ -69,9 +70,8 @@ Revisar los artefactos, registrar conformidad, grabar instalación/funcionalidad
 ## Archivos complementarios
 
 - [Organización de trabajo](https://docs.google.com/spreadsheets/d/1-0FezDia3gk-SHL6derwYG_BHRRJ_lL2/edit).
-- [Presentación de 13 diapositivas](https://docs.google.com/presentation/d/1DLdzazSMJ0nzhHe7oZvh-T7DYXGhJSkl/edit).
+- [Presentación de 15 diapositivas](https://docs.google.com/presentation/d/1DLdzazSMJ0nzhHe7oZvh-T7DYXGhJSkl/edit).
 - [Guía de instalación y demo](https://docs.google.com/document/d/12jZ0bUIo-CvGxOWItBZTpxfc8v4MWYxy/edit).
-- [Informe PDF](https://drive.google.com/file/d/1F41RrChmofTdiQcT7jU8LOqx1N5hG2-0/view).
 
 La imagen adjunta a la OT 1 de G3 es un archivo ficticio de prueba (captura de login). Permite probar la recepción de evidencia; no acredita una instalación en terreno.
 
@@ -79,5 +79,9 @@ La imagen adjunta a la OT 1 de G3 es un archivo ficticio de prueba (captura de l
 
 - `resultados/shortcut-scrum.json`: 19 tickets del I3, acuerdos de integración y responsables de revisión.
 - `diagramas/editables-drawio/`: 234 archivos con textos y primitivas vectoriales editables. Los conectores conservan geometría; cambios estructurales se regeneran desde PlantUML.
-- `diagramas/incremento3/proceso-final-incremento3.*`: BPMN 2.0, Draw.io y PNG con flujo de terreno/inventario. Bizagi no disponible para guardar `.bpm`.
+- `diagramas/incremento3/proceso-final-incremento3.*`: BPMN 2.0, Draw.io y PNG con flujo de terreno/inventario. Material complementario; el modelo Bizagi pertenece al Documento 0.
 - Los ensayos concurrentes usan una misma cuenta QA y base pequeña; no acreditan la matriz completa de RNF-06.
+
+## Revisión del 3 de octubre
+
+Se preservó la versión del equipo del 2 de octubre (21:03 UTC). Pruebas ordenadas por CU y glosario de códigos; árbol y modelo ChartDB con I1 azul, I2 verde e I3 ámbar; cuatro gráficos de alcance; componentes actualizados; CU64 y CU69 como trazabilidad principal. Modelo ChartDB editable y datos de gráficos incluidos en diagramas/incremento3.

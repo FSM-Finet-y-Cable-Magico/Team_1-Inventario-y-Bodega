@@ -52,8 +52,8 @@
     "pagina_rubrica": "8",
     "criterio": "Umbral I3 de al menos 95 %",
     "estado": "Parcial",
-    "evidencia": "2.1: 96 CU declarados; 19 tratados en I3. Existen discrepancias funcionales y aceptación pendiente.",
-    "cierre": "No equiparar roadmap con aceptación sin reservas; revisar contrato y matriz de excepciones."
+    "evidencia": "96 CU implementados declarados en dev; I3 incorpora 19. INT69-TECNICO documenta una restricción que no cumple su expectativa.",
+    "cierre": "El alcance implementado supera 95%; no equivale a conformidad funcional sin reservas."
   },
   {
     "id": "R08",
@@ -188,16 +188,16 @@
     "pagina_rubrica": "3",
     "criterio": "Evidencia de cada prueba ejecutada",
     "estado": "Comprobado",
-    "evidencia": "Capítulo 10: 70 registros, 65 escenarios funcionales y cinco ensayos de concurrencia; fechas y respuestas adjuntas.",
-    "cierre": "Sin acción adicional documental."
+    "evidencia": "Capítulo 10: 74 registros, 73 conformes y uno no conforme; orden por CU, identificadores explicados y respuestas adjuntas.",
+    "cierre": "Sin acción documental adicional."
   },
   {
     "id": "R25",
     "pagina_rubrica": "3",
     "criterio": "Cobertura de flujos y excepciones especificados",
     "estado": "Parcial",
-    "evidencia": "13.6: CU94 sin alertas comprobado; acuerdos #141/#145/#146/#147 recuperados.",
-    "cierre": "Mantener límites exactos de CU63/67/69; no declarar pruebas no ejecutadas."
+    "evidencia": "13.6 y 10.7: cliente inexistente, consulta sin equipos y saldo insuficiente comprobados. INT69-TECNICO no conforme.",
+    "cierre": "Distinguir acuerdos de integración de restricciones especificadas; seguimiento técnico de la pertenencia de la serie al técnico."
   },
   {
     "id": "R26",
@@ -211,9 +211,9 @@
     "id": "R27",
     "pagina_rubrica": "5–6",
     "criterio": "Sprint Review con equipo y Product Owner",
-    "estado": "Parcial",
-    "evidencia": "3.4: Review técnica con objetivos, resultados, cambios del backlog, problemas y mejoras; tickets In Review.",
-    "cierre": "Aceptación formal del Product Owner no registrada."
+    "estado": "Documentado",
+    "evidencia": "3.4: Review técnica, objetivos, resultados, problemas y mejoras; proceso de reuniones igual a I2 confirmado por el jefe de grupo.",
+    "cierre": "La aceptación formal corresponde a una etapa posterior y no es un entregable de I3."
   },
   {
     "id": "R28",
@@ -236,8 +236,8 @@
     "pagina_rubrica": "7",
     "criterio": "PPT: portada, índice, alcance y traza Scrum++",
     "estado": "Corregido",
-    "evidencia": "Diapositiva 13: Planning 19 CU/38 HH, backlog #139–157, Review, retrospectiva y reparto de #160–173 visibles.",
-    "cierre": "La presentación conserva la plantilla del I2."
+    "evidencia": "PPT: portada, índice, introducción, alcance, Scrum, requisitos, componentes, físico, trazabilidad CU64/CU69, secuencias, árbol y pruebas.",
+    "cierre": "Sin acción documental adicional."
   },
   {
     "id": "R31",
@@ -267,17 +267,17 @@
     "id": "R34",
     "pagina_rubrica": "8",
     "criterio": "Incluir I2, I1 y Documento 0 corregidos",
-    "estado": "Parcial",
-    "evidencia": "Carpeta raíz de Drive contiene I2, I1 y acceso directo Documento 0.",
-    "cierre": "Existencia comprobada; no se verificó el cierre integral de todas las correcciones en esos tres documentos. El I3 por sí solo no lo acredita."
+    "estado": "Revisado",
+    "evidencia": "Carpetas I1 e I2 de Drive contrastadas: documentos, presentaciones, código, SQL, diagramas, CU, gráficos y organización. Documento 0 consultado como antecedente.",
+    "cierre": "La revisión de antecedentes no reescribe ni certifica las copias históricas completas."
   },
   {
     "id": "R35",
     "pagina_rubrica": "9",
     "criterio": "Documento Word autocontenido",
-    "estado": "Parcial",
-    "evidencia": "RF, CU, vistas, pruebas, modelos y diccionario incluidos. Respuestas técnicas completas y fuentes editables van adjuntas.",
-    "cierre": "Las diferencias de contrato y condiciones no ejecutadas permanecen explícitas; los modelos generales deben consultarse también en resolución original."
+    "estado": "Comprobado",
+    "evidencia": "Informe autocontenido: requisitos, 19 CU, vistas, capturas, modelos y diccionario, 74 pruebas, Scrum y cuatro gráficos. Hallazgos técnicos identificados.",
+    "cierre": "Sin acción documental adicional."
   },
   {
     "id": "R36",
@@ -435,17 +435,17 @@
     "id": "R55",
     "pagina_rubrica": "4",
     "criterio": "Levantamiento de procesos con sistema terminado",
-    "estado": "Parcial",
-    "evidencia": "13.9: proceso final, comparación con proceso inicial, PNG, Draw.io y BPMN 2.0 con geometría.",
-    "cierre": "Importación en Bizagi y guardado propietario .bpm no verificados; aplicación no disponible en este equipo."
+    "estado": "Documentado",
+    "evidencia": "13.9: proceso final implementado y comparación con el antecedente. El modelo Bizagi pertenece al Documento 0, según delimitación del jefe de grupo.",
+    "cierre": "Sin acción documental adicional."
   },
   {
     "id": "R56",
     "pagina_rubrica": "1, 9",
     "criterio": "Complementos Documento 0: BPMN Bizagi, análisis, costos, CV y aceptación",
-    "estado": "Parcial",
-    "evidencia": "13.10: Doc0 contiene análisis, modelos iniciales, CV, aceptación inicial, costos y planificación. Se identificaron figuras y secciones.",
-    "cierre": "No se localizó .bpm editable; mención de 2025 en descripción A18 contradice planificación 2026. La aceptación inicial no sustituye cierre I3."
+    "estado": "Antecedente",
+    "evidencia": "13.10: análisis, modelos, CV, costos, planificación y aceptación inicial del Documento 0. Bizagi se conserva en dicho documento.",
+    "cierre": "La aceptación formal posterior queda fuera de esta etapa; grabaciones y exposición a cargo del equipo."
   },
   {
     "id": "R57",
@@ -467,9 +467,9 @@
     "id": "D04",
     "pagina_rubrica": "Observación4",
     "criterio": "Físico, diferencias, MERE/MR/FNs/ME en anexos",
-    "estado": "Comprobado",
-    "evidencia": "2.1, 5 y 13: físico por áreas, esquema de 32 tablas, MERE histórico, MR/ME/FNs; límites de normalización explícitos.",
-    "cierre": "Sin acción adicional en esta auditoría."
+    "estado": "Corregido",
+    "evidencia": "Modelos físico, MERE, MR, FNs y ME en informe y anexos; ChartDB con 12 tablas I1 azules, 14 I2 verdes y 6 I3 ámbar.",
+    "cierre": "Sin acción documental adicional."
   },
   {
     "id": "D05",
@@ -483,9 +483,9 @@
     "id": "D06",
     "pagina_rubrica": "Observación6",
     "criterio": "Árbol identificado por incremento",
-    "estado": "Comprobado",
-    "evidencia": "Árbol I3 rotulado; matriz de pantallas y CU por procedencia.",
-    "cierre": "Sin acción adicional en esta auditoría."
+    "estado": "Corregido",
+    "evidencia": "Árbol con leyenda I1 azul, I2 verde e I3 ámbar; borde ámbar para ampliaciones de pantallas anteriores.",
+    "cierre": "Sin acción documental adicional."
   },
   {
     "id": "D07",
@@ -499,16 +499,16 @@
     "id": "D08",
     "pagina_rubrica": "Observación8",
     "criterio": "Evidencias de pruebas por incremento",
-    "estado": "Parcial",
-    "evidencia": "Inventario de los 96 CU, evidencias históricas y 70 registros actuales, incluido CU94 vacío.",
-    "cierre": "Persisten condiciones exactas no ejecutadas de integración; ver 13.6."
+    "estado": "Comprobado",
+    "evidencia": "Capítulo 10 ordenado por CU y tipo de escenario; glosario P/REG/N/E y evidencias de 74 registros, incluido un hallazgo no conforme.",
+    "cierre": "Sin acción documental adicional."
   },
   {
     "id": "D09",
     "pagina_rubrica": "Observación9",
     "criterio": "Retrospectiva",
-    "estado": "Comprobado",
-    "evidencia": "Capítulo 12 y 3.7: retrospectiva, acciones y responsables de revisión; proceso confirmado por el jefe.",
-    "cierre": "Conformidad humana se conserva como pendiente."
+    "estado": "Corregido",
+    "evidencia": "Capítulo 12: acciones, responsables y cuatro gráficos: burn-up y burn-down de I3 y del proyecto completo. Cortes de entrega identificados.",
+    "cierre": "Sin acción documental adicional."
   }
 ]

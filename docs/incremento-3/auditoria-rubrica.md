@@ -1,12 +1,10 @@
 # Auditoría de rúbrica del Incremento 3
 
-Fecha: 1 de octubre de 2026. Aplicación probada en dev `a810aa40`.
+Fecha: 3 de octubre de 2026. Aplicación probada en dev `a810aa40`.
 
-## Resultado de esta pasada
+Se preservaron las ediciones del equipo descargadas el 3 de octubre. La revisión incorpora las observaciones adicionales: orden y glosario de pruebas, colores por incremento, cuatro gráficos, trazabilidad CU64/CU69 y componentes actualizados.
 
-Se incorporaron registros reales de Shortcut, reparto de revisión entre cinco integrantes, proceso de reuniones de I2 confirmado por el jefe, 234 versiones Draw.io, proceso final BPMN y seis registros adicionales de prueba. El total es 70 registros: 65 escenarios funcionales y cinco ensayos de concurrencia.
-
-Los 64 criterios siguientes conservan evidencia y límites. Un criterio parcial no se declara cumplido por aparecer en el informe.
+Se documentan 74 registros: 73 conformes y uno no conforme (INT69-TECNICO). La integridad documental no se presenta como ausencia de defectos del software. Bizagi pertenece al Documento 0; aceptación formal posterior fuera del alcance; videos y exposición a cargo del equipo.
 
 | ID | Rúbrica | Criterio | Estado | Evidencia | Cierre |
 |---|---|---|---|---|---|
@@ -16,7 +14,7 @@ Los 64 criterios siguientes conservan evidencia y límites. Un criterio parcial 
 | R04 | 2, 12 | Índice de tablas | Comprobado | Preliminares; correlativos por capítulo. | Sin acción adicional en esta auditoría. |
 | R05 | 2 | Introducción | Comprobado | Capítulo 1: problema, solución, alcance y corte de dev. | Sin acción adicional en esta auditoría. |
 | R06 | 2, 8 | Propuesta y alcance del incremento | Comprobado | 2.1: 46 + 31 + 19 = 96; I3 19,79 % y acumulado 100 % declarado. | Sin acción adicional en esta auditoría. |
-| R07 | 8 | Umbral I3 de al menos 95 % | Parcial | 2.1: 96 CU declarados; 19 tratados en I3. Existen discrepancias funcionales y aceptación pendiente. | No equiparar roadmap con aceptación sin reservas; revisar contrato y matriz de excepciones. |
+| R07 | 8 | Umbral I3 de al menos 95 % | Parcial | 96 CU implementados declarados en dev; I3 incorpora 19. INT69-TECNICO documenta una restricción que no cumple su expectativa. | El alcance implementado supera 95%; no equivale a conformidad funcional sin reservas. |
 | R08 | 3 | Product Backlog con RF, prioridad y responsable | Comprobado | 3.1 y matriz RF–CU; responsables de implementación identificados. | Sin acción adicional en esta auditoría. |
 | R09 | 3 | Planificación del sprint y tiempo estimado | Parcial | 3.1–3.2: criterio I2 de 2 HH/CU aplicado a 19 CU (38 HH); 19 tickets con responsables y fechas reales. | Shortcut permanece Unestimated; no presentar las horas referenciales como estimación histórica registrada. |
 | R10 | 3 | Sprint Backlog vinculado a vista externa | Comprobado | 3.1 y capítulo 4: 19 CU del alcance; 3.2 tareas de cierre separadas. | Sin acción adicional en esta auditoría. |
@@ -33,18 +31,18 @@ Los 64 criterios siguientes conservan evidencia y límites. Un criterio parcial 
 | R21 | 4 | Explicación de cada vista, no solo imágenes | Comprobado | Capítulos 4–8 tienen texto de contexto y correspondencia con el sistema. | Sin acción adicional en esta auditoría. |
 | R22 | 4 | Árbol de navegación | Comprobado | Capítulo 9 y fuente arbol-navegacion-incremento3.drawio; procedencia por incremento. | Sin acción adicional en esta auditoría. |
 | R23 | 4 | Funcionamiento de pantallas | Comprobado | 9.1–9.24: 24 vistas actuales descritas, incluidas G3 y excepciones móviles. | Sin acción adicional en esta auditoría. |
-| R24 | 3 | Evidencia de cada prueba ejecutada | Comprobado | Capítulo 10: 70 registros, 65 escenarios funcionales y cinco ensayos de concurrencia; fechas y respuestas adjuntas. | Sin acción adicional documental. |
-| R25 | 3 | Cobertura de flujos y excepciones especificados | Parcial | 13.6: CU94 sin alertas comprobado; acuerdos #141/#145/#146/#147 recuperados. | Mantener límites exactos de CU63/67/69; no declarar pruebas no ejecutadas. |
+| R24 | 3 | Evidencia de cada prueba ejecutada | Comprobado | Capítulo 10: 74 registros, 73 conformes y uno no conforme; orden por CU, identificadores explicados y respuestas adjuntas. | Sin acción documental adicional. |
+| R25 | 3 | Cobertura de flujos y excepciones especificados | Parcial | 13.6 y 10.7: cliente inexistente, consulta sin equipos y saldo insuficiente comprobados. INT69-TECNICO no conforme. | Distinguir acuerdos de integración de restricciones especificadas; seguimiento técnico de la pertenencia de la serie al técnico. |
 | R26 | 5 | Daily diario: avance, siguiente trabajo e impedimentos | Parcial | 3.3: proceso de reuniones igual a I2 confirmado por jefe de grupo; seguimiento, próximos pasos e impedimentos trazados con Shortcut. | Frecuencia semanal frente a diaria de la rúbrica; no existen fechas/asistencias individuales de actas. |
-| R27 | 5–6 | Sprint Review con equipo y Product Owner | Parcial | 3.4: Review técnica con objetivos, resultados, cambios del backlog, problemas y mejoras; tickets In Review. | Aceptación formal del Product Owner no registrada. |
+| R27 | 5–6 | Sprint Review con equipo y Product Owner | Documentado | 3.4: Review técnica, objetivos, resultados, problemas y mejoras; proceso de reuniones igual a I2 confirmado por el jefe de grupo. | La aceptación formal corresponde a una etapa posterior y no es un entregable de I3. |
 | R28 | 6 | Retrospectiva: inspección y plan de mejora | Comprobado | 3.7 y 12: procedimiento I2 confirmado, inspección de hechos y plan de mejora con revisores asignados. | La revisión humana de acciones permanece por realizar. |
-| R29 | 6 | Definición de terminado y calidad | Parcial | 3.4 y 10.5: 140/140 pruebas y 23/23 suites sobre dev con montaje de pruebas corregido en PR 67 (02-10-2026). | Persiste lint global: 1203 errores y 118 advertencias; los nueve archivos de prueba corregidos pasan ESLint. |
-| R30 | 7 | PPT: portada, índice, alcance y traza Scrum++ | Corregido | Diapositiva 13: Planning 19 CU/38 HH, backlog #139–157, Review, retrospectiva y reparto de #160–173 visibles. | La presentación conserva la plantilla del I2. |
+| R29 | 6 | Definición de terminado y calidad | Parcial | 3.4 y 10.5: 140/140 pruebas y 23/23 suites sobre dev con corrección del montaje de pruebas en PR 67 (02-10-2026). | Persiste deuda global de lint: 1203 errores y 118 advertencias. Los nueve archivos de prueba corregidos pasan ESLint; se conservan resultados anteriores. |
+| R30 | 7 | PPT: portada, índice, alcance y traza Scrum++ | Corregido | PPT: portada, índice, introducción, alcance, Scrum, requisitos, componentes, físico, trazabilidad CU64/CU69, secuencias, árbol y pruebas. | Sin acción documental adicional. |
 | R31 | 7 | PPT recomendada ≤7 min; total ≤15 min | Planificado | Guía: 6 min 30 s de presentación y 7 min 30 s de demo. | Ensayar y registrar la duración real; el guion no acredita el tiempo ejecutado. |
 | R32 | 7, 9 | Todos presentes y presentan | Acción personal | Guía distribuye el recorrido de presentación. | Asistencia y participación reales del equipo. |
 | R33 | 7–8 | Enviar por jefe de grupo; asunto y Drive | Acción personal | Entrega I3 hasta 04-10-2026 23:59; presentación semana 05-10. | Enviar desde el jefe con asunto Ingeniería de Software – Grupo 1 y enlace completo; registrar comprobante. |
-| R34 | 8 | Incluir I2, I1 y Documento 0 corregidos | Parcial | Carpeta raíz de Drive contiene I2, I1 y acceso directo Documento 0. | Existencia comprobada; no se verificó el cierre integral de todas las correcciones en esos tres documentos. El I3 por sí solo no lo acredita. |
-| R35 | 9 | Documento Word autocontenido | Parcial | RF, CU, vistas, pruebas, modelos y diccionario incluidos. Respuestas técnicas completas y fuentes editables van adjuntas. | Las diferencias de contrato y condiciones no ejecutadas permanecen explícitas; los modelos generales deben consultarse también en resolución original. |
+| R34 | 8 | Incluir I2, I1 y Documento 0 corregidos | Revisado | Carpetas I1 e I2 de Drive contrastadas: documentos, presentaciones, código, SQL, diagramas, CU, gráficos y organización. Documento 0 consultado como antecedente. | La revisión de antecedentes no reescribe ni certifica las copias históricas completas. |
+| R35 | 9 | Documento Word autocontenido | Comprobado | Informe autocontenido: requisitos, 19 CU, vistas, capturas, modelos y diccionario, 74 pruebas, Scrum y cuatro gráficos. Hallazgos técnicos identificados. | Sin acción documental adicional. |
 | R36 | 9 | Transacciones en base de datos relacional | Comprobado | PostgreSQL, 32 tablas, claves y prueba de rollback. JSONB se distingue del núcleo transaccional. | Sin acción adicional en esta auditoría. |
 | R37 | 9 | Word, PPT y documentos complementarios | Comprobado | Drive I3: DOCX, PDF, PPTX, XLSX y guía DOCX/PDF. | Sin acción adicional en esta auditoría. |
 | R38 | 9 | Archivos Draw.io de secuencias, objetos y otros | Corregido | 234 archivos Draw.io con 31.414 objetos y textos editables, además de fuentes originales y árbol/despliegue. | Se conservan las geometrías de los SVG de PlantUML; las primitivas se pueden editar en Draw.io. |
@@ -64,16 +62,16 @@ Los 64 criterios siguientes conservan evidencia y límites. Un criterio parcial 
 | R52 | 14 | Numeración romana y arábiga abajo a derecha a 1,5 cm | Comprobado | Preliminares romanos, cuerpo desde 1, pie a 1,5 cm; portada sin número. | Sin acción adicional en esta auditoría. |
 | R53 | 14 | Capítulos/índices en página nueva; títulos en mayúsculas | Comprobado | Estilo Heading 1 con salto anterior; índices independientes. | Sin acción adicional en esta auditoría. |
 | R54 | 13–14 | APA vigente y referencias al final | Corregido | Referencias ordenadas por autor, año, título, tipo y enlace cuando existe, con sangría francesa. | Documentos internos sin URL pública conservan identificación y procedencia; no se inventan DOI ni fecha exacta. |
-| R55 | 4 | Levantamiento de procesos con sistema terminado | Parcial | 13.9: proceso final, comparación con proceso inicial, PNG, Draw.io y BPMN 2.0 con geometría. | Importación en Bizagi y guardado propietario .bpm no verificados; aplicación no disponible en este equipo. |
-| R56 | 1, 9 | Complementos Documento 0: BPMN Bizagi, análisis, costos, CV y aceptación | Parcial | 13.10: Doc0 contiene análisis, modelos iniciales, CV, aceptación inicial, costos y planificación. Se identificaron figuras y secciones. | No se localizó .bpm editable; mención de 2025 en descripción A18 contradice planificación 2026. La aceptación inicial no sustituye cierre I3. |
+| R55 | 4 | Levantamiento de procesos con sistema terminado | Documentado | 13.9: proceso final implementado y comparación con el antecedente. El modelo Bizagi pertenece al Documento 0, según delimitación del jefe de grupo. | Sin acción documental adicional. |
+| R56 | 1, 9 | Complementos Documento 0: BPMN Bizagi, análisis, costos, CV y aceptación | Antecedente | 13.10: análisis, modelos, CV, costos, planificación y aceptación inicial del Documento 0. Bizagi se conserva en dicho documento. | La aceptación formal posterior queda fuera de esta etapa; grabaciones y exposición a cargo del equipo. |
 | R57 | 9 | Integridad, originalidad, participación y entrega completa | Parcial | ZIP íntegro y fuentes trazables; informe de commits y datos QA identificados. | No se ha ejecutado análisis antivirus; originalidad/participación y completitud requieren evidencia del equipo, no certificación automática. |
 | D03 | Observación3 | Pila sin I1 en proceso | Comprobado | 3.1 separa 77 CU terminados de tareas de revisión; no arrastra desarrollo histórico pendiente. | Sin acción adicional en esta auditoría. |
-| D04 | Observación4 | Físico, diferencias, MERE/MR/FNs/ME en anexos | Comprobado | 2.1, 5 y 13: físico por áreas, esquema de 32 tablas, MERE histórico, MR/ME/FNs; límites de normalización explícitos. | Sin acción adicional en esta auditoría. |
+| D04 | Observación4 | Físico, diferencias, MERE/MR/FNs/ME en anexos | Corregido | Modelos físico, MERE, MR, FNs y ME en informe y anexos; ChartDB con 12 tablas I1 azules, 14 I2 verdes y 6 I3 ámbar. | Sin acción documental adicional. |
 | D05 | Observación5 | Eliminar hoja en blanco | Comprobado | Se eliminó un salto vacío detectado en la revisión de maquetación. El PDF corregido se vuelve a inspeccionar antes de publicar. | Sin acción adicional en esta auditoría. |
-| D06 | Observación6 | Árbol identificado por incremento | Comprobado | Árbol I3 rotulado; matriz de pantallas y CU por procedencia. | Sin acción adicional en esta auditoría. |
+| D06 | Observación6 | Árbol identificado por incremento | Corregido | Árbol con leyenda I1 azul, I2 verde e I3 ámbar; borde ámbar para ampliaciones de pantallas anteriores. | Sin acción documental adicional. |
 | D07 | Observación7 | Vistas explicadas | Comprobado | Capítulos 4–9 incluyen explicación y capturas; no solo listado de imágenes. | Sin acción adicional en esta auditoría. |
-| D08 | Observación8 | Evidencias de pruebas por incremento | Parcial | Inventario de los 96 CU, evidencias históricas y 70 registros actuales, incluido CU94 vacío. | Persisten condiciones exactas no ejecutadas de integración; ver 13.6. |
-| D09 | Observación9 | Retrospectiva | Comprobado | Capítulo 12 y 3.7: retrospectiva, acciones y responsables de revisión; proceso confirmado por el jefe. | Conformidad humana se conserva como pendiente. |
+| D08 | Observación8 | Evidencias de pruebas por incremento | Comprobado | Capítulo 10 ordenado por CU y tipo de escenario; glosario P/REG/N/E y evidencias de 74 registros, incluido un hallazgo no conforme. | Sin acción documental adicional. |
+| D09 | Observación9 | Retrospectiva | Corregido | Capítulo 12: acciones, responsables y cuatro gráficos: burn-up y burn-down de I3 y del proyecto completo. Cortes de entrega identificados. | Sin acción documental adicional. |
 
 ## Reparto de revisión
 
@@ -81,6 +79,6 @@ Los 64 criterios siguientes conservan evidencia y límites. Un criterio parcial 
 - Kevin: 162, 166, 172.
 - Tomás: 163, 165, 171.
 - Javiera: 161, 167, 170.
-- Uriel: 164, 168 (vistas y trazabilidad).
+- Uriel: 164, 168.
 
 Los tickets permanecen abiertos hasta revisión humana.
