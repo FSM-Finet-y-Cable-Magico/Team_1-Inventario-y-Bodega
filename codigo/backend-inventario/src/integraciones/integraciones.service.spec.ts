@@ -670,6 +670,30 @@ describe('IntegracionesService — sc-158 (acuerdo G8 P0)', () => {
       expect(unidad.srv).toBe('SRV-2026-00001');
     });
 
+    it('serie asignada a otro técnico: discrepancia y la unidad no cambia', async () => {
+      const seed = seedCierre(25);
+      seed.UnidadEquipo[0].idTecnicoAsignado = 4;
+      const { service, manager } = crearServicio(seed);
+
+      const respuesta = await service.recibirCierreOt(
+        781,
+        payloadCierreInstalacion(),
+        G8,
+      );
+
+      expect(respuesta.data.discrepancias).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            numero_serie: 'ONT-123456',
+            codigo: 'SERIE_DE_OTRO_TECNICO',
+          }),
+        ]),
+      );
+      const unidad = manager.tabla(UnidadEquipo)[0];
+      expect(unidad.estado).toBe('Asignado a técnico');
+      expect(unidad.idTecnicoAsignado).toBe(4);
+    });
+
     it('saldo exacto (disponible == declarado) permite el cierre', async () => {
       const { service } = crearServicio(seedCierre(10));
 
