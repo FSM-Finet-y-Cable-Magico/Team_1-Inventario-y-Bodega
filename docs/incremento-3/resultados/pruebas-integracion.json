@@ -1,0 +1,210 @@
+[
+  {
+    "id": "INT63-CLIENTE",
+    "cu": "CU-63",
+    "name": "Cliente desconocido al crear la OT previa al cierre",
+    "expect": "404 cliente inexistente y ninguna OT creada",
+    "status": 404,
+    "data": {
+      "message": "Cliente no encontrado",
+      "error": "Not Found",
+      "statusCode": 404
+    },
+    "passed": true,
+    "at": "2026-10-03T16:41:12.326Z",
+    "contexto": "Dev a810aa40 y G3 5ca1fbb, PostgreSQL QA aislado. Datos ficticios."
+  },
+  {
+    "id": "INT67-SIN-EQUIPOS",
+    "cu": "CU-67/CU-87",
+    "name": "Cliente existente sin equipos registrados",
+    "expect": "Ficha G3 200 y reporte T1 sin equipos",
+    "status": 200,
+    "data": {
+      "cliente": {
+        "id_cliente": 3,
+        "rut": "33333333-3",
+        "nombre_completo": "Cliente QA Sin Equipos I3",
+        "email": "sin.equipos@example.test",
+        "telefono": "912345678",
+        "estado": "PENDIENTE",
+        "es_conflictivo": false,
+        "obs_conflictivo": null,
+        "fecha_creacion": "2026-10-03T16:41:12.332Z",
+        "direccion_principal": {
+          "id_direccion": 3,
+          "id_cliente": 3,
+          "direccion_completa": "Calle QA 300",
+          "comuna": "Santiago",
+          "ciudad": "Santiago",
+          "es_principal": true
+        },
+        "contratos_activos": []
+      },
+      "historial_ot": [],
+      "alerta_reparaciones_30_dias": {
+        "activa": false,
+        "total_reparaciones_30_dias": 0,
+        "desde": "2026-09-03T17:41:12.347Z",
+        "hasta": "2026-10-03T16:41:12.347Z",
+        "ots": []
+      }
+    },
+    "reporte_t1": {
+      "status": 200,
+      "data": []
+    },
+    "passed": true,
+    "at": "2026-10-03T16:41:12.593Z",
+    "contexto": "Dev a810aa40 y G3 5ca1fbb, PostgreSQL QA aislado. Datos ficticios."
+  },
+  {
+    "id": "INT69-TECNICO",
+    "cu": "CU-69",
+    "name": "Serie asignada a otro técnico en cierre de reparación",
+    "expect": "Discrepancia y unidad sin reasignar",
+    "status": 201,
+    "data": {
+      "success": true,
+      "data": {
+        "duplicado": false,
+        "id_ot": 93901,
+        "clave_idempotencia": "inc3-revision-otro-tecnico",
+        "estado_proceso": "PROCESADO",
+        "srv": null,
+        "id_tecnico": 1,
+        "acciones_aplicadas": [
+          {
+            "numero_serie": "DEMO-DEC-0001",
+            "accion": "INSTALADO_EN_CLIENTE",
+            "id_unidad": 14,
+            "estado_anterior": "Asignado a técnico",
+            "estado_nuevo": "Instalado en cliente"
+          }
+        ],
+        "discrepancias": [],
+        "materiales": {
+          "descontados": [],
+          "ajustes": []
+        },
+        "id_cierre_reparacion": 3
+      }
+    },
+    "entrada": {
+      "clave_idempotencia": "inc3-revision-otro-tecnico",
+      "id_ot": 93901,
+      "id_empresa": 1,
+      "id_tecnico": 1,
+      "tipo_ot": "REPARACION",
+      "equipos_instalados": [
+        {
+          "numero_serie": "DEMO-DEC-0001"
+        }
+      ],
+      "materiales": [],
+      "reparacion": {
+        "falla_reportada": "Prueba de asignación ajena",
+        "solucion_aplicada": "Sin cambios de unidad ajena",
+        "resultado": "SIN_SOLUCION"
+      }
+    },
+    "persistencia": [
+      {
+        "estado": "Instalado en cliente",
+        "id_tecnico_asignado": 4
+      }
+    ],
+    "passed": false,
+    "at": "2026-10-03T03:11:27.069Z",
+    "contexto": "Dev a810aa40 y G3 5ca1fbb, PostgreSQL QA aislado. Datos ficticios."
+  },
+  {
+    "id": "INT69-SALDO",
+    "cu": "CU-69",
+    "name": "Consumo de reparación superior al saldo",
+    "expect": "Cierre con discrepancia y saldo sin descuento indebido",
+    "status": 201,
+    "data": {
+      "success": true,
+      "data": {
+        "duplicado": false,
+        "id_ot": 93902,
+        "clave_idempotencia": "inc3-revision-reparacion-saldo",
+        "estado_proceso": "PROCESADO_CON_DISCREPANCIAS",
+        "srv": null,
+        "id_tecnico": 4,
+        "acciones_aplicadas": [
+          {
+            "tipo": "MATERIALES",
+            "descontados": [],
+            "ajustes": [
+              {
+                "id_tipo_equipo": 7,
+                "nombre": "Fibra drop QA",
+                "unidad_medida": "Metro",
+                "disponible": 0,
+                "declarado": 99999,
+                "descontado": 0,
+                "faltante": 99999
+              }
+            ]
+          }
+        ],
+        "discrepancias": [
+          {
+            "codigo": "SALDO_INSUFICIENTE_AJUSTADO",
+            "id_tipo_equipo": 7,
+            "detalle": "Saldo insuficiente de [Fibra drop QA]: disponible 0 Metro, declarado 99999 Metro. Se descontó lo disponible y el faltante quedó como ajuste."
+          }
+        ],
+        "materiales": {
+          "descontados": [],
+          "ajustes": [
+            {
+              "id_tipo_equipo": 7,
+              "nombre": "Fibra drop QA",
+              "unidad_medida": "Metro",
+              "disponible": 0,
+              "declarado": 99999,
+              "descontado": 0,
+              "faltante": 99999
+            }
+          ]
+        },
+        "id_cierre_reparacion": 4
+      }
+    },
+    "entrada": {
+      "clave_idempotencia": "inc3-revision-reparacion-saldo",
+      "id_ot": 93902,
+      "id_empresa": 1,
+      "id_tecnico": 4,
+      "tipo_ot": "REPARACION",
+      "equipos_instalados": [],
+      "materiales": [
+        {
+          "id_tipo_equipo": 7,
+          "cantidad": 99999
+        }
+      ],
+      "reparacion": {
+        "falla_reportada": "Prueba saldo insuficiente",
+        "solucion_aplicada": "Registro con discrepancia según contrato",
+        "resultado": "SIN_SOLUCION"
+      }
+    },
+    "before": [
+      {
+        "cantidad": "0.00"
+      }
+    ],
+    "after": [
+      {
+        "cantidad": "0.00"
+      }
+    ],
+    "passed": true,
+    "at": "2026-10-03T03:11:27.083Z",
+    "contexto": "Dev a810aa40 y G3 5ca1fbb, PostgreSQL QA aislado. Datos ficticios."
+  }
+]

@@ -1,0 +1,152 @@
+@startuml
+
+!theme plain
+
+hide circle
+
+skinparam linetype ortho
+
+skinparam shadowing false
+
+skinparam roundcorner 4
+
+skinparam classFontSize 11
+
+skinparam classFontName "Helvetica,Arial,sans-serif"
+
+skinparam arrowColor #333333
+
+skinparam packageBackgroundColor transparent
+
+skinparam class {
+
+    BackgroundColor #FFFFFF
+
+    BorderColor #2B5797
+
+    HeaderBackgroundColor #E8EEF7
+
+}
+
+title Modelo de entidades y claves — corte Incremento 3
+entity "asignacion_equipo_servicio" as asignacion_equipo_servicio {
+  * id_asignacion <<PK>>
+}
+entity "bodega" as bodega {
+  * id_bodega <<PK>>
+}
+entity "borrador_cierre" as borrador_cierre {
+  * id_borrador <<PK>>
+}
+entity "cierre_reparacion" as cierre_reparacion {
+  * id_cierre_reparacion <<PK>>
+}
+entity "donacion" as donacion {
+  * id_donacion <<PK>>
+}
+entity "donacion_detalle" as donacion_detalle {
+  * id_detalle <<PK>>
+}
+entity "empresa" as empresa {
+  * id_empresa <<PK>>
+}
+entity "historial_estado_equipo" as historial_estado_equipo {
+  * id_historial <<PK>>
+}
+entity "integracion_activacion" as integracion_activacion {
+  * id_activacion <<PK>>
+}
+entity "integracion_cierre" as integracion_cierre {
+  * id_cierre <<PK>>
+}
+entity "inventario_personal_tecnico" as inventario_personal_tecnico {
+  * id_inventario <<PK>>
+}
+entity "log_auditoria" as log_auditoria {
+  * id_log <<PK>>
+}
+entity "movimiento_inventario" as movimiento_inventario {
+  * id_movimiento <<PK>>
+}
+entity "notificacion" as notificacion {
+  * id_notificacion <<PK>>
+}
+entity "orden_ingreso" as orden_ingreso {
+  * id_orden <<PK>>
+}
+entity "orden_ingreso_detalle" as orden_ingreso_detalle {
+  * id_detalle <<PK>>
+}
+entity "prestamo_detalle" as prestamo_detalle {
+  * id_detalle <<PK>>
+}
+entity "prestamo_externo" as prestamo_externo {
+  * id_prestamo <<PK>>
+}
+entity "prestamo_retorno" as prestamo_retorno {
+  * id_retorno <<PK>>
+}
+entity "proveedor" as proveedor {
+  * id_proveedor <<PK>>
+}
+entity "proveedor_tipo_equipo" as proveedor_tipo_equipo {
+  * id <<PK>>
+}
+entity "rol" as rol {
+  * id_rol <<PK>>
+}
+entity "salida_bodega" as salida_bodega {
+  * id_salida <<PK>>
+}
+entity "salida_detalle" as salida_detalle {
+  * id_detalle <<PK>>
+}
+entity "secuencia_srv" as secuencia_srv {
+  * id_empresa <<PK>>
+  * anio <<PK>>
+  * anio <<PK>>
+  * id_empresa <<PK>>
+}
+entity "solicitud_baja" as solicitud_baja {
+  * id_solicitud <<PK>>
+}
+entity "stock_consumible" as stock_consumible {
+  * id_stock <<PK>>
+}
+entity "tipo_equipo" as tipo_equipo {
+  * id_tipo_equipo <<PK>>
+}
+entity "transferencia_equipo" as transferencia_equipo {
+  * id_transferencia <<PK>>
+}
+entity "unidad_equipo" as unidad_equipo {
+  * id_unidad <<PK>>
+}
+entity "usuario" as usuario {
+  * id_usuario <<PK>>
+}
+entity "usuario_rol" as usuario_rol {
+  * id_usuario_rol <<PK>>
+}
+asignacion_equipo_servicio }o--|| unidad_equipo
+donacion_detalle }o--|| donacion
+donacion_detalle }o--|| unidad_equipo
+historial_estado_equipo }o--|| unidad_equipo
+orden_ingreso }o--|| bodega
+orden_ingreso }o--|| proveedor
+orden_ingreso_detalle }o--|| orden_ingreso
+orden_ingreso_detalle }o--|| tipo_equipo
+prestamo_detalle }o--|| prestamo_externo
+prestamo_detalle }o--|| unidad_equipo
+prestamo_externo }o--|| unidad_equipo
+prestamo_retorno }o--|| prestamo_detalle
+proveedor_tipo_equipo }o--|| proveedor
+proveedor_tipo_equipo }o--|| tipo_equipo
+salida_detalle }o--|| salida_bodega
+solicitud_baja }o--|| unidad_equipo
+stock_consumible }o--|| bodega
+stock_consumible }o--|| tipo_equipo
+unidad_equipo }o--|| tipo_equipo
+usuario_rol }o--|| rol
+usuario_rol }o--|| usuario
+@enduml

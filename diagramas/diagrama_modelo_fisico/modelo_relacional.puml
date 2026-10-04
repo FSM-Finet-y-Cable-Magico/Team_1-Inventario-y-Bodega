@@ -1,0 +1,396 @@
+@startuml
+
+!theme plain
+
+hide circle
+
+skinparam linetype ortho
+
+skinparam shadowing false
+
+skinparam roundcorner 4
+
+skinparam classFontSize 11
+
+skinparam classFontName "Helvetica,Arial,sans-serif"
+
+skinparam arrowColor #333333
+
+skinparam packageBackgroundColor transparent
+
+skinparam class {
+
+    BackgroundColor #FFFFFF
+
+    BorderColor #2B5797
+
+    HeaderBackgroundColor #E8EEF7
+
+}
+
+title Modelo Relacional — Inventario y Bodega (corte dev)
+
+entity "asignacion_equipo_servicio" as asignacion_equipo_servicio {
+  * id_asignacion <<PK>>
+  * id_unidad <<FK>>
+  * id_empresa
+  event_id
+  id_cliente_externo
+  rut_cliente
+  * id_servicio_externo
+  id_contrato_externo
+  id_ot
+  * fecha_instalacion
+  fecha_retiro
+  activa
+  origen
+  trace_id
+}
+entity "bodega" as bodega {
+  * id_bodega <<PK>>
+  id_empresa
+  * nombre
+  direccion
+  id_usuario_responsable
+  activa
+}
+entity "borrador_cierre" as borrador_cierre {
+  * id_borrador <<PK>>
+  * id_ot
+  * id_empresa
+  * id_tecnico
+  codigo_trabajo
+  falla_reportada
+  solucion_aplicada
+  resultado
+  categoria_falla
+  fecha_actualizacion
+}
+entity "cierre_reparacion" as cierre_reparacion {
+  * id_cierre_reparacion <<PK>>
+  id_cierre
+  * id_ot
+  * id_empresa
+  id_tecnico
+  rut_cliente
+  direccion_servicio
+  * falla_reportada
+  * solucion_aplicada
+  * resultado
+  resuelto_remotamente
+  categoria_falla
+  equipos_retirados
+  equipos_instalados
+  consumibles
+  codigo_trabajo
+  fecha_cierre
+  fecha_registro
+}
+entity "donacion" as donacion {
+  * id_donacion <<PK>>
+  * nombre_institucion
+  * rut_institucion
+  * fecha_donacion
+  numero_resolucion
+  * id_usuario
+  id_empresa
+  fecha_creacion
+}
+entity "donacion_detalle" as donacion_detalle {
+  * id_detalle <<PK>>
+  * id_donacion <<FK>>
+  * id_unidad <<FK>>
+}
+entity "empresa" as empresa {
+  * id_empresa <<PK>>
+  * nombre
+}
+entity "historial_estado_equipo" as historial_estado_equipo {
+  * id_historial <<PK>>
+  id_unidad <<FK>>
+  id_usuario
+  estado_anterior
+  estado_nuevo
+  motivo
+  fecha_hora
+}
+entity "integracion_activacion" as integracion_activacion {
+  * id_activacion <<PK>>
+  event_id
+  trace_id
+  * id_empresa
+  id_ot
+  id_cliente_externo
+  rut_cliente
+  id_servicio_externo
+  id_contrato_externo
+  payload
+  * estado_proceso
+  equipos_asociados
+  discrepancias
+  fecha_proceso
+}
+entity "integracion_cierre" as integracion_cierre {
+  * id_cierre <<PK>>
+  * clave_idempotencia
+  * id_ot
+  * id_empresa
+  tipo_ot
+  * payload
+  estado_proceso
+  discrepancias
+  acciones_aplicadas
+  fecha_proceso
+  srv
+  id_tecnico
+  materiales_aplicados
+}
+entity "inventario_personal_tecnico" as inventario_personal_tecnico {
+  * id_inventario <<PK>>
+  * id_tecnico
+  * id_tipo_equipo
+  cantidad
+  fecha_actualizacion
+}
+entity "log_auditoria" as log_auditoria {
+  * id_log <<PK>>
+  * id_usuario
+  * accion
+  entidad_afectada
+  * id_entidad_afectada
+  valor_anterior
+  * valor_nuevo
+  ip_origen
+  fecha_hora
+}
+entity "movimiento_inventario" as movimiento_inventario {
+  * id_movimiento <<PK>>
+  id_tipo_equipo
+  id_unidad
+  id_empresa_origen
+  id_empresa_destino
+  id_bodega_origen
+  id_bodega_destino
+  id_usuario
+  tipo_movimiento
+  cantidad
+  fecha
+  referencia_id
+}
+entity "notificacion" as notificacion {
+  * id_notificacion <<PK>>
+  * tipo
+  * id_empresa
+  * descripcion
+  * clave_dedupe
+  leida
+  fecha_generacion
+  fecha_leida
+}
+entity "orden_ingreso" as orden_ingreso {
+  * id_orden <<PK>>
+  * correlativo
+  * id_proveedor <<FK>>
+  * numero_documento
+  * fecha_documento
+  * id_empresa_destino
+  * id_bodega_destino <<FK>>
+  estado
+  * id_usuario_registro
+  fecha_creacion
+}
+entity "orden_ingreso_detalle" as orden_ingreso_detalle {
+  * id_detalle <<PK>>
+  * id_orden <<FK>>
+  * id_tipo_equipo <<FK>>
+  * cantidad_esperada
+  garantia_dias
+  cantidad_recibida
+}
+entity "prestamo_detalle" as prestamo_detalle {
+  * id_detalle <<PK>>
+  * id_prestamo <<FK>>
+  id_unidad <<FK>>
+  id_tipo_equipo
+  cantidad
+  cantidad_retornada
+}
+entity "prestamo_externo" as prestamo_externo {
+  * id_prestamo <<PK>>
+  * tipo
+  * id_empresa
+  id_unidad <<FK>>
+  * nombre_receptor
+  rut_receptor
+  fecha_salida
+  * fecha_retorno_estimada
+  fecha_retorno_real
+  * detalle
+  estado
+  resultado
+  * id_usuario_registro
+  correlativo
+  id_bodega_origen
+}
+entity "prestamo_retorno" as prestamo_retorno {
+  * id_retorno <<PK>>
+  * id_detalle <<FK>>
+  cantidad
+  * fecha_retorno
+  observacion
+  * id_usuario
+}
+entity "proveedor" as proveedor {
+  * id_proveedor <<PK>>
+  * nombre_comercial
+  * rut
+  nombre_contacto
+  telefono
+  email
+  activa
+  fecha_creacion
+}
+entity "proveedor_tipo_equipo" as proveedor_tipo_equipo {
+  * id <<PK>>
+  * id_proveedor <<FK>>
+  * id_tipo_equipo <<FK>>
+}
+entity "rol" as rol {
+  * id_rol <<PK>>
+  * nombre_rol
+  descripcion
+}
+entity "salida_bodega" as salida_bodega {
+  * id_salida <<PK>>
+  * id_tecnico
+  * id_bodega_origen
+  fecha_hora
+  id_empresa
+  id_usuario_registro
+}
+entity "salida_detalle" as salida_detalle {
+  * id_detalle <<PK>>
+  * id_salida <<FK>>
+  id_tipo_equipo
+  id_unidad
+  cantidad
+}
+entity "secuencia_srv" as secuencia_srv {
+  * id_empresa <<PK>>
+  * anio <<PK>>
+  ultimo
+}
+entity "solicitud_baja" as solicitud_baja {
+  * id_solicitud <<PK>>
+  * id_unidad <<FK>>
+  id_empresa
+  * id_usuario_solicitante
+  * motivo
+  motivo_otro
+  * estado
+  id_usuario_aprobador
+  fecha_solicitud
+  fecha_resolucion
+  motivo_rechazo
+}
+entity "stock_consumible" as stock_consumible {
+  * id_stock <<PK>>
+  * id_tipo_equipo <<FK>>
+  * id_bodega <<FK>>
+  cantidad_disponible
+  umbral_minimo
+}
+entity "tipo_equipo" as tipo_equipo {
+  * id_tipo_equipo <<PK>>
+  id_empresa
+  * nombre
+  categoria
+  marca
+  modelo
+  descripcion_tecnica
+  unidad_medida
+  garantia_dias
+  requiere_serie_individual
+  ficha_tecnica_pdf_url
+  ficha_tecnica_nombre
+  activo
+}
+entity "transferencia_equipo" as transferencia_equipo {
+  * id_transferencia <<PK>>
+  id_empresa_origen
+  id_empresa_destino
+  id_usuario_registro
+  fecha_transferencia
+  observaciones
+}
+entity "unidad_equipo" as unidad_equipo {
+  * id_unidad <<PK>>
+  id_tipo_equipo <<FK>>
+  id_empresa
+  * numero_serie
+  modelo
+  * estado
+  fecha_adquisicion
+  fecha_venc_garantia
+  diagnostico_tecnico
+  id_cliente_instalado
+  id_bodega_actual
+  numero_poste
+  id_caja_nap
+  mac_address
+  proveedor
+  observaciones
+  ubicacion_fisica
+  motivo_baja
+  motivo_baja_detalle
+  id_tecnico_asignado
+  cliente_rut
+  cliente_nombre
+  direccion_instalacion
+  comuna_instalacion
+  srv
+}
+entity "usuario" as usuario {
+  * id_usuario <<PK>>
+  id_empresa
+  * nombre_completo
+  nombre_usuario
+  email
+  * password_hash
+  activo
+  intentos_fallidos
+  bloqueado_hasta
+  debe_cambiar_password
+  fecha_creacion
+  rut
+}
+entity "usuario_rol" as usuario_rol {
+  * id_usuario_rol <<PK>>
+  id_usuario <<FK>>
+  * id_rol <<FK>>
+  fecha_asignacion
+}
+
+unidad_equipo ||..o{ asignacion_equipo_servicio : "id_unidad"
+donacion ||..o{ donacion_detalle : "id_donacion"
+unidad_equipo ||..o{ donacion_detalle : "id_unidad"
+unidad_equipo ||..o{ historial_estado_equipo : "id_unidad"
+bodega ||..o{ orden_ingreso : "id_bodega_destino"
+proveedor ||..o{ orden_ingreso : "id_proveedor"
+orden_ingreso ||..o{ orden_ingreso_detalle : "id_orden"
+tipo_equipo ||..o{ orden_ingreso_detalle : "id_tipo_equipo"
+prestamo_externo ||..o{ prestamo_detalle : "id_prestamo"
+unidad_equipo ||..o{ prestamo_detalle : "id_unidad"
+prestamo_detalle ||..o{ prestamo_retorno : "id_detalle"
+proveedor ||..o{ proveedor_tipo_equipo : "id_proveedor"
+tipo_equipo ||..o{ proveedor_tipo_equipo : "id_tipo_equipo"
+salida_bodega ||..o{ salida_detalle : "id_salida"
+unidad_equipo ||..o{ solicitud_baja : "id_unidad"
+bodega ||..o{ stock_consumible : "id_bodega"
+tipo_equipo ||..o{ stock_consumible : "id_tipo_equipo"
+tipo_equipo ||..o{ unidad_equipo : "id_tipo_equipo"
+rol ||..o{ usuario_rol : "id_rol"
+usuario ||..o{ usuario_rol : "id_usuario"
+unidad_equipo ||..o{ prestamo_externo : "id_unidad"
+
+@enduml

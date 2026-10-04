@@ -1,0 +1,196 @@
+[
+  {
+    "row": [
+      "UR",
+      "5.4",
+      "Registro de la ubicación física y externa de las unidades. ",
+      "1",
+      "3",
+      "1",
+      "1",
+      "1",
+      "1"
+    ],
+    "text": "El sistema debe registrar la ubicación física de las unidades dentro de la bodega, así como su ubicación externa cuando se encuentren asignadas a técnicos, instaladas en clientes o en préstamo.\nTrazabilidad: RF-28, RF-29",
+    "rfs": [
+      "RF-29"
+    ]
+  },
+  {
+    "row": [
+      "UR",
+      "7.2",
+      "Consulta de equipos y materiales asignados por parte del técnico.",
+      "1",
+      "3",
+      "1",
+      "1",
+      "1",
+      "1"
+    ],
+    "text": "El técnico de terreno debe poder consultar en todo momento los equipos y materiales asignados, incluyendo acceso desde dispositivos móviles en terreno.\nTrazabilidad: RF-36, RF-39",
+    "rfs": [
+      "RF-39"
+    ]
+  },
+  {
+    "row": [
+      "UR",
+      "8.1",
+      "Registro de cierres de instalaciones realizadas en terreno.",
+      "1",
+      "3",
+      "1",
+      "1",
+      "1",
+      "1"
+    ],
+    "text": "El técnico de terreno debe poder registrar el cierre de una instalación, vinculando el equipo instalado con los datos del cliente, dirección y materiales utilizados.\nTrazabilidad: RF-40, RF-41, RF-42, RF-44",
+    "rfs": [
+      "RF-40",
+      "RF-41",
+      "RF-42",
+      "RF-44"
+    ]
+  },
+  {
+    "row": [
+      "UR",
+      "8.2",
+      "Asociación de múltiples servicios a un mismo cliente.",
+      "1",
+      "2",
+      "1",
+      "1",
+      "1",
+      "1"
+    ],
+    "text": "El sistema debe permitir gestionar múltiples servicios e instalaciones bajo un mismo perfil de cliente comercial.\nTrazabilidad: RF-43",
+    "rfs": [
+      "RF-43"
+    ]
+  },
+  {
+    "row": [
+      "UR",
+      "8.3",
+      "Documentación de trabajos de reparación técnica.",
+      "2",
+      "2",
+      "2",
+      "1",
+      "1",
+      "1"
+    ],
+    "text": "El técnico de terreno debe poder registrar cierres de trabajos de reparación realizados.\nTrazabilidad: RF-45",
+    "rfs": [
+      "RF-45"
+    ]
+  },
+  {
+    "row": [
+      "UR",
+      "8.4",
+      "Catálogo de tipos de trabajo para el registro de cierres. ",
+      "2",
+      "2",
+      "2",
+      "1",
+      "1",
+      "1"
+    ],
+    "text": "El sistema debe ofrecer al técnico un catálogo de tipos de trabajo codificados (instalaciones, cambios de equipo, reparaciones y retiros) que pre completen los campos del formulario de cierre.\nTrazabilidad: RF-46",
+    "rfs": [
+      "RF-46"
+    ]
+  },
+  {
+    "row": [
+      "UR",
+      "9.1",
+      "Registro de devoluciones y evaluación de equipo.",
+      "1",
+      "2",
+      "1",
+      "1",
+      "1",
+      "1"
+    ],
+    "text": "El sistema debe gestionar el reingreso de equipos retirados de clientes y evaluar su condición técnica.\nTrazabilidad: RF-47, RF-48, RF-49",
+    "rfs": [
+      "RF-47",
+      "RF-49"
+    ]
+  },
+  {
+    "row": [
+      "UR",
+      "10.2",
+      "Notificación de vencimientos de préstamos.",
+      "2",
+      "3",
+      "2",
+      "1",
+      "1",
+      "1"
+    ],
+    "text": "El sistema debe generar notificaciones de alertas de préstamos vencidos.\nTrazabilidad: RF-70",
+    "rfs": [
+      "RF-70"
+    ]
+  },
+  {
+    "row": [
+      "UR",
+      "11.1",
+      "Generación de reportes operativos de inventario.",
+      "1",
+      "3",
+      "2",
+      "1",
+      "1",
+      "1"
+    ],
+    "text": "El sistema debe permitir generar reportes sobre inventario y operaciones.\nTrazabilidad: RF-60, RF-61, RF-62, RF-63, RF-64, RF-65, RF-66",
+    "rfs": [
+      "RF-62",
+      "RF-65"
+    ]
+  },
+  {
+    "row": [
+      "UR",
+      "11.2",
+      "Exportación de datos a formatos Excel y PDF.",
+      "1",
+      "2",
+      "2",
+      "1",
+      "1",
+      "1"
+    ],
+    "text": "El sistema debe permitir exportar reportes en formatos de oficina estándar.\nTrazabilidad: RF-67",
+    "rfs": [
+      "RF-67"
+    ]
+  },
+  {
+    "row": [
+      "UR",
+      "12.1",
+      "Centro visual de alertas y notificaciones.",
+      "1",
+      "1",
+      "2",
+      "1",
+      "1",
+      "1"
+    ],
+    "text": "El usuario debe recibir avisos visuales que le informen sobre alertas de stock mínimo, préstamos vencidos y eventos relevantes.\nTrazabilidad: RF-68, RF-69, RF-70",
+    "rfs": [
+      "RF-68",
+      "RF-69",
+      "RF-70"
+    ]
+  }
+]

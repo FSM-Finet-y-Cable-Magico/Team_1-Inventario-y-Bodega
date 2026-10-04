@@ -1,0 +1,277 @@
+[
+  {
+    "id": "G3-65-N",
+    "cu": "CU-65",
+    "name": "Registro de cliente",
+    "expect": "201 cliente persistido",
+    "status": 201,
+    "data": {
+      "id_cliente": 1,
+      "id_empresa": 1,
+      "rut": "11111111-1",
+      "nombre_completo": "Cliente QA Incremento Tres",
+      "email": "qa.incremento3@example.test",
+      "telefono": "912345678",
+      "estado": "PENDIENTE",
+      "es_conflictivo": false,
+      "obs_conflictivo": null,
+      "importado_masivo": false,
+      "fecha_creacion": "2026-09-30T15:58:24.560Z",
+      "direcciones": [
+        {
+          "id_direccion": 1,
+          "id_cliente": 1,
+          "direccion_completa": "Av. Pruebas 123",
+          "comuna": "Santiago",
+          "ciudad": "Santiago",
+          "es_principal": true
+        }
+      ]
+    },
+    "passed": true,
+    "at": "2026-09-30T15:58:24.567Z",
+    "contexto": "Backend real G3 5ca1fbb, base PostgreSQL QA aislada"
+  },
+  {
+    "id": "G3-65-E1",
+    "cu": "CU-65",
+    "name": "RUT duplicado",
+    "expect": "409",
+    "status": 409,
+    "data": {
+      "message": "Este RUT ya está registrado",
+      "error": "Conflict",
+      "statusCode": 409
+    },
+    "passed": true,
+    "at": "2026-09-30T15:58:24.571Z",
+    "contexto": "Backend real G3 5ca1fbb, base PostgreSQL QA aislada"
+  },
+  {
+    "id": "G3-65-E2",
+    "cu": "CU-65",
+    "name": "Dígito verificador incorrecto",
+    "expect": "400",
+    "status": 400,
+    "data": {
+      "message": "RUT inválido. Verifique el número",
+      "error": "Bad Request",
+      "statusCode": 400
+    },
+    "passed": true,
+    "at": "2026-09-30T15:58:24.573Z",
+    "contexto": "Backend real G3 5ca1fbb, base PostgreSQL QA aislada"
+  },
+  {
+    "id": "G3-67-N",
+    "cu": "CU-67",
+    "name": "Consulta de ficha por RUT",
+    "expect": "200",
+    "status": 200,
+    "data": {
+      "cliente": {
+        "id_cliente": 1,
+        "rut": "11111111-1",
+        "nombre_completo": "Cliente QA Incremento Tres",
+        "email": "qa.incremento3@example.test",
+        "telefono": "912345678",
+        "estado": "PENDIENTE",
+        "es_conflictivo": false,
+        "obs_conflictivo": null,
+        "fecha_creacion": "2026-09-30T15:58:24.560Z",
+        "direccion_principal": {
+          "id_direccion": 1,
+          "id_cliente": 1,
+          "direccion_completa": "Av. Pruebas 123",
+          "comuna": "Santiago",
+          "ciudad": "Santiago",
+          "es_principal": true
+        },
+        "contratos_activos": []
+      },
+      "historial_ot": [],
+      "alerta_reparaciones_30_dias": {
+        "activa": false,
+        "total_reparaciones_30_dias": 0,
+        "desde": "2026-08-31T16:58:24.584Z",
+        "hasta": "2026-09-30T15:58:24.584Z",
+        "ots": []
+      }
+    },
+    "passed": true,
+    "at": "2026-09-30T15:58:24.586Z",
+    "contexto": "Backend real G3 5ca1fbb, base PostgreSQL QA aislada"
+  },
+  {
+    "id": "G3-66-N",
+    "cu": "CU-66",
+    "name": "Edición de cliente",
+    "expect": "200 con teléfono actualizado",
+    "status": 200,
+    "data": {
+      "id_cliente": 1,
+      "id_empresa": 1,
+      "rut": "11111111-1",
+      "nombre_completo": "Cliente QA Incremento Tres Editado",
+      "email": "qa.incremento3@example.test",
+      "telefono": "987654321",
+      "estado": "PENDIENTE",
+      "es_conflictivo": false,
+      "obs_conflictivo": null,
+      "importado_masivo": false,
+      "fecha_creacion": "2026-09-30T15:58:24.560Z",
+      "direcciones": [
+        {
+          "id_direccion": 1,
+          "id_cliente": 1,
+          "direccion_completa": "Av. Pruebas 123",
+          "comuna": "Santiago",
+          "ciudad": "Santiago",
+          "es_principal": true
+        }
+      ]
+    },
+    "passed": true,
+    "at": "2026-09-30T15:58:24.595Z",
+    "contexto": "Backend real G3 5ca1fbb, base PostgreSQL QA aislada"
+  },
+  {
+    "id": "G3-66-E1",
+    "cu": "CU-66",
+    "name": "Cliente inexistente",
+    "expect": "404",
+    "status": 404,
+    "data": {
+      "message": "Cliente no encontrado",
+      "error": "Not Found",
+      "statusCode": 404
+    },
+    "passed": true,
+    "at": "2026-09-30T15:58:24.598Z",
+    "contexto": "Backend real G3 5ca1fbb, base PostgreSQL QA aislada"
+  },
+  {
+    "id": "G3-67-E1",
+    "cu": "CU-67",
+    "name": "Consulta sin coincidencia",
+    "expect": "404",
+    "status": 404,
+    "data": {
+      "message": "Cliente no encontrado",
+      "error": "Not Found",
+      "statusCode": 404
+    },
+    "passed": true,
+    "at": "2026-09-30T15:58:24.602Z",
+    "contexto": "Backend real G3 5ca1fbb, base PostgreSQL QA aislada"
+  },
+  {
+    "id": "G3-63-E1",
+    "cu": "CU-63",
+    "name": "Cierre sin evidencia obligatoria",
+    "expect": "400",
+    "status": 400,
+    "data": {
+      "message": [
+        "fotos must contain at least 1 elements"
+      ],
+      "error": "Bad Request",
+      "statusCode": 400
+    },
+    "passed": true,
+    "at": "2026-09-30T15:58:25.099Z",
+    "contexto": "Backend real G3 5ca1fbb, base PostgreSQL QA aislada"
+  },
+  {
+    "id": "G3-63-N",
+    "cu": "CU-63",
+    "name": "Cierre de instalación con fan-out real hacia G1",
+    "expect": "201 y estado COMPLETADA",
+    "status": 201,
+    "data": {
+      "id_ot": 1,
+      "id_empresa": 1,
+      "id_cliente": 1,
+      "id_tecnico": 2,
+      "id_tecnico_externo": null,
+      "id_direccion": 1,
+      "id_ticket": null,
+      "id_categoria_falla": null,
+      "id_caja_nap": null,
+      "tipo_ot": "INSTALACION",
+      "prioridad": "MEDIA",
+      "estado": "COMPLETADA",
+      "fecha_creacion": "2026-09-30T15:58:25.061Z",
+      "fecha_programada": "2026-09-30T15:58:25.056Z",
+      "fecha_completada": "2026-09-30T15:58:25.110Z",
+      "potencia_optica_dbm": "-21",
+      "categoria_falla_otro": null,
+      "observaciones": "Prueba integral de cierre Incremento 3",
+      "obs_cliente_ausente": null,
+      "resuelto_remotamente": false,
+      "alerta_detenida_descartada_en": null,
+      "alerta_detenida_descartada_por": null,
+      "cierre_equipos": null,
+      "cliente": {
+        "id_cliente": 1,
+        "nombre_completo": "Cliente QA Incremento Tres Editado",
+        "rut": "11111111-1",
+        "es_conflictivo": false
+      },
+      "tecnico": {
+        "id_usuario": 2,
+        "nombre_completo": "Técnico QA Incremento",
+        "nombre_usuario": "tecnico.incremento"
+      },
+      "direccion": {
+        "direccion_completa": "Av. Pruebas 123",
+        "comuna": "Santiago"
+      },
+      "categoria_falla": null,
+      "fotos": [
+        {
+          "id_foto": 1,
+          "id_ot": 1,
+          "url_cloudinary": "http://127.0.0.1:13306/evidencias/login.png",
+          "formato": "png",
+          "tamano_kb": 44,
+          "fecha_subida": "2026-09-30T15:58:25.106Z"
+        }
+      ],
+      "materiales": [],
+      "llamada": {
+        "id_llamada": 1,
+        "id_ot": 1,
+        "resultado": "CONFORME",
+        "observaciones": "Conformidad ficticia para prueba QA",
+        "fecha_llamada": "2026-09-30T15:58:25.109Z"
+      },
+      "advertencia_potencia": false,
+      "alerta_reparaciones_30_dias": {
+        "activa": false,
+        "total_reparaciones_30_dias": 0,
+        "desde": "2026-08-31T16:58:25.130Z",
+        "hasta": "2026-09-30T15:58:25.130Z",
+        "ots": []
+      }
+    },
+    "passed": true,
+    "at": "2026-09-30T15:58:25.138Z",
+    "contexto": "Backend real G3 5ca1fbb, base PostgreSQL QA aislada"
+  },
+  {
+    "id": "G3-63-E2",
+    "cu": "CU-63",
+    "name": "Repetición del cierre ya completado",
+    "expect": "400",
+    "status": 400,
+    "data": {
+      "message": "Solo se pueden cerrar OT en estado EN_CURSO",
+      "error": "Bad Request",
+      "statusCode": 400
+    },
+    "passed": true,
+    "at": "2026-09-30T15:58:25.141Z",
+    "contexto": "Backend real G3 5ca1fbb, base PostgreSQL QA aislada"
+  }
+]

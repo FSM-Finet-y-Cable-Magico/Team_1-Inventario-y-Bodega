@@ -1,0 +1,3210 @@
+[
+  {
+    "id": "REG-01",
+    "cu": "CU-01",
+    "name": "Inicio de sesión correcto",
+    "expect": "JWT emitido",
+    "passed": true,
+    "ok": true,
+    "status": 201,
+    "observado": "JWT recibido para superusuario",
+    "at": "2026-09-30T01:09:16.170Z"
+  },
+  {
+    "id": "REG-02",
+    "cu": "CU-01",
+    "name": "Credenciales inválidas",
+    "expect": "401 sin detalle de la cuenta",
+    "passed": true,
+    "status": 401,
+    "data": {
+      "message": "Usuario o contraseña incorrectos.",
+      "error": "Unauthorized",
+      "statusCode": 401
+    },
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:09:16.391Z"
+  },
+  {
+    "id": "REG-03",
+    "cu": "CU-02",
+    "name": "Acceso sin sesión",
+    "expect": "401",
+    "passed": true,
+    "status": 401,
+    "data": {
+      "message": "Unauthorized",
+      "statusCode": 401
+    },
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:10:19.070Z",
+    "correccion_prueba": "Se ajustó URL, filtro o fixture al contrato de dev antes de repetir"
+  },
+  {
+    "id": "REG-04",
+    "cu": "CU-02",
+    "name": "Técnico intenta consultar usuarios",
+    "expect": "403",
+    "passed": true,
+    "status": 403,
+    "data": {
+      "message": "No tiene permisos para acceder a esta sección.",
+      "error": "Forbidden",
+      "statusCode": 403
+    },
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:10:19.080Z",
+    "correccion_prueba": "Se ajustó URL, filtro o fixture al contrato de dev antes de repetir"
+  },
+  {
+    "id": "REG-CU-25",
+    "cu": "CU-25",
+    "name": "Consulta de regresión /catalogo",
+    "expect": "200",
+    "passed": true,
+    "status": 200,
+    "data": [
+      {
+        "id_tipo_equipo": 1,
+        "id_empresa": 1,
+        "nombre": "ONT QA Finet",
+        "categoria": "EQUIPO",
+        "marca": "Huawei",
+        "modelo": "HG8145V",
+        "descripcionTecnica": null,
+        "unidadMedida": "unidad",
+        "garantiaDias": 365,
+        "requiereSerialNumber": true,
+        "fichaTecnicaPdfUrl": null,
+        "fichaTecnicaNombre": null,
+        "activo": true
+      },
+      {
+        "id_tipo_equipo": 3,
+        "id_empresa": 1,
+        "nombre": "Router Wi-Fi QA",
+        "categoria": "Otro",
+        "marca": "TP-Link",
+        "modelo": "Archer C6",
+        "descripcionTecnica": null,
+        "unidadMedida": "unidad",
+        "garantiaDias": 365,
+        "requiereSerialNumber": true,
+        "fichaTecnicaPdfUrl": null,
+        "fichaTecnicaNombre": null,
+        "activo": true
+      },
+      {
+        "id_tipo_equipo": 4,
+        "id_empresa": 1,
+        "nombre": "Switch 8 puertos QA",
+        "categoria": "Otro",
+        "marca": "TP-Link",
+        "modelo": "TL-SG108",
+        "descripcionTecnica": null,
+        "unidadMedida": "unidad",
+        "garantiaDias": 730,
+        "requiereSerialNumber": true,
+        "fichaTecnicaPdfUrl": null,
+        "fichaTecnicaNombre": null,
+        "activo": true
+      },
+      {
+        "id_tipo_equipo": 5,
+        "id_empresa": 1,
+        "nombre": "Decodificador TV QA",
+        "categoria": "Decodificador",
+        "marca": "ZTE",
+        "modelo": "ZXV10 B860",
+        "descripcionTecnica": null,
+        "unidadMedida": "unidad",
+        "garantiaDias": 365,
+        "requiereSerialNumber": true,
+        "fichaTecnicaPdfUrl": null,
+        "fichaTecnicaNombre": null,
+        "activo": true
+      },
+      {
+        "id_tipo_equipo": 6,
+        "id_empresa": 1,
+        "nombre": "Conector SC/APC QA",
+        "categoria": "Consumible conector",
+        "marca": "Fiberhome",
+        "modelo": null,
+        "descripcionTecnica": null,
+        "unidadMedida": "Unidad",
+        "garantiaDias": 0,
+        "requiereSerialNumber": false,
+        "fichaTecnicaPdfUrl": null,
+        "fichaTecnicaNombre": null,
+        "activo": true
+      },
+      {
+        "id_tipo_equipo": 7,
+        "id_empresa": 1,
+        "nombre": "Fibra drop QA",
+        "categoria": "Consumible fibra óptica",
+        "marca": "Fiberhome",
+        "modelo": null,
+        "descripcionTecnica": null,
+        "unidadMedida": "Metro",
+        "garantiaDias": 0,
+        "requiereSerialNumber": false,
+        "fichaTecnicaPdfUrl": null,
+        "fichaTecnicaNombre": null,
+        "activo": true
+      },
+      {
+        "id_tipo_equipo": 8,
+        "id_empresa": 1,
+        "nombre": "Cable UTP Cat6 QA",
+        "categoria": "Consumible otro",
+        "marca": "Panduit",
+        "modelo": null,
+        "descripcionTecnica": null,
+        "unidadMedida": "Metro",
+        "garantiaDias": 0,
+        "requiereSerialNumber": false,
+        "fichaTecnicaPdfUrl": null,
+        "fichaTecnicaNombre": null,
+        "activo": true
+      }
+    ],
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:09:16.396Z"
+  },
+  {
+    "id": "REG-CU-44",
+    "cu": "CU-44",
+    "name": "Consulta de regresión /bodegas",
+    "expect": "200",
+    "passed": true,
+    "status": 200,
+    "data": [
+      {
+        "id_bodega": 1,
+        "nombre": "Bodega Finet Central",
+        "direccion": "Dirección de prueba Finet",
+        "empresa": "Finet",
+        "responsable": null,
+        "activa": true,
+        "estado": "Activa",
+        "resumen_stock_total": 783.5
+      },
+      {
+        "id_bodega": 2,
+        "nombre": "Bodega Cable Mágico Central",
+        "direccion": "Dirección de prueba Cable Mágico",
+        "empresa": "Cable Mágico",
+        "responsable": null,
+        "activa": true,
+        "estado": "Activa",
+        "resumen_stock_total": 353
+      }
+    ],
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:09:16.405Z"
+  },
+  {
+    "id": "REG-CU-53",
+    "cu": "CU-53",
+    "name": "Consulta de regresión /ordenes-ingreso",
+    "expect": "200",
+    "passed": true,
+    "status": 200,
+    "data": [
+      {
+        "id_orden": 4,
+        "correlativo": "OI-0004",
+        "id_proveedor": 1,
+        "numero_documento": "FAC-DEMO-04",
+        "fecha_documento": "2026-09-21",
+        "id_empresa_destino": 2,
+        "id_bodega_destino": 2,
+        "estado": "Completada",
+        "id_usuario_registro": 2,
+        "fecha_creacion": "2026-09-30T01:04:14.010Z",
+        "nombre_proveedor": "Distribuidora Andina SpA",
+        "nombre_bodega": "Bodega Cable Mágico Central",
+        "nombre_empresa": "Cable Mágico",
+        "detalles": [
+          {
+            "id_detalle": 6,
+            "id_orden": 4,
+            "id_tipo_equipo": 11,
+            "cantidad_esperada": 200,
+            "garantia_dias": 0,
+            "cantidad_recibida": 200,
+            "nombre_tipo_equipo": "Fibra drop Cable QA",
+            "requiere_serie_individual": false
+          }
+        ]
+      },
+      {
+        "id_orden": 3,
+        "correlativo": "OI-0003",
+        "id_proveedor": 3,
+        "numero_documento": "FAC-DEMO-03",
+        "fecha_documento": "2026-09-09",
+        "id_empresa_destino": 1,
+        "id_bodega_destino": 1,
+        "estado": "Completada",
+        "id_usuario_registro": 2,
+        "fecha_creacion": "2026-09-30T01:04:14.006Z",
+        "nombre_proveedor": "Importadora Pacífico SpA",
+        "nombre_bodega": "Bodega Finet Central",
+        "nombre_empresa": "Finet",
+        "detalles": [
+          {
+            "id_detalle": 4,
+            "id_orden": 3,
+            "id_tipo_equipo": 3,
+            "cantidad_esperada": 2,
+            "garantia_dias": 365,
+            "cantidad_recibida": 2,
+            "nombre_tipo_equipo": "Router Wi-Fi QA",
+            "requiere_serie_individual": true
+          },
+          {
+            "id_detalle": 5,
+            "id_orden": 3,
+            "id_tipo_equipo": 6,
+            "cantidad_esperada": 100,
+            "garantia_dias": 0,
+            "cantidad_recibida": 100,
+            "nombre_tipo_equipo": "Conector SC/APC QA",
+            "requiere_serie_individual": false
+          }
+        ]
+      },
+      {
+        "id_orden": 2,
+        "correlativo": "OI-0002",
+        "id_proveedor": 2,
+        "numero_documento": "FAC-DEMO-02",
+        "fecha_documento": "2026-09-23",
+        "id_empresa_destino": 1,
+        "id_bodega_destino": 1,
+        "estado": "Recepción parcial",
+        "id_usuario_registro": 2,
+        "fecha_creacion": "2026-09-30T01:04:14.002Z",
+        "nombre_proveedor": "TecnoRed Chile Ltda.",
+        "nombre_bodega": "Bodega Finet Central",
+        "nombre_empresa": "Finet",
+        "detalles": [
+          {
+            "id_detalle": 2,
+            "id_orden": 2,
+            "id_tipo_equipo": 4,
+            "cantidad_esperada": 4,
+            "garantia_dias": 730,
+            "cantidad_recibida": 2,
+            "nombre_tipo_equipo": "Switch 8 puertos QA",
+            "requiere_serie_individual": true
+          },
+          {
+            "id_detalle": 3,
+            "id_orden": 2,
+            "id_tipo_equipo": 5,
+            "cantidad_esperada": 3,
+            "garantia_dias": 365,
+            "cantidad_recibida": 3,
+            "nombre_tipo_equipo": "Decodificador TV QA",
+            "requiere_serie_individual": true
+          }
+        ]
+      },
+      {
+        "id_orden": 1,
+        "correlativo": "OI-0001",
+        "id_proveedor": 1,
+        "numero_documento": "FAC-DEMO-01",
+        "fecha_documento": "2026-09-27",
+        "id_empresa_destino": 1,
+        "id_bodega_destino": 1,
+        "estado": "Pendiente de recepción",
+        "id_usuario_registro": 2,
+        "fecha_creacion": "2026-09-30T01:04:14.000Z",
+        "nombre_proveedor": "Distribuidora Andina SpA",
+        "nombre_bodega": "Bodega Finet Central",
+        "nombre_empresa": "Finet",
+        "detalles": [
+          {
+            "id_detalle": 1,
+            "id_orden": 1,
+            "id_tipo_equipo": 3,
+            "cantidad_esperada": 3,
+            "garantia_dias": 365,
+            "cantidad_recibida": 0,
+            "nombre_tipo_equipo": "Router Wi-Fi QA",
+            "requiere_serie_individual": true
+          }
+        ]
+      }
+    ],
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:09:16.425Z"
+  },
+  {
+    "id": "REG-CU-51",
+    "cu": "CU-51",
+    "name": "Consulta de regresión /proveedores",
+    "expect": "200",
+    "passed": true,
+    "status": 200,
+    "data": [
+      {
+        "id_proveedor": 1,
+        "nombre_comercial": "Distribuidora Andina SpA",
+        "rut": "76123456-0",
+        "nombre_contacto": "Marcela Rojas",
+        "telefono": "+56912345678",
+        "email": "ventas@distribuidoraandina.cl",
+        "activa": true,
+        "fecha_creacion": "2026-09-30T01:04:13.940Z",
+        "tipos_equipo": [
+          {
+            "id_tipo_equipo": 1,
+            "nombre": "ONT QA Finet"
+          },
+          {
+            "id_tipo_equipo": 3,
+            "nombre": "Router Wi-Fi QA"
+          },
+          {
+            "id_tipo_equipo": 4,
+            "nombre": "Switch 8 puertos QA"
+          }
+        ]
+      },
+      {
+        "id_proveedor": 3,
+        "nombre_comercial": "Importadora Pacífico SpA",
+        "rut": "78345678-8",
+        "nombre_contacto": "Camila Fuentes",
+        "telefono": "+56934567890",
+        "email": "pedidos@importadorapacifico.cl",
+        "activa": true,
+        "fecha_creacion": "2026-09-30T01:04:13.946Z",
+        "tipos_equipo": [
+          {
+            "id_tipo_equipo": 3,
+            "nombre": "Router Wi-Fi QA"
+          },
+          {
+            "id_tipo_equipo": 8,
+            "nombre": "Cable UTP Cat6 QA"
+          }
+        ]
+      },
+      {
+        "id_proveedor": 2,
+        "nombre_comercial": "TecnoRed Chile Ltda.",
+        "rut": "77234567-4",
+        "nombre_contacto": "Felipe Soto",
+        "telefono": "+56923456789",
+        "email": "contacto@tecnored.cl",
+        "activa": true,
+        "fecha_creacion": "2026-09-30T01:04:13.944Z",
+        "tipos_equipo": [
+          {
+            "id_tipo_equipo": 5,
+            "nombre": "Decodificador TV QA"
+          },
+          {
+            "id_tipo_equipo": 6,
+            "nombre": "Conector SC/APC QA"
+          }
+        ]
+      }
+    ],
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:09:16.431Z"
+  },
+  {
+    "id": "REG-CU-57",
+    "cu": "CU-57",
+    "name": "Consulta de regresión /salidas",
+    "expect": "200",
+    "passed": true,
+    "status": 200,
+    "data": [
+      {
+        "id_salida": 3,
+        "tecnico": "Técnico Cable Mágico QA",
+        "bodega": "Bodega Cable Mágico Central",
+        "fecha_hora": "2026-09-11T14:00:00.000Z",
+        "items": [
+          {
+            "id_detalle": 7,
+            "id_unidad": 31,
+            "id_tipo_equipo": 9,
+            "cantidad": null
+          },
+          {
+            "id_detalle": 8,
+            "id_unidad": null,
+            "id_tipo_equipo": 11,
+            "cantidad": 40
+          }
+        ]
+      },
+      {
+        "id_salida": 2,
+        "tecnico": "Técnico Terreno QA",
+        "bodega": "Bodega Finet Central",
+        "fecha_hora": "2026-09-12T18:10:00.000Z",
+        "items": [
+          {
+            "id_detalle": 5,
+            "id_unidad": null,
+            "id_tipo_equipo": 8,
+            "cantidad": 60
+          },
+          {
+            "id_detalle": 6,
+            "id_unidad": null,
+            "id_tipo_equipo": 6,
+            "cantidad": 8
+          }
+        ]
+      },
+      {
+        "id_salida": 1,
+        "tecnico": "Técnico Terreno QA",
+        "bodega": "Bodega Finet Central",
+        "fecha_hora": "2026-09-10T12:30:00.000Z",
+        "items": [
+          {
+            "id_detalle": 1,
+            "id_unidad": 14,
+            "id_tipo_equipo": 5,
+            "cantidad": null
+          },
+          {
+            "id_detalle": 2,
+            "id_unidad": 16,
+            "id_tipo_equipo": null,
+            "cantidad": null
+          },
+          {
+            "id_detalle": 3,
+            "id_unidad": null,
+            "id_tipo_equipo": 7,
+            "cantidad": 25
+          },
+          {
+            "id_detalle": 4,
+            "id_unidad": null,
+            "id_tipo_equipo": 6,
+            "cantidad": 12
+          }
+        ]
+      }
+    ],
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:09:16.436Z"
+  },
+  {
+    "id": "REG-CU-83",
+    "cu": "CU-83",
+    "name": "Consulta de regresión /prestamos",
+    "expect": "200",
+    "passed": true,
+    "status": 200,
+    "data": [
+      {
+        "id_prestamo": 3,
+        "correlativo": "PE-00003",
+        "tipo": "PRESTAMO_EXTERNO",
+        "nombre_receptor": "Servicio Técnico Electronorte Ltda.",
+        "rut_receptor": "77456789-5",
+        "fecha_salida": "2026-08-01T15:00:00.000Z",
+        "fecha_estimada_retorno": "2026-09-04",
+        "motivo": "Préstamo cerrado con devolución completa de conectores.",
+        "estado": "CERRADO",
+        "empresa": "Finet",
+        "registrado_por": "Admin Finet QA",
+        "equipos": 0,
+        "consumibles": 1,
+        "dias_restantes": null,
+        "items_resumen": [
+          {
+            "tipo": "Consumible",
+            "descripcion": "Conector SC/APC QA",
+            "cantidad": 10
+          }
+        ]
+      },
+      {
+        "id_prestamo": 2,
+        "correlativo": "PE-00002",
+        "tipo": "PRESTAMO_EXTERNO",
+        "nombre_receptor": "Municipalidad de Providencia",
+        "rut_receptor": "69123456-8",
+        "fecha_salida": "2026-08-20T12:00:00.000Z",
+        "fecha_estimada_retorno": "2026-09-26",
+        "motivo": "Préstamo vencido para demostración (días restantes negativos).",
+        "estado": "ACTIVO",
+        "empresa": "Finet",
+        "registrado_por": "Admin Finet QA",
+        "equipos": 0,
+        "consumibles": 1,
+        "dias_restantes": -3,
+        "items_resumen": [
+          {
+            "tipo": "Consumible",
+            "descripcion": "Fibra drop QA",
+            "cantidad": 20
+          }
+        ]
+      },
+      {
+        "id_prestamo": 1,
+        "correlativo": "PE-00001",
+        "tipo": "PRESTAMO_EXTERNO",
+        "nombre_receptor": "Constructora Andes Ltda.",
+        "rut_receptor": "96567890-5",
+        "fecha_salida": "2026-09-09T13:00:00.000Z",
+        "fecha_estimada_retorno": "2026-10-03",
+        "motivo": "Préstamo de equipos y fibra para faena en terreno.",
+        "estado": "ACTIVO",
+        "empresa": "Finet",
+        "registrado_por": "Admin Finet QA",
+        "equipos": 2,
+        "consumibles": 1,
+        "dias_restantes": 4,
+        "items_resumen": [
+          {
+            "tipo": "Equipo",
+            "descripcion": null,
+            "cantidad": 1
+          },
+          {
+            "tipo": "Equipo",
+            "descripcion": "Router Wi-Fi QA",
+            "cantidad": 1
+          },
+          {
+            "tipo": "Consumible",
+            "descripcion": "Fibra drop QA",
+            "cantidad": 15
+          }
+        ]
+      }
+    ],
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:09:16.440Z"
+  },
+  {
+    "id": "REG-CU-85",
+    "cu": "CU-85",
+    "name": "Consulta de regresión /reportes/stock",
+    "expect": "200",
+    "passed": true,
+    "status": 200,
+    "data": [
+      {
+        "id_empresa": 2,
+        "empresa": "Cable Mágico",
+        "id_bodega": 2,
+        "bodega": "Bodega Cable Mágico Central",
+        "id_tipo_equipo": 1,
+        "tipo_equipo": "ONT QA Finet",
+        "unidad_medida": "unidad",
+        "en_bodega": 0,
+        "asignado_a_tecnico": 0,
+        "en_revision": 0,
+        "en_prestamo_externo": 0,
+        "total_activo": 0,
+        "umbral_minimo": 0,
+        "bajo_umbral": false
+      },
+      {
+        "id_empresa": 2,
+        "empresa": "Cable Mágico",
+        "id_bodega": 2,
+        "bodega": "Bodega Cable Mágico Central",
+        "id_tipo_equipo": 2,
+        "tipo_equipo": "ONT QA Cable Mágico",
+        "unidad_medida": "unidad",
+        "en_bodega": 3,
+        "asignado_a_tecnico": 0,
+        "en_revision": 0,
+        "en_prestamo_externo": 0,
+        "total_activo": 3,
+        "umbral_minimo": 0,
+        "bajo_umbral": false
+      },
+      {
+        "id_empresa": 2,
+        "empresa": "Cable Mágico",
+        "id_bodega": 2,
+        "bodega": "Bodega Cable Mágico Central",
+        "id_tipo_equipo": 3,
+        "tipo_equipo": "Router Wi-Fi QA",
+        "unidad_medida": "unidad",
+        "en_bodega": 0,
+        "asignado_a_tecnico": 0,
+        "en_revision": 0,
+        "en_prestamo_externo": 0,
+        "total_activo": 0,
+        "umbral_minimo": 0,
+        "bajo_umbral": false
+      },
+      {
+        "id_empresa": 2,
+        "empresa": "Cable Mágico",
+        "id_bodega": 2,
+        "bodega": "Bodega Cable Mágico Central",
+        "id_tipo_equipo": 4,
+        "tipo_equipo": "Switch 8 puertos QA",
+        "unidad_medida": "unidad",
+        "en_bodega": 0,
+        "asignado_a_tecnico": 0,
+        "en_revision": 0,
+        "en_prestamo_externo": 0,
+        "total_activo": 0,
+        "umbral_minimo": 0,
+        "bajo_umbral": false
+      },
+      {
+        "id_empresa": 2,
+        "empresa": "Cable Mágico",
+        "id_bodega": 2,
+        "bodega": "Bodega Cable Mágico Central",
+        "id_tipo_equipo": 5,
+        "tipo_equipo": "Decodificador TV QA",
+        "unidad_medida": "unidad",
+        "en_bodega": 0,
+        "asignado_a_tecnico": 0,
+        "en_revision": 0,
+        "en_prestamo_externo": 0,
+        "total_activo": 0,
+        "umbral_minimo": 0,
+        "bajo_umbral": false
+      },
+      {
+        "id_empresa": 2,
+        "empresa": "Cable Mágico",
+        "id_bodega": 2,
+        "bodega": "Bodega Cable Mágico Central",
+        "id_tipo_equipo": 6,
+        "tipo_equipo": "Conector SC/APC QA",
+        "unidad_medida": "Unidad",
+        "en_bodega": 0,
+        "asignado_a_tecnico": 0,
+        "en_revision": 0,
+        "en_prestamo_externo": 0,
+        "total_activo": 0,
+        "umbral_minimo": 0,
+        "bajo_umbral": false
+      },
+      {
+        "id_empresa": 2,
+        "empresa": "Cable Mágico",
+        "id_bodega": 2,
+        "bodega": "Bodega Cable Mágico Central",
+        "id_tipo_equipo": 7,
+        "tipo_equipo": "Fibra drop QA",
+        "unidad_medida": "Metro",
+        "en_bodega": 0,
+        "asignado_a_tecnico": 0,
+        "en_revision": 0,
+        "en_prestamo_externo": 0,
+        "total_activo": 0,
+        "umbral_minimo": 0,
+        "bajo_umbral": false
+      },
+      {
+        "id_empresa": 2,
+        "empresa": "Cable Mágico",
+        "id_bodega": 2,
+        "bodega": "Bodega Cable Mágico Central",
+        "id_tipo_equipo": 8,
+        "tipo_equipo": "Cable UTP Cat6 QA",
+        "unidad_medida": "Metro",
+        "en_bodega": 0,
+        "asignado_a_tecnico": 0,
+        "en_revision": 0,
+        "en_prestamo_externo": 0,
+        "total_activo": 0,
+        "umbral_minimo": 0,
+        "bajo_umbral": false
+      },
+      {
+        "id_empresa": 2,
+        "empresa": "Cable Mágico",
+        "id_bodega": 2,
+        "bodega": "Bodega Cable Mágico Central",
+        "id_tipo_equipo": 9,
+        "tipo_equipo": "Router Wi-Fi Cable QA",
+        "unidad_medida": "unidad",
+        "en_bodega": 0,
+        "asignado_a_tecnico": 0,
+        "en_revision": 0,
+        "en_prestamo_externo": 0,
+        "total_activo": 0,
+        "umbral_minimo": 0,
+        "bajo_umbral": false
+      },
+      {
+        "id_empresa": 2,
+        "empresa": "Cable Mágico",
+        "id_bodega": 2,
+        "bodega": "Bodega Cable Mágico Central",
+        "id_tipo_equipo": 10,
+        "tipo_equipo": "Conector SC/APC Cable QA",
+        "unidad_medida": "Unidad",
+        "en_bodega": 140,
+        "asignado_a_tecnico": 0,
+        "en_revision": 0,
+        "en_prestamo_externo": 0,
+        "total_activo": 140,
+        "umbral_minimo": 30,
+        "bajo_umbral": false
+      },
+      {
+        "id_empresa": 2,
+        "empresa": "Cable Mágico",
+        "id_bodega": 2,
+        "bodega": "Bodega Cable Mágico Central",
+        "id_tipo_equipo": 11,
+        "tipo_equipo": "Fibra drop Cable QA",
+        "unidad_medida": "Metro",
+        "en_bodega": 210,
+        "asignado_a_tecnico": 0,
+        "en_revision": 0,
+        "en_prestamo_externo": 0,
+        "total_activo": 210,
+        "umbral_minimo": 50,
+        "bajo_umbral": false
+      },
+      {
+        "id_empresa": 1,
+        "empresa": "Finet",
+        "id_bodega": 1,
+        "bodega": "Bodega Finet Central",
+        "id_tipo_equipo": 1,
+        "tipo_equipo": "ONT QA Finet",
+        "unidad_medida": "unidad",
+        "en_bodega": 3,
+        "asignado_a_tecnico": 0,
+        "en_revision": 0,
+        "en_prestamo_externo": 0,
+        "total_activo": 3,
+        "umbral_minimo": 0,
+        "bajo_umbral": false
+      },
+      {
+        "id_empresa": 1,
+        "empresa": "Finet",
+        "id_bodega": 1,
+        "bodega": "Bodega Finet Central",
+        "id_tipo_equipo": 2,
+        "tipo_equipo": "ONT QA Cable Mágico",
+        "unidad_medida": "unidad",
+        "en_bodega": 0,
+        "asignado_a_tecnico": 0,
+        "en_revision": 0,
+        "en_prestamo_externo": 0,
+        "total_activo": 0,
+        "umbral_minimo": 0,
+        "bajo_umbral": false
+      },
+      {
+        "id_empresa": 1,
+        "empresa": "Finet",
+        "id_bodega": 1,
+        "bodega": "Bodega Finet Central",
+        "id_tipo_equipo": 3,
+        "tipo_equipo": "Router Wi-Fi QA",
+        "unidad_medida": "unidad",
+        "en_bodega": 3,
+        "asignado_a_tecnico": 0,
+        "en_revision": 0,
+        "en_prestamo_externo": 0,
+        "total_activo": 3,
+        "umbral_minimo": 0,
+        "bajo_umbral": false
+      },
+      {
+        "id_empresa": 1,
+        "empresa": "Finet",
+        "id_bodega": 1,
+        "bodega": "Bodega Finet Central",
+        "id_tipo_equipo": 4,
+        "tipo_equipo": "Switch 8 puertos QA",
+        "unidad_medida": "unidad",
+        "en_bodega": 2,
+        "asignado_a_tecnico": 0,
+        "en_revision": 0,
+        "en_prestamo_externo": 0,
+        "total_activo": 2,
+        "umbral_minimo": 0,
+        "bajo_umbral": false
+      },
+      {
+        "id_empresa": 1,
+        "empresa": "Finet",
+        "id_bodega": 1,
+        "bodega": "Bodega Finet Central",
+        "id_tipo_equipo": 5,
+        "tipo_equipo": "Decodificador TV QA",
+        "unidad_medida": "unidad",
+        "en_bodega": 0,
+        "asignado_a_tecnico": 0,
+        "en_revision": 0,
+        "en_prestamo_externo": 0,
+        "total_activo": 0,
+        "umbral_minimo": 0,
+        "bajo_umbral": false
+      },
+      {
+        "id_empresa": 1,
+        "empresa": "Finet",
+        "id_bodega": 1,
+        "bodega": "Bodega Finet Central",
+        "id_tipo_equipo": 6,
+        "tipo_equipo": "Conector SC/APC QA",
+        "unidad_medida": "Unidad",
+        "en_bodega": 5,
+        "asignado_a_tecnico": 0,
+        "en_revision": 0,
+        "en_prestamo_externo": 0,
+        "total_activo": 5,
+        "umbral_minimo": 20,
+        "bajo_umbral": true
+      },
+      {
+        "id_empresa": 1,
+        "empresa": "Finet",
+        "id_bodega": 1,
+        "bodega": "Bodega Finet Central",
+        "id_tipo_equipo": 7,
+        "tipo_equipo": "Fibra drop QA",
+        "unidad_medida": "Metro",
+        "en_bodega": 450.5,
+        "asignado_a_tecnico": 0,
+        "en_revision": 0,
+        "en_prestamo_externo": 0,
+        "total_activo": 450.5,
+        "umbral_minimo": 100,
+        "bajo_umbral": false
+      },
+      {
+        "id_empresa": 1,
+        "empresa": "Finet",
+        "id_bodega": 1,
+        "bodega": "Bodega Finet Central",
+        "id_tipo_equipo": 8,
+        "tipo_equipo": "Cable UTP Cat6 QA",
+        "unidad_medida": "Metro",
+        "en_bodega": 320,
+        "asignado_a_tecnico": 0,
+        "en_revision": 0,
+        "en_prestamo_externo": 0,
+        "total_activo": 320,
+        "umbral_minimo": 50,
+        "bajo_umbral": false
+      },
+      {
+        "id_empresa": 1,
+        "empresa": "Finet",
+        "id_bodega": 1,
+        "bodega": "Bodega Finet Central",
+        "id_tipo_equipo": 9,
+        "tipo_equipo": "Router Wi-Fi Cable QA",
+        "unidad_medida": "unidad",
+        "en_bodega": 0,
+        "asignado_a_tecnico": 0,
+        "en_revision": 0,
+        "en_prestamo_externo": 0,
+        "total_activo": 0,
+        "umbral_minimo": 0,
+        "bajo_umbral": false
+      },
+      {
+        "id_empresa": 1,
+        "empresa": "Finet",
+        "id_bodega": 1,
+        "bodega": "Bodega Finet Central",
+        "id_tipo_equipo": 10,
+        "tipo_equipo": "Conector SC/APC Cable QA",
+        "unidad_medida": "Unidad",
+        "en_bodega": 0,
+        "asignado_a_tecnico": 0,
+        "en_revision": 0,
+        "en_prestamo_externo": 0,
+        "total_activo": 0,
+        "umbral_minimo": 0,
+        "bajo_umbral": false
+      },
+      {
+        "id_empresa": 1,
+        "empresa": "Finet",
+        "id_bodega": 1,
+        "bodega": "Bodega Finet Central",
+        "id_tipo_equipo": 11,
+        "tipo_equipo": "Fibra drop Cable QA",
+        "unidad_medida": "Metro",
+        "en_bodega": 0,
+        "asignado_a_tecnico": 0,
+        "en_revision": 0,
+        "en_prestamo_externo": 0,
+        "total_activo": 0,
+        "umbral_minimo": 0,
+        "bajo_umbral": false
+      }
+    ],
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:09:16.448Z"
+  },
+  {
+    "id": "REG-CU-86",
+    "cu": "CU-86",
+    "name": "Consulta de regresión /reportes/movimientos",
+    "expect": "200",
+    "passed": true,
+    "status": 200,
+    "data": [
+      {
+        "id_movimiento": 2,
+        "fecha": "2026-09-23T13:00:00.000Z",
+        "tipo_movimiento": "INGRESO_RECEPCION",
+        "cantidad": 3,
+        "referencia_id": 2,
+        "id_tipo_equipo": 5,
+        "id_unidad": null,
+        "id_usuario": 2,
+        "item": "Decodificador TV QA",
+        "tipo_equipo": "Decodificador TV QA",
+        "id_bodega": 1,
+        "bodega": "Bodega Finet Central",
+        "id_empresa": 1,
+        "usuario": "Admin Finet QA",
+        "empresa": "Finet",
+        "referencia_tipo": "orden_ingreso"
+      },
+      {
+        "id_movimiento": 1,
+        "fecha": "2026-09-23T13:00:00.000Z",
+        "tipo_movimiento": "INGRESO_RECEPCION",
+        "cantidad": 2,
+        "referencia_id": 2,
+        "id_tipo_equipo": 4,
+        "id_unidad": null,
+        "id_usuario": 2,
+        "item": "Switch 8 puertos QA",
+        "tipo_equipo": "Switch 8 puertos QA",
+        "id_bodega": 1,
+        "bodega": "Bodega Finet Central",
+        "id_empresa": 1,
+        "usuario": "Admin Finet QA",
+        "empresa": "Finet",
+        "referencia_tipo": "orden_ingreso"
+      },
+      {
+        "id_movimiento": 5,
+        "fecha": "2026-09-21T13:00:00.000Z",
+        "tipo_movimiento": "INGRESO_RECEPCION",
+        "cantidad": 200,
+        "referencia_id": 4,
+        "id_tipo_equipo": 11,
+        "id_unidad": null,
+        "id_usuario": 2,
+        "item": "Fibra drop Cable QA",
+        "tipo_equipo": "Fibra drop Cable QA",
+        "id_bodega": 2,
+        "bodega": "Bodega Cable Mágico Central",
+        "id_empresa": 2,
+        "usuario": "Admin Finet QA",
+        "empresa": "Cable Mágico",
+        "referencia_tipo": "orden_ingreso"
+      },
+      {
+        "id_movimiento": 20,
+        "fecha": "2026-09-17T13:00:00.000Z",
+        "tipo_movimiento": "TRANSFERENCIA_APROBADA",
+        "cantidad": 10,
+        "referencia_id": 1,
+        "id_tipo_equipo": 6,
+        "id_unidad": null,
+        "id_usuario": 2,
+        "item": "Conector SC/APC QA",
+        "tipo_equipo": "Conector SC/APC QA",
+        "id_bodega": 2,
+        "bodega": "Bodega Cable Mágico Central",
+        "id_empresa": 2,
+        "usuario": "Admin Finet QA",
+        "empresa": "Cable Mágico",
+        "referencia_tipo": "transferencia"
+      },
+      {
+        "id_movimiento": 11,
+        "fecha": "2026-09-12T18:10:00.000Z",
+        "tipo_movimiento": "SALIDA_A_TECNICO",
+        "cantidad": 8,
+        "referencia_id": 2,
+        "id_tipo_equipo": 6,
+        "id_unidad": null,
+        "id_usuario": 2,
+        "item": "Conector SC/APC QA",
+        "tipo_equipo": "Conector SC/APC QA",
+        "id_bodega": 1,
+        "bodega": "Bodega Finet Central",
+        "id_empresa": 1,
+        "usuario": "Admin Finet QA",
+        "empresa": "Finet",
+        "referencia_tipo": "documento"
+      },
+      {
+        "id_movimiento": 10,
+        "fecha": "2026-09-12T18:10:00.000Z",
+        "tipo_movimiento": "SALIDA_A_TECNICO",
+        "cantidad": 60,
+        "referencia_id": 2,
+        "id_tipo_equipo": 8,
+        "id_unidad": null,
+        "id_usuario": 2,
+        "item": "Cable UTP Cat6 QA",
+        "tipo_equipo": "Cable UTP Cat6 QA",
+        "id_bodega": 1,
+        "bodega": "Bodega Finet Central",
+        "id_empresa": 1,
+        "usuario": "Admin Finet QA",
+        "empresa": "Finet",
+        "referencia_tipo": "documento"
+      },
+      {
+        "id_movimiento": 13,
+        "fecha": "2026-09-11T14:00:00.000Z",
+        "tipo_movimiento": "SALIDA_A_TECNICO",
+        "cantidad": 40,
+        "referencia_id": 3,
+        "id_tipo_equipo": 11,
+        "id_unidad": null,
+        "id_usuario": 2,
+        "item": "Fibra drop Cable QA",
+        "tipo_equipo": "Fibra drop Cable QA",
+        "id_bodega": 2,
+        "bodega": "Bodega Cable Mágico Central",
+        "id_empresa": 2,
+        "usuario": "Admin Finet QA",
+        "empresa": "Cable Mágico",
+        "referencia_tipo": "documento"
+      },
+      {
+        "id_movimiento": 12,
+        "fecha": "2026-09-11T14:00:00.000Z",
+        "tipo_movimiento": "SALIDA_A_TECNICO",
+        "cantidad": 1,
+        "referencia_id": 3,
+        "id_tipo_equipo": 9,
+        "id_unidad": 31,
+        "id_usuario": 2,
+        "item": "DEMO-C-RTR-0001",
+        "tipo_equipo": "Router Wi-Fi Cable QA",
+        "id_bodega": 2,
+        "bodega": "Bodega Cable Mágico Central",
+        "id_empresa": 2,
+        "usuario": "Admin Finet QA",
+        "empresa": "Cable Mágico",
+        "referencia_tipo": "documento"
+      },
+      {
+        "id_movimiento": 9,
+        "fecha": "2026-09-10T12:30:00.000Z",
+        "tipo_movimiento": "SALIDA_A_TECNICO",
+        "cantidad": 12,
+        "referencia_id": 1,
+        "id_tipo_equipo": 6,
+        "id_unidad": null,
+        "id_usuario": 2,
+        "item": "Conector SC/APC QA",
+        "tipo_equipo": "Conector SC/APC QA",
+        "id_bodega": 1,
+        "bodega": "Bodega Finet Central",
+        "id_empresa": 1,
+        "usuario": "Admin Finet QA",
+        "empresa": "Finet",
+        "referencia_tipo": "documento"
+      },
+      {
+        "id_movimiento": 8,
+        "fecha": "2026-09-10T12:30:00.000Z",
+        "tipo_movimiento": "SALIDA_A_TECNICO",
+        "cantidad": 25,
+        "referencia_id": 1,
+        "id_tipo_equipo": 7,
+        "id_unidad": null,
+        "id_usuario": 2,
+        "item": "Fibra drop QA",
+        "tipo_equipo": "Fibra drop QA",
+        "id_bodega": 1,
+        "bodega": "Bodega Finet Central",
+        "id_empresa": 1,
+        "usuario": "Admin Finet QA",
+        "empresa": "Finet",
+        "referencia_tipo": "documento"
+      },
+      {
+        "id_movimiento": 7,
+        "fecha": "2026-09-10T12:30:00.000Z",
+        "tipo_movimiento": "SALIDA_A_TECNICO",
+        "cantidad": 1,
+        "referencia_id": 1,
+        "id_tipo_equipo": null,
+        "id_unidad": 16,
+        "id_usuario": 2,
+        "item": "DEMO-ONT-0004",
+        "tipo_equipo": null,
+        "id_bodega": 1,
+        "bodega": "Bodega Finet Central",
+        "id_empresa": 1,
+        "usuario": "Admin Finet QA",
+        "empresa": "Finet",
+        "referencia_tipo": "documento"
+      },
+      {
+        "id_movimiento": 6,
+        "fecha": "2026-09-10T12:30:00.000Z",
+        "tipo_movimiento": "SALIDA_A_TECNICO",
+        "cantidad": 1,
+        "referencia_id": 1,
+        "id_tipo_equipo": 5,
+        "id_unidad": 14,
+        "id_usuario": 2,
+        "item": "DEMO-DEC-0001",
+        "tipo_equipo": "Decodificador TV QA",
+        "id_bodega": 1,
+        "bodega": "Bodega Finet Central",
+        "id_empresa": 1,
+        "usuario": "Admin Finet QA",
+        "empresa": "Finet",
+        "referencia_tipo": "documento"
+      },
+      {
+        "id_movimiento": 16,
+        "fecha": "2026-09-09T13:00:00.000Z",
+        "tipo_movimiento": "PRESTAMO_EXTERNO",
+        "cantidad": 15,
+        "referencia_id": 1,
+        "id_tipo_equipo": 7,
+        "id_unidad": null,
+        "id_usuario": 2,
+        "item": "Fibra drop QA",
+        "tipo_equipo": "Fibra drop QA",
+        "id_bodega": 1,
+        "bodega": "Bodega Finet Central",
+        "id_empresa": 1,
+        "usuario": "Admin Finet QA",
+        "empresa": "Finet",
+        "referencia_tipo": "prestamo"
+      },
+      {
+        "id_movimiento": 15,
+        "fecha": "2026-09-09T13:00:00.000Z",
+        "tipo_movimiento": "PRESTAMO_EXTERNO",
+        "cantidad": 1,
+        "referencia_id": 1,
+        "id_tipo_equipo": 3,
+        "id_unidad": 22,
+        "id_usuario": 2,
+        "item": "DEMO-RTR-0008",
+        "tipo_equipo": "Router Wi-Fi QA",
+        "id_bodega": 1,
+        "bodega": "Bodega Finet Central",
+        "id_empresa": 1,
+        "usuario": "Admin Finet QA",
+        "empresa": "Finet",
+        "referencia_tipo": "prestamo"
+      },
+      {
+        "id_movimiento": 14,
+        "fecha": "2026-09-09T13:00:00.000Z",
+        "tipo_movimiento": "PRESTAMO_EXTERNO",
+        "cantidad": 1,
+        "referencia_id": 1,
+        "id_tipo_equipo": null,
+        "id_unidad": 21,
+        "id_usuario": 2,
+        "item": "DEMO-ONT-0009",
+        "tipo_equipo": null,
+        "id_bodega": 1,
+        "bodega": "Bodega Finet Central",
+        "id_empresa": 1,
+        "usuario": "Admin Finet QA",
+        "empresa": "Finet",
+        "referencia_tipo": "prestamo"
+      },
+      {
+        "id_movimiento": 4,
+        "fecha": "2026-09-09T13:00:00.000Z",
+        "tipo_movimiento": "INGRESO_RECEPCION",
+        "cantidad": 100,
+        "referencia_id": 3,
+        "id_tipo_equipo": 6,
+        "id_unidad": null,
+        "id_usuario": 2,
+        "item": "Conector SC/APC QA",
+        "tipo_equipo": "Conector SC/APC QA",
+        "id_bodega": 1,
+        "bodega": "Bodega Finet Central",
+        "id_empresa": 1,
+        "usuario": "Admin Finet QA",
+        "empresa": "Finet",
+        "referencia_tipo": "orden_ingreso"
+      },
+      {
+        "id_movimiento": 3,
+        "fecha": "2026-09-09T13:00:00.000Z",
+        "tipo_movimiento": "INGRESO_RECEPCION",
+        "cantidad": 2,
+        "referencia_id": 3,
+        "id_tipo_equipo": 3,
+        "id_unidad": null,
+        "id_usuario": 2,
+        "item": "Router Wi-Fi QA",
+        "tipo_equipo": "Router Wi-Fi QA",
+        "id_bodega": 1,
+        "bodega": "Bodega Finet Central",
+        "id_empresa": 1,
+        "usuario": "Admin Finet QA",
+        "empresa": "Finet",
+        "referencia_tipo": "orden_ingreso"
+      },
+      {
+        "id_movimiento": 19,
+        "fecha": "2026-09-07T17:00:00.000Z",
+        "tipo_movimiento": "PRESTAMO_EXTERNO",
+        "cantidad": 1,
+        "referencia_id": 4,
+        "id_tipo_equipo": 5,
+        "id_unidad": 20,
+        "id_usuario": 2,
+        "item": "DEMO-DEC-0003",
+        "tipo_equipo": "Decodificador TV QA",
+        "id_bodega": 1,
+        "bodega": "Bodega Finet Central",
+        "id_empresa": 1,
+        "usuario": "Admin Finet QA",
+        "empresa": "Finet",
+        "referencia_tipo": "prestamo"
+      },
+      {
+        "id_movimiento": 17,
+        "fecha": "2026-08-20T13:00:00.000Z",
+        "tipo_movimiento": "PRESTAMO_EXTERNO",
+        "cantidad": 20,
+        "referencia_id": 2,
+        "id_tipo_equipo": 7,
+        "id_unidad": null,
+        "id_usuario": 2,
+        "item": "Fibra drop QA",
+        "tipo_equipo": "Fibra drop QA",
+        "id_bodega": 1,
+        "bodega": "Bodega Finet Central",
+        "id_empresa": 1,
+        "usuario": "Admin Finet QA",
+        "empresa": "Finet",
+        "referencia_tipo": "prestamo"
+      },
+      {
+        "id_movimiento": 18,
+        "fecha": "2026-08-01T16:00:00.000Z",
+        "tipo_movimiento": "PRESTAMO_EXTERNO",
+        "cantidad": 10,
+        "referencia_id": 3,
+        "id_tipo_equipo": 6,
+        "id_unidad": null,
+        "id_usuario": 2,
+        "item": "Conector SC/APC QA",
+        "tipo_equipo": "Conector SC/APC QA",
+        "id_bodega": 1,
+        "bodega": "Bodega Finet Central",
+        "id_empresa": 1,
+        "usuario": "Admin Finet QA",
+        "empresa": "Finet",
+        "referencia_tipo": "prestamo"
+      }
+    ],
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:09:16.453Z"
+  },
+  {
+    "id": "REG-CU-88",
+    "cu": "CU-88",
+    "name": "Consulta de regresión /reportes/garantias",
+    "expect": "200",
+    "passed": true,
+    "status": 200,
+    "data": [
+      {
+        "numero_serie": "DEMO-ONT-0001",
+        "tipo_equipo": "ONT QA Finet",
+        "marca": "Huawei",
+        "modelo": null,
+        "proveedor": "Distribuidora Andina SpA",
+        "fecha_adquisicion": "2025-08-25",
+        "duracion_garantia_dias": 365,
+        "fecha_vencimiento": "2026-08-25",
+        "dias": -36,
+        "dias_restantes": null,
+        "dias_vencidos": 36,
+        "estado": "En bodega",
+        "empresa": "Finet"
+      },
+      {
+        "numero_serie": "DEMO-RTR-0001",
+        "tipo_equipo": "Router Wi-Fi QA",
+        "marca": "TP-Link",
+        "modelo": null,
+        "proveedor": "Importadora Pacífico SpA",
+        "fecha_adquisicion": "2025-10-14",
+        "duracion_garantia_dias": 365,
+        "fecha_vencimiento": "2026-10-14",
+        "dias": 14,
+        "dias_restantes": 14,
+        "dias_vencidos": null,
+        "estado": "En bodega",
+        "empresa": "Finet"
+      },
+      {
+        "numero_serie": "DEMO-RTR-0002",
+        "tipo_equipo": "Router Wi-Fi QA",
+        "marca": "TP-Link",
+        "modelo": null,
+        "proveedor": "Importadora Pacífico SpA",
+        "fecha_adquisicion": "2025-11-13",
+        "duracion_garantia_dias": 365,
+        "fecha_vencimiento": "2026-11-13",
+        "dias": 44,
+        "dias_restantes": 44,
+        "dias_vencidos": null,
+        "estado": "En bodega",
+        "empresa": "Finet"
+      },
+      {
+        "numero_serie": "DEMO-SWT-0001",
+        "tipo_equipo": "Switch 8 puertos QA",
+        "marca": "TP-Link",
+        "modelo": null,
+        "proveedor": "Distribuidora Andina SpA",
+        "fecha_adquisicion": "2024-12-18",
+        "duracion_garantia_dias": 730,
+        "fecha_vencimiento": "2026-12-18",
+        "dias": 79,
+        "dias_restantes": 79,
+        "dias_vencidos": null,
+        "estado": "En bodega",
+        "empresa": "Finet"
+      },
+      {
+        "numero_serie": "HW-ONT-99001",
+        "tipo_equipo": "ONT QA Finet",
+        "marca": "Huawei",
+        "modelo": "HG8245H",
+        "proveedor": "Proveedor QA",
+        "fecha_adquisicion": "2026-01-10",
+        "duracion_garantia_dias": 365,
+        "fecha_vencimiento": "2027-01-10",
+        "dias": 102,
+        "dias_restantes": 102,
+        "dias_vencidos": null,
+        "estado": "Instalado en cliente",
+        "empresa": "Finet"
+      },
+      {
+        "numero_serie": "HW-ONT-99002",
+        "tipo_equipo": "ONT QA Finet",
+        "marca": "Huawei",
+        "modelo": "HG8245H",
+        "proveedor": "Proveedor QA",
+        "fecha_adquisicion": "2026-01-10",
+        "duracion_garantia_dias": 365,
+        "fecha_vencimiento": "2027-01-10",
+        "dias": 102,
+        "dias_restantes": 102,
+        "dias_vencidos": null,
+        "estado": "Instalado en cliente",
+        "empresa": "Finet"
+      },
+      {
+        "numero_serie": "HW-ONT-99003",
+        "tipo_equipo": "ONT QA Cable Mágico",
+        "marca": "Huawei",
+        "modelo": "HG8245H",
+        "proveedor": "Proveedor QA",
+        "fecha_adquisicion": "2026-01-10",
+        "duracion_garantia_dias": 365,
+        "fecha_vencimiento": "2027-01-10",
+        "dias": 102,
+        "dias_restantes": 102,
+        "dias_vencidos": null,
+        "estado": "Instalado en cliente",
+        "empresa": "Cable Mágico"
+      },
+      {
+        "numero_serie": "QA-ONT-C-0001",
+        "tipo_equipo": "ONT QA Cable Mágico",
+        "marca": "Huawei",
+        "modelo": "HG8145V",
+        "proveedor": "Proveedor QA",
+        "fecha_adquisicion": "2026-01-15",
+        "duracion_garantia_dias": 365,
+        "fecha_vencimiento": "2027-01-15",
+        "dias": 107,
+        "dias_restantes": 107,
+        "dias_vencidos": null,
+        "estado": "En bodega",
+        "empresa": "Cable Mágico"
+      },
+      {
+        "numero_serie": "QA-ONT-C-0002",
+        "tipo_equipo": "ONT QA Cable Mágico",
+        "marca": "Huawei",
+        "modelo": "HG8145V",
+        "proveedor": "Proveedor QA",
+        "fecha_adquisicion": "2026-01-15",
+        "duracion_garantia_dias": 365,
+        "fecha_vencimiento": "2027-01-15",
+        "dias": 107,
+        "dias_restantes": 107,
+        "dias_vencidos": null,
+        "estado": "Asignado a técnico",
+        "empresa": "Cable Mágico"
+      },
+      {
+        "numero_serie": "QA-ONT-C-0003",
+        "tipo_equipo": "ONT QA Cable Mágico",
+        "marca": "Huawei",
+        "modelo": "HG8145V",
+        "proveedor": "Proveedor QA",
+        "fecha_adquisicion": "2026-01-15",
+        "duracion_garantia_dias": 365,
+        "fecha_vencimiento": "2027-01-15",
+        "dias": 107,
+        "dias_restantes": 107,
+        "dias_vencidos": null,
+        "estado": "Instalado en cliente",
+        "empresa": "Cable Mágico"
+      },
+      {
+        "numero_serie": "QA-ONT-F-0001",
+        "tipo_equipo": "ONT QA Finet",
+        "marca": "Huawei",
+        "modelo": "HG8145V",
+        "proveedor": "Proveedor QA",
+        "fecha_adquisicion": "2026-01-15",
+        "duracion_garantia_dias": 365,
+        "fecha_vencimiento": "2027-01-15",
+        "dias": 107,
+        "dias_restantes": 107,
+        "dias_vencidos": null,
+        "estado": "En bodega",
+        "empresa": "Finet"
+      },
+      {
+        "numero_serie": "QA-ONT-F-0002",
+        "tipo_equipo": "ONT QA Finet",
+        "marca": "Huawei",
+        "modelo": "HG8145V",
+        "proveedor": "Proveedor QA",
+        "fecha_adquisicion": "2026-01-15",
+        "duracion_garantia_dias": 365,
+        "fecha_vencimiento": "2027-01-15",
+        "dias": 107,
+        "dias_restantes": 107,
+        "dias_vencidos": null,
+        "estado": "Asignado a técnico",
+        "empresa": "Finet"
+      },
+      {
+        "numero_serie": "QA-ONT-F-0003",
+        "tipo_equipo": "ONT QA Finet",
+        "marca": "Huawei",
+        "modelo": "HG8145V",
+        "proveedor": "Proveedor QA",
+        "fecha_adquisicion": "2026-01-15",
+        "duracion_garantia_dias": 365,
+        "fecha_vencimiento": "2027-01-15",
+        "dias": 107,
+        "dias_restantes": 107,
+        "dias_vencidos": null,
+        "estado": "Instalado en cliente",
+        "empresa": "Finet"
+      },
+      {
+        "numero_serie": "DEMO-DEC-0001",
+        "tipo_equipo": "Decodificador TV QA",
+        "marca": "ZTE",
+        "modelo": null,
+        "proveedor": "TecnoRed Chile Ltda.",
+        "fecha_adquisicion": "2026-03-13",
+        "duracion_garantia_dias": 365,
+        "fecha_vencimiento": "2027-03-13",
+        "dias": 164,
+        "dias_restantes": 164,
+        "dias_vencidos": null,
+        "estado": "Asignado a técnico",
+        "empresa": "Finet"
+      },
+      {
+        "numero_serie": "DEMO-DEC-0002",
+        "tipo_equipo": "Decodificador TV QA",
+        "marca": "ZTE",
+        "modelo": null,
+        "proveedor": "TecnoRed Chile Ltda.",
+        "fecha_adquisicion": "2026-03-23",
+        "duracion_garantia_dias": 365,
+        "fecha_vencimiento": "2027-03-23",
+        "dias": 174,
+        "dias_restantes": 174,
+        "dias_vencidos": null,
+        "estado": "Asignado a técnico",
+        "empresa": "Finet"
+      },
+      {
+        "numero_serie": "DEMO-ONT-0004",
+        "tipo_equipo": "ONT QA Finet",
+        "marca": "Huawei",
+        "modelo": null,
+        "proveedor": "Distribuidora Andina SpA",
+        "fecha_adquisicion": "2026-06-01",
+        "duracion_garantia_dias": 365,
+        "fecha_vencimiento": "2027-06-01",
+        "dias": 244,
+        "dias_restantes": 244,
+        "dias_vencidos": null,
+        "estado": "Asignado a técnico",
+        "empresa": "Finet"
+      },
+      {
+        "numero_serie": "DEMO-C-ONT-0001",
+        "tipo_equipo": "ONT QA Cable Mágico",
+        "marca": "Huawei",
+        "modelo": null,
+        "proveedor": null,
+        "fecha_adquisicion": "2026-07-11",
+        "duracion_garantia_dias": 365,
+        "fecha_vencimiento": "2027-07-11",
+        "dias": 284,
+        "dias_restantes": 284,
+        "dias_vencidos": null,
+        "estado": "En bodega",
+        "empresa": "Cable Mágico"
+      },
+      {
+        "numero_serie": "DEMO-C-ONT-0002",
+        "tipo_equipo": "ONT QA Cable Mágico",
+        "marca": "Huawei",
+        "modelo": null,
+        "proveedor": null,
+        "fecha_adquisicion": "2026-07-16",
+        "duracion_garantia_dias": 365,
+        "fecha_vencimiento": "2027-07-16",
+        "dias": 289,
+        "dias_restantes": 289,
+        "dias_vencidos": null,
+        "estado": "En bodega",
+        "empresa": "Cable Mágico"
+      },
+      {
+        "numero_serie": "DEMO-RTR-0004",
+        "tipo_equipo": "Router Wi-Fi QA",
+        "marca": "TP-Link",
+        "modelo": null,
+        "proveedor": "Importadora Pacífico SpA",
+        "fecha_adquisicion": "2026-07-31",
+        "duracion_garantia_dias": 365,
+        "fecha_vencimiento": "2027-07-31",
+        "dias": 304,
+        "dias_restantes": 304,
+        "dias_vencidos": null,
+        "estado": "Instalado en cliente",
+        "empresa": "Finet"
+      },
+      {
+        "numero_serie": "DEMO-C-RTR-0001",
+        "tipo_equipo": "Router Wi-Fi Cable QA",
+        "marca": "Huawei",
+        "modelo": null,
+        "proveedor": null,
+        "fecha_adquisicion": "2026-08-20",
+        "duracion_garantia_dias": 365,
+        "fecha_vencimiento": "2027-08-20",
+        "dias": 324,
+        "dias_restantes": 324,
+        "dias_vencidos": null,
+        "estado": "Asignado a técnico",
+        "empresa": "Cable Mágico"
+      },
+      {
+        "numero_serie": "DEMO-ONT-0002",
+        "tipo_equipo": "ONT QA Finet",
+        "marca": "Huawei",
+        "modelo": null,
+        "proveedor": "Distribuidora Andina SpA",
+        "fecha_adquisicion": "2026-08-30",
+        "duracion_garantia_dias": 365,
+        "fecha_vencimiento": "2027-08-30",
+        "dias": 334,
+        "dias_restantes": 334,
+        "dias_vencidos": null,
+        "estado": "En bodega",
+        "empresa": "Finet"
+      },
+      {
+        "numero_serie": "DEMO-SWT-0002",
+        "tipo_equipo": "Switch 8 puertos QA",
+        "marca": "TP-Link",
+        "modelo": null,
+        "proveedor": "Distribuidora Andina SpA",
+        "fecha_adquisicion": "2026-06-21",
+        "duracion_garantia_dias": 730,
+        "fecha_vencimiento": "2028-06-20",
+        "dias": 629,
+        "dias_restantes": 629,
+        "dias_vencidos": null,
+        "estado": "En bodega",
+        "empresa": "Finet"
+      }
+    ],
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:09:16.458Z"
+  },
+  {
+    "id": "REG-CU-89",
+    "cu": "CU-89",
+    "name": "Consulta de regresión /reportes/tecnicos/inventario",
+    "expect": "200",
+    "passed": true,
+    "status": 200,
+    "data": [
+      {
+        "tecnico": {
+          "id_usuario": 5,
+          "nombre_completo": "Técnico Cable Mágico QA",
+          "empresa": "Cable Mágico"
+        },
+        "equipos_individualizables": [
+          {
+            "numero_serie": "DEMO-C-RTR-0001",
+            "tipo_equipo": "Router Wi-Fi Cable QA",
+            "fecha_asignacion": "2026-09-11",
+            "dias_transcurridos": 18
+          },
+          {
+            "numero_serie": "QA-ONT-C-0002",
+            "tipo_equipo": "ONT QA Cable Mágico",
+            "fecha_asignacion": null,
+            "dias_transcurridos": 0
+          }
+        ],
+        "consumibles": [
+          {
+            "id_tipo_equipo": 11,
+            "tipo_equipo": "Fibra drop Cable QA",
+            "cantidad_disponible": 40,
+            "unidad_medida": "Metro"
+          }
+        ]
+      },
+      {
+        "tecnico": {
+          "id_usuario": 4,
+          "nombre_completo": "Técnico Terreno QA",
+          "empresa": "Finet"
+        },
+        "equipos_individualizables": [
+          {
+            "numero_serie": "DEMO-DEC-0001",
+            "tipo_equipo": "Decodificador TV QA",
+            "fecha_asignacion": "2026-09-10",
+            "dias_transcurridos": 19
+          },
+          {
+            "numero_serie": "DEMO-DEC-0002",
+            "tipo_equipo": "Decodificador TV QA",
+            "fecha_asignacion": null,
+            "dias_transcurridos": 0
+          },
+          {
+            "numero_serie": "DEMO-ONT-0004",
+            "tipo_equipo": "ONT QA Finet",
+            "fecha_asignacion": "2026-09-10",
+            "dias_transcurridos": 19
+          },
+          {
+            "numero_serie": "QA-ONT-F-0002",
+            "tipo_equipo": "ONT QA Finet",
+            "fecha_asignacion": null,
+            "dias_transcurridos": 0
+          }
+        ],
+        "consumibles": [
+          {
+            "id_tipo_equipo": 8,
+            "tipo_equipo": "Cable UTP Cat6 QA",
+            "cantidad_disponible": 60,
+            "unidad_medida": "Metro"
+          },
+          {
+            "id_tipo_equipo": 6,
+            "tipo_equipo": "Conector SC/APC QA",
+            "cantidad_disponible": 20,
+            "unidad_medida": "Unidad"
+          },
+          {
+            "id_tipo_equipo": 7,
+            "tipo_equipo": "Fibra drop QA",
+            "cantidad_disponible": 25,
+            "unidad_medida": "Metro"
+          }
+        ]
+      }
+    ],
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:09:16.473Z"
+  },
+  {
+    "id": "REG-CU-91",
+    "cu": "CU-91",
+    "name": "Consulta de regresión /reportes/consumo",
+    "expect": "200",
+    "passed": true,
+    "status": 200,
+    "data": [
+      {
+        "id_tipo_equipo": 8,
+        "tipo_consumible": "Cable UTP Cat6 QA",
+        "unidad_medida": "Metro",
+        "cantidad_ingresada": 0,
+        "cantidad_entregada": 60,
+        "cantidad_usada_en_cierres": 0,
+        "cantidad_devuelta": 0,
+        "diferencia": -60,
+        "desvio": false
+      },
+      {
+        "id_tipo_equipo": 6,
+        "tipo_consumible": "Conector SC/APC QA",
+        "unidad_medida": "Unidad",
+        "cantidad_ingresada": 100,
+        "cantidad_entregada": 20,
+        "cantidad_usada_en_cierres": 0,
+        "cantidad_devuelta": 10,
+        "diferencia": 90,
+        "desvio": true
+      },
+      {
+        "id_tipo_equipo": 11,
+        "tipo_consumible": "Fibra drop Cable QA",
+        "unidad_medida": "Metro",
+        "cantidad_ingresada": 200,
+        "cantidad_entregada": 40,
+        "cantidad_usada_en_cierres": 0,
+        "cantidad_devuelta": 0,
+        "diferencia": 160,
+        "desvio": true
+      },
+      {
+        "id_tipo_equipo": 7,
+        "tipo_consumible": "Fibra drop QA",
+        "unidad_medida": "Metro",
+        "cantidad_ingresada": 0,
+        "cantidad_entregada": 25,
+        "cantidad_usada_en_cierres": 0,
+        "cantidad_devuelta": 0,
+        "diferencia": -25,
+        "desvio": false
+      }
+    ],
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:09:16.481Z"
+  },
+  {
+    "id": "P61-N",
+    "cu": "CU-61",
+    "name": "Jornada con trabajos e inventario",
+    "expect": "Trabajos de contrato G3 y existencias del técnico",
+    "passed": true,
+    "status": 200,
+    "data": {
+      "success": true,
+      "data": {
+        "fecha": "2026-09-29",
+        "trabajos_estado": "OK",
+        "trabajos": [
+          {
+            "id_ot": 9301,
+            "tipo_ot": "INSTALACION",
+            "estado": "PENDIENTE",
+            "prioridad": "MEDIA",
+            "fecha_programada": "2026-09-30T01:09:16.500Z",
+            "observaciones": "Instalación de prueba para verificar CU-61",
+            "cliente": {
+              "id_cliente": 9001,
+              "rut": "11111111-1",
+              "nombre_completo": "Cliente de prueba Incremento 3",
+              "telefono": "912345678"
+            },
+            "direccion": {
+              "direccion": "Av. Pruebas 123",
+              "comuna": "Santiago",
+              "referencia": "Datos ficticios QA"
+            }
+          },
+          {
+            "id_ot": 9302,
+            "tipo_ot": "REPARACION",
+            "estado": "EN_CURSO",
+            "prioridad": "ALTA",
+            "fecha_programada": "2026-09-30T01:09:16.501Z",
+            "observaciones": "Pérdida de señal de prueba",
+            "cliente": {
+              "id_cliente": 9001,
+              "rut": "11111111-1",
+              "nombre_completo": "Cliente de prueba Incremento 3",
+              "telefono": "912345678"
+            },
+            "direccion": {
+              "direccion": "Av. Pruebas 123",
+              "comuna": "Santiago",
+              "referencia": null
+            }
+          }
+        ],
+        "inventario": {
+          "tecnico": {
+            "id_usuario": 4,
+            "nombre_completo": "Técnico Terreno QA",
+            "nombre_usuario": "tecnico_qa",
+            "empresa": "Finet"
+          },
+          "ns_asignados": [
+            {
+              "numero_serie": "DEMO-ONT-0004",
+              "id_unidad": 16,
+              "tipo": "ONT QA Finet",
+              "estado": "Asignado a técnico"
+            },
+            {
+              "numero_serie": "DEMO-DEC-0002",
+              "id_unidad": 15,
+              "tipo": "Decodificador TV QA",
+              "estado": "Asignado a técnico"
+            },
+            {
+              "numero_serie": "DEMO-DEC-0001",
+              "id_unidad": 14,
+              "tipo": "Decodificador TV QA",
+              "estado": "Asignado a técnico"
+            },
+            {
+              "numero_serie": "QA-ONT-F-0002",
+              "id_unidad": 2,
+              "tipo": "ONT QA Finet",
+              "estado": "Asignado a técnico"
+            }
+          ],
+          "saldos": [
+            {
+              "id_tipo_equipo": 7,
+              "tipo": "Fibra drop QA",
+              "saldo": 25,
+              "unidad_medida": "Metro"
+            },
+            {
+              "id_tipo_equipo": 6,
+              "tipo": "Conector SC/APC QA",
+              "saldo": 20,
+              "unidad_medida": "Unidad"
+            },
+            {
+              "id_tipo_equipo": 8,
+              "tipo": "Cable UTP Cat6 QA",
+              "saldo": 60,
+              "unidad_medida": "Metro"
+            }
+          ]
+        }
+      }
+    },
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "contexto": "G3 simulado mediante servidor local de contrato; aplicación T1 real de dev",
+    "at": "2026-09-30T01:09:16.505Z"
+  },
+  {
+    "id": "P61-E1",
+    "cu": "CU-61",
+    "name": "Jornada sin trabajos",
+    "expect": "200 y lista vacía",
+    "passed": true,
+    "status": 200,
+    "data": {
+      "success": true,
+      "data": {
+        "fecha": "2026-09-29",
+        "trabajos_estado": "OK",
+        "trabajos": [],
+        "inventario": {
+          "tecnico": {
+            "id_usuario": 4,
+            "nombre_completo": "Técnico Terreno QA",
+            "nombre_usuario": "tecnico_qa",
+            "empresa": "Finet"
+          },
+          "ns_asignados": [
+            {
+              "numero_serie": "DEMO-ONT-0004",
+              "id_unidad": 16,
+              "tipo": "ONT QA Finet",
+              "estado": "Asignado a técnico"
+            },
+            {
+              "numero_serie": "DEMO-DEC-0002",
+              "id_unidad": 15,
+              "tipo": "Decodificador TV QA",
+              "estado": "Asignado a técnico"
+            },
+            {
+              "numero_serie": "DEMO-DEC-0001",
+              "id_unidad": 14,
+              "tipo": "Decodificador TV QA",
+              "estado": "Asignado a técnico"
+            },
+            {
+              "numero_serie": "QA-ONT-F-0002",
+              "id_unidad": 2,
+              "tipo": "ONT QA Finet",
+              "estado": "Asignado a técnico"
+            }
+          ],
+          "saldos": [
+            {
+              "id_tipo_equipo": 7,
+              "tipo": "Fibra drop QA",
+              "saldo": 25,
+              "unidad_medida": "Metro"
+            },
+            {
+              "id_tipo_equipo": 6,
+              "tipo": "Conector SC/APC QA",
+              "saldo": 20,
+              "unidad_medida": "Unidad"
+            },
+            {
+              "id_tipo_equipo": 8,
+              "tipo": "Cable UTP Cat6 QA",
+              "saldo": 60,
+              "unidad_medida": "Metro"
+            }
+          ]
+        }
+      }
+    },
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:09:16.513Z"
+  },
+  {
+    "id": "P61-E2",
+    "cu": "CU-61",
+    "name": "G3 no disponible",
+    "expect": "Inventario conservado y aviso NO_DISPONIBLE",
+    "passed": true,
+    "status": 200,
+    "data": {
+      "success": true,
+      "data": {
+        "fecha": "2026-09-29",
+        "trabajos_estado": "NO_DISPONIBLE",
+        "trabajos": [],
+        "inventario": {
+          "tecnico": {
+            "id_usuario": 4,
+            "nombre_completo": "Técnico Terreno QA",
+            "nombre_usuario": "tecnico_qa",
+            "empresa": "Finet"
+          },
+          "ns_asignados": [
+            {
+              "numero_serie": "DEMO-ONT-0004",
+              "id_unidad": 16,
+              "tipo": "ONT QA Finet",
+              "estado": "Asignado a técnico"
+            },
+            {
+              "numero_serie": "DEMO-DEC-0002",
+              "id_unidad": 15,
+              "tipo": "Decodificador TV QA",
+              "estado": "Asignado a técnico"
+            },
+            {
+              "numero_serie": "DEMO-DEC-0001",
+              "id_unidad": 14,
+              "tipo": "Decodificador TV QA",
+              "estado": "Asignado a técnico"
+            },
+            {
+              "numero_serie": "QA-ONT-F-0002",
+              "id_unidad": 2,
+              "tipo": "ONT QA Finet",
+              "estado": "Asignado a técnico"
+            }
+          ],
+          "saldos": [
+            {
+              "id_tipo_equipo": 7,
+              "tipo": "Fibra drop QA",
+              "saldo": 25,
+              "unidad_medida": "Metro"
+            },
+            {
+              "id_tipo_equipo": 6,
+              "tipo": "Conector SC/APC QA",
+              "saldo": 20,
+              "unidad_medida": "Unidad"
+            },
+            {
+              "id_tipo_equipo": 8,
+              "tipo": "Cable UTP Cat6 QA",
+              "saldo": 60,
+              "unidad_medida": "Metro"
+            }
+          ]
+        }
+      }
+    },
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:09:16.523Z"
+  },
+  {
+    "id": "P48-E1",
+    "cu": "CU-48",
+    "name": "Ubicación externa incompleta",
+    "expect": "Campos faltantes identificados",
+    "passed": true,
+    "status": 200,
+    "data": {
+      "id_unidad": 3,
+      "numero_serie": "QA-ONT-F-0003",
+      "mac_address": null,
+      "tipo_equipo": {
+        "nombre": "ONT QA Finet",
+        "categoria": "EQUIPO",
+        "marca": "Huawei",
+        "modelo": "HG8145V",
+        "ficha_tecnica_pdf_url": null
+      },
+      "marca": "Huawei",
+      "modelo": "HG8145V",
+      "empresa": "Finet",
+      "id_empresa": 1,
+      "bodega": null,
+      "id_bodega_actual": null,
+      "estado": "Instalado en cliente",
+      "proveedor": "Proveedor QA",
+      "fecha_adquisicion": "2026-01-15",
+      "fecha_venc_garantia": "2027-01-15",
+      "garantia": {
+        "posee_garantia": true,
+        "garantia_vigente": true,
+        "no_calculable": false,
+        "dias_restantes": 107,
+        "mensaje_alerta": "¡ALERTA VIGENTE! El dispositivo cuenta con cobertura de soporte técnico de fábrica por 107 días más."
+      },
+      "ubicacion_fisica": null,
+      "motivo_baja": null,
+      "motivo_baja_detalle": null,
+      "observaciones": "Unidad QA para integración con G3",
+      "numero_poste": null,
+      "id_cliente_instalado": null,
+      "id_caja_nap": null,
+      "cliente_rut": null,
+      "cliente_nombre": null,
+      "direccion_instalacion": null,
+      "comuna_instalacion": null,
+      "srv": null,
+      "ubicacion_externa": {
+        "tipo": "CLIENTE",
+        "datos": {
+          "rut": null,
+          "nombre": null,
+          "direccion": null,
+          "comuna": null
+        },
+        "campos_faltantes": [
+          "nombre",
+          "rut",
+          "direccion"
+        ]
+      }
+    },
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:09:16.526Z"
+  },
+  {
+    "id": "P64-N",
+    "cu": "CU-64",
+    "name": "Cierre atómico de instalación",
+    "expect": "Unidad instalada, stock 25→20, SRV y registro",
+    "passed": true,
+    "status": 201,
+    "data": {
+      "success": true,
+      "data": {
+        "duplicado": false,
+        "id_ot": 9301,
+        "clave_idempotencia": "inc3-9301",
+        "estado_proceso": "PROCESADO",
+        "srv": "SRV-2026-00001",
+        "id_tecnico": 4,
+        "acciones_aplicadas": [
+          {
+            "numero_serie": "QA-ONT-F-0002",
+            "accion": "INSTALADO_EN_CLIENTE",
+            "id_unidad": 2,
+            "estado_anterior": "Asignado a técnico",
+            "estado_nuevo": "Instalado en cliente"
+          },
+          {
+            "tipo": "MATERIALES",
+            "descontados": [
+              {
+                "id_tipo_equipo": 7,
+                "nombre": "Fibra drop QA",
+                "cantidad": 5,
+                "saldo_anterior": 25,
+                "saldo_nuevo": 20
+              }
+            ],
+            "ajustes": []
+          }
+        ],
+        "discrepancias": [],
+        "materiales": {
+          "descontados": [
+            {
+              "id_tipo_equipo": 7,
+              "nombre": "Fibra drop QA",
+              "cantidad": 5,
+              "saldo_anterior": 25,
+              "saldo_nuevo": 20
+            }
+          ],
+          "ajustes": []
+        },
+        "id_cierre_reparacion": null
+      }
+    },
+    "contentType": "application/json; charset=utf-8",
+    "db": [
+      {
+        "estado": "Instalado en cliente",
+        "cliente_rut": "11111111-1",
+        "srv": "SRV-2026-00001"
+      }
+    ],
+    "stock": [
+      {
+        "cantidad": "20.00"
+      }
+    ],
+    "ok": true,
+    "at": "2026-09-30T01:09:16.555Z"
+  },
+  {
+    "id": "P64-ID",
+    "cu": "CU-64",
+    "name": "Reenvío idempotente",
+    "expect": "No descuenta nuevamente",
+    "passed": true,
+    "status": 201,
+    "data": {
+      "success": true,
+      "data": {
+        "duplicado": true,
+        "id_ot": 9301,
+        "clave_idempotencia": "inc3-9301",
+        "estado_proceso": "PROCESADO",
+        "srv": "SRV-2026-00001",
+        "id_tecnico": 4,
+        "acciones_aplicadas": [
+          {
+            "accion": "INSTALADO_EN_CLIENTE",
+            "id_unidad": 2,
+            "estado_nuevo": "Instalado en cliente",
+            "numero_serie": "QA-ONT-F-0002",
+            "estado_anterior": "Asignado a técnico"
+          },
+          {
+            "tipo": "MATERIALES",
+            "ajustes": [],
+            "descontados": [
+              {
+                "nombre": "Fibra drop QA",
+                "cantidad": 5,
+                "saldo_nuevo": 20,
+                "id_tipo_equipo": 7,
+                "saldo_anterior": 25
+              }
+            ]
+          }
+        ],
+        "discrepancias": [],
+        "materiales": {
+          "ajustes": [],
+          "descontados": [
+            {
+              "nombre": "Fibra drop QA",
+              "cantidad": 5,
+              "saldo_nuevo": 20,
+              "id_tipo_equipo": 7,
+              "saldo_anterior": 25
+            }
+          ]
+        },
+        "id_cierre_reparacion": null
+      }
+    },
+    "contentType": "application/json; charset=utf-8",
+    "stock": [
+      {
+        "cantidad": "20.00"
+      }
+    ],
+    "ok": true,
+    "at": "2026-09-30T01:09:16.559Z"
+  },
+  {
+    "id": "P48-N",
+    "cu": "CU-48",
+    "name": "Ubicación externa después de instalación",
+    "expect": "Cliente y dirección persistidos",
+    "passed": true,
+    "status": 200,
+    "data": {
+      "id_unidad": 2,
+      "numero_serie": "QA-ONT-F-0002",
+      "mac_address": null,
+      "tipo_equipo": {
+        "nombre": "ONT QA Finet",
+        "categoria": "EQUIPO",
+        "marca": "Huawei",
+        "modelo": "HG8145V",
+        "ficha_tecnica_pdf_url": null
+      },
+      "marca": "Huawei",
+      "modelo": "HG8145V",
+      "empresa": "Finet",
+      "id_empresa": 1,
+      "bodega": null,
+      "id_bodega_actual": null,
+      "estado": "Instalado en cliente",
+      "proveedor": "Proveedor QA",
+      "fecha_adquisicion": "2026-01-15",
+      "fecha_venc_garantia": "2027-01-15",
+      "garantia": {
+        "posee_garantia": true,
+        "garantia_vigente": true,
+        "no_calculable": false,
+        "dias_restantes": 107,
+        "mensaje_alerta": "¡ALERTA VIGENTE! El dispositivo cuenta con cobertura de soporte técnico de fábrica por 107 días más."
+      },
+      "ubicacion_fisica": null,
+      "motivo_baja": null,
+      "motivo_baja_detalle": null,
+      "observaciones": "Unidad QA para integración con G3",
+      "numero_poste": null,
+      "id_cliente_instalado": null,
+      "id_caja_nap": null,
+      "cliente_rut": "11111111-1",
+      "cliente_nombre": "Cliente de prueba Incremento 3",
+      "direccion_instalacion": "Av. Pruebas 123",
+      "comuna_instalacion": "Santiago",
+      "srv": "SRV-2026-00001",
+      "ubicacion_externa": {
+        "tipo": "CLIENTE",
+        "datos": {
+          "rut": "11111111-1",
+          "nombre": "Cliente de prueba Incremento 3",
+          "direccion": "Av. Pruebas 123",
+          "comuna": "Santiago"
+        },
+        "campos_faltantes": []
+      }
+    },
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:09:16.565Z"
+  },
+  {
+    "id": "P48-PE",
+    "cu": "CU-48",
+    "name": "Ubicación en préstamo externo",
+    "expect": "Receptor y número PE visibles",
+    "passed": true,
+    "status": 200,
+    "data": {
+      "id_unidad": 21,
+      "numero_serie": "DEMO-ONT-0009",
+      "mac_address": null,
+      "tipo_equipo": {
+        "nombre": "ONT QA Finet",
+        "categoria": "EQUIPO",
+        "marca": "Huawei",
+        "modelo": "HG8145V",
+        "ficha_tecnica_pdf_url": null
+      },
+      "marca": "Huawei",
+      "modelo": "HG8145V",
+      "empresa": "Finet",
+      "id_empresa": 1,
+      "bodega": null,
+      "id_bodega_actual": null,
+      "estado": "En préstamo externo",
+      "proveedor": "Distribuidora Andina SpA",
+      "fecha_adquisicion": null,
+      "fecha_venc_garantia": null,
+      "garantia": {
+        "posee_garantia": false,
+        "garantia_vigente": false,
+        "no_calculable": true,
+        "dias_restantes": 0,
+        "mensaje_alerta": "Garantía no calculable"
+      },
+      "ubicacion_fisica": null,
+      "motivo_baja": null,
+      "motivo_baja_detalle": null,
+      "observaciones": null,
+      "numero_poste": null,
+      "id_cliente_instalado": null,
+      "id_caja_nap": null,
+      "cliente_rut": null,
+      "cliente_nombre": null,
+      "direccion_instalacion": null,
+      "comuna_instalacion": null,
+      "srv": null,
+      "ubicacion_externa": {
+        "tipo": "PRESTAMO_EXTERNO",
+        "datos": {
+          "nombre_receptor": null,
+          "rut_receptor": null,
+          "numero_prestamo": null,
+          "motivo": null
+        },
+        "campos_faltantes": [
+          "nombre_receptor",
+          "numero_prestamo",
+          "motivo"
+        ]
+      }
+    },
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:10:19.086Z",
+    "correccion_prueba": "Se ajustó URL, filtro o fixture al contrato de dev antes de repetir"
+  },
+  {
+    "id": "P64-400",
+    "cu": "CU-64",
+    "name": "Payload sin clave de idempotencia",
+    "expect": "400 antes de mutar",
+    "passed": true,
+    "status": 400,
+    "data": {
+      "message": "Falta la clave_idempotencia del cierre.",
+      "error": "Bad Request",
+      "statusCode": 400
+    },
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:09:16.571Z"
+  },
+  {
+    "id": "P64-E1",
+    "cu": "CU-64",
+    "name": "Fallo interno y rollback",
+    "expect": "500; unidad y stock originales; cierre no persistido",
+    "passed": true,
+    "status": 500,
+    "data": {
+      "statusCode": 500,
+      "message": "Internal server error"
+    },
+    "contentType": "application/json; charset=utf-8",
+    "before": [
+      {
+        "cantidad": "20.00"
+      }
+    ],
+    "after": [
+      {
+        "estado": "Asignado a técnico"
+      }
+    ],
+    "stock": [
+      {
+        "cantidad": "20.00"
+      }
+    ],
+    "registro": [],
+    "contexto": "Trigger de fallo temporal en base QA; se elimina al terminar",
+    "ok": true,
+    "at": "2026-09-30T01:09:16.587Z"
+  },
+  {
+    "id": "P68-N",
+    "cu": "CU-68",
+    "name": "Consumo dentro del saldo",
+    "expect": "Descuento observado en P64-N y saldo no negativo",
+    "passed": true,
+    "ok": true,
+    "observado": [
+      {
+        "cantidad": "20.00"
+      }
+    ],
+    "at": "2026-09-30T01:09:16.589Z"
+  },
+  {
+    "id": "P68-E1",
+    "cu": "CU-68",
+    "name": "Consumo superior al saldo",
+    "expect": "Procesa con discrepancia y ajusta a cero según acuerdo G3",
+    "passed": true,
+    "status": 201,
+    "data": {
+      "success": true,
+      "data": {
+        "duplicado": false,
+        "id_ot": 9303,
+        "clave_idempotencia": "inc3-9303",
+        "estado_proceso": "PROCESADO_CON_DISCREPANCIAS",
+        "srv": "SRV-2026-00002",
+        "id_tecnico": 4,
+        "acciones_aplicadas": [
+          {
+            "tipo": "MATERIALES",
+            "descontados": [
+              {
+                "id_tipo_equipo": 7,
+                "nombre": "Fibra drop QA",
+                "cantidad": 20,
+                "saldo_anterior": 20,
+                "saldo_nuevo": 0
+              }
+            ],
+            "ajustes": [
+              {
+                "id_tipo_equipo": 7,
+                "nombre": "Fibra drop QA",
+                "unidad_medida": "Metro",
+                "disponible": 20,
+                "declarado": 999,
+                "descontado": 20,
+                "faltante": 979
+              }
+            ]
+          }
+        ],
+        "discrepancias": [
+          {
+            "codigo": "SALDO_INSUFICIENTE_AJUSTADO",
+            "id_tipo_equipo": 7,
+            "detalle": "Saldo insuficiente de [Fibra drop QA]: disponible 20 Metro, declarado 999 Metro. Se descontó lo disponible y el faltante quedó como ajuste."
+          }
+        ],
+        "materiales": {
+          "descontados": [
+            {
+              "id_tipo_equipo": 7,
+              "nombre": "Fibra drop QA",
+              "cantidad": 20,
+              "saldo_anterior": 20,
+              "saldo_nuevo": 0
+            }
+          ],
+          "ajustes": [
+            {
+              "id_tipo_equipo": 7,
+              "nombre": "Fibra drop QA",
+              "unidad_medida": "Metro",
+              "disponible": 20,
+              "declarado": 999,
+              "descontado": 20,
+              "faltante": 979
+            }
+          ]
+        },
+        "id_cierre_reparacion": null
+      }
+    },
+    "contentType": "application/json; charset=utf-8",
+    "stock": [
+      {
+        "cantidad": "0.00"
+      }
+    ],
+    "ok": true,
+    "at": "2026-09-30T01:09:16.598Z"
+  },
+  {
+    "id": "P70-N",
+    "cu": "CU-70",
+    "name": "Catálogo de trabajos",
+    "expect": "Diez tipos T-01..T-10",
+    "passed": true,
+    "status": 200,
+    "data": [
+      {
+        "codigo": "T-01",
+        "nombre": "Instalación internet",
+        "tipo_ot": "INSTALACION",
+        "campos": {
+          "solucion_aplicada": "Instalación de servicio de internet: tendido de fibra, instalación de ONT y prueba de navegación."
+        },
+        "materiales_sugeridos": [
+          "Fibra drop",
+          "Conector SC/APC",
+          "Roseta óptica"
+        ]
+      },
+      {
+        "codigo": "T-02",
+        "nombre": "TV cable",
+        "tipo_ot": "INSTALACION",
+        "campos": {
+          "solucion_aplicada": "Instalación de servicio de TV cable: tendido de coaxial, instalación de decodificador y prueba de señal."
+        },
+        "materiales_sugeridos": [
+          "Cable coaxial RG6",
+          "Conector coaxial",
+          "Splitter"
+        ]
+      },
+      {
+        "codigo": "T-03",
+        "nombre": "Combo",
+        "tipo_ot": "INSTALACION",
+        "campos": {
+          "solucion_aplicada": "Instalación de combo internet + TV cable: ONT y decodificador instalados, ambos servicios probados."
+        },
+        "materiales_sugeridos": [
+          "Fibra drop",
+          "Cable coaxial RG6",
+          "Conector SC/APC",
+          "Splitter"
+        ]
+      },
+      {
+        "codigo": "T-04",
+        "nombre": "Cambio ONT",
+        "tipo_ot": "REPARACION",
+        "campos": {
+          "falla_reportada": "El cliente reporta que la ONT no entrega servicio.",
+          "solucion_aplicada": "Se reemplazó la ONT por una unidad operativa y se verificó la navegación del cliente.",
+          "resultado": "RESUELTO",
+          "categoria_falla": "Equipo defectuoso"
+        },
+        "materiales_sugeridos": [
+          "Patchcord SC/APC"
+        ]
+      },
+      {
+        "codigo": "T-05",
+        "nombre": "Cambio decodificador",
+        "tipo_ot": "REPARACION",
+        "campos": {
+          "falla_reportada": "El cliente reporta que el decodificador no muestra señal.",
+          "solucion_aplicada": "Se reemplazó el decodificador por una unidad operativa y se verificó la señal de TV.",
+          "resultado": "RESUELTO",
+          "categoria_falla": "Equipo defectuoso"
+        },
+        "materiales_sugeridos": [
+          "Cable HDMI"
+        ]
+      },
+      {
+        "codigo": "T-06",
+        "nombre": "Reparación fibra",
+        "tipo_ot": "REPARACION",
+        "campos": {
+          "falla_reportada": "El cliente reporta pérdida total del servicio por corte de la fibra de acometida.",
+          "solucion_aplicada": "Se reparó el tramo de fibra dañado, se hizo el empalme y se midió la potencia óptica.",
+          "resultado": "RESUELTO",
+          "categoria_falla": "Corte de fibra"
+        },
+        "materiales_sugeridos": [
+          "Fibra drop",
+          "Conector SC/APC",
+          "Manga de empalme"
+        ]
+      },
+      {
+        "codigo": "T-07",
+        "nombre": "Reparación TV",
+        "tipo_ot": "REPARACION",
+        "campos": {
+          "falla_reportada": "El cliente reporta canales con interferencia o ausencia de señal de TV.",
+          "solucion_aplicada": "Se revisó la red coaxial, se reemplazaron conectores dañados y se verificó la señal en el decodificador.",
+          "resultado": "RESUELTO",
+          "categoria_falla": "Señal degradada"
+        },
+        "materiales_sugeridos": [
+          "Cable coaxial RG6",
+          "Conector coaxial"
+        ]
+      },
+      {
+        "codigo": "T-08",
+        "nombre": "Cambio splitter",
+        "tipo_ot": "REPARACION",
+        "campos": {
+          "falla_reportada": "El cliente reporta señal intermitente en uno o más puntos del domicilio.",
+          "solucion_aplicada": "Se reemplazó el splitter defectuoso y se verificó el nivel de señal en cada salida.",
+          "resultado": "RESUELTO",
+          "categoria_falla": "Equipo defectuoso"
+        },
+        "materiales_sugeridos": [
+          "Splitter",
+          "Conector coaxial"
+        ]
+      },
+      {
+        "codigo": "T-09",
+        "nombre": "Reconfiguración",
+        "tipo_ot": "REPARACION",
+        "campos": {
+          "falla_reportada": "El cliente reporta problemas de conexión sin daño visible en la instalación.",
+          "solucion_aplicada": "Se reconfiguró el equipo del cliente (parámetros de red y credenciales) y se probó el servicio.",
+          "resultado": "RESUELTO",
+          "categoria_falla": "Configuración"
+        },
+        "materiales_sugeridos": []
+      },
+      {
+        "codigo": "T-10",
+        "nombre": "Retiro por baja",
+        "tipo_ot": "AMBOS",
+        "campos": {
+          "falla_reportada": "Baja del servicio: se solicita el retiro de los equipos del domicilio.",
+          "solucion_aplicada": "Se retiraron los equipos del cliente y se dejaron en poder del técnico para su reingreso a bodega.",
+          "resultado": "RESUELTO",
+          "categoria_falla": "Baja de servicio"
+        },
+        "materiales_sugeridos": []
+      }
+    ],
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:09:16.599Z"
+  },
+  {
+    "id": "P70-G",
+    "cu": "CU-70",
+    "name": "Borrador de reparación",
+    "expect": "Campos persistidos y auditados",
+    "passed": true,
+    "status": 200,
+    "data": {
+      "id_ot": 9302,
+      "id_empresa": 1,
+      "id_tecnico": 4,
+      "codigoTrabajo": "T-06",
+      "fallaReportada": "Pérdida de señal en equipo de prueba",
+      "solucionAplicada": "Reemplazo de ONT y validación de señal",
+      "resultado": "RESUELTO",
+      "categoriaFalla": "Equipo defectuoso",
+      "id_borrador": 1,
+      "fechaActualizacion": "2026-09-30T01:09:16.601Z"
+    },
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:09:16.605Z"
+  },
+  {
+    "id": "P70-E1",
+    "cu": "CU-70",
+    "name": "Borrador manual sin código",
+    "expect": "Se permite captura manual",
+    "passed": true,
+    "status": 200,
+    "data": {
+      "id_ot": 9304,
+      "id_empresa": 1,
+      "id_tecnico": 4,
+      "codigoTrabajo": null,
+      "fallaReportada": "Caso no catalogado de prueba",
+      "solucionAplicada": "Diagnóstico manual de prueba",
+      "resultado": "PARCIAL",
+      "categoriaFalla": null,
+      "id_borrador": 2,
+      "fechaActualizacion": "2026-09-30T01:09:16.606Z"
+    },
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:09:16.610Z"
+  },
+  {
+    "id": "P70-VAL",
+    "cu": "CU-70",
+    "name": "Código inexistente",
+    "expect": "400",
+    "passed": true,
+    "status": 400,
+    "data": {
+      "message": "El tipo de trabajo [T-99] no existe en el catálogo (T-01 a T-10).",
+      "error": "Bad Request",
+      "statusCode": 400
+    },
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:09:16.611Z"
+  },
+  {
+    "id": "P69-N",
+    "cu": "CU-69",
+    "name": "Cierre de reparación con retiro y reemplazo",
+    "expect": "Cierre, estados e historial persistidos",
+    "passed": true,
+    "status": 201,
+    "data": {
+      "success": true,
+      "data": {
+        "duplicado": false,
+        "id_ot": 9302,
+        "clave_idempotencia": "inc3-9302",
+        "estado_proceso": "PROCESADO",
+        "srv": null,
+        "id_tecnico": 4,
+        "acciones_aplicadas": [
+          {
+            "numero_serie": "DEMO-ONT-0004",
+            "accion": "INSTALADO_EN_CLIENTE",
+            "id_unidad": 16,
+            "estado_anterior": "Asignado a técnico",
+            "estado_nuevo": "Instalado en cliente"
+          },
+          {
+            "numero_serie": "QA-ONT-F-0002",
+            "accion": "RETIRADO_PARA_DIAGNOSTICO",
+            "id_unidad": 2,
+            "estado_anterior": "Instalado en cliente",
+            "estado_nuevo": "En revisión"
+          },
+          {
+            "tipo": "MATERIALES",
+            "descontados": [
+              {
+                "id_tipo_equipo": 6,
+                "nombre": "Conector SC/APC QA",
+                "cantidad": 2,
+                "saldo_anterior": 20,
+                "saldo_nuevo": 18
+              }
+            ],
+            "ajustes": []
+          }
+        ],
+        "discrepancias": [],
+        "materiales": {
+          "descontados": [
+            {
+              "id_tipo_equipo": 6,
+              "nombre": "Conector SC/APC QA",
+              "cantidad": 2,
+              "saldo_anterior": 20,
+              "saldo_nuevo": 18
+            }
+          ],
+          "ajustes": []
+        },
+        "id_cierre_reparacion": 1
+      }
+    },
+    "contentType": "application/json; charset=utf-8",
+    "rows": [
+      {
+        "id_ot": 9302,
+        "falla_reportada": "Pérdida de señal en equipo de prueba",
+        "solucion_aplicada": "Reemplazo de ONT y validación de señal",
+        "resultado": "Resuelto",
+        "codigo_trabajo": "T-06"
+      }
+    ],
+    "ok": true,
+    "at": "2026-09-30T01:09:16.629Z"
+  },
+  {
+    "id": "P69-E1",
+    "cu": "CU-69",
+    "name": "Serie no encontrada en cierre",
+    "expect": "Discrepancia persistida sin inventar equipo",
+    "passed": true,
+    "status": 201,
+    "data": {
+      "success": true,
+      "data": {
+        "duplicado": false,
+        "id_ot": 9305,
+        "clave_idempotencia": "inc3-9305",
+        "estado_proceso": "PROCESADO_CON_DISCREPANCIAS",
+        "srv": null,
+        "id_tecnico": 4,
+        "acciones_aplicadas": [],
+        "discrepancias": [
+          {
+            "numero_serie": "NO-EXISTE-INC3",
+            "accion": "RETIRADO_PARA_DIAGNOSTICO",
+            "codigo": "SERIE_NO_EXISTE",
+            "detalle": "La serie no existe en la empresa 1. Revisar manualmente."
+          }
+        ],
+        "materiales": {
+          "descontados": [],
+          "ajustes": []
+        },
+        "id_cierre_reparacion": 2
+      }
+    },
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:09:16.638Z"
+  },
+  {
+    "id": "P73-N",
+    "cu": "CU-73",
+    "name": "/unidades/devolucion/DEMO-RTR-0004",
+    "expect": "200 con datos del dominio",
+    "passed": true,
+    "status": 200,
+    "data": {
+      "id_unidad": 17,
+      "numero_serie": "DEMO-RTR-0004",
+      "estado": "Instalado en cliente",
+      "tipo": "Router Wi-Fi QA",
+      "marca": "TP-Link",
+      "modelo": "Archer C6",
+      "fecha_adquisicion": "31/07/2026",
+      "fecha_venc_garantia": "31/07/2027",
+      "nombre_cliente": null,
+      "direccion_instalacion": null,
+      "ultimos_cambios_estado": [
+        {
+          "fecha_hora": "2026-09-04T15:30:00.000Z",
+          "estado_anterior": "Asignado a técnico",
+          "estado_nuevo": "Instalado en cliente",
+          "observacion": "Carga de datos de demostración (Instalado en cliente)."
+        }
+      ],
+      "campos_no_registrados": [
+        "Nombre del cliente",
+        "Dirección de instalación"
+      ]
+    },
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:09:16.643Z"
+  },
+  {
+    "id": "P73-E1",
+    "cu": "CU-73",
+    "name": "/unidades/devolucion/QA-ONT-F-0003",
+    "expect": "200 con datos del dominio",
+    "passed": true,
+    "status": 200,
+    "data": {
+      "id_unidad": 3,
+      "numero_serie": "QA-ONT-F-0003",
+      "estado": "Instalado en cliente",
+      "tipo": "ONT QA Finet",
+      "marca": "Huawei",
+      "modelo": "HG8145V",
+      "fecha_adquisicion": "15/01/2026",
+      "fecha_venc_garantia": "15/01/2027",
+      "nombre_cliente": null,
+      "direccion_instalacion": null,
+      "ultimos_cambios_estado": [],
+      "campos_no_registrados": [
+        "Nombre del cliente",
+        "Dirección de instalación"
+      ]
+    },
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:09:16.647Z"
+  },
+  {
+    "id": "P87-N",
+    "cu": "CU-87",
+    "name": "/reportes/equipos-instalados",
+    "expect": "200 con datos del dominio",
+    "passed": true,
+    "status": 200,
+    "data": [
+      {
+        "id_unidad": 16,
+        "numero_servicio": "-",
+        "rut_cliente": "-",
+        "nombre_cliente": "Cliente no especificado",
+        "direccion_instalacion": "Sin dirección registrada",
+        "tipo_equipo": "ONT QA Finet",
+        "numero_serie": "DEMO-ONT-0004",
+        "fecha_instalacion": "29/09/2026",
+        "tecnico_instalacion": "Técnico Terreno QA",
+        "id_empresa": 1
+      }
+    ],
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:10:19.096Z",
+    "correccion_prueba": "Se ajustó URL, filtro o fixture al contrato de dev antes de repetir"
+  },
+  {
+    "id": "P90-N",
+    "cu": "CU-90",
+    "name": "/reportes/tecnicos/productividad",
+    "expect": "200 con datos del dominio",
+    "passed": true,
+    "status": 200,
+    "data": [
+      {
+        "id_tecnico": 5,
+        "nombre_completo": "Técnico Cable Mágico QA",
+        "id_empresa": 2,
+        "empresa": "Cable Mágico",
+        "instalaciones_cerradas": 0,
+        "reparaciones_cerradas": 0,
+        "metros_fibra_optica": 0,
+        "unidades_conectores": 0,
+        "otros_consumibles": [],
+        "otros_consumibles_resumen": "-"
+      },
+      {
+        "id_tecnico": 4,
+        "nombre_completo": "Técnico Terreno QA",
+        "id_empresa": 1,
+        "empresa": "Finet",
+        "instalaciones_cerradas": 2,
+        "reparaciones_cerradas": 2,
+        "metros_fibra_optica": 1004,
+        "unidades_conectores": 2,
+        "otros_consumibles": [],
+        "otros_consumibles_resumen": "-"
+      }
+    ],
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:10:19.109Z",
+    "correccion_prueba": "Se ajustó URL, filtro o fixture al contrato de dev antes de repetir"
+  },
+  {
+    "id": "P94-N",
+    "cu": "CU-94",
+    "name": "/alertas",
+    "expect": "200 con datos del dominio",
+    "passed": true,
+    "status": 200,
+    "data": [
+      {
+        "tipo": "Stock bajo umbral",
+        "empresa": "Finet",
+        "descripcion": "Conector SC/APC QA en Bodega Finet Central: 5 disponibles (umbral: 20).",
+        "fecha_hora": "2026-09-30T01:09:16.650Z"
+      },
+      {
+        "tipo": "Garantía con defecto",
+        "empresa": "Finet",
+        "descripcion": "Equipo QA-ONT-F-0002 (ONT QA Finet) en revisión con garantía vigente hasta 15/01/2027.",
+        "fecha_hora": "2026-09-30T01:09:16.000Z"
+      },
+      {
+        "tipo": "Préstamo vencido",
+        "empresa": "Finet",
+        "descripcion": "Préstamo PE-00002 a Municipalidad de Providencia: vencido hace 3 días.",
+        "fecha_hora": "2026-09-26T00:00:00"
+      }
+    ],
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:09:16.657Z"
+  },
+  {
+    "id": "P96-N",
+    "cu": "CU-96",
+    "name": "/notificaciones",
+    "expect": "200 con datos del dominio",
+    "passed": true,
+    "status": 200,
+    "data": {
+      "contador": 2,
+      "notificaciones": [
+        {
+          "id_notificacion": 2,
+          "tipo": "Préstamo vencido",
+          "empresa": "Finet",
+          "descripcion": "Préstamo PE-00002 a Municipalidad de Providencia: vencido hace 3 días.",
+          "fecha_hora": "2026-09-30T01:06:36.062Z"
+        },
+        {
+          "id_notificacion": 1,
+          "tipo": "Stock bajo umbral",
+          "empresa": "Finet",
+          "descripcion": "Conector SC/APC QA en Bodega Finet Central: 5 disponibles (umbral: 20).",
+          "fecha_hora": "2026-09-30T01:06:36.059Z"
+        }
+      ]
+    },
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:09:16.665Z"
+  },
+  {
+    "id": "P71-E1",
+    "cu": "CU-71",
+    "name": "Devolución de serie no instalada",
+    "expect": "400",
+    "passed": true,
+    "status": 400,
+    "data": {
+      "message": "Transición de estado no permitida para este equipo. Estado actual: En bodega.",
+      "error": "Bad Request",
+      "statusCode": 400
+    },
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:09:16.668Z"
+  },
+  {
+    "id": "P87-E1",
+    "cu": "CU-87",
+    "name": "Reporte sin coincidencias",
+    "expect": "200 vacío",
+    "passed": true,
+    "status": 200,
+    "data": [],
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:09:16.672Z"
+  },
+  {
+    "id": "P90-E1",
+    "cu": "CU-90",
+    "name": "Rango inválido",
+    "expect": "400",
+    "passed": true,
+    "status": 400,
+    "data": {
+      "message": "La fecha de inicio debe ser anterior o igual a la fecha de fin.",
+      "error": "Bad Request",
+      "statusCode": 400
+    },
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:09:16.673Z"
+  },
+  {
+    "id": "P92-N",
+    "cu": "CU-92",
+    "name": "Exportación XLSX",
+    "expect": "Archivo válido y descarga 200",
+    "passed": true,
+    "status": 200,
+    "contentType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "bytes": 3451,
+    "archivo": "reporte-stock-inc3.xlsx",
+    "firma": "PK\u0003\u0004\u0014",
+    "ok": true,
+    "at": "2026-09-30T01:09:16.683Z"
+  },
+  {
+    "id": "P93-N",
+    "cu": "CU-93",
+    "name": "Exportación PDF",
+    "expect": "Archivo válido y descarga 200",
+    "passed": true,
+    "status": 200,
+    "contentType": "application/pdf",
+    "bytes": 32592,
+    "archivo": "reporte-stock-inc3.pdf",
+    "firma": "%PDF-",
+    "ok": true,
+    "at": "2026-09-30T01:09:16.692Z"
+  },
+  {
+    "id": "P95-N",
+    "cu": "CU-95",
+    "name": "Aviso de garantía al enviar a revisión",
+    "expect": "409 AVISO_GARANTIA y estado conservado",
+    "passed": true,
+    "status": 409,
+    "data": {
+      "statusCode": 409,
+      "error": "Conflict",
+      "codigo": "AVISO_GARANTIA",
+      "message": "AVISO: El equipo QA-ONT-F-0003 (Huawei HG8145V) tiene garantía vigente hasta 15/01/2027. Considere contactar al proveedor Proveedor QA antes de proceder. ¿Desea continuar de todas formas?"
+    },
+    "contentType": "application/json; charset=utf-8",
+    "ok": true,
+    "at": "2026-09-30T01:10:19.114Z",
+    "correccion_prueba": "Se ajustó URL, filtro o fixture al contrato de dev antes de repetir"
+  },
+  {
+    "id": "P95-CANCEL",
+    "cu": "CU-95",
+    "name": "Cancelación sin confirmar",
+    "expect": "Estado En bodega permanece",
+    "passed": true,
+    "rows": [
+      {
+        "estado": "En bodega"
+      }
+    ],
+    "ok": true,
+    "at": "2026-09-30T01:09:16.696Z"
+  },
+  {
+    "id": "P96-E1",
+    "cu": "CU-96",
+    "name": "Marcar todas las notificaciones",
+    "expect": "Contador cero después de lectura",
+    "passed": true,
+    "status": 200,
+    "data": {
+      "success": true,
+      "cantidad": 2
+    },
+    "contentType": "application/json; charset=utf-8",
+    "after": {
+      "status": 200,
+      "data": {
+        "contador": 0,
+        "notificaciones": []
+      },
+      "contentType": "application/json; charset=utf-8"
+    },
+    "ok": true,
+    "at": "2026-09-30T01:09:16.707Z"
+  }
+]

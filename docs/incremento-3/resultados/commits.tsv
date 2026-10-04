@@ -1,0 +1,78 @@
+a810aa40f23d0a677d4f5ff989995bc4ad945696	2026-09-29	Javier Farías	Merge pull request #66 from FSM-Finet-y-Cable-Magico/tomas
+c5add05ab9dbac8992cfb0d2dc7b23211b88a460	2026-09-29	Javier F	Merge origin/dev into tomas (conflictos de la PR #66)
+1a3961c480081fdf49007ed1d0d97e8b50c67d3a	2026-09-29	Tomás Heilenkötter	feat(CU-69,CU-70,CU-93): cierre de reparación, tipo de trabajo codificado y exportación a PDF
+12a17e7d976277285fa81eae0d69e8d652899916	2026-09-29	Javier Farías	Merge pull request #60 from FSM-Finet-y-Cable-Magico/Kevin
+e47d4bed4c719428c0f8701581f6357f28c79301	2026-09-29	Javier F	Merge remote-tracking branch 'origin/dev' into Kevin
+1222cc740aa8e02842c4fa95b15c697c2cd5f805	2026-09-29	Javier Farías	Merge pull request #65 from FSM-Finet-y-Cable-Magico/Javiera
+54178c19374546b79da98d8461d2753ff1b98b96	2026-09-29	Javier F	Merge remote-tracking branch 'origin/dev' into Javiera
+a1e8e19535bf60cbbd27a0c5878441c6a691d0cd	2026-09-29	Kevin Cifuentes	feat(CU-87, CU-90, CU-92): reportes de equipos instalados, productividad y exportacion excel
+d0c589bdb411d0efdb618ec554629e3540b5a81b	2026-09-29	Tomás Heilenkötter	Merge remote-tracking branch 'origin/dev' into tomas
+0b64bd287af4f50f04a4565326d5f158d83a67ba	2026-09-29	Javier Farías	Merge pull request #64 from FSM-Finet-y-Cable-Magico/docs/readme-al-dia
+475a08eaedf8f4036951eead7c26e7dec4e5bd15	2026-09-29	Javier F	docs(readme): actualizar avance a 83/96 CU y corregir flujo de ramas
+9a94e00a721b1e19ad961d5aa1d4c8def3dbab4e	2026-09-25	JMoran70	feat(CU-95): mostrar aviso de garantía vigente al cambiar estado
+572c228d09b4f3e835fec379b433bacb741d1876	2026-09-25	JMoran70	feat(CU-73): mostrar información de equipo en devolución
+9958c523383ce7672944bb67f2eb402d0eab5e45	2026-09-25	JMoran70	feat(CU-71): registrar devolución de equipo desde cliente
+65c385ed716f7bf696b2678b04c1cbde3e5a1271	2026-09-29	Javier Farías	Merge pull request #61 from FSM-Finet-y-Cable-Magico/feat/runa
+8a185e63ebf9ac9a1ea8c94883bcaa5b2bf3a9cd	2026-09-29	Javier F	Merge remote-tracking branch 'origin/dev' into feat/runa
+22e6b59bcc39ad479009e6e0df53fa40660fb960	2026-09-28	Javier Farías	Merge pull request #62 from FSM-Finet-y-Cable-Magico/feat/javier-cus
+9e555fb6c7fff519cbceabd820f60fe3892bd309	2026-09-28	Javier F	style(backend): comentarios de trazabilidad CU-XX y formato
+14ad56ebe3da8c00a006bbe526f30059890aec1d	2026-09-28	Javier F	chore(arranque): fallback sin internet y guía de avisos de macOS/Windows
+07f4c95b198669ff36013e58ed351ecf6693c915	2026-09-28	Javier F	chore(seed): datos de demostración del Incremento 2 (idempotentes)
+76432137b06ab571ab55fc674c736544652ee6ce	2026-09-28	Runawaydark	feat(CU-96): notificaciones visuales en la campana del sistema
+034875cfedb45c07030c058a4cd53a6b28972192	2026-09-28	Runawaydark	feat(CU-94): consultar alertas activas en el dashboard
+be8dfba24bcccbe033fa87442ce7aa71306ac0f7	2026-09-27	Javier F	Merge remote-tracking branch 'origin/dev' into feat/javier-cus
+2cbd148bb1110b9d38b461bff607d7858f55953e	2026-09-27	Javier F	feat(integracion-g8): sc-159 P1 — equipos por servicio y stock informativo S2S
+8e04959ca6bfd577aab16dbeb4d099420410d913	2026-09-27	Javier F	docs(CU-63,CU-65,CU-66,CU-67): verificación de la implementación de G3 (sc-141/143/144/145)
+ca03b20eb1ee01918c81137650687b34dae68ad7	2026-09-26	Javier F	feat(CU-61): vista móvil de trabajos e inventario del técnico
+fcf1ccb9a379e289ef38532bdc92b9d67489371c	2026-09-26	Javier F	feat(CU-48): consultando ubicación externa de equipo fuera de bodega
+3161699c59ba7edf9dfa21b4f5d1d25a9c56dc6e	2026-09-26	Javier F	feat(CU-64,CU-68): acciones atómicas del cierre y validación de saldo de consumibles
+2ef52190619bd7428a2fcd86d0d46d6618a097ab	2026-09-26	Javier F	feat(integracion-g8): sc-158 P0 — tipos-equipo S2S, activaciones y asignación equipo-servicio
+38a0a3f621841af555d80d53fda9b5a81cfc568a	2026-09-13	Runawaydark	docs(diagramas): mover arbol de navegacion a su propia carpeta
+d8e40e28dfb405a2517eb5e1b6e2315fea46f0b2	2026-09-13	uriel navarrete	doc: actualización de árbol de navegación incremento 2
+275b3d8378eec4fc684de4d0db9a6300baa3d3b7	2026-09-13	uriel navarrete	Delete diagramas/arbol-navegacion/arbol-navegacion.drawio
+b21452285871b01ec955bbe4600df157f523f135	2026-09-13	uriel navarrete	Delete diagramas/arbol-navegacion/arbol-navegacion.png
+99ade99ddd50614aed8fc87ffb9ff02dad0db4c6	2026-09-13	Javier Farías	Merge pull request #59 from FSM-Finet-y-Cable-Magico/dev
+f6f91b720deb247a7a499a0dc87e34eebdc322dc	2026-09-13	Javier Farías	Merge pull request #58 from FSM-Finet-y-Cable-Magico/feat/javier-cus
+edd79a6d0ab9f9a287fad6d19a7682c2d176ce57	2026-09-13	Javier F	incremento 2 diagramas compnentes
+3b5b04f67d98aa5e619371825ecee5d2e44b4634	2026-09-13	Javier Farías	Merge pull request #57 from FSM-Finet-y-Cable-Magico/dev
+00894fe09e3b531cc9a75a75350f548e96925b7a	2026-09-13	Javier Farías	Merge pull request #56 from FSM-Finet-y-Cable-Magico/feat/javier-cus
+8bfa4503cec2aa82f655d142e1066c3024066e45	2026-09-13	Javier F	docs(diagramas): retornos trazables en CU-54/57 y loops sin rectángulo (notas inicio/término)
+c9d18792415c01bb99439a51a85a5fd969aec878	2026-09-13	Kevin Cifuentes	Diagrama de clases y objetos actualizada
+7a30e58795bf00372f20ee533712ed72addb8c66	2026-09-13	Kevin Cifuentes	Diagrama de clases y objetos actualizados
+f0149f24837dee4b8801baad7a176f33608866d6	2026-09-12	Javier Farías	Merge pull request #55 from FSM-Finet-y-Cable-Magico/dev
+57e93a985aa6df99571a21da4355a0fca2f23262	2026-09-12	Javier Farías	Merge pull request #54 from FSM-Finet-y-Cable-Magico/feat/javier-cus
+3608c40c60d5aa7a227fca2ec8bc1caaddc08392	2026-09-12	Javier F	Merge remote-tracking branch 'origin/dev' into feat/javier-cus
+b9db5fe4cbda8b0c686ecd1985f12440c33f0bca	2026-09-12	Javier F	docs(diagramas): agrega el nombre oficial del CU a los títulos de CU-52/54/55/56/58/59/60/62/78/84 (formato incremento 1) y re-render
+85bf4911aa29ee8bc4364758c9f32a749c632885	2026-09-12	Kevin Cifuentes	agregado mere y modelo bdd
+7e2b48ad5b99285651104a0e1ec69e36e6cfaca4	2026-09-12	Kevin Cifuentes	modelos actualizados
+f7621d8bfcc6928aebffb83ecda3311b50b16c7e	2026-09-11	Javier Farías	Merge pull request #53 from FSM-Finet-y-Cable-Magico/dev
+e26c86bb3462a1d046e7393c55b4ae5be2e415b8	2026-09-11	Javier Farías	Merge pull request #52 from FSM-Finet-y-Cable-Magico/feat/javier-cus
+e79a4d048619703cfd7b007bce7ce5e53cf0c354	2026-09-11	Javier F	docs(diagramas): margin en el estilo CSS (no padding) — restaura el tamaño original de los cuadros de participantes
+ad6ea28e90ef333ed9ca9787bcb49f369cacbac4	2026-09-11	Javier Farías	Merge pull request #51 from FSM-Finet-y-Cable-Magico/dev
+7ef600731251a8886a0c9b876b05fe941e42192f	2026-09-11	Javier Farías	Merge pull request #50 from FSM-Finet-y-Cable-Magico/feat/javier-cus
+0840cb60e9279ddcd90fb8ef4f7e184427f45481	2026-09-11	Javier F	docs(diagramas): padding via CSS (<style> con participant/actor padding) — elimina el aviso 'Please use CSS style instead of skinparam ParticipantPadding' de todos los PNG
+15b0437f21be9b3a8ab5ff2fc3d0e7f68f63d88f	2026-09-11	Javier Farías	Merge pull request #49 from FSM-Finet-y-Cable-Magico/dev
+45a640dbed91f93248c6f4001a74b8b23d775a53	2026-09-11	Javier Farías	Merge pull request #48 from FSM-Finet-y-Cable-Magico/feat/javier-cus
+933582b473877488bdc5db0010364ebf49bdd992	2026-09-11	Javier F	docs(diagramas): reemplaza <style> por skinparam ParticipantPadding/ActorPadding (67 puml) y re-render
+e1b3c80a35a6cf7c0d5cb13e7f2f5e71233f1765	2026-09-11	Javier Farías	Merge pull request #47 from FSM-Finet-y-Cable-Magico/dev
+afc8ed6275c64302f849832a7e3a1440a8538091	2026-09-11	Javier Farías	Merge pull request #46 from FSM-Finet-y-Cable-Magico/feat/javier-cus
+631d6f49a270ebcdeca879ffe20fa162e5f2a7ed	2026-09-11	Javier F	docs(diagramas): CU-55 E1/E3 y CU-56 E1 — excepciones faltantes según el JSON (formato de incremento 1)
+099d3457884b3cb8b1cd961ac204888f595c25ba	2026-09-11	Javier F	docs(diagramas): elimina duplicados ' 2' de merge — copias byte-exactas de sus .puml canónicos
+5a1d7c4c9ea431338d2825b42314c56db78ace83	2026-09-11	Javier Farías	Merge pull request #44 from FSM-Finet-y-Cable-Magico/dev
+d93c6ec1e38b79cd918d82286f85f0688c321551	2026-09-11	Javier Farías	Merge pull request #43 from FSM-Finet-y-Cable-Magico/feat/javier-cus
+1828e6b2d9abc773c56eef4cbcbaa2aeccb153fb	2026-09-11	Javier F	docs(diagramas): elimina PNGs obsoletos ya no generados por los .puml (contenían 'postgres' y títulos viejos)
+2539bcbebecd3347f0cb9a7873a7137750b8fea0	2026-09-11	Javier Farías	Merge pull request #42 from FSM-Finet-y-Cable-Magico/dev
+4e127ffe76b55f0a14f04ad25dd8193188773434	2026-09-11	Javier Farías	Merge pull request #41 from FSM-Finet-y-Cable-Magico/feat/javier-cus
+30c5dd441dcb1e6673a6971d3ae77d393df1ef27	2026-09-11	Javier F	docs(diagramas): re-render de todos los PNG de los diagramas normalizados
+b29d123e63290dff0d92d83e7e3366ac9fd16f69	2026-09-11	Javier Farías	Merge pull request #40 from FSM-Finet-y-Cable-Magico/dev
+e52450f6cc2b95de7a61beb34e8a90c3b781bddf	2026-09-11	Javier Farías	Merge pull request #39 from FSM-Finet-y-Cable-Magico/feat/javier-cus
+6f13db735a0c3b17c22ae6ae7718d9468803a269	2026-09-11	Javier F	docs(diagramas): títulos de CU-47/72/74/75/76/77/78..84 al formato del incremento 1 (excepción: ...)
+57ff10cc8bf61f04807ea4d14fbc9cf7909b296c	2026-09-10	Javier F	docs(diagramas): CU-52..62 — la BD como participantes por tabla en vez de 'postgres' genérico (formato de los primeros CUs) y títulos de excepciones normalizados
+1f73f561b36358bd6ca72cce7dc7ee462d169531	2026-09-10	Javier F	docs(CU-57): títulos de diagramas de secuencia en el formato de los primeros CUs (excepción: ...)
+71f7f5898b1c6ec1f6881bccd8c7353176321acb	2026-09-10	Javier Farías	Merge pull request #37 from FSM-Finet-y-Cable-Magico/dev
+6fcbb9a78f3aabbd868a70e7633e3e846aac188a	2026-09-10	Javier Farías	Merge pull request #36 from FSM-Finet-y-Cable-Magico/feat/javier-cus
+74b03ad693ca688818f6679bf824ddd5f00eb1de	2026-09-10	Javier F	fix(CU-57): GET /salidas con 500 — findBy con array no genera IN en esta versión de TypeORM (In() explícito)
+1168f38359bffdf0da3791d9b4cf3bdc10951b5a	2026-09-10	Runawaydark	docs(casos-de-uso): capturas de pantalla de los casos de uso implementados faltantes
+7ba476b7c2c23a102a3ce5cc4237c7c03ebb01fa	2026-09-10	Javier Farías	Merge pull request #35 from FSM-Finet-y-Cable-Magico/dev
+4607dfc10b73dfd7100923f987d34bc6a3548c40	2026-09-10	Javier Farías	Merge pull request #34 from FSM-Finet-y-Cable-Magico/feat/javier-cus
+5e95e2bf37ee112f02ea895f7abd0fb086683362	2026-09-10	Javier F	fix(CU-85): botón 'Stock' en Reportes para acceder a /reportes/stock

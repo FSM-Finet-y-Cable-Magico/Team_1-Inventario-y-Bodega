@@ -1,0 +1,514 @@
+[
+  {
+    "id": "R01",
+    "pagina_rubrica": "2, 11",
+    "criterio": "Portada: título, integrantes completos y orden por apellido",
+    "estado": "Comprobado",
+    "evidencia": "Portada: Cifuentes, Farías, Heilenkötter, Morán y Navarrete.",
+    "cierre": "Sin acción adicional en esta auditoría."
+  },
+  {
+    "id": "R02",
+    "pagina_rubrica": "2, 12",
+    "criterio": "Índice de contenidos",
+    "estado": "Comprobado",
+    "evidencia": "Preliminares; referencias contrastadas con PDF.",
+    "cierre": "Sin acción adicional en esta auditoría."
+  },
+  {
+    "id": "R03",
+    "pagina_rubrica": "2, 12",
+    "criterio": "Índice de figuras",
+    "estado": "Comprobado",
+    "evidencia": "Índice de figuras con referencias contrastadas con el PDF; incluye proceso final y asignación Shortcut.",
+    "cierre": "Sin acción adicional en esta auditoría."
+  },
+  {
+    "id": "R04",
+    "pagina_rubrica": "2, 12",
+    "criterio": "Índice de tablas",
+    "estado": "Comprobado",
+    "evidencia": "Preliminares; correlativos por capítulo.",
+    "cierre": "Sin acción adicional en esta auditoría."
+  },
+  {
+    "id": "R05",
+    "pagina_rubrica": "2",
+    "criterio": "Introducción",
+    "estado": "Comprobado",
+    "evidencia": "Capítulo 1: problema, solución, alcance y corte de dev.",
+    "cierre": "Sin acción adicional en esta auditoría."
+  },
+  {
+    "id": "R06",
+    "pagina_rubrica": "2, 8",
+    "criterio": "Propuesta y alcance del incremento",
+    "estado": "Comprobado",
+    "evidencia": "2.1: 46 + 31 + 19 = 96; I3 19,79 % y acumulado 100 % declarado.",
+    "cierre": "Sin acción adicional en esta auditoría."
+  },
+  {
+    "id": "R07",
+    "pagina_rubrica": "8",
+    "criterio": "Umbral I3 de al menos 95 %",
+    "estado": "Parcial",
+    "evidencia": "96 CU implementados declarados en dev; I3 incorpora 19. INT69-TECNICO documenta una restricción que no cumple su expectativa.",
+    "cierre": "El alcance implementado supera 95%; no equivale a conformidad funcional sin reservas."
+  },
+  {
+    "id": "R08",
+    "pagina_rubrica": "3",
+    "criterio": "Product Backlog con RF, prioridad y responsable",
+    "estado": "Comprobado",
+    "evidencia": "3.1 y matriz RF–CU; responsables de implementación identificados.",
+    "cierre": "Sin acción adicional en esta auditoría."
+  },
+  {
+    "id": "R09",
+    "pagina_rubrica": "3",
+    "criterio": "Planificación del sprint y tiempo estimado",
+    "estado": "Parcial",
+    "evidencia": "3.1–3.2: criterio I2 de 2 HH/CU aplicado a 19 CU (38 HH); 19 tickets con responsables y fechas reales.",
+    "cierre": "Shortcut permanece Unestimated; no presentar las horas referenciales como estimación histórica registrada."
+  },
+  {
+    "id": "R10",
+    "pagina_rubrica": "3",
+    "criterio": "Sprint Backlog vinculado a vista externa",
+    "estado": "Comprobado",
+    "evidencia": "3.1 y capítulo 4: 19 CU del alcance; 3.2 tareas de cierre separadas.",
+    "cierre": "Sin acción adicional en esta auditoría."
+  },
+  {
+    "id": "R11",
+    "pagina_rubrica": "3–4",
+    "criterio": "Las cuatro vistas restantes del sprint",
+    "estado": "Comprobado",
+    "evidencia": "Capítulos 5–8: lógica, procesos, desarrollo y física.",
+    "cierre": "Sin acción adicional en esta auditoría."
+  },
+  {
+    "id": "R12",
+    "pagina_rubrica": "3",
+    "criterio": "Casos de uso extendidos",
+    "estado": "Comprobado",
+    "evidencia": "4.2–4.20: actores, resumen, frecuencia, precondición, flujo, excepciones y poscondición.",
+    "cierre": "Sin acción adicional en esta auditoría."
+  },
+  {
+    "id": "R13",
+    "pagina_rubrica": "3",
+    "criterio": "Nombres de CU en gerundio",
+    "estado": "Comprobado",
+    "evidencia": "Los 19 nombres conservan la redacción de docs/casos-de-uso.json.",
+    "cierre": "Sin acción adicional en esta auditoría."
+  },
+  {
+    "id": "R14",
+    "pagina_rubrica": "1, 3",
+    "criterio": "Requerimientos funcionales y UR ESA trazados",
+    "estado": "Corregido",
+    "evidencia": "2.2: RF-43 recuperado al separar la referencia múltiple de CU-67. 2.3: UR originales con sus atributos ESA.",
+    "cierre": "La fuente conserva algunos campos vacíos; se identifican sin inventar calificaciones."
+  },
+  {
+    "id": "R15",
+    "pagina_rubrica": "1, 3",
+    "criterio": "Matriz RF–CU y diagrama de CU",
+    "estado": "Corregido",
+    "evidencia": "4.1 y 4.21; RF-42/RF-43 separados y ambos trazados a CU-67.",
+    "cierre": "Sin acción adicional en esta auditoría."
+  },
+  {
+    "id": "R16",
+    "pagina_rubrica": "1, 9",
+    "criterio": "Requerimientos no funcionales aplicables",
+    "estado": "Parcial",
+    "evidencia": "2.4 y 10.6: diez RNF, cinco ensayos de 20 solicitudes simultáneas; duraciones registradas.",
+    "cierre": "Restan carga de cierre, sesiones reales, navegadores/SO, despliegue, HTTPS productivo, backup y separación por esquemas."
+  },
+  {
+    "id": "R17",
+    "pagina_rubrica": "4",
+    "criterio": "Vista lógica: clases y modelo de datos explicados",
+    "estado": "Comprobado",
+    "evidencia": "5.1–5.4 y 13.1–13.2; relaciones, claves, unidades y consumibles contextualizados.",
+    "cierre": "Sin acción adicional en esta auditoría."
+  },
+  {
+    "id": "R18",
+    "pagina_rubrica": "4",
+    "criterio": "Vista de procesos: secuencias de diseño entre objetos",
+    "estado": "Comprobado",
+    "evidencia": "Capítulo 6; vistas/controladores/servicios/BD y secuencias G3.",
+    "cierre": "Sin acción adicional en esta auditoría."
+  },
+  {
+    "id": "R19",
+    "pagina_rubrica": "4",
+    "criterio": "Vista de desarrollo: componentes y estructura",
+    "estado": "Comprobado",
+    "evidencia": "7.1–7.3: componentes, rutas, módulos, contrato y divergencias.",
+    "cierre": "Sin acción adicional en esta auditoría."
+  },
+  {
+    "id": "R20",
+    "pagina_rubrica": "4",
+    "criterio": "Vista física: software y hardware/despliegue",
+    "estado": "Comprobado",
+    "evidencia": "Capítulo 8: diagrama y configuración QA; el despliegue productivo exigido por RNF-03 sigue sin verificarse.",
+    "cierre": "Sin acción adicional en esta auditoría."
+  },
+  {
+    "id": "R21",
+    "pagina_rubrica": "4",
+    "criterio": "Explicación de cada vista, no solo imágenes",
+    "estado": "Comprobado",
+    "evidencia": "Capítulos 4–8 tienen texto de contexto y correspondencia con el sistema.",
+    "cierre": "Sin acción adicional en esta auditoría."
+  },
+  {
+    "id": "R22",
+    "pagina_rubrica": "4",
+    "criterio": "Árbol de navegación",
+    "estado": "Comprobado",
+    "evidencia": "Capítulo 9 y fuente arbol-navegacion-incremento3.drawio; procedencia por incremento.",
+    "cierre": "Sin acción adicional en esta auditoría."
+  },
+  {
+    "id": "R23",
+    "pagina_rubrica": "4",
+    "criterio": "Funcionamiento de pantallas",
+    "estado": "Comprobado",
+    "evidencia": "9.1–9.24: 24 vistas actuales descritas, incluidas G3 y excepciones móviles.",
+    "cierre": "Sin acción adicional en esta auditoría."
+  },
+  {
+    "id": "R24",
+    "pagina_rubrica": "3",
+    "criterio": "Evidencia de cada prueba ejecutada",
+    "estado": "Comprobado",
+    "evidencia": "Capítulo 10: 74 registros, 73 conformes y uno no conforme; orden por CU, identificadores explicados y respuestas adjuntas.",
+    "cierre": "Sin acción documental adicional."
+  },
+  {
+    "id": "R25",
+    "pagina_rubrica": "3",
+    "criterio": "Cobertura de flujos y excepciones especificados",
+    "estado": "Parcial",
+    "evidencia": "13.6 y 10.7: cliente inexistente, consulta sin equipos y saldo insuficiente comprobados. INT69-TECNICO no conforme.",
+    "cierre": "Distinguir acuerdos de integración de restricciones especificadas; seguimiento técnico de la pertenencia de la serie al técnico."
+  },
+  {
+    "id": "R26",
+    "pagina_rubrica": "5",
+    "criterio": "Daily diario: avance, siguiente trabajo e impedimentos",
+    "estado": "Parcial",
+    "evidencia": "3.3: proceso de reuniones igual a I2 confirmado por jefe de grupo; seguimiento, próximos pasos e impedimentos trazados con Shortcut.",
+    "cierre": "Frecuencia semanal frente a diaria de la rúbrica; no existen fechas/asistencias individuales de actas."
+  },
+  {
+    "id": "R27",
+    "pagina_rubrica": "5–6",
+    "criterio": "Sprint Review con equipo y Product Owner",
+    "estado": "Documentado",
+    "evidencia": "3.4: Review técnica, objetivos, resultados, problemas y mejoras; proceso de reuniones igual a I2 confirmado por el jefe de grupo.",
+    "cierre": "La aceptación formal corresponde a una etapa posterior y no es un entregable de I3."
+  },
+  {
+    "id": "R28",
+    "pagina_rubrica": "6",
+    "criterio": "Retrospectiva: inspección y plan de mejora",
+    "estado": "Comprobado",
+    "evidencia": "3.7 y 12: procedimiento I2 confirmado, inspección de hechos y plan de mejora con revisores asignados.",
+    "cierre": "La revisión humana de acciones permanece por realizar."
+  },
+  {
+    "id": "R29",
+    "pagina_rubrica": "6",
+    "criterio": "Definición de terminado y calidad",
+    "estado": "Parcial",
+    "evidencia": "3.4 y 10.5: 140/140 pruebas y 23/23 suites sobre dev con corrección del montaje de pruebas en PR 67 (02-10-2026).",
+    "cierre": "Persiste deuda global de lint: 1203 errores y 118 advertencias. Los nueve archivos de prueba corregidos pasan ESLint; se conservan resultados anteriores."
+  },
+  {
+    "id": "R30",
+    "pagina_rubrica": "7",
+    "criterio": "PPT: portada, índice, alcance y traza Scrum++",
+    "estado": "Corregido",
+    "evidencia": "PPT: portada, índice, introducción, alcance, Scrum, requisitos, componentes, físico, trazabilidad CU64/CU69, secuencias, árbol y pruebas.",
+    "cierre": "Sin acción documental adicional."
+  },
+  {
+    "id": "R31",
+    "pagina_rubrica": "7",
+    "criterio": "PPT recomendada ≤7 min; total ≤15 min",
+    "estado": "Planificado",
+    "evidencia": "Guía: 6 min 30 s de presentación y 7 min 30 s de demo.",
+    "cierre": "Ensayar y registrar la duración real; el guion no acredita el tiempo ejecutado."
+  },
+  {
+    "id": "R32",
+    "pagina_rubrica": "7, 9",
+    "criterio": "Todos presentes y presentan",
+    "estado": "Acción personal",
+    "evidencia": "Guía distribuye el recorrido de presentación.",
+    "cierre": "Asistencia y participación reales del equipo."
+  },
+  {
+    "id": "R33",
+    "pagina_rubrica": "7–8",
+    "criterio": "Enviar por jefe de grupo; asunto y Drive",
+    "estado": "Acción personal",
+    "evidencia": "Entrega I3 hasta 04-10-2026 23:59; presentación semana 05-10.",
+    "cierre": "Enviar desde el jefe con asunto Ingeniería de Software – Grupo 1 y enlace completo; registrar comprobante."
+  },
+  {
+    "id": "R34",
+    "pagina_rubrica": "8",
+    "criterio": "Incluir I2, I1 y Documento 0 corregidos",
+    "estado": "Revisado",
+    "evidencia": "Carpetas I1 e I2 de Drive contrastadas: documentos, presentaciones, código, SQL, diagramas, CU, gráficos y organización. Documento 0 consultado como antecedente.",
+    "cierre": "La revisión de antecedentes no reescribe ni certifica las copias históricas completas."
+  },
+  {
+    "id": "R35",
+    "pagina_rubrica": "9",
+    "criterio": "Documento Word autocontenido",
+    "estado": "Comprobado",
+    "evidencia": "Informe autocontenido: requisitos, 19 CU, vistas, capturas, modelos y diccionario, 74 pruebas, Scrum y cuatro gráficos. Hallazgos técnicos identificados.",
+    "cierre": "Sin acción documental adicional."
+  },
+  {
+    "id": "R36",
+    "pagina_rubrica": "9",
+    "criterio": "Transacciones en base de datos relacional",
+    "estado": "Comprobado",
+    "evidencia": "PostgreSQL, 32 tablas, claves y prueba de rollback. JSONB se distingue del núcleo transaccional.",
+    "cierre": "Sin acción adicional en esta auditoría."
+  },
+  {
+    "id": "R37",
+    "pagina_rubrica": "9",
+    "criterio": "Word, PPT y documentos complementarios",
+    "estado": "Comprobado",
+    "evidencia": "Drive I3: DOCX, PDF, PPTX, XLSX y guía DOCX/PDF.",
+    "cierre": "Sin acción adicional en esta auditoría."
+  },
+  {
+    "id": "R38",
+    "pagina_rubrica": "9",
+    "criterio": "Archivos Draw.io de secuencias, objetos y otros",
+    "estado": "Corregido",
+    "evidencia": "234 archivos Draw.io con 31.414 objetos y textos editables, además de fuentes originales y árbol/despliegue.",
+    "cierre": "Se conservan las geometrías de los SVG de PlantUML; las primitivas se pueden editar en Draw.io."
+  },
+  {
+    "id": "R39",
+    "pagina_rubrica": "9",
+    "criterio": "Documento de instalación",
+    "estado": "Comprobado",
+    "evidencia": "Guía de instalación y demo: requisitos, comandos, configuración, comprobación, respaldo y solución de problemas.",
+    "cierre": "Sin acción adicional en esta auditoría."
+  },
+  {
+    "id": "R40",
+    "pagina_rubrica": "9",
+    "criterio": "Video de instalación",
+    "estado": "Pendiente del equipo",
+    "evidencia": "Guion preparado; carpeta I3 no contiene grabación.",
+    "cierre": "Grabar y adjuntar el video correspondiente; comprobar audio, legibilidad y archivo reproducible."
+  },
+  {
+    "id": "R41",
+    "pagina_rubrica": "9",
+    "criterio": "Video de funcionalidades del incremento",
+    "estado": "Pendiente del equipo",
+    "evidencia": "Guion preparado; carpeta I3 no contiene grabación.",
+    "cierre": "Grabar y adjuntar el video correspondiente; comprobar audio, legibilidad y archivo reproducible."
+  },
+  {
+    "id": "R42",
+    "pagina_rubrica": "9",
+    "criterio": "Video de presentación y demo por separado",
+    "estado": "Pendiente del equipo",
+    "evidencia": "Presentación y recorrido preparados; faltan archivos de grabación separados.",
+    "cierre": "Grabar y adjuntar el video correspondiente; comprobar audio, legibilidad y archivo reproducible."
+  },
+  {
+    "id": "R43",
+    "pagina_rubrica": "9",
+    "criterio": "ZIP con archivos necesarios para ejecutar aplicación",
+    "estado": "Comprobado",
+    "evidencia": "ZIP del código y anexos de PR 67, con comprobación de integridad y archivos .env de ejemplo; revisión exacta registrada en el manifiesto de entrega.",
+    "cierre": "El funcionamiento de servicios externos requiere su configuración; el ZIP no lleva secretos de producción."
+  },
+  {
+    "id": "R44",
+    "pagina_rubrica": "9",
+    "criterio": "Versionamiento Git de todos e informe de commits",
+    "estado": "Comprobado",
+    "evidencia": "Capítulo 11: 78 registros del periodo y aportes de cinco integrantes; PR 67 hacia dev.",
+    "cierre": "Sin acción adicional en esta auditoría."
+  },
+  {
+    "id": "R45",
+    "pagina_rubrica": "9–10",
+    "criterio": "Excel: capítulo, contenido, autores y revisores",
+    "estado": "Corregido",
+    "evidencia": "Excel: capítulos, elaboración/fuentes, revisores asignados y 19 registros de desarrollo Shortcut.",
+    "cierre": "La columna de revisión realizada permanece Pendiente hasta conformidad real."
+  },
+  {
+    "id": "R46",
+    "pagina_rubrica": "12",
+    "criterio": "Invocar y explicar cada figura/tabla antes de aparecer",
+    "estado": "Corregido",
+    "evidencia": "Invocaciones previas a tablas explican campos y propósito; figuras contextualizadas antes de aparecer.",
+    "cierre": "Validar continuidad visual en la renderización final."
+  },
+  {
+    "id": "R47",
+    "pagina_rubrica": "13",
+    "criterio": "Numeración capítulo.correlativo",
+    "estado": "Comprobado",
+    "evidencia": "Figuras y tablas generadas por contador de capítulo; índices enlazados por etiqueta.",
+    "cierre": "Sin acción adicional en esta auditoría."
+  },
+  {
+    "id": "R48",
+    "pagina_rubrica": "13",
+    "criterio": "Carta y márgenes de 2,5 cm",
+    "estado": "Comprobado",
+    "evidencia": "Secciones DOCX: 21,59 × 27,94 cm, cuatro márgenes 2,5 cm.",
+    "cierre": "Sin acción adicional en esta auditoría."
+  },
+  {
+    "id": "R49",
+    "pagina_rubrica": "13",
+    "criterio": "Fuente Arial/TNR 12; leyendas recomendadas 9",
+    "estado": "Corregido",
+    "evidencia": "Cuerpo TNR y tablas Arial, tamaño 12; leyendas 9. UR ESA restauradas con todos sus atributos y trazabilidad.",
+    "cierre": "La versión de 187 páginas tenía todas las tablas a 10, parte de la reducción de tamaño."
+  },
+  {
+    "id": "R50",
+    "pagina_rubrica": "13",
+    "criterio": "Interlineado 1,5 y simple en anexos/leyendas/referencias",
+    "estado": "Corregido",
+    "evidencia": "Cuerpo con interlineado 1,5; tablas y material de anexo simple; leyendas 9.",
+    "cierre": "Sin acción adicional en esta auditoría."
+  },
+  {
+    "id": "R51",
+    "pagina_rubrica": "13–14",
+    "criterio": "Texto justificado, títulos y sangría de subtítulos",
+    "estado": "Comprobado",
+    "evidencia": "Estilos DOCX: texto justificado, títulos a izquierda y sangría progresiva.",
+    "cierre": "Sin acción adicional en esta auditoría."
+  },
+  {
+    "id": "R52",
+    "pagina_rubrica": "14",
+    "criterio": "Numeración romana y arábiga abajo a derecha a 1,5 cm",
+    "estado": "Comprobado",
+    "evidencia": "Preliminares romanos, cuerpo desde 1, pie a 1,5 cm; portada sin número.",
+    "cierre": "Sin acción adicional en esta auditoría."
+  },
+  {
+    "id": "R53",
+    "pagina_rubrica": "14",
+    "criterio": "Capítulos/índices en página nueva; títulos en mayúsculas",
+    "estado": "Comprobado",
+    "evidencia": "Estilo Heading 1 con salto anterior; índices independientes.",
+    "cierre": "Sin acción adicional en esta auditoría."
+  },
+  {
+    "id": "R54",
+    "pagina_rubrica": "13–14",
+    "criterio": "APA vigente y referencias al final",
+    "estado": "Corregido",
+    "evidencia": "Referencias ordenadas por autor, año, título, tipo y enlace cuando existe, con sangría francesa.",
+    "cierre": "Documentos internos sin URL pública conservan identificación y procedencia; no se inventan DOI ni fecha exacta."
+  },
+  {
+    "id": "R55",
+    "pagina_rubrica": "4",
+    "criterio": "Levantamiento de procesos con sistema terminado",
+    "estado": "Documentado",
+    "evidencia": "13.9: proceso final implementado y comparación con el antecedente. El modelo Bizagi pertenece al Documento 0, según delimitación del jefe de grupo.",
+    "cierre": "Sin acción documental adicional."
+  },
+  {
+    "id": "R56",
+    "pagina_rubrica": "1, 9",
+    "criterio": "Complementos Documento 0: BPMN Bizagi, análisis, costos, CV y aceptación",
+    "estado": "Antecedente",
+    "evidencia": "13.10: análisis, modelos, CV, costos, planificación y aceptación inicial del Documento 0. Bizagi se conserva en dicho documento.",
+    "cierre": "La aceptación formal posterior queda fuera de esta etapa; grabaciones y exposición a cargo del equipo."
+  },
+  {
+    "id": "R57",
+    "pagina_rubrica": "9",
+    "criterio": "Integridad, originalidad, participación y entrega completa",
+    "estado": "Parcial",
+    "evidencia": "ZIP íntegro y fuentes trazables; informe de commits y datos QA identificados.",
+    "cierre": "No se ha ejecutado análisis antivirus; originalidad/participación y completitud requieren evidencia del equipo, no certificación automática."
+  },
+  {
+    "id": "D03",
+    "pagina_rubrica": "Observación3",
+    "criterio": "Pila sin I1 en proceso",
+    "estado": "Comprobado",
+    "evidencia": "3.1 separa 77 CU terminados de tareas de revisión; no arrastra desarrollo histórico pendiente.",
+    "cierre": "Sin acción adicional en esta auditoría."
+  },
+  {
+    "id": "D04",
+    "pagina_rubrica": "Observación4",
+    "criterio": "Físico, diferencias, MERE/MR/FNs/ME en anexos",
+    "estado": "Corregido",
+    "evidencia": "Modelos físico, MERE, MR, FNs y ME en informe y anexos; ChartDB con 12 tablas I1 azules, 14 I2 verdes y 6 I3 ámbar.",
+    "cierre": "Sin acción documental adicional."
+  },
+  {
+    "id": "D05",
+    "pagina_rubrica": "Observación5",
+    "criterio": "Eliminar hoja en blanco",
+    "estado": "Comprobado",
+    "evidencia": "Se eliminó un salto vacío detectado en la revisión de maquetación. El PDF corregido se vuelve a inspeccionar antes de publicar.",
+    "cierre": "Sin acción adicional en esta auditoría."
+  },
+  {
+    "id": "D06",
+    "pagina_rubrica": "Observación6",
+    "criterio": "Árbol identificado por incremento",
+    "estado": "Corregido",
+    "evidencia": "Árbol con leyenda I1 azul, I2 verde e I3 ámbar; borde ámbar para ampliaciones de pantallas anteriores.",
+    "cierre": "Sin acción documental adicional."
+  },
+  {
+    "id": "D07",
+    "pagina_rubrica": "Observación7",
+    "criterio": "Vistas explicadas",
+    "estado": "Comprobado",
+    "evidencia": "Capítulos 4–9 incluyen explicación y capturas; no solo listado de imágenes.",
+    "cierre": "Sin acción adicional en esta auditoría."
+  },
+  {
+    "id": "D08",
+    "pagina_rubrica": "Observación8",
+    "criterio": "Evidencias de pruebas por incremento",
+    "estado": "Comprobado",
+    "evidencia": "Capítulo 10 ordenado por CU y tipo de escenario; glosario P/REG/N/E y evidencias de 74 registros, incluido un hallazgo no conforme.",
+    "cierre": "Sin acción documental adicional."
+  },
+  {
+    "id": "D09",
+    "pagina_rubrica": "Observación9",
+    "criterio": "Retrospectiva",
+    "estado": "Corregido",
+    "evidencia": "Capítulo 12: acciones, responsables y cuatro gráficos: burn-up y burn-down de I3 y del proyecto completo. Cortes de entrega identificados.",
+    "cierre": "Sin acción documental adicional."
+  }
+]

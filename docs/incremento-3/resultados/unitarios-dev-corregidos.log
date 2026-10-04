@@ -1,0 +1,8 @@
+[Nest] 56191  - 10/02/2026, 9:38:03 AM    WARN [ExportacionService] Exportación PDF de [stock] superó 15000 ms.
+
+Test Suites: 23 passed, 23 total
+Tests:       140 passed, 140 total
+Snapshots:   0 total
+Time:        1.472 s, estimated 2 s
+Ran all test suites.
+Test results written to: ../../../../../../tmp/incremento3/cierre/unitarios-dev-corregidos.json

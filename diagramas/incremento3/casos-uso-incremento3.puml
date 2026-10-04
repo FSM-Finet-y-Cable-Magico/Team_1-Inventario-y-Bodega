@@ -1,0 +1,55 @@
+@startuml
+!theme plain
+skinparam shadowing false
+skinparam monochrome true
+left to right direction
+title Casos de uso del Incremento 3 — alcance de cierre
+actor "Administrador / Bodega" as A
+actor "Técnico" as T
+actor "Sistema G3" as G
+rectangle "Inventario y Bodega — Grupo 1" {
+usecase "CU-48\nConsultando ubicación externa de equipo fuera de bodega" as U48
+usecase "CU-61\nConsultando vista móvil de trabajos e inventario del técnico" as U61
+usecase "CU-64\nEjecutando acciones atómicas del cierre de instalación" as U64
+usecase "CU-68\nVerificando saldo de consumibles en cierre" as U68
+usecase "CU-69\nRegistrando cierre de trabajo de reparación" as U69
+usecase "CU-70\nSeleccionando tipo de trabajo codificado para cierre" as U70
+usecase "CU-71\nRegistrando devolución de equipo desde cliente" as U71
+usecase "CU-73\nMostrando información de equipo en devolución" as U73
+usecase "CU-87\nGenerando reporte de equipos instalados por cliente" as U87
+usecase "CU-90\nGenerando reporte de productividad de técnicos" as U90
+usecase "CU-92\nExportando reporte a Excel" as U92
+usecase "CU-93\nExportando reporte a PDF" as U93
+usecase "CU-94\nConsultando alertas activas en el dashboard" as U94
+usecase "CU-95\nMostrando aviso de garantía vigente al cambiar estado" as U95
+usecase "CU-96\nRecibiendo notificaciones visuales en la campana del sistema" as U96
+}
+rectangle "Dominio G3 (integración)" {
+usecase "CU-63\nRegistrando cierre de trabajo de instalación" as U63
+usecase "CU-65\nCreando datos del cliente" as U65
+usecase "CU-66\nEditando datos del cliente" as U66
+usecase "CU-67\nConsultando datos y equipos del cliente" as U67
+}
+A --> U48
+T --> U61
+T --> U63
+G --> U64
+A --> U65
+A --> U66
+A --> U67
+G --> U68
+G --> U69
+T --> U70
+A --> U71
+A --> U73
+A --> U87
+A --> U90
+A --> U92
+A --> U93
+A --> U94
+A --> U95
+A --> U96
+U63 ..> U64 : cierre
+U64 ..> U68 : consumo
+U69 ..> U70 : borrador
+@enduml

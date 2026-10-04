@@ -1,0 +1,142 @@
+[
+  {
+    "archivo": "CU48-E1-instalacion-incompleta.png",
+    "bytes": 111232,
+    "sha256": "72b8c8beedcbe612d4ece4a2ce811fb96149b5baa37431c915c41d70e633c3a4"
+  },
+  {
+    "archivo": "CU48-prestamo-externo.png",
+    "bytes": 117783,
+    "sha256": "04d80fe2ae60663ae2b8ddfb0a371bc1cdaf0d9bea4602d6e448f08924aac0cc"
+  },
+  {
+    "archivo": "CU61-empty-movil.png",
+    "bytes": 42994,
+    "sha256": "82db56e400dc49d745ff04b38299e2e32b05a30bc18832dd4d17c8104316483f"
+  },
+  {
+    "archivo": "CU61-error-movil.png",
+    "bytes": 49647,
+    "sha256": "a78d6bf1a459203b89d505380a444b68f9c4c17d631aa7fe21ba659141e2f8e1"
+  },
+  {
+    "archivo": "CU61-normal-movil.png",
+    "bytes": 54355,
+    "sha256": "a7a5195502e36d091513666017acf61de0987780358bf63f471f41e4a477f967"
+  },
+  {
+    "archivo": "CU69-cierre-reparacion.png",
+    "bytes": 132402,
+    "sha256": "de64f276c6532ffdb80b4e08c2ef1ace1396797a426685a26549df698658f505"
+  },
+  {
+    "archivo": "CU70-manual-guardado.png",
+    "bytes": 64890,
+    "sha256": "553fd6c125b2111085ed1698e829254f0f867193962b1bb44a1878bc132a004a"
+  },
+  {
+    "archivo": "CU70-predefinidos.png",
+    "bytes": 65385,
+    "sha256": "3129b02982a05bb3f376f9163da8f40983ed746de0bf3908b611a5b633286a69"
+  },
+  {
+    "archivo": "CU71-CU73-formulario.png",
+    "bytes": 75452,
+    "sha256": "9eb7e79652496062108a7ca190a490f61b2dac20c73a3ae7c2223ed2e4cfe81c"
+  },
+  {
+    "archivo": "CU71-devolucion-completada.png",
+    "bytes": 45118,
+    "sha256": "15e4e828c8111b12b4994aee1fbffd728f44ba463dc6ce24068c41dad83ce4cd"
+  },
+  {
+    "archivo": "CU71-garantia.png",
+    "bytes": 68578,
+    "sha256": "eacf4e94000934ff294a89f4680ac02c7865184ece6d51a0a9e411b4eadba45c"
+  },
+  {
+    "archivo": "CU73-devolucion.png",
+    "bytes": 55289,
+    "sha256": "63c219ee0ba8943189a953558607d87afd52747d04b428f1b2324d20ecc9b979"
+  },
+  {
+    "archivo": "CU87-reporte.png",
+    "bytes": 71652,
+    "sha256": "3dd826550f6b4c2acad7bc58a861bef9b22f114d91d768ac467fed41b3f7b17a"
+  },
+  {
+    "archivo": "CU90-productividad.png",
+    "bytes": 71091,
+    "sha256": "12114d46dc965ee4182d0663fd587bf5dd39cd64ff3a1a30f46565896e744c0b"
+  },
+  {
+    "archivo": "CU90-rango-invalido.png",
+    "bytes": 75226,
+    "sha256": "547ccc0d0ba41c539b160e51a125be22313c35585ba20991f63c59feb524bdd7"
+  },
+  {
+    "archivo": "CU92-CU93-stock.png",
+    "bytes": 163327,
+    "sha256": "5d4b011484905b05500d68d2236c5a5bd81c3e59e3b7fb15404293c2aedba2ac"
+  },
+  {
+    "archivo": "CU94-dashboard-alertas.png",
+    "bytes": 120412,
+    "sha256": "b7c94e5c3ce4bb5b92449070ba004d5348d3a5b4c39add7b6e0ad35043b8bfc0"
+  },
+  {
+    "archivo": "CU94-dashboard-cua.png",
+    "bytes": 76361,
+    "sha256": "8c5ff1aecd20e663dbe1f8bc02211b57d7427885274b732dd4e05f68645586cb"
+  },
+  {
+    "archivo": "CU95-aviso-garantia.png",
+    "bytes": 59927,
+    "sha256": "7d4a0fe4bd0333ef609ebf170f173e3c40aab109ba1be5271ee21f4ccfd9f7c3"
+  },
+  {
+    "archivo": "CU95-cancelacion.png",
+    "bytes": 70070,
+    "sha256": "df72c711b2330b85118eeb2e0b56433f13ccc13895295d6373df4f8401656f3c"
+  },
+  {
+    "archivo": "CU96-notificaciones.png",
+    "bytes": 95791,
+    "sha256": "515cc9529ed9986cfda3276d20838c739d1359b043519650b2dce87dac5f8973"
+  },
+  {
+    "archivo": "CU96-sin-pendientes.png",
+    "bytes": 89080,
+    "sha256": "55782285de48aca30a425d1a60f773769935406e38a5159a08626e1bf8bff9fa"
+  },
+  {
+    "archivo": "G3-CU63-cierre-completado.png",
+    "bytes": 91405,
+    "sha256": "16a273353d889f80b55748516a7cabdd47c40c7e27403337d6e9901f9f9df085"
+  },
+  {
+    "archivo": "G3-CU65-CU67-ficha.png",
+    "bytes": 65849,
+    "sha256": "44669157990405d72294aba8ba9cb8fed1ef0e1a90e61d65a59a3f55fe6a1cc3"
+  },
+  {
+    "archivo": "G3-CU66-edicion.png",
+    "bytes": 85691,
+    "sha256": "0c4bd209abd869c53191ce2f5b666e87059e665be0179874c7d82e42d6901958"
+  },
+  {
+    "archivo": "G3-CU67-clientes.png",
+    "bytes": 51206,
+    "sha256": "e17a07cbeeab346a97048e49b643e76880dd63ed3eb6b725d8d9cd5224c1d8e6"
+  },
+  {
+    "archivo": "login.png",
+    "bytes": 26815,
+    "sha256": "c899e1eb4077169bc4ec0ae03eeed5d03e515d20e4d4de001c79653b0215170b"
+  },
+  {
+    "archivo": "reportes.png",
+    "bytes": 172103,
+    "sha256": "c29395466c3358c57f28662218b79c916458d06f1448007b68c515a8445dc987"
+  }
+]

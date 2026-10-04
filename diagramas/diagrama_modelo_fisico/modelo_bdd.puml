@@ -1,74 +1,308 @@
 @startuml
+
 !theme plain
+
 hide circle
+
 skinparam linetype ortho
+
 skinparam shadowing false
+
 skinparam roundcorner 4
+
 skinparam classFontSize 11
+
 skinparam classFontName "Helvetica,Arial,sans-serif"
+
 skinparam arrowColor #333333
+
 skinparam packageBackgroundColor transparent
 
 skinparam class {
+
     BackgroundColor #FFFFFF
+
     BorderColor #2B5797
+
     HeaderBackgroundColor #E8EEF7
+
 }
 
-title Modelo Físico de Base de Datos — Inventario y Bodega (PostgreSQL)
+title Modelo Físico de Base de Datos — Inventario y Bodega (PostgreSQL 16, migraciones de dev)
 
-entity "empresa" as empresa {
-  * id_empresa : int <<PK>>
-  --
-  * nombre : varchar(100)
-  rut_empresa : varchar(12) <<UQ>>
-  esquema_db : varchar(50)
+entity "asignacion_equipo_servicio" as asignacion_equipo_servicio {
+  * id_asignacion : int <<PK>>
+  * id_unidad : int <<FK>>
+  * id_empresa : int
+  event_id : varchar(100)
+  id_cliente_externo : int
+  rut_cliente : varchar(20)
+  * id_servicio_externo : int
+  id_contrato_externo : int
+  id_ot : int
+  * fecha_instalacion : timestamptz
+  fecha_retiro : timestamptz
+  activa : boolean
+  origen : varchar(30)
+  trace_id : varchar(100)
 }
-
-entity "rol" as rol {
-  * id_rol : int <<PK>>
-  --
-  * nombre_rol : varchar(50) <<UQ>>
-  descripcion : varchar(200)
-}
-
-entity "usuario" as usuario {
-  * id_usuario : int <<PK>>
-  --
-  id_empresa : int <<FK>>
-  * nombre_completo : varchar(150)
-  nombre_usuario : varchar(50) <<UQ>>
-  email : varchar(150) <<UQ>>
-  * password_hash : varchar(255)
-  activo : boolean
-  intentos_fallidos : int
-  bloqueado_hasta : timestamptz
-  debe_cambiar_password : boolean
-  fecha_creacion : timestamptz
-}
-
-entity "usuario_rol" as usuario_rol {
-  * id_usuario_rol : int <<PK>>
-  --
-  * id_usuario : int <<FK>>
-  * id_rol : int <<FK>>
-  fecha_asignacion : timestamptz
-}
-
 entity "bodega" as bodega {
   * id_bodega : int <<PK>>
-  --
-  id_empresa : int <<FK>>
+  id_empresa : int
   * nombre : varchar(100)
   direccion : varchar(200)
-  id_usuario_responsable : int <<FK>>
+  id_usuario_responsable : int
   activa : boolean
 }
-
+entity "borrador_cierre" as borrador_cierre {
+  * id_borrador : int <<PK>>
+  * id_ot : int
+  * id_empresa : int
+  * id_tecnico : int
+  codigo_trabajo : varchar(10)
+  falla_reportada : varchar(300)
+  solucion_aplicada : varchar(300)
+  resultado : varchar(30)
+  categoria_falla : varchar(120)
+  fecha_actualizacion : timestamptz
+}
+entity "cierre_reparacion" as cierre_reparacion {
+  * id_cierre_reparacion : int <<PK>>
+  id_cierre : int
+  * id_ot : int
+  * id_empresa : int
+  id_tecnico : int
+  rut_cliente : varchar(12)
+  direccion_servicio : varchar(200)
+  * falla_reportada : varchar(300)
+  * solucion_aplicada : varchar(300)
+  * resultado : varchar(30)
+  resuelto_remotamente : boolean
+  categoria_falla : varchar(120)
+  equipos_retirados : jsonb
+  equipos_instalados : jsonb
+  consumibles : jsonb
+  codigo_trabajo : varchar(10)
+  fecha_cierre : timestamptz
+  fecha_registro : timestamptz
+}
+entity "donacion" as donacion {
+  * id_donacion : int <<PK>>
+  * nombre_institucion : varchar(100)
+  * rut_institucion : varchar(12)
+  * fecha_donacion : date
+  numero_resolucion : varchar(30)
+  * id_usuario : int
+  id_empresa : int
+  fecha_creacion : timestamptz
+}
+entity "donacion_detalle" as donacion_detalle {
+  * id_detalle : int <<PK>>
+  * id_donacion : int <<FK>>
+  * id_unidad : int <<FK>>
+}
+entity "empresa" as empresa {
+  * id_empresa : int <<PK>>
+  * nombre : varchar(100)
+}
+entity "historial_estado_equipo" as historial_estado_equipo {
+  * id_historial : int <<PK>>
+  id_unidad : int <<FK>>
+  id_usuario : int
+  estado_anterior : varchar(30)
+  estado_nuevo : varchar(30)
+  motivo : text
+  fecha_hora : timestamp
+}
+entity "integracion_activacion" as integracion_activacion {
+  * id_activacion : int <<PK>>
+  event_id : varchar(100)
+  trace_id : varchar(100)
+  * id_empresa : int
+  id_ot : int
+  id_cliente_externo : int
+  rut_cliente : varchar(20)
+  id_servicio_externo : int
+  id_contrato_externo : int
+  payload : jsonb
+  * estado_proceso : varchar(40)
+  equipos_asociados : jsonb
+  discrepancias : jsonb
+  fecha_proceso : timestamptz
+}
+entity "integracion_cierre" as integracion_cierre {
+  * id_cierre : int <<PK>>
+  * clave_idempotencia : varchar(120)
+  * id_ot : int
+  * id_empresa : int
+  tipo_ot : varchar(30)
+  * payload : jsonb
+  estado_proceso : varchar(40)
+  discrepancias : jsonb
+  acciones_aplicadas : jsonb
+  fecha_proceso : timestamptz
+  srv : varchar(20)
+  id_tecnico : int
+  materiales_aplicados : jsonb
+}
+entity "inventario_personal_tecnico" as inventario_personal_tecnico {
+  * id_inventario : int <<PK>>
+  * id_tecnico : int
+  * id_tipo_equipo : int
+  cantidad : numeric(10,2)
+  fecha_actualizacion : timestamptz
+}
+entity "log_auditoria" as log_auditoria {
+  * id_log : int <<PK>>
+  * id_usuario : int
+  * accion : varchar(100)
+  entidad_afectada : varchar(100)
+  * id_entidad_afectada : int
+  valor_anterior : jsonb
+  * valor_nuevo : jsonb
+  ip_origen : inet
+  fecha_hora : timestamptz
+}
+entity "movimiento_inventario" as movimiento_inventario {
+  * id_movimiento : int <<PK>>
+  id_tipo_equipo : int
+  id_unidad : int
+  id_empresa_origen : int
+  id_empresa_destino : int
+  id_bodega_origen : int
+  id_bodega_destino : int
+  id_usuario : int
+  tipo_movimiento : varchar(30)
+  cantidad : numeric(10,2)
+  fecha : timestamp
+  referencia_id : int
+}
+entity "notificacion" as notificacion {
+  * id_notificacion : int <<PK>>
+  * tipo : varchar(40)
+  * id_empresa : int
+  * descripcion : varchar(150)
+  * clave_dedupe : varchar(120)
+  leida : boolean
+  fecha_generacion : timestamptz
+  fecha_leida : timestamptz
+}
+entity "orden_ingreso" as orden_ingreso {
+  * id_orden : int <<PK>>
+  * correlativo : varchar(10)
+  * id_proveedor : int <<FK>>
+  * numero_documento : varchar(30)
+  * fecha_documento : date
+  * id_empresa_destino : int
+  * id_bodega_destino : int <<FK>>
+  estado : varchar(30)
+  * id_usuario_registro : int
+  fecha_creacion : timestamptz
+}
+entity "orden_ingreso_detalle" as orden_ingreso_detalle {
+  * id_detalle : int <<PK>>
+  * id_orden : int <<FK>>
+  * id_tipo_equipo : int <<FK>>
+  * cantidad_esperada : int
+  garantia_dias : int
+  cantidad_recibida : int
+}
+entity "prestamo_detalle" as prestamo_detalle {
+  * id_detalle : int <<PK>>
+  * id_prestamo : int <<FK>>
+  id_unidad : int <<FK>>
+  id_tipo_equipo : int
+  cantidad : numeric(10,2)
+  cantidad_retornada : numeric(10,2)
+}
+entity "prestamo_externo" as prestamo_externo {
+  * id_prestamo : int <<PK>>
+  * tipo : varchar(30)
+  * id_empresa : int
+  id_unidad : int <<FK>>
+  * nombre_receptor : varchar(80)
+  rut_receptor : varchar(12)
+  fecha_salida : timestamptz
+  * fecha_retorno_estimada : date
+  fecha_retorno_real : date
+  * detalle : text
+  estado : varchar(20)
+  resultado : varchar(20)
+  * id_usuario_registro : int
+  correlativo : varchar(12)
+  id_bodega_origen : int
+}
+entity "prestamo_retorno" as prestamo_retorno {
+  * id_retorno : int <<PK>>
+  * id_detalle : int <<FK>>
+  cantidad : numeric(10,2)
+  * fecha_retorno : timestamptz
+  observacion : varchar(300)
+  * id_usuario : int
+}
+entity "proveedor" as proveedor {
+  * id_proveedor : int <<PK>>
+  * nombre_comercial : varchar(100)
+  * rut : varchar(12)
+  nombre_contacto : varchar(80)
+  telefono : varchar(15)
+  email : varchar(150)
+  activa : boolean
+  fecha_creacion : timestamptz
+}
+entity "proveedor_tipo_equipo" as proveedor_tipo_equipo {
+  * id : int <<PK>>
+  * id_proveedor : int <<FK>>
+  * id_tipo_equipo : int <<FK>>
+}
+entity "rol" as rol {
+  * id_rol : int <<PK>>
+  * nombre_rol : varchar(50)
+  descripcion : varchar(200)
+}
+entity "salida_bodega" as salida_bodega {
+  * id_salida : int <<PK>>
+  * id_tecnico : int
+  * id_bodega_origen : int
+  fecha_hora : timestamptz
+  id_empresa : int
+  id_usuario_registro : int
+}
+entity "salida_detalle" as salida_detalle {
+  * id_detalle : int <<PK>>
+  * id_salida : int <<FK>>
+  id_tipo_equipo : int
+  id_unidad : int
+  cantidad : numeric(10,2)
+}
+entity "secuencia_srv" as secuencia_srv {
+  * id_empresa : int <<PK>>
+  * anio : int <<PK>>
+  ultimo : int
+}
+entity "solicitud_baja" as solicitud_baja {
+  * id_solicitud : int <<PK>>
+  * id_unidad : int <<FK>>
+  id_empresa : int
+  * id_usuario_solicitante : int
+  * motivo : varchar(40)
+  motivo_otro : varchar(200)
+  * estado : varchar(30)
+  id_usuario_aprobador : int
+  fecha_solicitud : timestamptz
+  fecha_resolucion : timestamptz
+  motivo_rechazo : varchar(200)
+}
+entity "stock_consumible" as stock_consumible {
+  * id_stock : int <<PK>>
+  * id_tipo_equipo : int <<FK>>
+  * id_bodega : int <<FK>>
+  cantidad_disponible : numeric(10,2)
+  umbral_minimo : numeric(10,2)
+}
 entity "tipo_equipo" as tipo_equipo {
   * id_tipo_equipo : int <<PK>>
-  --
-  id_empresa : int <<FK>>
+  id_empresa : int
   * nombre : varchar(100)
   categoria : varchar(40)
   marca : varchar(50)
@@ -81,210 +315,82 @@ entity "tipo_equipo" as tipo_equipo {
   ficha_tecnica_nombre : varchar(255)
   activo : boolean
 }
-
+entity "transferencia_equipo" as transferencia_equipo {
+  * id_transferencia : int <<PK>>
+  id_empresa_origen : int
+  id_empresa_destino : int
+  id_usuario_registro : int
+  fecha_transferencia : date
+  observaciones : text
+}
 entity "unidad_equipo" as unidad_equipo {
   * id_unidad : int <<PK>>
-  --
   id_tipo_equipo : int <<FK>>
-  id_empresa : int <<FK>>
-  * numero_serie : varchar(80) <<UQ>>
+  id_empresa : int
+  * numero_serie : varchar(80)
   modelo : varchar(80)
   * estado : varchar(30)
   fecha_adquisicion : date
   fecha_venc_garantia : date
   diagnostico_tecnico : text
   id_cliente_instalado : int
-  id_bodega_actual : int <<FK>>
-  id_tecnico_asignado : int <<FK>>
+  id_bodega_actual : int
   numero_poste : varchar(30)
   id_caja_nap : int
-  mac_address : varchar(17) <<UQ>>
+  mac_address : varchar(17)
   proveedor : varchar(80)
   observaciones : varchar(300)
   ubicacion_fisica : varchar(60)
+  motivo_baja : varchar(40)
+  motivo_baja_detalle : varchar(200)
+  id_tecnico_asignado : int
+  cliente_rut : varchar(20)
+  cliente_nombre : varchar(150)
+  direccion_instalacion : varchar(300)
+  comuna_instalacion : varchar(100)
+  srv : varchar(20)
 }
-
-entity "historial_estado_equipo" as historial_estado_equipo {
-  * id_historial : bigint <<PK>>
-  --
-  id_unidad : int <<FK>>
-  id_usuario : int <<FK>>
-  estado_anterior : varchar(30)
-  estado_nuevo : varchar(30)
-  motivo : text
-  fecha_hora : timestamp
-}
-
-entity "stock_consumible" as stock_consumible {
-  * id_stock : int <<PK>>
-  --
-  * id_tipo_equipo : int <<FK>>
-  * id_bodega : int <<FK>>
-  * cantidad_disponible : numeric(10,2)
-  umbral_minimo : numeric(10,2)
-}
-
-entity "transferencia_equipo" as transferencia_equipo {
-  * id_transferencia : int <<PK>>
-  --
-  id_empresa_origen : int <<FK>>
-  id_empresa_destino : int <<FK>>
-  id_usuario_registro : int <<FK>>
-  fecha_transferencia : date
-  observaciones : text
-}
-
-entity "movimiento_inventario" as movimiento_inventario {
-  * id_movimiento : bigint <<PK>>
-  --
-  id_tipo_equipo : int <<FK>>
-  id_unidad : int <<FK>>
-  id_empresa_origen : int <<FK>>
-  id_empresa_destino : int <<FK>>
-  id_bodega_origen : int <<FK>>
-  id_bodega_destino : int <<FK>>
-  id_usuario : int <<FK>>
-  tipo_movimiento : varchar(30)
-  cantidad : numeric(10,2)
-  fecha : timestamp
-  referencia_id : int
-}
-
-entity "log_auditoria" as log_auditoria {
-  * id_log : bigint <<PK>>
-  --
-  * id_usuario : int <<FK>>
-  * accion : varchar(100)
-  entidad_afectada : varchar(100)
-  * id_entidad_afectada : int
-  valor_anterior : jsonb
-  * valor_nuevo : jsonb
-  ip_origen : inet
-  fecha_hora : timestamptz
-}
-
-entity "proveedor" as proveedor {
-  * id_proveedor : int <<PK>>
-  --
-  * nombre_comercial : varchar(100)
-  * rut : varchar(12) <<UQ>>
-  nombre_contacto : varchar(80)
-  telefono : varchar(15)
+entity "usuario" as usuario {
+  * id_usuario : int <<PK>>
+  id_empresa : int
+  * nombre_completo : varchar(150)
+  nombre_usuario : varchar(50)
   email : varchar(150)
-  activa : boolean
+  * password_hash : varchar(255)
+  activo : boolean
+  intentos_fallidos : int
+  bloqueado_hasta : timestamptz
+  debe_cambiar_password : boolean
   fecha_creacion : timestamptz
+  rut : varchar(12)
+}
+entity "usuario_rol" as usuario_rol {
+  * id_usuario_rol : int <<PK>>
+  id_usuario : int <<FK>>
+  * id_rol : int <<FK>>
+  fecha_asignacion : timestamptz
 }
 
-entity "proveedor_tipo_equipo" as proveedor_tipo_equipo {
-  * id : int <<PK>>
-  --
-  * id_proveedor : int <<FK>>
-  * id_tipo_equipo : int <<FK>>
-}
-
-entity "orden_ingreso" as orden_ingreso {
-  * id_orden : int <<PK>>
-  --
-  * correlativo : varchar(10) <<UQ>>
-  * id_proveedor : int <<FK>>
-  * numero_documento : varchar(30)
-  * fecha_documento : date
-  * id_empresa_destino : int <<FK>>
-  * id_bodega_destino : int <<FK>>
-  * estado : varchar(30)
-  * id_usuario_registro : int <<FK>>
-  fecha_creacion : timestamptz
-}
-
-entity "orden_ingreso_detalle" as orden_ingreso_detalle {
-  * id_detalle : int <<PK>>
-  --
-  * id_orden : int <<FK>>
-  * id_tipo_equipo : int <<FK>>
-  * cantidad_esperada : int
-  garantia_dias : int
-  cantidad_recibida : int
-}
-
-entity "salida_bodega" as salida_bodega {
-  * id_salida : int <<PK>>
-  --
-  * id_tecnico : int <<FK>>
-  * id_bodega_origen : int <<FK>>
-  fecha_hora : timestamptz
-  id_empresa : int <<FK>>
-  id_usuario_registro : int <<FK>>
-}
-
-entity "salida_detalle" as salida_detalle {
-  * id_detalle : int <<PK>>
-  --
-  * id_salida : int <<FK>>
-  id_tipo_equipo : int <<FK>>
-  id_unidad : int <<FK>>
-  cantidad : numeric(10,2)
-}
-
-entity "inventario_personal_tecnico" as inventario_personal_tecnico {
-  * id_inventario : int <<PK>>
-  --
-  * id_tecnico : int <<FK>>
-  * id_tipo_equipo : int <<FK>>
-  cantidad : numeric(10,2)
-  fecha_actualizacion : timestamptz
-}
-
-' ==============================================================================
-' RELACIONES / LLAVES FORÁNEAS (Crow's Foot)
-' ==============================================================================
-empresa ||..o{ usuario : "id_empresa"
-empresa ||..o{ bodega : "id_empresa"
-empresa ||..o{ tipo_equipo : "id_empresa"
-empresa ||..o{ unidad_equipo : "id_empresa"
-empresa ||..o{ orden_ingreso : "id_empresa_destino"
-empresa ||..o{ salida_bodega : "id_empresa"
-
-usuario ||--o{ usuario_rol : "id_usuario"
-rol ||--o{ usuario_rol : "id_rol"
-
-usuario ||..o{ bodega : "id_usuario_responsable"
-usuario ||--o{ historial_estado_equipo : "id_usuario"
-usuario ||..o{ unidad_equipo : "id_tecnico_asignado"
-usuario ||--o{ log_auditoria : "id_usuario"
-usuario ||--o{ orden_ingreso : "id_usuario_registro"
-usuario ||--o{ salida_bodega : "id_tecnico"
-usuario ||..o{ salida_bodega : "id_usuario_registro"
-usuario ||--o{ inventario_personal_tecnico : "id_tecnico"
-
-tipo_equipo ||--o{ unidad_equipo : "id_tipo_equipo"
-tipo_equipo ||--o{ stock_consumible : "id_tipo_equipo"
-tipo_equipo ||--o{ proveedor_tipo_equipo : "id_tipo_equipo"
-tipo_equipo ||--o{ orden_ingreso_detalle : "id_tipo_equipo"
-tipo_equipo ||..o{ salida_detalle : "id_tipo_equipo"
-tipo_equipo ||--o{ inventario_personal_tecnico : "id_tipo_equipo"
-
-bodega ||..o{ unidad_equipo : "id_bodega_actual"
-bodega ||--o{ stock_consumible : "id_bodega"
-bodega ||--o{ orden_ingreso : "id_bodega_destino"
-bodega ||--o{ salida_bodega : "id_bodega_origen"
-
-unidad_equipo ||--o{ historial_estado_equipo : "id_unidad"
-unidad_equipo ||..o{ salida_detalle : "id_unidad"
-
-proveedor ||--o{ proveedor_tipo_equipo : "id_proveedor"
-proveedor ||--o{ orden_ingreso : "id_proveedor"
-
-orden_ingreso ||--|{ orden_ingreso_detalle : "id_orden"
-salida_bodega ||--|{ salida_detalle : "id_salida"
-
-empresa ||..o{ transferencia_equipo : "id_empresa_origen"
-empresa ||..o{ transferencia_equipo : "id_empresa_destino"
-usuario ||..o{ transferencia_equipo : "id_usuario_registro"
-
-tipo_equipo ||..o{ movimiento_inventario : "id_tipo_equipo"
-unidad_equipo ||..o{ movimiento_inventario : "id_unidad"
-bodega ||..o{ movimiento_inventario : "id_bodega_origen"
-bodega ||..o{ movimiento_inventario : "id_bodega_destino"
-usuario ||..o{ movimiento_inventario : "id_usuario"
+unidad_equipo ||..o{ asignacion_equipo_servicio : "id_unidad"
+donacion ||..o{ donacion_detalle : "id_donacion"
+unidad_equipo ||..o{ donacion_detalle : "id_unidad"
+unidad_equipo ||..o{ historial_estado_equipo : "id_unidad"
+bodega ||..o{ orden_ingreso : "id_bodega_destino"
+proveedor ||..o{ orden_ingreso : "id_proveedor"
+orden_ingreso ||..o{ orden_ingreso_detalle : "id_orden"
+tipo_equipo ||..o{ orden_ingreso_detalle : "id_tipo_equipo"
+prestamo_externo ||..o{ prestamo_detalle : "id_prestamo"
+unidad_equipo ||..o{ prestamo_detalle : "id_unidad"
+prestamo_detalle ||..o{ prestamo_retorno : "id_detalle"
+proveedor ||..o{ proveedor_tipo_equipo : "id_proveedor"
+tipo_equipo ||..o{ proveedor_tipo_equipo : "id_tipo_equipo"
+salida_bodega ||..o{ salida_detalle : "id_salida"
+unidad_equipo ||..o{ solicitud_baja : "id_unidad"
+bodega ||..o{ stock_consumible : "id_bodega"
+tipo_equipo ||..o{ stock_consumible : "id_tipo_equipo"
+tipo_equipo ||..o{ unidad_equipo : "id_tipo_equipo"
+rol ||..o{ usuario_rol : "id_rol"
+usuario ||..o{ usuario_rol : "id_usuario"
+unidad_equipo ||..o{ prestamo_externo : "id_unidad"
 
 @enduml

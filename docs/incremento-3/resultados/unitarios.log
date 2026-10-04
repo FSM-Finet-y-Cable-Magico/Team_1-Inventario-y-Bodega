@@ -1,0 +1,769 @@
+
+> backend-inventario@0.0.1 test
+> jest --runInBand
+
+FAIL src/usuarios/usuarios.controller.spec.ts
+  ● UsuariosController › should be defined
+
+    Nest can't resolve dependencies of the UsuariosService (?, UsuarioRolRepository, RolRepository, AuditoriaService). Please make sure that the argument "UsuarioRepository" at index [0] is available in the RootTestModule module.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If "UsuarioRepository" is a provider, is it part of the current RootTestModule?
+    - If "UsuarioRepository" is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing "UsuarioRepository" */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       7 |
+       8 |   beforeEach(async () => {
+    >  9 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+      10 |       controllers: [UsuariosController],
+      11 |       providers: [UsuariosService],
+      12 |     }).compile();
+
+      at TestingInjector.lookupComponentInParentModules (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:300:19)
+      at TestingInjector.resolveComponentWrapper (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:150:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:179:27)
+      at TestingInjector.loadInstance (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:77:13)
+      at TestingInjector.loadProvider (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:111:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:119:9)
+      at TestingModuleBuilder.compile (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (usuarios/usuarios.controller.spec.ts:9:35)
+
+FAIL src/auth/auth.controller.spec.ts
+  ● AuthController › should be defined
+
+    Nest can't resolve dependencies of the AuthService (?, JwtService, AuditoriaService). Please make sure that the argument "UsuarioRepository" at index [0] is available in the RootTestModule module.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If "UsuarioRepository" is a provider, is it part of the current RootTestModule?
+    - If "UsuarioRepository" is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing "UsuarioRepository" */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       7 |
+       8 |   beforeEach(async () => {
+    >  9 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+      10 |       controllers: [AuthController],
+      11 |       providers: [AuthService],
+      12 |     }).compile();
+
+      at TestingInjector.lookupComponentInParentModules (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:300:19)
+      at TestingInjector.resolveComponentWrapper (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:150:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:179:27)
+      at TestingInjector.loadInstance (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:77:13)
+      at TestingInjector.loadProvider (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:111:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:119:9)
+      at TestingModuleBuilder.compile (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (auth/auth.controller.spec.ts:9:35)
+
+FAIL src/roles/roles.controller.spec.ts
+  ● RolesController › should be defined
+
+    Nest can't resolve dependencies of the RolesService (?, AuditoriaService). Please make sure that the argument "RolRepository" at index [0] is available in the RootTestModule module.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If "RolRepository" is a provider, is it part of the current RootTestModule?
+    - If "RolRepository" is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing "RolRepository" */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       7 |
+       8 |   beforeEach(async () => {
+    >  9 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+      10 |       controllers: [RolesController],
+      11 |       providers: [RolesService],
+      12 |     }).compile();
+
+      at TestingInjector.lookupComponentInParentModules (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:300:19)
+      at TestingInjector.resolveComponentWrapper (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:150:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:179:27)
+      at TestingInjector.loadInstance (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:77:13)
+      at TestingInjector.loadProvider (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:111:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:119:9)
+      at TestingModuleBuilder.compile (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (roles/roles.controller.spec.ts:9:35)
+
+FAIL src/auditoria/auditoria.controller.spec.ts
+  ● AuditoriaController › should be defined
+
+    Nest can't resolve dependencies of the AuditoriaService (?, UsuarioRepository). Please make sure that the argument "AuditoriaRepository" at index [0] is available in the RootTestModule module.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If "AuditoriaRepository" is a provider, is it part of the current RootTestModule?
+    - If "AuditoriaRepository" is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing "AuditoriaRepository" */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       7 |
+       8 |   beforeEach(async () => {
+    >  9 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+      10 |       controllers: [AuditoriaController],
+      11 |       providers: [AuditoriaService],
+      12 |     }).compile();
+
+      at TestingInjector.lookupComponentInParentModules (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:300:19)
+      at TestingInjector.resolveComponentWrapper (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:150:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:179:27)
+      at TestingInjector.loadInstance (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:77:13)
+      at TestingInjector.loadProvider (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:111:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:119:9)
+      at TestingModuleBuilder.compile (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (auditoria/auditoria.controller.spec.ts:9:35)
+
+FAIL src/roles/roles.service.spec.ts
+  ● RolesService › should be defined
+
+    Nest can't resolve dependencies of the RolesService (?, AuditoriaService). Please make sure that the argument "RolRepository" at index [0] is available in the RootTestModule module.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If "RolRepository" is a provider, is it part of the current RootTestModule?
+    - If "RolRepository" is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing "RolRepository" */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [RolesService],
+      10 |     }).compile();
+      11 |
+
+      at TestingInjector.lookupComponentInParentModules (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:300:19)
+      at TestingInjector.resolveComponentWrapper (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:150:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:179:27)
+      at TestingInjector.loadInstance (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:77:13)
+      at TestingInjector.loadProvider (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:111:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:119:9)
+      at TestingModuleBuilder.compile (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (roles/roles.service.spec.ts:8:35)
+
+FAIL src/auth/auth.service.spec.ts
+  ● AuthService › should be defined
+
+    Nest can't resolve dependencies of the AuthService (?, JwtService, AuditoriaService). Please make sure that the argument "UsuarioRepository" at index [0] is available in the RootTestModule module.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If "UsuarioRepository" is a provider, is it part of the current RootTestModule?
+    - If "UsuarioRepository" is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing "UsuarioRepository" */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [AuthService],
+      10 |     }).compile();
+      11 |
+
+      at TestingInjector.lookupComponentInParentModules (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:300:19)
+      at TestingInjector.resolveComponentWrapper (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:150:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:179:27)
+      at TestingInjector.loadInstance (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:77:13)
+      at TestingInjector.loadProvider (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:111:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:119:9)
+      at TestingModuleBuilder.compile (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (auth/auth.service.spec.ts:8:35)
+
+FAIL src/usuarios/usuarios.service.spec.ts
+  ● UsuariosService › should be defined
+
+    Nest can't resolve dependencies of the UsuariosService (?, UsuarioRolRepository, RolRepository, AuditoriaService). Please make sure that the argument "UsuarioRepository" at index [0] is available in the RootTestModule module.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If "UsuarioRepository" is a provider, is it part of the current RootTestModule?
+    - If "UsuarioRepository" is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing "UsuarioRepository" */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [UsuariosService],
+      10 |     }).compile();
+      11 |
+
+      at TestingInjector.lookupComponentInParentModules (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:300:19)
+      at TestingInjector.resolveComponentWrapper (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:150:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:179:27)
+      at TestingInjector.loadInstance (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:77:13)
+      at TestingInjector.loadProvider (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:111:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:119:9)
+      at TestingModuleBuilder.compile (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (usuarios/usuarios.service.spec.ts:8:35)
+
+FAIL src/health/health.controller.spec.ts
+  ● HealthController › should be defined
+
+    Nest can't resolve dependencies of the HealthController (?). Please make sure that the argument DataSource at index [0] is available in the RootTestModule module.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If DataSource is a provider, is it part of the current RootTestModule?
+    - If DataSource is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing DataSource */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       controllers: [HealthController],
+      10 |     }).compile();
+      11 |
+
+      at TestingInjector.lookupComponentInParentModules (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:300:19)
+      at TestingInjector.resolveComponentWrapper (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:150:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:179:27)
+      at TestingInjector.loadInstance (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:77:13)
+      at TestingInjector.loadController (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:99:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:68:13
+          at async Promise.all (index 0)
+      at TestingInstanceLoader.createInstancesOfControllers (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:67:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:42:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:119:9)
+      at TestingModuleBuilder.compile (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (health/health.controller.spec.ts:8:35)
+
+FAIL src/auditoria/auditoria.service.spec.ts
+  ● AuditoriaService › should be defined
+
+    Nest can't resolve dependencies of the AuditoriaService (?, UsuarioRepository). Please make sure that the argument "AuditoriaRepository" at index [0] is available in the RootTestModule module.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If "AuditoriaRepository" is a provider, is it part of the current RootTestModule?
+    - If "AuditoriaRepository" is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing "AuditoriaRepository" */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [AuditoriaService],
+      10 |     }).compile();
+      11 |
+
+      at TestingInjector.lookupComponentInParentModules (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:300:19)
+      at TestingInjector.resolveComponentWrapper (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:150:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:179:27)
+      at TestingInjector.loadInstance (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:77:13)
+      at TestingInjector.loadProvider (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:111:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:119:9)
+      at TestingModuleBuilder.compile (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (auditoria/auditoria.service.spec.ts:8:35)
+
+[Nest] 28289  - 09/30/2026, 1:16:55 PM    WARN [ExportacionService] Exportación PDF de [stock] superó 15000 ms.
+
+Summary of all failing tests
+FAIL usuarios/usuarios.controller.spec.ts
+  ● UsuariosController › should be defined
+
+    Nest can't resolve dependencies of the UsuariosService (?, UsuarioRolRepository, RolRepository, AuditoriaService). Please make sure that the argument "UsuarioRepository" at index [0] is available in the RootTestModule module.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If "UsuarioRepository" is a provider, is it part of the current RootTestModule?
+    - If "UsuarioRepository" is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing "UsuarioRepository" */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       7 |
+       8 |   beforeEach(async () => {
+    >  9 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+      10 |       controllers: [UsuariosController],
+      11 |       providers: [UsuariosService],
+      12 |     }).compile();
+
+      at TestingInjector.lookupComponentInParentModules (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:300:19)
+      at TestingInjector.resolveComponentWrapper (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:150:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:179:27)
+      at TestingInjector.loadInstance (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:77:13)
+      at TestingInjector.loadProvider (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:111:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:119:9)
+      at TestingModuleBuilder.compile (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (usuarios/usuarios.controller.spec.ts:9:35)
+
+FAIL auth/auth.controller.spec.ts
+  ● AuthController › should be defined
+
+    Nest can't resolve dependencies of the AuthService (?, JwtService, AuditoriaService). Please make sure that the argument "UsuarioRepository" at index [0] is available in the RootTestModule module.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If "UsuarioRepository" is a provider, is it part of the current RootTestModule?
+    - If "UsuarioRepository" is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing "UsuarioRepository" */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       7 |
+       8 |   beforeEach(async () => {
+    >  9 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+      10 |       controllers: [AuthController],
+      11 |       providers: [AuthService],
+      12 |     }).compile();
+
+      at TestingInjector.lookupComponentInParentModules (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:300:19)
+      at TestingInjector.resolveComponentWrapper (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:150:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:179:27)
+      at TestingInjector.loadInstance (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:77:13)
+      at TestingInjector.loadProvider (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:111:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:119:9)
+      at TestingModuleBuilder.compile (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (auth/auth.controller.spec.ts:9:35)
+
+FAIL roles/roles.controller.spec.ts
+  ● RolesController › should be defined
+
+    Nest can't resolve dependencies of the RolesService (?, AuditoriaService). Please make sure that the argument "RolRepository" at index [0] is available in the RootTestModule module.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If "RolRepository" is a provider, is it part of the current RootTestModule?
+    - If "RolRepository" is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing "RolRepository" */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       7 |
+       8 |   beforeEach(async () => {
+    >  9 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+      10 |       controllers: [RolesController],
+      11 |       providers: [RolesService],
+      12 |     }).compile();
+
+      at TestingInjector.lookupComponentInParentModules (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:300:19)
+      at TestingInjector.resolveComponentWrapper (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:150:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:179:27)
+      at TestingInjector.loadInstance (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:77:13)
+      at TestingInjector.loadProvider (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:111:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:119:9)
+      at TestingModuleBuilder.compile (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (roles/roles.controller.spec.ts:9:35)
+
+FAIL auditoria/auditoria.controller.spec.ts
+  ● AuditoriaController › should be defined
+
+    Nest can't resolve dependencies of the AuditoriaService (?, UsuarioRepository). Please make sure that the argument "AuditoriaRepository" at index [0] is available in the RootTestModule module.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If "AuditoriaRepository" is a provider, is it part of the current RootTestModule?
+    - If "AuditoriaRepository" is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing "AuditoriaRepository" */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       7 |
+       8 |   beforeEach(async () => {
+    >  9 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+      10 |       controllers: [AuditoriaController],
+      11 |       providers: [AuditoriaService],
+      12 |     }).compile();
+
+      at TestingInjector.lookupComponentInParentModules (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:300:19)
+      at TestingInjector.resolveComponentWrapper (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:150:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:179:27)
+      at TestingInjector.loadInstance (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:77:13)
+      at TestingInjector.loadProvider (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:111:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:119:9)
+      at TestingModuleBuilder.compile (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (auditoria/auditoria.controller.spec.ts:9:35)
+
+FAIL roles/roles.service.spec.ts
+  ● RolesService › should be defined
+
+    Nest can't resolve dependencies of the RolesService (?, AuditoriaService). Please make sure that the argument "RolRepository" at index [0] is available in the RootTestModule module.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If "RolRepository" is a provider, is it part of the current RootTestModule?
+    - If "RolRepository" is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing "RolRepository" */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [RolesService],
+      10 |     }).compile();
+      11 |
+
+      at TestingInjector.lookupComponentInParentModules (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:300:19)
+      at TestingInjector.resolveComponentWrapper (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:150:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:179:27)
+      at TestingInjector.loadInstance (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:77:13)
+      at TestingInjector.loadProvider (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:111:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:119:9)
+      at TestingModuleBuilder.compile (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (roles/roles.service.spec.ts:8:35)
+
+FAIL auth/auth.service.spec.ts
+  ● AuthService › should be defined
+
+    Nest can't resolve dependencies of the AuthService (?, JwtService, AuditoriaService). Please make sure that the argument "UsuarioRepository" at index [0] is available in the RootTestModule module.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If "UsuarioRepository" is a provider, is it part of the current RootTestModule?
+    - If "UsuarioRepository" is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing "UsuarioRepository" */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [AuthService],
+      10 |     }).compile();
+      11 |
+
+      at TestingInjector.lookupComponentInParentModules (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:300:19)
+      at TestingInjector.resolveComponentWrapper (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:150:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:179:27)
+      at TestingInjector.loadInstance (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:77:13)
+      at TestingInjector.loadProvider (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:111:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:119:9)
+      at TestingModuleBuilder.compile (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (auth/auth.service.spec.ts:8:35)
+
+FAIL usuarios/usuarios.service.spec.ts
+  ● UsuariosService › should be defined
+
+    Nest can't resolve dependencies of the UsuariosService (?, UsuarioRolRepository, RolRepository, AuditoriaService). Please make sure that the argument "UsuarioRepository" at index [0] is available in the RootTestModule module.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If "UsuarioRepository" is a provider, is it part of the current RootTestModule?
+    - If "UsuarioRepository" is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing "UsuarioRepository" */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [UsuariosService],
+      10 |     }).compile();
+      11 |
+
+      at TestingInjector.lookupComponentInParentModules (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:300:19)
+      at TestingInjector.resolveComponentWrapper (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:150:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:179:27)
+      at TestingInjector.loadInstance (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:77:13)
+      at TestingInjector.loadProvider (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:111:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:119:9)
+      at TestingModuleBuilder.compile (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (usuarios/usuarios.service.spec.ts:8:35)
+
+FAIL health/health.controller.spec.ts
+  ● HealthController › should be defined
+
+    Nest can't resolve dependencies of the HealthController (?). Please make sure that the argument DataSource at index [0] is available in the RootTestModule module.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If DataSource is a provider, is it part of the current RootTestModule?
+    - If DataSource is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing DataSource */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       controllers: [HealthController],
+      10 |     }).compile();
+      11 |
+
+      at TestingInjector.lookupComponentInParentModules (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:300:19)
+      at TestingInjector.resolveComponentWrapper (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:150:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:179:27)
+      at TestingInjector.loadInstance (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:77:13)
+      at TestingInjector.loadController (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:99:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:68:13
+          at async Promise.all (index 0)
+      at TestingInstanceLoader.createInstancesOfControllers (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:67:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:42:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:119:9)
+      at TestingModuleBuilder.compile (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (health/health.controller.spec.ts:8:35)
+
+FAIL auditoria/auditoria.service.spec.ts
+  ● AuditoriaService › should be defined
+
+    Nest can't resolve dependencies of the AuditoriaService (?, UsuarioRepository). Please make sure that the argument "AuditoriaRepository" at index [0] is available in the RootTestModule module.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If "AuditoriaRepository" is a provider, is it part of the current RootTestModule?
+    - If "AuditoriaRepository" is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing "AuditoriaRepository" */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [AuditoriaService],
+      10 |     }).compile();
+      11 |
+
+      at TestingInjector.lookupComponentInParentModules (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:300:19)
+      at TestingInjector.resolveComponentWrapper (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:150:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:179:27)
+      at TestingInjector.loadInstance (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:77:13)
+      at TestingInjector.loadProvider (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/injector.js:111:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at ../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:119:9)
+      at TestingModuleBuilder.compile (../../../../../../../Users/javier/Team_1-Inventario-y-Bodega/codigo/backend-inventario/node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (auditoria/auditoria.service.spec.ts:8:35)
+
+
+Test Suites: 9 failed, 14 passed, 23 total
+Tests:       9 failed, 128 passed, 137 total
+Snapshots:   0 total
+Time:        2.03 s
+Ran all test suites.

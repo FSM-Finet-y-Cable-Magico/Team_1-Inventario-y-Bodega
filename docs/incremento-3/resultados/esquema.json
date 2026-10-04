@@ -1,0 +1,2846 @@
+{
+  "cols": [
+    {
+      "table_name": "asignacion_equipo_servicio",
+      "column_name": "id_asignacion",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "nextval('asignacion_equipo_servicio_id_asignacion_seq'::regclass)"
+    },
+    {
+      "table_name": "asignacion_equipo_servicio",
+      "column_name": "id_unidad",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "asignacion_equipo_servicio",
+      "column_name": "id_empresa",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "asignacion_equipo_servicio",
+      "column_name": "event_id",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "asignacion_equipo_servicio",
+      "column_name": "id_cliente_externo",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "asignacion_equipo_servicio",
+      "column_name": "rut_cliente",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "asignacion_equipo_servicio",
+      "column_name": "id_servicio_externo",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "asignacion_equipo_servicio",
+      "column_name": "id_contrato_externo",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "asignacion_equipo_servicio",
+      "column_name": "id_ot",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "asignacion_equipo_servicio",
+      "column_name": "fecha_instalacion",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "asignacion_equipo_servicio",
+      "column_name": "fecha_retiro",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "asignacion_equipo_servicio",
+      "column_name": "activa",
+      "data_type": "boolean",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "true"
+    },
+    {
+      "table_name": "asignacion_equipo_servicio",
+      "column_name": "origen",
+      "data_type": "character varying",
+      "character_maximum_length": 30,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "asignacion_equipo_servicio",
+      "column_name": "trace_id",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "bodega",
+      "column_name": "id_bodega",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "nextval('bodega_id_bodega_seq'::regclass)"
+    },
+    {
+      "table_name": "bodega",
+      "column_name": "id_empresa",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "bodega",
+      "column_name": "nombre",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "bodega",
+      "column_name": "direccion",
+      "data_type": "character varying",
+      "character_maximum_length": 200,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "bodega",
+      "column_name": "id_usuario_responsable",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "bodega",
+      "column_name": "activa",
+      "data_type": "boolean",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "true"
+    },
+    {
+      "table_name": "borrador_cierre",
+      "column_name": "id_borrador",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "nextval('borrador_cierre_id_borrador_seq'::regclass)"
+    },
+    {
+      "table_name": "borrador_cierre",
+      "column_name": "id_ot",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "borrador_cierre",
+      "column_name": "id_empresa",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "borrador_cierre",
+      "column_name": "id_tecnico",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "borrador_cierre",
+      "column_name": "codigo_trabajo",
+      "data_type": "character varying",
+      "character_maximum_length": 10,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "borrador_cierre",
+      "column_name": "falla_reportada",
+      "data_type": "character varying",
+      "character_maximum_length": 300,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "borrador_cierre",
+      "column_name": "solucion_aplicada",
+      "data_type": "character varying",
+      "character_maximum_length": 300,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "borrador_cierre",
+      "column_name": "resultado",
+      "data_type": "character varying",
+      "character_maximum_length": 30,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "borrador_cierre",
+      "column_name": "categoria_falla",
+      "data_type": "character varying",
+      "character_maximum_length": 120,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "borrador_cierre",
+      "column_name": "fecha_actualizacion",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "cierre_reparacion",
+      "column_name": "id_cierre_reparacion",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "nextval('cierre_reparacion_id_cierre_reparacion_seq'::regclass)"
+    },
+    {
+      "table_name": "cierre_reparacion",
+      "column_name": "id_cierre",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "cierre_reparacion",
+      "column_name": "id_ot",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "cierre_reparacion",
+      "column_name": "id_empresa",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "cierre_reparacion",
+      "column_name": "id_tecnico",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "cierre_reparacion",
+      "column_name": "rut_cliente",
+      "data_type": "character varying",
+      "character_maximum_length": 12,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "cierre_reparacion",
+      "column_name": "direccion_servicio",
+      "data_type": "character varying",
+      "character_maximum_length": 200,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "cierre_reparacion",
+      "column_name": "falla_reportada",
+      "data_type": "character varying",
+      "character_maximum_length": 300,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "cierre_reparacion",
+      "column_name": "solucion_aplicada",
+      "data_type": "character varying",
+      "character_maximum_length": 300,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "cierre_reparacion",
+      "column_name": "resultado",
+      "data_type": "character varying",
+      "character_maximum_length": 30,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "cierre_reparacion",
+      "column_name": "resuelto_remotamente",
+      "data_type": "boolean",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "false"
+    },
+    {
+      "table_name": "cierre_reparacion",
+      "column_name": "categoria_falla",
+      "data_type": "character varying",
+      "character_maximum_length": 120,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "cierre_reparacion",
+      "column_name": "equipos_retirados",
+      "data_type": "jsonb",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "cierre_reparacion",
+      "column_name": "equipos_instalados",
+      "data_type": "jsonb",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "cierre_reparacion",
+      "column_name": "consumibles",
+      "data_type": "jsonb",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "cierre_reparacion",
+      "column_name": "codigo_trabajo",
+      "data_type": "character varying",
+      "character_maximum_length": 10,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "cierre_reparacion",
+      "column_name": "fecha_cierre",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "cierre_reparacion",
+      "column_name": "fecha_registro",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "donacion",
+      "column_name": "id_donacion",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "nextval('donacion_id_donacion_seq'::regclass)"
+    },
+    {
+      "table_name": "donacion",
+      "column_name": "nombre_institucion",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "donacion",
+      "column_name": "rut_institucion",
+      "data_type": "character varying",
+      "character_maximum_length": 12,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "donacion",
+      "column_name": "fecha_donacion",
+      "data_type": "date",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "donacion",
+      "column_name": "numero_resolucion",
+      "data_type": "character varying",
+      "character_maximum_length": 30,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "donacion",
+      "column_name": "id_usuario",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "donacion",
+      "column_name": "id_empresa",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "donacion",
+      "column_name": "fecha_creacion",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "donacion_detalle",
+      "column_name": "id_detalle",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "nextval('donacion_detalle_id_detalle_seq'::regclass)"
+    },
+    {
+      "table_name": "donacion_detalle",
+      "column_name": "id_donacion",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "donacion_detalle",
+      "column_name": "id_unidad",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "empresa",
+      "column_name": "id_empresa",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "nextval('empresa_id_empresa_seq'::regclass)"
+    },
+    {
+      "table_name": "empresa",
+      "column_name": "nombre",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "historial_estado_equipo",
+      "column_name": "id_historial",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "nextval('historial_estado_equipo_id_historial_seq'::regclass)"
+    },
+    {
+      "table_name": "historial_estado_equipo",
+      "column_name": "id_unidad",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "historial_estado_equipo",
+      "column_name": "id_usuario",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "historial_estado_equipo",
+      "column_name": "estado_anterior",
+      "data_type": "character varying",
+      "character_maximum_length": 30,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "historial_estado_equipo",
+      "column_name": "estado_nuevo",
+      "data_type": "character varying",
+      "character_maximum_length": 30,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "historial_estado_equipo",
+      "column_name": "motivo",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "historial_estado_equipo",
+      "column_name": "fecha_hora",
+      "data_type": "timestamp without time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "CURRENT_TIMESTAMP"
+    },
+    {
+      "table_name": "integracion_activacion",
+      "column_name": "id_activacion",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "nextval('integracion_activacion_id_activacion_seq'::regclass)"
+    },
+    {
+      "table_name": "integracion_activacion",
+      "column_name": "event_id",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "integracion_activacion",
+      "column_name": "trace_id",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "integracion_activacion",
+      "column_name": "id_empresa",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "integracion_activacion",
+      "column_name": "id_ot",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "integracion_activacion",
+      "column_name": "id_cliente_externo",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "integracion_activacion",
+      "column_name": "rut_cliente",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "integracion_activacion",
+      "column_name": "id_servicio_externo",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "integracion_activacion",
+      "column_name": "id_contrato_externo",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "integracion_activacion",
+      "column_name": "payload",
+      "data_type": "jsonb",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "integracion_activacion",
+      "column_name": "estado_proceso",
+      "data_type": "character varying",
+      "character_maximum_length": 40,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "integracion_activacion",
+      "column_name": "equipos_asociados",
+      "data_type": "jsonb",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "integracion_activacion",
+      "column_name": "discrepancias",
+      "data_type": "jsonb",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "integracion_activacion",
+      "column_name": "fecha_proceso",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "integracion_cierre",
+      "column_name": "id_cierre",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "nextval('integracion_cierre_id_cierre_seq'::regclass)"
+    },
+    {
+      "table_name": "integracion_cierre",
+      "column_name": "clave_idempotencia",
+      "data_type": "character varying",
+      "character_maximum_length": 120,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "integracion_cierre",
+      "column_name": "id_ot",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "integracion_cierre",
+      "column_name": "id_empresa",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "integracion_cierre",
+      "column_name": "tipo_ot",
+      "data_type": "character varying",
+      "character_maximum_length": 30,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "integracion_cierre",
+      "column_name": "payload",
+      "data_type": "jsonb",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "integracion_cierre",
+      "column_name": "estado_proceso",
+      "data_type": "character varying",
+      "character_maximum_length": 40,
+      "is_nullable": "NO",
+      "column_default": "'PROCESADO'::character varying"
+    },
+    {
+      "table_name": "integracion_cierre",
+      "column_name": "discrepancias",
+      "data_type": "jsonb",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "integracion_cierre",
+      "column_name": "acciones_aplicadas",
+      "data_type": "jsonb",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "integracion_cierre",
+      "column_name": "fecha_proceso",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "integracion_cierre",
+      "column_name": "srv",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "integracion_cierre",
+      "column_name": "id_tecnico",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "integracion_cierre",
+      "column_name": "materiales_aplicados",
+      "data_type": "jsonb",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "inventario_personal_tecnico",
+      "column_name": "id_inventario",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "nextval('inventario_personal_tecnico_id_inventario_seq'::regclass)"
+    },
+    {
+      "table_name": "inventario_personal_tecnico",
+      "column_name": "id_tecnico",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "inventario_personal_tecnico",
+      "column_name": "id_tipo_equipo",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "inventario_personal_tecnico",
+      "column_name": "cantidad",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "0"
+    },
+    {
+      "table_name": "inventario_personal_tecnico",
+      "column_name": "fecha_actualizacion",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "log_auditoria",
+      "column_name": "id_log",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "nextval('log_auditoria_id_log_seq'::regclass)"
+    },
+    {
+      "table_name": "log_auditoria",
+      "column_name": "id_usuario",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "log_auditoria",
+      "column_name": "accion",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "log_auditoria",
+      "column_name": "entidad_afectada",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "log_auditoria",
+      "column_name": "id_entidad_afectada",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "log_auditoria",
+      "column_name": "valor_anterior",
+      "data_type": "jsonb",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "log_auditoria",
+      "column_name": "valor_nuevo",
+      "data_type": "jsonb",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "log_auditoria",
+      "column_name": "ip_origen",
+      "data_type": "inet",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "log_auditoria",
+      "column_name": "fecha_hora",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "movimiento_inventario",
+      "column_name": "id_movimiento",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "nextval('movimiento_inventario_id_movimiento_seq'::regclass)"
+    },
+    {
+      "table_name": "movimiento_inventario",
+      "column_name": "id_tipo_equipo",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "movimiento_inventario",
+      "column_name": "id_unidad",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "movimiento_inventario",
+      "column_name": "id_empresa_origen",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "movimiento_inventario",
+      "column_name": "id_empresa_destino",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "movimiento_inventario",
+      "column_name": "id_bodega_origen",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "movimiento_inventario",
+      "column_name": "id_bodega_destino",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "movimiento_inventario",
+      "column_name": "id_usuario",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "movimiento_inventario",
+      "column_name": "tipo_movimiento",
+      "data_type": "character varying",
+      "character_maximum_length": 30,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "movimiento_inventario",
+      "column_name": "cantidad",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "1"
+    },
+    {
+      "table_name": "movimiento_inventario",
+      "column_name": "fecha",
+      "data_type": "timestamp without time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "movimiento_inventario",
+      "column_name": "referencia_id",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "notificacion",
+      "column_name": "id_notificacion",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "nextval('notificacion_id_notificacion_seq'::regclass)"
+    },
+    {
+      "table_name": "notificacion",
+      "column_name": "tipo",
+      "data_type": "character varying",
+      "character_maximum_length": 40,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "notificacion",
+      "column_name": "id_empresa",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "notificacion",
+      "column_name": "descripcion",
+      "data_type": "character varying",
+      "character_maximum_length": 150,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "notificacion",
+      "column_name": "clave_dedupe",
+      "data_type": "character varying",
+      "character_maximum_length": 120,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "notificacion",
+      "column_name": "leida",
+      "data_type": "boolean",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "false"
+    },
+    {
+      "table_name": "notificacion",
+      "column_name": "fecha_generacion",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "notificacion",
+      "column_name": "fecha_leida",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "orden_ingreso",
+      "column_name": "id_orden",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "nextval('orden_ingreso_id_orden_seq'::regclass)"
+    },
+    {
+      "table_name": "orden_ingreso",
+      "column_name": "correlativo",
+      "data_type": "character varying",
+      "character_maximum_length": 10,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "orden_ingreso",
+      "column_name": "id_proveedor",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "orden_ingreso",
+      "column_name": "numero_documento",
+      "data_type": "character varying",
+      "character_maximum_length": 30,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "orden_ingreso",
+      "column_name": "fecha_documento",
+      "data_type": "date",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "orden_ingreso",
+      "column_name": "id_empresa_destino",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "orden_ingreso",
+      "column_name": "id_bodega_destino",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "orden_ingreso",
+      "column_name": "estado",
+      "data_type": "character varying",
+      "character_maximum_length": 30,
+      "is_nullable": "NO",
+      "column_default": "'Pendiente de recepción'::character varying"
+    },
+    {
+      "table_name": "orden_ingreso",
+      "column_name": "id_usuario_registro",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "orden_ingreso",
+      "column_name": "fecha_creacion",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "orden_ingreso_detalle",
+      "column_name": "id_detalle",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "nextval('orden_ingreso_detalle_id_detalle_seq'::regclass)"
+    },
+    {
+      "table_name": "orden_ingreso_detalle",
+      "column_name": "id_orden",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "orden_ingreso_detalle",
+      "column_name": "id_tipo_equipo",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "orden_ingreso_detalle",
+      "column_name": "cantidad_esperada",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "orden_ingreso_detalle",
+      "column_name": "garantia_dias",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "table_name": "orden_ingreso_detalle",
+      "column_name": "cantidad_recibida",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "table_name": "prestamo_detalle",
+      "column_name": "id_detalle",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "nextval('prestamo_detalle_id_detalle_seq'::regclass)"
+    },
+    {
+      "table_name": "prestamo_detalle",
+      "column_name": "id_prestamo",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "prestamo_detalle",
+      "column_name": "id_unidad",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "prestamo_detalle",
+      "column_name": "id_tipo_equipo",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "prestamo_detalle",
+      "column_name": "cantidad",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "prestamo_detalle",
+      "column_name": "cantidad_retornada",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "0"
+    },
+    {
+      "table_name": "prestamo_externo",
+      "column_name": "id_prestamo",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "nextval('prestamo_externo_id_prestamo_seq'::regclass)"
+    },
+    {
+      "table_name": "prestamo_externo",
+      "column_name": "tipo",
+      "data_type": "character varying",
+      "character_maximum_length": 30,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "prestamo_externo",
+      "column_name": "id_empresa",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "prestamo_externo",
+      "column_name": "id_unidad",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "prestamo_externo",
+      "column_name": "nombre_receptor",
+      "data_type": "character varying",
+      "character_maximum_length": 80,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "prestamo_externo",
+      "column_name": "rut_receptor",
+      "data_type": "character varying",
+      "character_maximum_length": 12,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "prestamo_externo",
+      "column_name": "fecha_salida",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "prestamo_externo",
+      "column_name": "fecha_retorno_estimada",
+      "data_type": "date",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "prestamo_externo",
+      "column_name": "fecha_retorno_real",
+      "data_type": "date",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "prestamo_externo",
+      "column_name": "detalle",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "prestamo_externo",
+      "column_name": "estado",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "NO",
+      "column_default": "'ACTIVO'::character varying"
+    },
+    {
+      "table_name": "prestamo_externo",
+      "column_name": "resultado",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "prestamo_externo",
+      "column_name": "id_usuario_registro",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "prestamo_externo",
+      "column_name": "correlativo",
+      "data_type": "character varying",
+      "character_maximum_length": 12,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "prestamo_externo",
+      "column_name": "id_bodega_origen",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "prestamo_retorno",
+      "column_name": "id_retorno",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "nextval('prestamo_retorno_id_retorno_seq'::regclass)"
+    },
+    {
+      "table_name": "prestamo_retorno",
+      "column_name": "id_detalle",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "prestamo_retorno",
+      "column_name": "cantidad",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "prestamo_retorno",
+      "column_name": "fecha_retorno",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "prestamo_retorno",
+      "column_name": "observacion",
+      "data_type": "character varying",
+      "character_maximum_length": 300,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "prestamo_retorno",
+      "column_name": "id_usuario",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "proveedor",
+      "column_name": "id_proveedor",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "nextval('proveedor_id_proveedor_seq'::regclass)"
+    },
+    {
+      "table_name": "proveedor",
+      "column_name": "nombre_comercial",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "proveedor",
+      "column_name": "rut",
+      "data_type": "character varying",
+      "character_maximum_length": 12,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "proveedor",
+      "column_name": "nombre_contacto",
+      "data_type": "character varying",
+      "character_maximum_length": 80,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "proveedor",
+      "column_name": "telefono",
+      "data_type": "character varying",
+      "character_maximum_length": 15,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "proveedor",
+      "column_name": "email",
+      "data_type": "character varying",
+      "character_maximum_length": 150,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "proveedor",
+      "column_name": "activa",
+      "data_type": "boolean",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "true"
+    },
+    {
+      "table_name": "proveedor",
+      "column_name": "fecha_creacion",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "proveedor_tipo_equipo",
+      "column_name": "id",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "nextval('proveedor_tipo_equipo_id_seq'::regclass)"
+    },
+    {
+      "table_name": "proveedor_tipo_equipo",
+      "column_name": "id_proveedor",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "proveedor_tipo_equipo",
+      "column_name": "id_tipo_equipo",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "rol",
+      "column_name": "id_rol",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "nextval('rol_id_rol_seq'::regclass)"
+    },
+    {
+      "table_name": "rol",
+      "column_name": "nombre_rol",
+      "data_type": "character varying",
+      "character_maximum_length": 50,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "rol",
+      "column_name": "descripcion",
+      "data_type": "character varying",
+      "character_maximum_length": 200,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "salida_bodega",
+      "column_name": "id_salida",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "nextval('salida_bodega_id_salida_seq'::regclass)"
+    },
+    {
+      "table_name": "salida_bodega",
+      "column_name": "id_tecnico",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "salida_bodega",
+      "column_name": "id_bodega_origen",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "salida_bodega",
+      "column_name": "fecha_hora",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "salida_bodega",
+      "column_name": "id_empresa",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "salida_bodega",
+      "column_name": "id_usuario_registro",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "salida_detalle",
+      "column_name": "id_detalle",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "nextval('salida_detalle_id_detalle_seq'::regclass)"
+    },
+    {
+      "table_name": "salida_detalle",
+      "column_name": "id_salida",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "salida_detalle",
+      "column_name": "id_tipo_equipo",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "salida_detalle",
+      "column_name": "id_unidad",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "salida_detalle",
+      "column_name": "cantidad",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "secuencia_srv",
+      "column_name": "id_empresa",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "secuencia_srv",
+      "column_name": "anio",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "secuencia_srv",
+      "column_name": "ultimo",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "table_name": "solicitud_baja",
+      "column_name": "id_solicitud",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "nextval('solicitud_baja_id_solicitud_seq'::regclass)"
+    },
+    {
+      "table_name": "solicitud_baja",
+      "column_name": "id_unidad",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "solicitud_baja",
+      "column_name": "id_empresa",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "solicitud_baja",
+      "column_name": "id_usuario_solicitante",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "solicitud_baja",
+      "column_name": "motivo",
+      "data_type": "character varying",
+      "character_maximum_length": 40,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "solicitud_baja",
+      "column_name": "motivo_otro",
+      "data_type": "character varying",
+      "character_maximum_length": 200,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "solicitud_baja",
+      "column_name": "estado",
+      "data_type": "character varying",
+      "character_maximum_length": 30,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "solicitud_baja",
+      "column_name": "id_usuario_aprobador",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "solicitud_baja",
+      "column_name": "fecha_solicitud",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "solicitud_baja",
+      "column_name": "fecha_resolucion",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "solicitud_baja",
+      "column_name": "motivo_rechazo",
+      "data_type": "character varying",
+      "character_maximum_length": 200,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "stock_consumible",
+      "column_name": "id_stock",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "nextval('stock_consumible_id_stock_seq'::regclass)"
+    },
+    {
+      "table_name": "stock_consumible",
+      "column_name": "id_tipo_equipo",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "stock_consumible",
+      "column_name": "id_bodega",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "stock_consumible",
+      "column_name": "cantidad_disponible",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "0"
+    },
+    {
+      "table_name": "stock_consumible",
+      "column_name": "umbral_minimo",
+      "data_type": "numeric",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "tipo_equipo",
+      "column_name": "id_tipo_equipo",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "nextval('tipo_equipo_id_tipo_equipo_seq'::regclass)"
+    },
+    {
+      "table_name": "tipo_equipo",
+      "column_name": "id_empresa",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "tipo_equipo",
+      "column_name": "nombre",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "tipo_equipo",
+      "column_name": "categoria",
+      "data_type": "character varying",
+      "character_maximum_length": 40,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "tipo_equipo",
+      "column_name": "marca",
+      "data_type": "character varying",
+      "character_maximum_length": 50,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "tipo_equipo",
+      "column_name": "modelo",
+      "data_type": "character varying",
+      "character_maximum_length": 50,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "tipo_equipo",
+      "column_name": "descripcion_tecnica",
+      "data_type": "character varying",
+      "character_maximum_length": 500,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "tipo_equipo",
+      "column_name": "unidad_medida",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "tipo_equipo",
+      "column_name": "garantia_dias",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "0"
+    },
+    {
+      "table_name": "tipo_equipo",
+      "column_name": "requiere_serie_individual",
+      "data_type": "boolean",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "tipo_equipo",
+      "column_name": "ficha_tecnica_pdf_url",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "tipo_equipo",
+      "column_name": "ficha_tecnica_nombre",
+      "data_type": "character varying",
+      "character_maximum_length": 255,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "tipo_equipo",
+      "column_name": "activo",
+      "data_type": "boolean",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "true"
+    },
+    {
+      "table_name": "transferencia_equipo",
+      "column_name": "id_transferencia",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "nextval('transferencia_equipo_id_transferencia_seq'::regclass)"
+    },
+    {
+      "table_name": "transferencia_equipo",
+      "column_name": "id_empresa_origen",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "transferencia_equipo",
+      "column_name": "id_empresa_destino",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "transferencia_equipo",
+      "column_name": "id_usuario_registro",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "transferencia_equipo",
+      "column_name": "fecha_transferencia",
+      "data_type": "date",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "transferencia_equipo",
+      "column_name": "observaciones",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "unidad_equipo",
+      "column_name": "id_unidad",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "nextval('unidad_equipo_id_unidad_seq'::regclass)"
+    },
+    {
+      "table_name": "unidad_equipo",
+      "column_name": "id_tipo_equipo",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "unidad_equipo",
+      "column_name": "id_empresa",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "unidad_equipo",
+      "column_name": "numero_serie",
+      "data_type": "character varying",
+      "character_maximum_length": 80,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "unidad_equipo",
+      "column_name": "modelo",
+      "data_type": "character varying",
+      "character_maximum_length": 80,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "unidad_equipo",
+      "column_name": "estado",
+      "data_type": "character varying",
+      "character_maximum_length": 30,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "unidad_equipo",
+      "column_name": "fecha_adquisicion",
+      "data_type": "date",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "unidad_equipo",
+      "column_name": "fecha_venc_garantia",
+      "data_type": "date",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "unidad_equipo",
+      "column_name": "diagnostico_tecnico",
+      "data_type": "text",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "unidad_equipo",
+      "column_name": "id_cliente_instalado",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "unidad_equipo",
+      "column_name": "id_bodega_actual",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "unidad_equipo",
+      "column_name": "numero_poste",
+      "data_type": "character varying",
+      "character_maximum_length": 30,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "unidad_equipo",
+      "column_name": "id_caja_nap",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "unidad_equipo",
+      "column_name": "mac_address",
+      "data_type": "character varying",
+      "character_maximum_length": 17,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "unidad_equipo",
+      "column_name": "proveedor",
+      "data_type": "character varying",
+      "character_maximum_length": 80,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "unidad_equipo",
+      "column_name": "observaciones",
+      "data_type": "character varying",
+      "character_maximum_length": 300,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "unidad_equipo",
+      "column_name": "ubicacion_fisica",
+      "data_type": "character varying",
+      "character_maximum_length": 60,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "unidad_equipo",
+      "column_name": "motivo_baja",
+      "data_type": "character varying",
+      "character_maximum_length": 40,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "unidad_equipo",
+      "column_name": "motivo_baja_detalle",
+      "data_type": "character varying",
+      "character_maximum_length": 200,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "unidad_equipo",
+      "column_name": "id_tecnico_asignado",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "unidad_equipo",
+      "column_name": "cliente_rut",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "unidad_equipo",
+      "column_name": "cliente_nombre",
+      "data_type": "character varying",
+      "character_maximum_length": 150,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "unidad_equipo",
+      "column_name": "direccion_instalacion",
+      "data_type": "character varying",
+      "character_maximum_length": 300,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "unidad_equipo",
+      "column_name": "comuna_instalacion",
+      "data_type": "character varying",
+      "character_maximum_length": 100,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "unidad_equipo",
+      "column_name": "srv",
+      "data_type": "character varying",
+      "character_maximum_length": 20,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "usuario",
+      "column_name": "id_usuario",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "nextval('usuario_id_usuario_seq'::regclass)"
+    },
+    {
+      "table_name": "usuario",
+      "column_name": "id_empresa",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "usuario",
+      "column_name": "nombre_completo",
+      "data_type": "character varying",
+      "character_maximum_length": 150,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "usuario",
+      "column_name": "nombre_usuario",
+      "data_type": "character varying",
+      "character_maximum_length": 50,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "usuario",
+      "column_name": "email",
+      "data_type": "character varying",
+      "character_maximum_length": 150,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "usuario",
+      "column_name": "password_hash",
+      "data_type": "character varying",
+      "character_maximum_length": 255,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "usuario",
+      "column_name": "activo",
+      "data_type": "boolean",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "true"
+    },
+    {
+      "table_name": "usuario",
+      "column_name": "intentos_fallidos",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "table_name": "usuario",
+      "column_name": "bloqueado_hasta",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "usuario",
+      "column_name": "debe_cambiar_password",
+      "data_type": "boolean",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "false"
+    },
+    {
+      "table_name": "usuario",
+      "column_name": "fecha_creacion",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "usuario",
+      "column_name": "rut",
+      "data_type": "character varying",
+      "character_maximum_length": 12,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "usuario_rol",
+      "column_name": "id_usuario_rol",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": "nextval('usuario_rol_id_usuario_rol_seq'::regclass)"
+    },
+    {
+      "table_name": "usuario_rol",
+      "column_name": "id_usuario",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "usuario_rol",
+      "column_name": "id_rol",
+      "data_type": "integer",
+      "character_maximum_length": null,
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "usuario_rol",
+      "column_name": "fecha_asignacion",
+      "data_type": "timestamp with time zone",
+      "character_maximum_length": null,
+      "is_nullable": "YES",
+      "column_default": "now()"
+    }
+  ],
+  "keys": [
+    {
+      "table_name": "asignacion_equipo_servicio",
+      "constraint_name": "asignacion_equipo_servicio_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "id_asignacion",
+      "foreign_table": "asignacion_equipo_servicio",
+      "foreign_column": "id_asignacion"
+    },
+    {
+      "table_name": "asignacion_equipo_servicio",
+      "constraint_name": "fk_asignacion_unidad",
+      "constraint_type": "FOREIGN KEY",
+      "column_name": "id_unidad",
+      "foreign_table": "unidad_equipo",
+      "foreign_column": "id_unidad"
+    },
+    {
+      "table_name": "bodega",
+      "constraint_name": "bodega_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "id_bodega",
+      "foreign_table": "bodega",
+      "foreign_column": "id_bodega"
+    },
+    {
+      "table_name": "borrador_cierre",
+      "constraint_name": "borrador_cierre_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "id_borrador",
+      "foreign_table": "borrador_cierre",
+      "foreign_column": "id_borrador"
+    },
+    {
+      "table_name": "borrador_cierre",
+      "constraint_name": "uq_borrador_cierre_ot",
+      "constraint_type": "UNIQUE",
+      "column_name": "id_ot",
+      "foreign_table": "borrador_cierre",
+      "foreign_column": "id_ot"
+    },
+    {
+      "table_name": "borrador_cierre",
+      "constraint_name": "uq_borrador_cierre_ot",
+      "constraint_type": "UNIQUE",
+      "column_name": "id_ot",
+      "foreign_table": "borrador_cierre",
+      "foreign_column": "id_empresa"
+    },
+    {
+      "table_name": "borrador_cierre",
+      "constraint_name": "uq_borrador_cierre_ot",
+      "constraint_type": "UNIQUE",
+      "column_name": "id_empresa",
+      "foreign_table": "borrador_cierre",
+      "foreign_column": "id_ot"
+    },
+    {
+      "table_name": "borrador_cierre",
+      "constraint_name": "uq_borrador_cierre_ot",
+      "constraint_type": "UNIQUE",
+      "column_name": "id_empresa",
+      "foreign_table": "borrador_cierre",
+      "foreign_column": "id_empresa"
+    },
+    {
+      "table_name": "cierre_reparacion",
+      "constraint_name": "cierre_reparacion_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "id_cierre_reparacion",
+      "foreign_table": "cierre_reparacion",
+      "foreign_column": "id_cierre_reparacion"
+    },
+    {
+      "table_name": "donacion",
+      "constraint_name": "donacion_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "id_donacion",
+      "foreign_table": "donacion",
+      "foreign_column": "id_donacion"
+    },
+    {
+      "table_name": "donacion_detalle",
+      "constraint_name": "donacion_detalle_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "id_detalle",
+      "foreign_table": "donacion_detalle",
+      "foreign_column": "id_detalle"
+    },
+    {
+      "table_name": "donacion_detalle",
+      "constraint_name": "fk_donacion_detalle_donacion",
+      "constraint_type": "FOREIGN KEY",
+      "column_name": "id_donacion",
+      "foreign_table": "donacion",
+      "foreign_column": "id_donacion"
+    },
+    {
+      "table_name": "donacion_detalle",
+      "constraint_name": "fk_donacion_detalle_unidad",
+      "constraint_type": "FOREIGN KEY",
+      "column_name": "id_unidad",
+      "foreign_table": "unidad_equipo",
+      "foreign_column": "id_unidad"
+    },
+    {
+      "table_name": "empresa",
+      "constraint_name": "empresa_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "id_empresa",
+      "foreign_table": "empresa",
+      "foreign_column": "id_empresa"
+    },
+    {
+      "table_name": "historial_estado_equipo",
+      "constraint_name": "fk_historial_unidad",
+      "constraint_type": "FOREIGN KEY",
+      "column_name": "id_unidad",
+      "foreign_table": "unidad_equipo",
+      "foreign_column": "id_unidad"
+    },
+    {
+      "table_name": "historial_estado_equipo",
+      "constraint_name": "historial_estado_equipo_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "id_historial",
+      "foreign_table": "historial_estado_equipo",
+      "foreign_column": "id_historial"
+    },
+    {
+      "table_name": "integracion_activacion",
+      "constraint_name": "integracion_activacion_event_id_key",
+      "constraint_type": "UNIQUE",
+      "column_name": "event_id",
+      "foreign_table": "integracion_activacion",
+      "foreign_column": "event_id"
+    },
+    {
+      "table_name": "integracion_activacion",
+      "constraint_name": "integracion_activacion_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "id_activacion",
+      "foreign_table": "integracion_activacion",
+      "foreign_column": "id_activacion"
+    },
+    {
+      "table_name": "integracion_cierre",
+      "constraint_name": "integracion_cierre_clave_idempotencia_key",
+      "constraint_type": "UNIQUE",
+      "column_name": "clave_idempotencia",
+      "foreign_table": "integracion_cierre",
+      "foreign_column": "clave_idempotencia"
+    },
+    {
+      "table_name": "integracion_cierre",
+      "constraint_name": "integracion_cierre_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "id_cierre",
+      "foreign_table": "integracion_cierre",
+      "foreign_column": "id_cierre"
+    },
+    {
+      "table_name": "inventario_personal_tecnico",
+      "constraint_name": "inventario_personal_tecnico_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "id_inventario",
+      "foreign_table": "inventario_personal_tecnico",
+      "foreign_column": "id_inventario"
+    },
+    {
+      "table_name": "inventario_personal_tecnico",
+      "constraint_name": "uq_inventario_tecnico_tipo",
+      "constraint_type": "UNIQUE",
+      "column_name": "id_tecnico",
+      "foreign_table": "inventario_personal_tecnico",
+      "foreign_column": "id_tipo_equipo"
+    },
+    {
+      "table_name": "inventario_personal_tecnico",
+      "constraint_name": "uq_inventario_tecnico_tipo",
+      "constraint_type": "UNIQUE",
+      "column_name": "id_tecnico",
+      "foreign_table": "inventario_personal_tecnico",
+      "foreign_column": "id_tecnico"
+    },
+    {
+      "table_name": "inventario_personal_tecnico",
+      "constraint_name": "uq_inventario_tecnico_tipo",
+      "constraint_type": "UNIQUE",
+      "column_name": "id_tipo_equipo",
+      "foreign_table": "inventario_personal_tecnico",
+      "foreign_column": "id_tecnico"
+    },
+    {
+      "table_name": "inventario_personal_tecnico",
+      "constraint_name": "uq_inventario_tecnico_tipo",
+      "constraint_type": "UNIQUE",
+      "column_name": "id_tipo_equipo",
+      "foreign_table": "inventario_personal_tecnico",
+      "foreign_column": "id_tipo_equipo"
+    },
+    {
+      "table_name": "log_auditoria",
+      "constraint_name": "log_auditoria_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "id_log",
+      "foreign_table": "log_auditoria",
+      "foreign_column": "id_log"
+    },
+    {
+      "table_name": "movimiento_inventario",
+      "constraint_name": "movimiento_inventario_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "id_movimiento",
+      "foreign_table": "movimiento_inventario",
+      "foreign_column": "id_movimiento"
+    },
+    {
+      "table_name": "notificacion",
+      "constraint_name": "notificacion_clave_dedupe_key",
+      "constraint_type": "UNIQUE",
+      "column_name": "clave_dedupe",
+      "foreign_table": "notificacion",
+      "foreign_column": "clave_dedupe"
+    },
+    {
+      "table_name": "notificacion",
+      "constraint_name": "notificacion_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "id_notificacion",
+      "foreign_table": "notificacion",
+      "foreign_column": "id_notificacion"
+    },
+    {
+      "table_name": "orden_ingreso",
+      "constraint_name": "fk_oi_bodega",
+      "constraint_type": "FOREIGN KEY",
+      "column_name": "id_bodega_destino",
+      "foreign_table": "bodega",
+      "foreign_column": "id_bodega"
+    },
+    {
+      "table_name": "orden_ingreso",
+      "constraint_name": "fk_oi_proveedor",
+      "constraint_type": "FOREIGN KEY",
+      "column_name": "id_proveedor",
+      "foreign_table": "proveedor",
+      "foreign_column": "id_proveedor"
+    },
+    {
+      "table_name": "orden_ingreso",
+      "constraint_name": "orden_ingreso_correlativo_key",
+      "constraint_type": "UNIQUE",
+      "column_name": "correlativo",
+      "foreign_table": "orden_ingreso",
+      "foreign_column": "correlativo"
+    },
+    {
+      "table_name": "orden_ingreso",
+      "constraint_name": "orden_ingreso_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "id_orden",
+      "foreign_table": "orden_ingreso",
+      "foreign_column": "id_orden"
+    },
+    {
+      "table_name": "orden_ingreso_detalle",
+      "constraint_name": "fk_oid_orden",
+      "constraint_type": "FOREIGN KEY",
+      "column_name": "id_orden",
+      "foreign_table": "orden_ingreso",
+      "foreign_column": "id_orden"
+    },
+    {
+      "table_name": "orden_ingreso_detalle",
+      "constraint_name": "fk_oid_tipo_equipo",
+      "constraint_type": "FOREIGN KEY",
+      "column_name": "id_tipo_equipo",
+      "foreign_table": "tipo_equipo",
+      "foreign_column": "id_tipo_equipo"
+    },
+    {
+      "table_name": "orden_ingreso_detalle",
+      "constraint_name": "orden_ingreso_detalle_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "id_detalle",
+      "foreign_table": "orden_ingreso_detalle",
+      "foreign_column": "id_detalle"
+    },
+    {
+      "table_name": "prestamo_detalle",
+      "constraint_name": "fk_prestamo_detalle_prestamo",
+      "constraint_type": "FOREIGN KEY",
+      "column_name": "id_prestamo",
+      "foreign_table": "prestamo_externo",
+      "foreign_column": "id_prestamo"
+    },
+    {
+      "table_name": "prestamo_detalle",
+      "constraint_name": "fk_prestamo_detalle_unidad",
+      "constraint_type": "FOREIGN KEY",
+      "column_name": "id_unidad",
+      "foreign_table": "unidad_equipo",
+      "foreign_column": "id_unidad"
+    },
+    {
+      "table_name": "prestamo_detalle",
+      "constraint_name": "prestamo_detalle_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "id_detalle",
+      "foreign_table": "prestamo_detalle",
+      "foreign_column": "id_detalle"
+    },
+    {
+      "table_name": "prestamo_externo",
+      "constraint_name": "prestamo_externo_correlativo_key",
+      "constraint_type": "UNIQUE",
+      "column_name": "correlativo",
+      "foreign_table": "prestamo_externo",
+      "foreign_column": "correlativo"
+    },
+    {
+      "table_name": "prestamo_externo",
+      "constraint_name": "prestamo_externo_id_unidad_fkey",
+      "constraint_type": "FOREIGN KEY",
+      "column_name": "id_unidad",
+      "foreign_table": "unidad_equipo",
+      "foreign_column": "id_unidad"
+    },
+    {
+      "table_name": "prestamo_externo",
+      "constraint_name": "prestamo_externo_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "id_prestamo",
+      "foreign_table": "prestamo_externo",
+      "foreign_column": "id_prestamo"
+    },
+    {
+      "table_name": "prestamo_retorno",
+      "constraint_name": "fk_prestamo_retorno_detalle",
+      "constraint_type": "FOREIGN KEY",
+      "column_name": "id_detalle",
+      "foreign_table": "prestamo_detalle",
+      "foreign_column": "id_detalle"
+    },
+    {
+      "table_name": "prestamo_retorno",
+      "constraint_name": "prestamo_retorno_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "id_retorno",
+      "foreign_table": "prestamo_retorno",
+      "foreign_column": "id_retorno"
+    },
+    {
+      "table_name": "proveedor",
+      "constraint_name": "proveedor_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "id_proveedor",
+      "foreign_table": "proveedor",
+      "foreign_column": "id_proveedor"
+    },
+    {
+      "table_name": "proveedor",
+      "constraint_name": "proveedor_rut_key",
+      "constraint_type": "UNIQUE",
+      "column_name": "rut",
+      "foreign_table": "proveedor",
+      "foreign_column": "rut"
+    },
+    {
+      "table_name": "proveedor_tipo_equipo",
+      "constraint_name": "fk_pte_proveedor",
+      "constraint_type": "FOREIGN KEY",
+      "column_name": "id_proveedor",
+      "foreign_table": "proveedor",
+      "foreign_column": "id_proveedor"
+    },
+    {
+      "table_name": "proveedor_tipo_equipo",
+      "constraint_name": "fk_pte_tipo_equipo",
+      "constraint_type": "FOREIGN KEY",
+      "column_name": "id_tipo_equipo",
+      "foreign_table": "tipo_equipo",
+      "foreign_column": "id_tipo_equipo"
+    },
+    {
+      "table_name": "proveedor_tipo_equipo",
+      "constraint_name": "proveedor_tipo_equipo_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "id",
+      "foreign_table": "proveedor_tipo_equipo",
+      "foreign_column": "id"
+    },
+    {
+      "table_name": "proveedor_tipo_equipo",
+      "constraint_name": "uq_pte",
+      "constraint_type": "UNIQUE",
+      "column_name": "id_proveedor",
+      "foreign_table": "proveedor_tipo_equipo",
+      "foreign_column": "id_proveedor"
+    },
+    {
+      "table_name": "proveedor_tipo_equipo",
+      "constraint_name": "uq_pte",
+      "constraint_type": "UNIQUE",
+      "column_name": "id_tipo_equipo",
+      "foreign_table": "proveedor_tipo_equipo",
+      "foreign_column": "id_tipo_equipo"
+    },
+    {
+      "table_name": "proveedor_tipo_equipo",
+      "constraint_name": "uq_pte",
+      "constraint_type": "UNIQUE",
+      "column_name": "id_tipo_equipo",
+      "foreign_table": "proveedor_tipo_equipo",
+      "foreign_column": "id_proveedor"
+    },
+    {
+      "table_name": "proveedor_tipo_equipo",
+      "constraint_name": "uq_pte",
+      "constraint_type": "UNIQUE",
+      "column_name": "id_proveedor",
+      "foreign_table": "proveedor_tipo_equipo",
+      "foreign_column": "id_tipo_equipo"
+    },
+    {
+      "table_name": "rol",
+      "constraint_name": "rol_nombre_rol_key",
+      "constraint_type": "UNIQUE",
+      "column_name": "nombre_rol",
+      "foreign_table": "rol",
+      "foreign_column": "nombre_rol"
+    },
+    {
+      "table_name": "rol",
+      "constraint_name": "rol_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "id_rol",
+      "foreign_table": "rol",
+      "foreign_column": "id_rol"
+    },
+    {
+      "table_name": "salida_bodega",
+      "constraint_name": "salida_bodega_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "id_salida",
+      "foreign_table": "salida_bodega",
+      "foreign_column": "id_salida"
+    },
+    {
+      "table_name": "salida_detalle",
+      "constraint_name": "fk_salida_detalle_salida",
+      "constraint_type": "FOREIGN KEY",
+      "column_name": "id_salida",
+      "foreign_table": "salida_bodega",
+      "foreign_column": "id_salida"
+    },
+    {
+      "table_name": "salida_detalle",
+      "constraint_name": "salida_detalle_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "id_detalle",
+      "foreign_table": "salida_detalle",
+      "foreign_column": "id_detalle"
+    },
+    {
+      "table_name": "secuencia_srv",
+      "constraint_name": "secuencia_srv_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "id_empresa",
+      "foreign_table": "secuencia_srv",
+      "foreign_column": "id_empresa"
+    },
+    {
+      "table_name": "secuencia_srv",
+      "constraint_name": "secuencia_srv_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "anio",
+      "foreign_table": "secuencia_srv",
+      "foreign_column": "anio"
+    },
+    {
+      "table_name": "secuencia_srv",
+      "constraint_name": "secuencia_srv_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "anio",
+      "foreign_table": "secuencia_srv",
+      "foreign_column": "id_empresa"
+    },
+    {
+      "table_name": "secuencia_srv",
+      "constraint_name": "secuencia_srv_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "id_empresa",
+      "foreign_table": "secuencia_srv",
+      "foreign_column": "anio"
+    },
+    {
+      "table_name": "solicitud_baja",
+      "constraint_name": "fk_solicitud_baja_unidad",
+      "constraint_type": "FOREIGN KEY",
+      "column_name": "id_unidad",
+      "foreign_table": "unidad_equipo",
+      "foreign_column": "id_unidad"
+    },
+    {
+      "table_name": "solicitud_baja",
+      "constraint_name": "solicitud_baja_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "id_solicitud",
+      "foreign_table": "solicitud_baja",
+      "foreign_column": "id_solicitud"
+    },
+    {
+      "table_name": "stock_consumible",
+      "constraint_name": "fk_stock_bodega",
+      "constraint_type": "FOREIGN KEY",
+      "column_name": "id_bodega",
+      "foreign_table": "bodega",
+      "foreign_column": "id_bodega"
+    },
+    {
+      "table_name": "stock_consumible",
+      "constraint_name": "fk_stock_tipo_equipo",
+      "constraint_type": "FOREIGN KEY",
+      "column_name": "id_tipo_equipo",
+      "foreign_table": "tipo_equipo",
+      "foreign_column": "id_tipo_equipo"
+    },
+    {
+      "table_name": "stock_consumible",
+      "constraint_name": "stock_consumible_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "id_stock",
+      "foreign_table": "stock_consumible",
+      "foreign_column": "id_stock"
+    },
+    {
+      "table_name": "tipo_equipo",
+      "constraint_name": "tipo_equipo_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "id_tipo_equipo",
+      "foreign_table": "tipo_equipo",
+      "foreign_column": "id_tipo_equipo"
+    },
+    {
+      "table_name": "transferencia_equipo",
+      "constraint_name": "transferencia_equipo_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "id_transferencia",
+      "foreign_table": "transferencia_equipo",
+      "foreign_column": "id_transferencia"
+    },
+    {
+      "table_name": "unidad_equipo",
+      "constraint_name": "fk_unidad_tipo_equipo",
+      "constraint_type": "FOREIGN KEY",
+      "column_name": "id_tipo_equipo",
+      "foreign_table": "tipo_equipo",
+      "foreign_column": "id_tipo_equipo"
+    },
+    {
+      "table_name": "unidad_equipo",
+      "constraint_name": "unidad_equipo_mac_address_key",
+      "constraint_type": "UNIQUE",
+      "column_name": "mac_address",
+      "foreign_table": "unidad_equipo",
+      "foreign_column": "mac_address"
+    },
+    {
+      "table_name": "unidad_equipo",
+      "constraint_name": "unidad_equipo_numero_serie_key",
+      "constraint_type": "UNIQUE",
+      "column_name": "numero_serie",
+      "foreign_table": "unidad_equipo",
+      "foreign_column": "numero_serie"
+    },
+    {
+      "table_name": "unidad_equipo",
+      "constraint_name": "unidad_equipo_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "id_unidad",
+      "foreign_table": "unidad_equipo",
+      "foreign_column": "id_unidad"
+    },
+    {
+      "table_name": "usuario",
+      "constraint_name": "usuario_email_key",
+      "constraint_type": "UNIQUE",
+      "column_name": "email",
+      "foreign_table": "usuario",
+      "foreign_column": "email"
+    },
+    {
+      "table_name": "usuario",
+      "constraint_name": "usuario_nombre_usuario_key",
+      "constraint_type": "UNIQUE",
+      "column_name": "nombre_usuario",
+      "foreign_table": "usuario",
+      "foreign_column": "nombre_usuario"
+    },
+    {
+      "table_name": "usuario",
+      "constraint_name": "usuario_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "id_usuario",
+      "foreign_table": "usuario",
+      "foreign_column": "id_usuario"
+    },
+    {
+      "table_name": "usuario_rol",
+      "constraint_name": "fk_usuario_rol_rol",
+      "constraint_type": "FOREIGN KEY",
+      "column_name": "id_rol",
+      "foreign_table": "rol",
+      "foreign_column": "id_rol"
+    },
+    {
+      "table_name": "usuario_rol",
+      "constraint_name": "fk_usuario_rol_usuario",
+      "constraint_type": "FOREIGN KEY",
+      "column_name": "id_usuario",
+      "foreign_table": "usuario",
+      "foreign_column": "id_usuario"
+    },
+    {
+      "table_name": "usuario_rol",
+      "constraint_name": "usuario_rol_pkey",
+      "constraint_type": "PRIMARY KEY",
+      "column_name": "id_usuario_rol",
+      "foreign_table": "usuario_rol",
+      "foreign_column": "id_usuario_rol"
+    }
+  ]
+}

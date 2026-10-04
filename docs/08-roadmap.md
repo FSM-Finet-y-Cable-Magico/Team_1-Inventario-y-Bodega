@@ -15,8 +15,8 @@ no esté reflejado aquí.
 - **Total de casos de uso:** 96
 - **Implementados por T1:** 92 (CU-01 a CU-62, CU-64, CU-68 a CU-96) — incluye CU-47, CU-48, CU-57..62, CU-61, CU-64, CU-68 (integración G3), CU-87/CU-90/CU-92 (PR #60, rama `Kevin`) y CU-69/CU-70/CU-93 (PR #66, rama `tomas`)
 - **Tomados por G3 (no los implementa T1):** 4 (CU-63, CU-65, CU-66, CU-67) — verificados contra `Team-3-FSM` (26-sept-2026), evidencia en `docs/11` §6
-- **Pendientes (Incremento 3):** 0 — con la PR #66 se completan los 11 CUs del incremento (sc-147 a sc-157)
-- **Integración con otros grupos (fuera del conteo de 96):** **sc-158/sc-159** (G8 CRM, acuerdo v1 ratificado 24-sept-2026 · Javier) — sc-158 (P0) y sc-159 (P1) implementados en `feat/javier-cus`; pendiente solo la API key de G8. **sc-113** (G3, implementado)
+- **Pendientes (Incremento 3):** 0 — la entrega suma 19 CUs respecto de los 77 del Incremento 2: CU-48, CU-61, CU-63 a CU-71, CU-73, CU-87, CU-90 y CU-92 a CU-96. Los 11 tickets sc-147 a sc-157 corresponden a una parte del alcance, no al incremento completo
+- **Integración con otros grupos (fuera del conteo de 96):** **sc-158/sc-159** (G8 CRM, acuerdo v1 ratificado 24-sept-2026 · Javier) — sc-158 (P0) y sc-159 (P1) implementados en `feat/javier-cus`; keys de G3 y G8 configuradas en Railway (pendiente enviar la URL pública a G8 al cerrar el lote). **sc-113** (G3, implementado)
 
 ## Leyenda
 

@@ -1,0 +1,96 @@
+@startuml
+
+!theme plain
+
+hide circle
+
+skinparam linetype ortho
+
+skinparam shadowing false
+
+skinparam roundcorner 4
+
+skinparam classFontSize 11
+
+skinparam classFontName "Helvetica,Arial,sans-serif"
+
+skinparam arrowColor #333333
+
+skinparam packageBackgroundColor transparent
+
+skinparam class {
+
+    BackgroundColor #FFFFFF
+
+    BorderColor #2B5797
+
+    HeaderBackgroundColor #E8EEF7
+
+}
+
+title Modelo físico — detalle prestamos y bajas (dev)
+entity "prestamo_externo" as prestamo_externo {
+  * id_prestamo : integer <<PK>>
+  * tipo : varchar(30)
+  * id_empresa : integer
+  id_unidad : integer
+  * nombre_receptor : varchar(80)
+  rut_receptor : varchar(12)
+  * fecha_salida : timestamptz
+  * fecha_retorno_estimada : date
+  fecha_retorno_real : date
+  * detalle : text
+  * estado : varchar(20)
+  resultado : varchar(20)
+  * id_usuario_registro : integer
+  correlativo : varchar(12)
+  id_bodega_origen : integer
+}
+entity "prestamo_detalle" as prestamo_detalle {
+  * id_detalle : integer <<PK>>
+  * id_prestamo : integer
+  id_unidad : integer
+  id_tipo_equipo : integer
+  cantidad : numeric
+  cantidad_retornada : numeric
+}
+entity "prestamo_retorno" as prestamo_retorno {
+  * id_retorno : integer <<PK>>
+  * id_detalle : integer
+  cantidad : numeric
+  * fecha_retorno : timestamptz
+  observacion : varchar(300)
+  * id_usuario : integer
+}
+entity "solicitud_baja" as solicitud_baja {
+  * id_solicitud : integer <<PK>>
+  * id_unidad : integer
+  id_empresa : integer
+  * id_usuario_solicitante : integer
+  * motivo : varchar(40)
+  motivo_otro : varchar(200)
+  * estado : varchar(30)
+  id_usuario_aprobador : integer
+  fecha_solicitud : timestamptz
+  fecha_resolucion : timestamptz
+  motivo_rechazo : varchar(200)
+}
+entity "donacion" as donacion {
+  * id_donacion : integer <<PK>>
+  * nombre_institucion : varchar(100)
+  * rut_institucion : varchar(12)
+  * fecha_donacion : date
+  numero_resolucion : varchar(30)
+  * id_usuario : integer
+  id_empresa : integer
+  fecha_creacion : timestamptz
+}
+entity "donacion_detalle" as donacion_detalle {
+  * id_detalle : integer <<PK>>
+  * id_donacion : integer
+  * id_unidad : integer
+}
+donacion_detalle }o--|| donacion : id_donacion
+prestamo_detalle }o--|| prestamo_externo : id_prestamo
+prestamo_retorno }o--|| prestamo_detalle : id_detalle
+@enduml

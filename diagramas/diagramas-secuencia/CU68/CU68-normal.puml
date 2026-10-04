@@ -1,4 +1,10 @@
 @startuml CU68-normal
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
 title CU-68 — Verificando saldo de consumibles en cierre (flujo normal: saldo suficiente)
 skinparam style strictuml
 skinparam monochrome true
@@ -30,13 +36,13 @@ participant "tipo_equipo" as tipo
 note over sys : Cierre de instalación (CU-64, webhook G3) o confirmación humana (CU-63).
 sys -> ips : detectarInsuficientes(manager, id_tecnico, materiales[])\n(pre-check sin bloqueo)
 activate ips
-loop cada material declarado
+== Inicio loop: cada material declarado ==
   ips -> inv : SELECT cantidad WHERE (id_tecnico, id_tipo_equipo)
   inv --> ips : saldo
   ips -> tipo : SELECT nombre, unidad_medida
   tipo --> ips : 'Cable UTP Cat6' / 'Metro'
-  ips -> ips : saldo ≥ declarado → suficiente ✓
-end
+  ips -> ips : saldo ≥ declarado → suficiente <font:DejaVu Sans Mono>✓</font>
+== Fin loop ==
 ips --> svc : insuficientes = [] → el cierre puede confirmarse
 deactivate ips
 sys -> svc : validarSaldo(...) / transacción del cierre

@@ -317,7 +317,8 @@ de prueba específicos, agregarlos con verificación de existencia (idempotente)
 ## 5. Referencias a diagramas de BDD
 
 - `diagramas/diagrama_mere/mere-chen.png` — Modelo Entidad-Relación (notación Chen).
-- `diagramas/diagrama_modelo_fisico/modelo_bdd.png` — Modelo físico de tablas.
+- `diagramas/diagrama_modelo_fisico/modelo_relacional.png` + `.puml` — Modelo relacional (32 tablas; PK/FK).
+- `diagramas/diagrama_modelo_fisico/modelo_bdd.png` + `.puml` — Modelo físico PostgreSQL 16 (32 tablas, columnas/tipos y relaciones del esquema tras migraciones de dev). Se generó desde una base QA vacía, ejecutando `init.sql` y `npm run migrar`; el esquema desplegable se mantiene en `init.sql` + `scripts/migrar.ts`.
 - `diagramas/diagrama-clases/` — diagrama de clases backend con las entidades TypeORM.
 
 ---

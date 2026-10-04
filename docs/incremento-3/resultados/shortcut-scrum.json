@@ -1,0 +1,334 @@
+{
+  "fecha_consulta": "2026-10-01",
+  "fuente": "https://app.shortcut.com/ing-de-software/epic/27",
+  "criterio_estimacion": "2 HH por CU, mismo criterio del Incremento 2 aplicado a 19 CU; 38 HH referenciales. Shortcut no contiene estimación individual histórica.",
+  "reuniones": "El jefe de grupo confirmó que se siguió el mismo proceso que en I2; no aportó fechas individuales de reuniones ni acta de aceptación del cliente.",
+  "desarrollo": [
+    {
+      "ticket": 139,
+      "cu": "CU-48",
+      "nombre": "Consultando ubicación externa de equipo fuera de bodega",
+      "responsable_shortcut": "Javier Farías",
+      "estado_shortcut": "In Review",
+      "creado": "2026-09-23",
+      "actualizado": "2026-09-29",
+      "estimacion_shortcut": null,
+      "dominio": "T1",
+      "url": "https://app.shortcut.com/ing-de-software/story/139"
+    },
+    {
+      "ticket": 140,
+      "cu": "CU-61",
+      "nombre": "Consultando vista móvil de trabajos e inventario del técnico",
+      "responsable_shortcut": "Javier Farías",
+      "estado_shortcut": "In Review",
+      "creado": "2026-09-23",
+      "actualizado": "2026-09-29",
+      "estimacion_shortcut": null,
+      "dominio": "T1",
+      "url": "https://app.shortcut.com/ing-de-software/story/140"
+    },
+    {
+      "ticket": 141,
+      "cu": "CU-63",
+      "nombre": "Registrando cierre de trabajo de instalación",
+      "responsable_shortcut": "Javier Farías",
+      "estado_shortcut": "In Review",
+      "creado": "2026-09-23",
+      "actualizado": "2026-09-29",
+      "estimacion_shortcut": null,
+      "dominio": "G3",
+      "url": "https://app.shortcut.com/ing-de-software/story/141"
+    },
+    {
+      "ticket": 142,
+      "cu": "CU-64",
+      "nombre": "Ejecutando acciones atómicas del cierre de instalación",
+      "responsable_shortcut": "Javier Farías",
+      "estado_shortcut": "In Review",
+      "creado": "2026-09-23",
+      "actualizado": "2026-09-29",
+      "estimacion_shortcut": null,
+      "dominio": "T1",
+      "url": "https://app.shortcut.com/ing-de-software/story/142"
+    },
+    {
+      "ticket": 143,
+      "cu": "CU-65",
+      "nombre": "Creando datos del cliente",
+      "responsable_shortcut": "Javier Farías",
+      "estado_shortcut": "In Review",
+      "creado": "2026-09-23",
+      "actualizado": "2026-09-29",
+      "estimacion_shortcut": null,
+      "dominio": "G3",
+      "url": "https://app.shortcut.com/ing-de-software/story/143"
+    },
+    {
+      "ticket": 144,
+      "cu": "CU-66",
+      "nombre": "Editando datos del cliente",
+      "responsable_shortcut": "Javier Farías",
+      "estado_shortcut": "In Review",
+      "creado": "2026-09-23",
+      "actualizado": "2026-09-29",
+      "estimacion_shortcut": null,
+      "dominio": "G3",
+      "url": "https://app.shortcut.com/ing-de-software/story/144"
+    },
+    {
+      "ticket": 145,
+      "cu": "CU-67",
+      "nombre": "Consultando datos y equipos del cliente",
+      "responsable_shortcut": "Javier Farías",
+      "estado_shortcut": "In Review",
+      "creado": "2026-09-23",
+      "actualizado": "2026-09-29",
+      "estimacion_shortcut": null,
+      "dominio": "G3",
+      "url": "https://app.shortcut.com/ing-de-software/story/145"
+    },
+    {
+      "ticket": 146,
+      "cu": "CU-68",
+      "nombre": "Verificando saldo de consumibles en cierre",
+      "responsable_shortcut": "Javier Farías",
+      "estado_shortcut": "In Review",
+      "creado": "2026-09-23",
+      "actualizado": "2026-09-29",
+      "estimacion_shortcut": null,
+      "dominio": "T1",
+      "url": "https://app.shortcut.com/ing-de-software/story/146"
+    },
+    {
+      "ticket": 147,
+      "cu": "CU-69",
+      "nombre": "Registrando cierre de trabajo de reparación",
+      "responsable_shortcut": "Tomás Heilenkötter",
+      "estado_shortcut": "In Review",
+      "creado": "2026-09-23",
+      "actualizado": "2026-09-29",
+      "estimacion_shortcut": null,
+      "dominio": "T1",
+      "url": "https://app.shortcut.com/ing-de-software/story/147"
+    },
+    {
+      "ticket": 148,
+      "cu": "CU-70",
+      "nombre": "Seleccionando tipo de trabajo codificado para cierre",
+      "responsable_shortcut": "Tomás Heilenkötter",
+      "estado_shortcut": "In Review",
+      "creado": "2026-09-23",
+      "actualizado": "2026-09-29",
+      "estimacion_shortcut": null,
+      "dominio": "T1",
+      "url": "https://app.shortcut.com/ing-de-software/story/148"
+    },
+    {
+      "ticket": 149,
+      "cu": "CU-71",
+      "nombre": "Registrando devolución de equipo desde cliente",
+      "responsable_shortcut": "Javiera Morán",
+      "estado_shortcut": "In Review",
+      "creado": "2026-09-23",
+      "actualizado": "2026-09-29",
+      "estimacion_shortcut": null,
+      "dominio": "T1",
+      "url": "https://app.shortcut.com/ing-de-software/story/149"
+    },
+    {
+      "ticket": 150,
+      "cu": "CU-73",
+      "nombre": "Mostrando información de equipo en devolución",
+      "responsable_shortcut": "Javiera Morán",
+      "estado_shortcut": "In Review",
+      "creado": "2026-09-23",
+      "actualizado": "2026-09-29",
+      "estimacion_shortcut": null,
+      "dominio": "T1",
+      "url": "https://app.shortcut.com/ing-de-software/story/150"
+    },
+    {
+      "ticket": 151,
+      "cu": "CU-87",
+      "nombre": "Generando reporte de equipos instalados por cliente",
+      "responsable_shortcut": "Kevin Cifuentes",
+      "estado_shortcut": "In Review",
+      "creado": "2026-09-23",
+      "actualizado": "2026-09-29",
+      "estimacion_shortcut": null,
+      "dominio": "T1",
+      "url": "https://app.shortcut.com/ing-de-software/story/151"
+    },
+    {
+      "ticket": 152,
+      "cu": "CU-90",
+      "nombre": "Generando reporte de productividad de técnicos",
+      "responsable_shortcut": "Kevin Cifuentes",
+      "estado_shortcut": "In Review",
+      "creado": "2026-09-23",
+      "actualizado": "2026-09-29",
+      "estimacion_shortcut": null,
+      "dominio": "T1",
+      "url": "https://app.shortcut.com/ing-de-software/story/152"
+    },
+    {
+      "ticket": 153,
+      "cu": "CU-92",
+      "nombre": "Exportando reporte a Excel",
+      "responsable_shortcut": "Kevin Cifuentes",
+      "estado_shortcut": "In Review",
+      "creado": "2026-09-23",
+      "actualizado": "2026-09-29",
+      "estimacion_shortcut": null,
+      "dominio": "T1",
+      "url": "https://app.shortcut.com/ing-de-software/story/153"
+    },
+    {
+      "ticket": 154,
+      "cu": "CU-93",
+      "nombre": "Exportando reporte a PDF",
+      "responsable_shortcut": "Tomás Heilenkötter",
+      "estado_shortcut": "In Review",
+      "creado": "2026-09-23",
+      "actualizado": "2026-09-29",
+      "estimacion_shortcut": null,
+      "dominio": "T1",
+      "url": "https://app.shortcut.com/ing-de-software/story/154"
+    },
+    {
+      "ticket": 155,
+      "cu": "CU-94",
+      "nombre": "Consultando alertas activas en el dashboard",
+      "responsable_shortcut": "Uriel Navarrete",
+      "estado_shortcut": "In Review",
+      "creado": "2026-09-23",
+      "actualizado": "2026-09-29",
+      "estimacion_shortcut": null,
+      "dominio": "T1",
+      "url": "https://app.shortcut.com/ing-de-software/story/155"
+    },
+    {
+      "ticket": 156,
+      "cu": "CU-95",
+      "nombre": "Mostrando aviso de garantía vigente al cambiar estado",
+      "responsable_shortcut": "Javiera Morán",
+      "estado_shortcut": "In Review",
+      "creado": "2026-09-23",
+      "actualizado": "2026-09-29",
+      "estimacion_shortcut": null,
+      "dominio": "T1",
+      "url": "https://app.shortcut.com/ing-de-software/story/156"
+    },
+    {
+      "ticket": 157,
+      "cu": "CU-96",
+      "nombre": "Recibiendo notificaciones visuales en la campana del sistema",
+      "responsable_shortcut": "Uriel Navarrete",
+      "estado_shortcut": "In Review",
+      "creado": "2026-09-23",
+      "actualizado": "2026-09-29",
+      "estimacion_shortcut": null,
+      "dominio": "T1",
+      "url": "https://app.shortcut.com/ing-de-software/story/157"
+    }
+  ],
+  "revisores": [
+    {
+      "ticket": 160,
+      "responsable": "Javier Farías",
+      "estado": "Backlog"
+    },
+    {
+      "ticket": 161,
+      "responsable": "Javiera Morán",
+      "estado": "To Do"
+    },
+    {
+      "ticket": 162,
+      "responsable": "Kevin Cifuentes",
+      "estado": "To Do"
+    },
+    {
+      "ticket": 163,
+      "responsable": "Tomás Heilenkötter",
+      "estado": "To Do"
+    },
+    {
+      "ticket": 164,
+      "responsable": "Uriel Navarrete",
+      "estado": "To Do"
+    },
+    {
+      "ticket": 165,
+      "responsable": "Tomás Heilenkötter",
+      "estado": "To Do"
+    },
+    {
+      "ticket": 166,
+      "responsable": "Kevin Cifuentes",
+      "estado": "To Do"
+    },
+    {
+      "ticket": 167,
+      "responsable": "Javiera Morán",
+      "estado": "To Do"
+    },
+    {
+      "ticket": 168,
+      "responsable": "Uriel Navarrete",
+      "estado": "To Do"
+    },
+    {
+      "ticket": 169,
+      "responsable": "Javier Farías",
+      "estado": "To Do"
+    },
+    {
+      "ticket": 170,
+      "responsable": "Javiera Morán",
+      "estado": "To Do"
+    },
+    {
+      "ticket": 171,
+      "responsable": "Tomás Heilenkötter",
+      "estado": "To Do"
+    },
+    {
+      "ticket": 172,
+      "responsable": "Kevin Cifuentes",
+      "estado": "To Do"
+    },
+    {
+      "ticket": 173,
+      "responsable": "Javier Farías",
+      "estado": "To Do"
+    }
+  ],
+  "acuerdos": [
+    {
+      "ticket": 141,
+      "cu": "CU-63",
+      "acuerdo": "G3 implementa el cierre; T1 verifica/documenta y ejecuta inventario mediante CU-64/68.",
+      "actividad": "Creado 23-09 13:32; Mergear a dev 27-09 23:01; In Review 29-09 10:30."
+    },
+    {
+      "ticket": 145,
+      "cu": "CU-67",
+      "acuerdo": "G3 aporta ficha y direcciones. Equipos del cliente se obtienen de unidades T1 mediante CU-87/ficha.",
+      "actividad": "Creado 23-09 13:33; Mergear a dev 27-09 23:01; In Review 29-09 10:29."
+    },
+    {
+      "ticket": 146,
+      "cu": "CU-68",
+      "acuerdo": "Saldo insuficiente no rechaza webhook G3; registrar ajuste/discrepancia y continuar. Confirmación humana conserva validación bloqueante.",
+      "actividad": "Creado 23-09 13:33; Mergear a dev 27-09 23:01; In Review 29-09 10:29."
+    },
+    {
+      "ticket": 147,
+      "cu": "CU-69",
+      "acuerdo": "Re-scope 29-09: datos reparación opcionales por payload real G3, recepción 2xx sin esos datos, inferencia técnico y traza integracion_cierre/historial_estado_equipo.",
+      "actividad": "Creado 23-09 13:33; In Progress 29-09 12:06 por Tomás; In Review 29-09 16:27 por Javier."
+    }
+  ]
+}
