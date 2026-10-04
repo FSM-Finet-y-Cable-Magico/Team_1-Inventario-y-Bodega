@@ -126,7 +126,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="ctrlFrame" parent="1" style="align=left;overflow=fill;html=1;dropTarget=0;whiteSpace=wrap;" value="&lt;p style=&quot;margin:0px;margin-top:6px;text-align:center;&quot;&gt;&lt;b&gt;Capa Controladores NestJS&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:8px;&quot;&gt;&lt;br&gt;&lt;/p&gt;" vertex="1">
-          <mxGeometry height="780" width="520" x="1770" y="210" as="geometry" />
+          <mxGeometry height="840" width="520" x="1770" y="210" as="geometry" />
         </mxCell>
         <mxCell id="ctrlFrameIcon" parent="ctrlFrame" style="shape=component;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
           <mxGeometry height="20" relative="1" width="20" x="1" as="geometry">
@@ -281,7 +281,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="extSys" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="G3: clientes y OT&lt;br&gt;G8: activación y consulta de stock" vertex="1">
-          <mxGeometry height="70" width="210" x="2040" y="1030" as="geometry" />
+          <mxGeometry height="70" width="210" x="2040" y="1090" as="geometry" />
         </mxCell>
         <mxCell id="extSyi" parent="extSys" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
           <mxGeometry height="20" relative="1" width="20" x="1" as="geometry">
@@ -304,7 +304,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="svcFrame" parent="1" style="align=left;overflow=fill;html=1;dropTarget=0;whiteSpace=wrap;" value="&lt;p style=&quot;margin:0px;margin-top:6px;text-align:center;&quot;&gt;&lt;b&gt;Capa Servicios - Módulos de aplicación&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:8px;&quot;&gt;&lt;br&gt;&lt;/p&gt;" vertex="1">
-          <mxGeometry height="900" width="620" x="1024.44" y="890" as="geometry" />
+          <mxGeometry height="975" width="620" x="1024.44" y="890" as="geometry" />
         </mxCell>
         <mxCell id="svcFrameIcon" parent="svcFrame" style="shape=component;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
           <mxGeometry height="20" relative="1" width="20" x="1" as="geometry">
@@ -533,7 +533,58 @@
         <mxCell id="s20" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="NotificacionesService&lt;br&gt;[I3]" vertex="1">
           <mxGeometry height="65" width="150" x="1065" y="1680" as="geometry" />
         </mxCell>
-        </root>
+          <mxCell id="s21" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="JornadaService&lt;br&gt;Jornada del técnico [I3]" vertex="1">
+          <mxGeometry height="65" width="144.74" x="1279.7" y="1390" as="geometry" />
+        </mxCell>
+        <mxCell id="s21i" parent="s21" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
+          <mxGeometry height="20" relative="1" width="20" x="1" as="geometry">
+            <mxPoint x="-27" y="7" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s22" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="InventarioPersonalService&lt;br&gt;[I3]" vertex="1">
+          <mxGeometry height="65" width="144.74" x="1279.7" y="1485" as="geometry" />
+        </mxCell>
+        <mxCell id="s22i" parent="s22" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
+          <mxGeometry height="20" relative="1" width="20" x="1" as="geometry">
+            <mxPoint x="-27" y="7" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s23" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="ExportacionService&lt;br&gt;Excel y PDF [I3]" vertex="1">
+          <mxGeometry height="65" width="144.74" x="1279.7" y="1580" as="geometry" />
+        </mxCell>
+        <mxCell id="s23i" parent="s23" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
+          <mxGeometry height="20" relative="1" width="20" x="1" as="geometry">
+            <mxPoint x="-27" y="7" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s24" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="ExcelExportService&lt;br&gt;[I3]" vertex="1">
+          <mxGeometry height="65" width="144.74" x="1279.7" y="1675" as="geometry" />
+        </mxCell>
+        <mxCell id="s24i" parent="s24" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
+          <mxGeometry height="20" relative="1" width="20" x="1" as="geometry">
+            <mxPoint x="-27" y="7" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s25" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="G3ClientService&lt;br&gt;Cliente HTTP G3 [I3]" vertex="1">
+          <mxGeometry height="65" width="144.74" x="1279.7" y="1770" as="geometry" />
+        </mxCell>
+        <mxCell id="s25i" parent="s25" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
+          <mxGeometry height="20" relative="1" width="20" x="1" as="geometry">
+            <mxPoint x="-27" y="7" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s26" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="AppService" vertex="1">
+          <mxGeometry height="65" width="150" x="1065" y="1775" as="geometry" />
+        </mxCell>
+        <mxCell id="s26i" parent="s26" style="shape=module;jettyWidth=8;jettyHeight=4;" value="" vertex="1">
+          <mxGeometry height="20" relative="1" width="20" x="1" as="geometry">
+            <mxPoint x="-27" y="7" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c24" parent="1" style="html=1;dropTarget=0;whiteSpace=wrap;" value="AppController" vertex="1">
+          <mxGeometry height="50" width="210" x="1815" y="970" as="geometry" />
+        </mxCell>
+      </root>
     </mxGraphModel>
   </diagram>
 </mxfile>

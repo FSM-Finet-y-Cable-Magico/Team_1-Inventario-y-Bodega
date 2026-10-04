@@ -34,7 +34,7 @@ package "Controladores — NestJS" {
  component "ReportesController\n/reportes" as ReportesController
  component "RolesController\n/roles" as RolesController
  component "SalidasController\n/salidas" as SalidasController
- component "TecnicosController\n/salidas" as TecnicosController
+ component "TecnicosController\n/tecnicos" as TecnicosController
  component "TransferenciasController\n/transferencias" as TransferenciasController
  component "UnitsController\n/unidades" as UnitsController
  component "UsuariosController\n/usuario" as UsuariosController
@@ -83,12 +83,10 @@ client --> BodegasController
 BodegasController --> BodegasService
 client --> SalidasController
 SalidasController --> InventarioPersonalService
-SalidasController --> JornadaService
 SalidasController --> SalidasService
 client --> TecnicosController
 TecnicosController --> InventarioPersonalService
 TecnicosController --> JornadaService
-TecnicosController --> SalidasService
 client --> HealthController
 client --> ReportesController
 ReportesController --> ReportesService
