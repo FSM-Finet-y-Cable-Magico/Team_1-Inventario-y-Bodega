@@ -1,4 +1,10 @@
 @startuml CU96-exc-sin-notificaciones
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
 title CU-96 — Recibiendo notificaciones visuales en la campana del sistema (excepción 1: sin notificaciones pendientes)
 
 skinparam style strictuml
@@ -60,6 +66,8 @@ svc -> svc : Sin candidatas nuevas → no inserta nada
 svc -> orm : delete(notificacion)\nWHERE leida = true AND fecha_generacion < now() - 30 días
 activate orm
 orm -> nent : DELETE ... (purga rutinaria,\npuede no afectar filas)
+nent --> orm : filas eliminadas
+orm --> svc : purga completada
 deactivate orm
 
 svc -> orm : find(notificacion)\nWHERE leida = false [AND id_empresa = :actorEmpresa]

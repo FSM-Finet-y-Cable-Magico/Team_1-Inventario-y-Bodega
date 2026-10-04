@@ -1,4 +1,10 @@
 @startuml CU87-normal
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
 title CU-87 — Generando reporte de equipos instalados por cliente (flujo normal)
 
 skinparam style strictuml

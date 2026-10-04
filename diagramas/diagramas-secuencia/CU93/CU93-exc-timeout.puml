@@ -1,4 +1,10 @@
 @startuml CU93-exc-timeout
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
 title CU-93 — Exportando reporte a PDF (Excepción 1: la generación supera los 15 segundos)
 skinparam style strictuml
 skinparam monochrome true
@@ -44,6 +50,8 @@ note right of rep
 end note
 
 exp -> exp : vence el límite antes de que el reporte responda
+rep --> exp : respuesta descartada (llegó fuera de plazo)
+deactivate rep
 exp -> exp : registra el aviso en el log del servidor
 
 note right of exp
@@ -53,7 +61,6 @@ end note
 
 exp --> ctrl : RequestTimeoutException\n'La generación del archivo superó los 15 segundos.\nIntente nuevamente.'
 deactivate exp
-deactivate rep
 ctrl --> vista : 408 Request Timeout
 deactivate ctrl
 vista --> adm : muestra el mensaje y permite reintentar\n(con filtros más acotados)

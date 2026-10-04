@@ -1,4 +1,10 @@
 @startuml CU48-normal
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
 title CU-48 — Consultando ubicación externa de equipo fuera de bodega (flujo normal)
 skinparam style strictuml
 skinparam monochrome true
@@ -37,23 +43,43 @@ activate ctrl
 ctrl -> svc : verFichaDetalle(id, id_empresa)
 activate svc
 svc -> orm : SELECT unidad_equipo + tipo_equipo
-uni --> svc : estado actual (fuera de bodega)
+activate orm
+orm -> uni : SELECT
+activate uni
+uni --> orm : unidad
+deactivate uni
+orm --> svc : estado actual (fuera de bodega)
+deactivate orm
 svc -> svc : resolverUbicacionExterna(unidad)
 alt estado = 'Asignado a técnico'
-  svc -> usr : SELECT nombre_completo, rut WHERE id_usuario = id_tecnico_asignado
-  usr --> svc : Pedro Técnico / 11111111-1
+  svc -> orm : SELECT nombre_completo, rut WHERE id_usuario = id_tecnico_asignado
+  activate orm
+  orm -> usr : SELECT
+  activate usr
+  usr --> orm : usuario
+  deactivate usr
+  orm --> svc : Pedro Técnico / 11111111-1
+  deactivate orm
   note right : tipo = TECNICO
 else estado = 'Instalado en cliente'
   svc -> svc : datos persistidos del cierre (CU-64):\ncliente_rut, cliente_nombre, direccion_instalacion
   opt G3 configurado y rut presente
     svc -> g3 : GET /clientes/rut/{rut}?id_empresa=N (X-API-KEY, timeout 2 s)
+    activate g3
     g3 --> svc : cliente { nombre_completo, direcciones[] }
+    deactivate g3
     note right : si G3 no responde → degrada\na lo persistido (sin error)
   end
   note right : tipo = CLIENTE
 else estado = 'En préstamo externo'
-  svc -> pre : SELECT nombre_receptor, rut_receptor,\ncorrelativo (PE-XXXXX), detalle WHERE id_unidad + estado ACTIVO
-  pre --> svc : Empresa Reparadora Ltda. / PE-00010 / motivo
+  svc -> orm : SELECT nombre_receptor, rut_receptor,\ncorrelativo (PE-XXXXX), detalle WHERE id_unidad + estado ACTIVO
+  activate orm
+  orm -> pre : SELECT
+  activate pre
+  pre --> orm : préstamo activo
+  deactivate pre
+  orm --> svc : Empresa Reparadora Ltda. / PE-00010 / motivo
+  deactivate orm
   note right : tipo = PRESTAMO_EXTERNO
 end
 svc --> ctrl : ficha + ubicacion_externa { tipo, datos, campos_faltantes }

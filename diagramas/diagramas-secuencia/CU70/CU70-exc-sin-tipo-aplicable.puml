@@ -1,4 +1,10 @@
 @startuml CU70-exc-sin-tipo-aplicable
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
 title CU-70 — Seleccionando tipo de trabajo codificado para cierre (Excepción 1: ningún código aplica)
 skinparam style strictuml
 skinparam monochrome true
@@ -38,6 +44,7 @@ note right of vista
   completa falla y solución a mano.
 end note
 
+vista --> tec : Campos vacíos para completar a mano
 tec -> vista : Guarda el cierre preparado
 vista -> ctrl : PATCH /api/cierres-trabajo/borradores/900\n{ codigo_trabajo: null, falla, solución }
 activate ctrl
@@ -49,6 +56,9 @@ activate bor
 bor --> svc : id_borrador
 deactivate bor
 svc -> aud : auditoriaService.create(CREAR_BORRADOR_CIERRE)
+activate aud
+aud --> svc : auditoría registrada
+deactivate aud
 svc --> ctrl : borrador guardado
 deactivate svc
 ctrl --> vista : 200 borrador

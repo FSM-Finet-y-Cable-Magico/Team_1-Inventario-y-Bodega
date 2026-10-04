@@ -1,11 +1,24 @@
 @startuml CU73-exc-datos-incompletos
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
 title CU-73 — Mostrando información de equipo en devolución\n(excepción 1: algunos datos de la unidad están incompletos)
 
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+<style>
+sequenceDiagram {
+participant {
+Margin 35 }
+actor {
+Margin 15 }
+ }
+</style>
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black

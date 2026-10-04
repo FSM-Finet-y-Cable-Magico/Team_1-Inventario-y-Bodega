@@ -1,4 +1,10 @@
 @startuml CU68-exc-saldo-insuficiente
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
 title CU-68 — Verificando saldo de consumibles en cierre (excepción: saldo insuficiente)
 skinparam style strictuml
 skinparam monochrome true
@@ -29,22 +35,42 @@ participant "integracion_cierre" as cierre
 
 sys -> ips : detectarInsuficientes(manager, id_tecnico, materiales[{tipo 7, cantidad 10}])
 activate ips
-ips -> inv : SELECT cantidad WHERE (id_tecnico, id_tipo_equipo = 7)
-inv --> ips : saldo = 4
+ips -> orm : SELECT cantidad WHERE (id_tecnico, id_tipo_equipo = 7)
+activate orm
+orm -> inv : SELECT
+activate inv
+inv --> orm : saldo = 4
+deactivate inv
+orm --> ips : saldo = 4
+deactivate orm
 ips -> ips : 4 < 10 → insuficiente
 ips --> sys : [{ mensaje: 'Saldo insuficiente de [Cable UTP Cat6]:\ndisponible 4 Metro, declarado 10 Metro.' }]
 deactivate ips
 alt Confirmación humana (CU-63)
   sys -> ips : validarSaldo(...)
+  activate ips
   ips --> sys : 400 BadRequestException (mensaje exacto E1)
+  deactivate ips
   note right : BLOQUEA la confirmación del cierre\n(no se aplica ninguna acción)
 else Webhook G3 (acuerdo Opción A)
   sys -> svc : continuar el cierre (nunca 4xx por regla de negocio)
   activate svc
-  svc -> inv : descontarHasta(manager, 7, 10) FOR UPDATE
-  inv --> svc : saldo 4 → descuenta 4, faltante 6
-  svc -> cierre : UPDATE materiales_aplicados (ajustes) +\ndiscrepancias: SALDO_INSUFICIENTE_AJUSTADO
+  svc -> orm : descontarHasta(manager, 7, 10) FOR UPDATE
+  activate orm
+  orm -> inv : SELECT con bloqueo + UPDATE
+  activate inv
+  inv --> orm : saldo 4 → queda en 0
+  deactivate inv
+  orm --> svc : descuenta 4, faltante 6
+  svc -> orm : UPDATE integracion_cierre: materiales_aplicados (ajustes)\n+ discrepancias: SALDO_INSUFICIENTE_AJUSTADO
+  orm -> cierre : UPDATE
+  activate cierre
+  cierre --> orm : actualizado
+  deactivate cierre
+  orm --> svc : cierre actualizado
   svc -> orm : commitTransaction()
+  orm --> svc : transacción confirmada
+  deactivate orm
   svc --> sys : 2xx (estado_proceso PROCESADO_CON_DISCREPANCIAS)
   note right : el faltante queda como ajuste registrado\npara revisión manual; el cierre NO se pierde
   deactivate svc

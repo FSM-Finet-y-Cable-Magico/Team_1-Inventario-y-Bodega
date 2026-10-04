@@ -1,4 +1,10 @@
 @startuml CU70-normal
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
 title CU-70 — Seleccionando tipo de trabajo codificado para cierre (flujo normal)
 skinparam style strictuml
 skinparam monochrome true
@@ -21,6 +27,7 @@ skinparam sequence {
 hide footbox
 
 actor "Técnico de terreno" as tec
+actor "G3 (cierre de OT)" as g3
 participant "V_MiJornada" as vista
 participant "C_CierresTrabajoController" as ctrl
 participant "C_CierresTrabajoService" as svc
@@ -39,7 +46,9 @@ activate ctrl
 ctrl -> svc : listarTiposTrabajo('REPARACION')
 activate svc
 svc -> cat : filtra los códigos del tipo de OT\n(los de tipo AMBOS siempre aplican)
+activate cat
 cat --> svc : T-04..T-10 con sus campos predefinidos
+deactivate cat
 svc --> ctrl : catálogo
 deactivate svc
 ctrl --> vista : 200 [{ codigo, nombre, campos, materiales_sugeridos }]
@@ -50,12 +59,15 @@ activate ctrl
 ctrl -> svc : obtenerBorrador(900, actor)
 activate svc
 svc -> bor : SELECT WHERE id_ot y id_empresa del actor
+activate bor
 bor --> svc : sin borrador previo
+deactivate bor
 svc --> ctrl : null
 deactivate svc
 ctrl --> vista : 200 null
 deactivate ctrl
 
+vista --> tec : Formulario con el select de tipos de trabajo
 tec -> vista : Selecciona T-06 Reparación fibra
 vista -> vista : aplicarTipo('T-06'):\nprecompleta falla, solución, resultado y categoría\ncon los campos del código (no pisa lo ya escrito)
 vista --> tec : Campos precompletados + materiales sugeridos
@@ -71,6 +83,9 @@ activate bor
 bor --> svc : id_borrador
 deactivate bor
 svc -> aud : auditoriaService.create(CREAR_BORRADOR_CIERRE)
+activate aud
+aud --> svc : auditoría registrada
+deactivate aud
 svc --> ctrl : borrador guardado
 deactivate svc
 ctrl --> vista : 200 borrador
@@ -79,14 +94,24 @@ vista --> tec : "Cierre preparado. Se aplicará cuando G3 cierre la OT."
 deactivate vista
 
 == Más tarde: G3 cierra la orden de trabajo ==
-
-intg -> bor : completarDesdeBorrador(900, empresa)
+g3 -> intg : POST /api/integraciones/ordenes/900/cierre (X-API-KEY)
 activate intg
+intg -> bor : completarDesdeBorrador(900, empresa)
+activate bor
 bor --> intg : borrador T-06 con sus campos
+deactivate bor
 intg -> cat : campos del código para lo que no trae el borrador
+activate cat
 cat --> intg : falla, solución, resultado y categoría predefinidos
+deactivate cat
 intg -> crep : INSERT cierre_reparacion\n(CU-69, con codigo_trabajo = 'T-06')
+activate crep
+crep --> intg : id_cierre_reparacion
+deactivate crep
 intg -> aud : auditoría CIERRE_REPARACION\n(incluye el codigo_trabajo)
+activate aud
+aud --> intg : auditoría registrada
+deactivate aud
+intg --> g3 : 200 { estado_proceso: 'PROCESADO', id_cierre_reparacion }
 deactivate intg
-
 @enduml

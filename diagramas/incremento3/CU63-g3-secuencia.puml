@@ -1,4 +1,10 @@
 @startuml
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
@@ -20,6 +26,7 @@ D --> S : commit
 S -> F : notificar(payload de cierre)
 F -> G1 : POST /api/integraciones/ordenes/:id/cierre\nX-API-KEY + clave_idempotencia
 G1 --> F : 201 PROCESADO / CON_DISCREPANCIAS
+F --> S : aviso de cierre entregado
 S --> C : OT completada
 C --> T : HTTP 201
 else Datos inválidos o estado distinto de EN_CURSO

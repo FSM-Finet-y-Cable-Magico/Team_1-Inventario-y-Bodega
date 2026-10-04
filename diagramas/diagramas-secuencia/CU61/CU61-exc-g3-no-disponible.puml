@@ -1,4 +1,10 @@
 @startuml CU61-exc-g3-no-disponible
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
 title CU-61 — Vista móvil del técnico (degradación: G3 no responde o no está configurado)
 skinparam style strictuml
 skinparam monochrome true

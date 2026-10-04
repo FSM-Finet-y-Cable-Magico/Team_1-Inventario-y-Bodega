@@ -1,4 +1,10 @@
 @startuml CU92-exc-timeout
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
 title CU-92 — Excepción 1: Tiempo límite de generación excedido (> 15 segundos)
 
 skinparam style strictuml
@@ -43,6 +49,7 @@ end note
 
 svc -> svc : Expira temporizador de 15 segundos en el backend
 svc --x db : Cancela espera
+db --> svc : consulta cancelada
 deactivate db
 
 svc --> ctrl : throw RequestTimeoutException(\n  "La generación del archivo superó los 15 segundos sin completarse.\n   Por favor intente nuevamente."\n)
