@@ -128,6 +128,9 @@
 	// CU-33: formato de fechas DD/MM/YYYY
 	function fmtFecha(fecha: string | null | undefined): string {
 		if (!fecha) return '-';
+		// Fecha sin hora (YYYY-MM-DD): se formatea tal cual para no correrla un día por zona horaria.
+		const soloFecha = /^(\d{4})-(\d{2})-(\d{2})$/.exec(fecha);
+		if (soloFecha) return `${soloFecha[3]}/${soloFecha[2]}/${soloFecha[1]}`;
 		return new Date(fecha).toLocaleDateString('en-GB', {
 			day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'America/Santiago'
 		});
