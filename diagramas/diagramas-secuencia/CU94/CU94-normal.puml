@@ -1,4 +1,10 @@
 @startuml CU94-normal
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
 title CU-94 — Consultando alertas activas en el dashboard (flujo normal)
 
 skinparam style strictuml

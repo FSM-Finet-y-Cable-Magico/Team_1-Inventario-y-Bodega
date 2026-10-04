@@ -1,4 +1,10 @@
 @startuml CU61-exc-sin-trabajos
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
 title CU-61 — Vista móvil del técnico (excepción: sin trabajos asignados para hoy)
 skinparam style strictuml
 skinparam monochrome true

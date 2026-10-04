@@ -1,11 +1,24 @@
 @startuml CU71-normal
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
 title CU-71 — Registrando devolución de equipo desde cliente (flujo normal)
 
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
-<style> sequenceDiagram { participant { Margin 35 } actor { Margin 15 } } </style>
+<style>
+sequenceDiagram {
+participant {
+Margin 35 }
+actor {
+Margin 15 }
+ }
+</style>
 skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black
@@ -93,7 +106,7 @@ deactivate uent
 orm --> svc : unidad (existe)
 deactivate orm
 
-svc -> svc : Precondición: estado === 'Instalado en cliente'\nfecha_devolucion ≤ hoy (America/Santiago)\nestado_visual ∈ { Sin daño visible, Daño leve,\nDaño grave, No enciende, Incompleto }\nnombre_tecnico_retiro obligatorio
+svc -> svc : Precondición: estado === 'Instalado en cliente'\nfecha_devolucion ≤ hoy (America/Santiago)\nestado_visual <font:DejaVu Sans Mono>∈</font> { Sin daño visible, Daño leve,\nDaño grave, No enciende, Incompleto }\nnombre_tecnico_retiro obligatorio
 activate svc
 deactivate svc
 

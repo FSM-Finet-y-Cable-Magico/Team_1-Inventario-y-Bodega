@@ -1,4 +1,10 @@
 @startuml CU69-normal
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
 title CU-69 — Registrando cierre de trabajo de reparación (flujo normal: con retiro)
 skinparam style strictuml
 skinparam monochrome true
@@ -36,9 +42,8 @@ note over g3 : El cierre de la OT lo ejecuta G3; T1 registra la parte de inventa
 
 g3 -> guard : POST /api/integraciones/ordenes/123/cierre\nX-API-KEY · { tipo_ot: 'REPARACION', id_tecnico,\nreparacion { falla_reportada, solucion_aplicada, resultado: 'RESUELTO' },\nequipos_retirados: ['NS-RET-001'], materiales: [{ id_tipo_equipo: 7, cantidad: 10.5 }] }
 activate guard
-guard --> ctrl : Key válida · scope con acceso a la empresa
-deactivate guard
-
+guard -> guard : Valida X-API-KEY\ny scope de la empresa
+guard -> ctrl : recibirCierre(123, payload)
 activate ctrl
 ctrl -> svc : recibirCierreOt(123, payload, integracion)
 activate svc
@@ -47,55 +52,79 @@ svc -> svc : Valida clave_idempotencia, id_empresa del scope\ny que el id_ot del
 
 svc -> orm : startTransaction()
 activate orm
-orm -> icier : INSERT integracion_cierre\n(clave_idempotencia UNIQUE reclama el cierre)
+orm --> svc : transacción iniciada
+
+svc -> orm : INSERT integracion_cierre\n(clave_idempotencia UNIQUE reclama el cierre)
+orm -> icier : INSERT
 activate icier
 icier --> orm : id_cierre
 deactivate icier
+orm --> svc : id_cierre
 
 svc -> svc : accion del ítem = RETIRADO_PARA_DIAGNOSTICO\n(la envía G3; si faltara, la define el arreglo de origen)
 
 svc -> orm : SELECT unidad_equipo\nWHERE numero_serie = 'NS-RET-001' AND id_empresa
-orm -> uent : consulta
+orm -> uent : SELECT
 activate uent
 uent --> orm : unidad (estado 'Instalado en cliente')
 deactivate uent
+orm --> svc : unidad
 
 svc -> orm : UPDATE unidad_equipo\nSET estado = 'En revisión',\ndiagnostico_tecnico = categoria_falla del cierre
-orm -> uent : unidad actualizada
-orm -> hent : INSERT historial_estado_equipo\n('Instalado en cliente' → 'En revisión',\nmotivo: 'Cierre OT #123 (integración G3)')
+orm -> uent : UPDATE
+activate uent
+uent --> orm : unidad actualizada
+deactivate uent
+orm --> svc : unidad actualizada
+
+svc -> orm : INSERT historial_estado_equipo\n('Instalado en cliente' → 'En revisión',\nmotivo: 'Cierre OT #123 (integración G3)')
+orm -> hent : INSERT
 activate hent
 hent --> orm : registro insertado
 deactivate hent
+orm --> svc : historial guardado
 
 svc -> svc : Valida falla reportada y solución aplicada (5 a 300)\ny mapea el resultado de G3: RESUELTO → 'Resuelto'
 
-svc -> orm : procesarMateriales (CU-64/CU-68):\nSELECT tipo_equipo (consumible + unidad de medida)\nSELECT inventario_personal_tecnico FOR UPDATE
-orm -> invp : consulta con bloqueo de fila
+svc -> orm : procesarMateriales (CU-64/CU-68):\nSELECT inventario_personal_tecnico FOR UPDATE
+orm -> invp : SELECT con bloqueo de fila
 activate invp
-invp --> orm : saldo 50.5 Metro ≥ 10.5 declarado (CU-68)
+invp --> orm : saldo 50.5 Metro
 deactivate invp
+orm --> svc : saldo ≥ 10.5 declarado (CU-68)
 
-svc -> orm : UPDATE inventario_personal_tecnico\nSET cantidad = 40 (CU-58)\nel detalle descontado se guarda en el cierre
-orm -> invp : saldo descontado
+svc -> orm : UPDATE inventario_personal_tecnico\nSET cantidad = 40 (CU-58)
+orm -> invp : UPDATE
+activate invp
+invp --> orm : saldo descontado
+deactivate invp
+orm --> svc : saldo actualizado
 
 svc -> orm : INSERT cierre_reparacion\n(falla, solución, resultado, rut cliente, dirección,\nequipos retirados e instalados, consumibles descontados)
-orm -> crep : registro insertado
+orm -> crep : INSERT
 activate crep
 crep --> orm : id_cierre_reparacion
 deactivate crep
+orm --> svc : id_cierre_reparacion
 
 svc -> orm : commitTransaction()
 orm --> svc : transacción confirmada
 deactivate orm
 
-svc -> aent : auditoriaService.create({ accion: 'CIERRE_REPARACION',\nentidad: 'cierre_reparacion', valor_nuevo: { resultado, equipos, consumibles } })
+svc -> orm : auditoriaService.create({ accion: 'CIERRE_REPARACION',\nentidad: 'cierre_reparacion', valor_nuevo })
+activate orm
+orm -> aent : INSERT log_auditoria
 activate aent
-aent --> svc : auditoría registrada
+aent --> orm : registrado
 deactivate aent
+orm --> svc : auditoría registrada
+deactivate orm
 
-svc --> ctrl : 200 { estado_proceso: 'PROCESADO',\nid_cierre_reparacion, discrepancias: [],\nmateriales { descontados, ajustes } }
+svc --> ctrl : { estado_proceso: 'PROCESADO',\nid_cierre_reparacion, discrepancias: [],\nmateriales { descontados, ajustes } }
 deactivate svc
-ctrl --> g3 : 200 OK
+ctrl --> guard : 200 OK
 deactivate ctrl
+guard --> g3 : 200 OK { estado_proceso: 'PROCESADO', id_cierre_reparacion }
+deactivate guard
 
 @enduml

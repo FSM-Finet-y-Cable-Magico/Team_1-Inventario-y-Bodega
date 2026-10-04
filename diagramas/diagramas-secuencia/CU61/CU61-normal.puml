@@ -1,4 +1,10 @@
 @startuml CU61-normal
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
 title CU-61 — Consultando vista móvil de trabajos e inventario del técnico (flujo normal)
 skinparam style strictuml
 skinparam monochrome true
@@ -40,14 +46,28 @@ activate svc
 svc -> svc : fecha de hoy (America/Santiago)
 svc -> ips : consultar(id_usuario, id_empresa, actor) → CU-58
 activate ips
-ips -> inv : SELECT saldos de consumibles
-ips -> uni : SELECT unidades 'Asignado a técnico' del técnico
+ips -> orm : SELECT saldos de consumibles
+activate orm
+orm -> inv : SELECT
+activate inv
+inv --> orm : saldos
+deactivate inv
+orm --> ips : saldos[]
+ips -> orm : SELECT unidades 'Asignado a técnico' del técnico
+orm -> uni : SELECT
+activate uni
+uni --> orm : unidades
+deactivate uni
+orm --> ips : ns_asignados[]
+deactivate orm
 ips --> svc : { tecnico, ns_asignados[], saldos[] }
 deactivate ips
 svc -> g3 : consultarOrdenes({ id_tecnico, id_empresa, fecha })
 activate g3
 g3 -> g3api : GET {G3}/ordenes?id_empresa&id_tecnico&estado=PENDIENTE,EN_CURSO&desde&hasta\nX-API-KEY (timeout 3 s)
+activate g3api
 g3api --> g3 : { success, data: [OT con cliente{} y direccion{}] }
+deactivate g3api
 g3 --> svc : { ok: true, data: ordenes[] }
 deactivate g3
 svc -> svc : mapear trabajos (tipo, estado, cliente, dirección, teléfono)

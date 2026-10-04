@@ -1,4 +1,10 @@
 @startuml CU96-normal
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
 title CU-96 — Recibiendo notificaciones visuales en la campana del sistema (flujo normal)
 
 skinparam style strictuml
@@ -98,6 +104,8 @@ note over svc : término loop\n(una clave ya existente se ignora: no duplica)
 svc -> orm : delete(notificacion)\nWHERE leida = true AND fecha_generacion < now() - 30 días
 activate orm
 orm -> nent : DELETE FROM notificacion\nWHERE leida AND fecha_generacion < :limite
+nent --> orm : filas eliminadas
+orm --> svc : purga completada
 deactivate orm
 
 svc -> orm : find(notificacion)\nWHERE leida = false [AND id_empresa = :actorEmpresa]\nORDER BY fecha_generacion DESC
@@ -134,6 +142,8 @@ deactivate orm
 svc -> orm : save({ leida: true, fecha_leida: now() })
 activate orm
 orm -> nent : UPDATE notificacion\nSET leida = true, fecha_leida = now()\nWHERE id_notificacion = ?
+nent --> orm : fila actualizada
+orm --> svc : notificación marcada como leída
 deactivate orm
 
 svc -> aud : create({ accion: 'ACTUALIZAR',\nentidad_afectada: 'notificacion' })
@@ -141,6 +151,8 @@ activate aud
 aud -> orm : save(log)
 activate orm
 orm -> aent : INSERT INTO log_auditoria
+aent --> orm : registrado
+orm --> aud : log guardado
 deactivate orm
 aud --> svc : Auditoría registrada
 deactivate aud

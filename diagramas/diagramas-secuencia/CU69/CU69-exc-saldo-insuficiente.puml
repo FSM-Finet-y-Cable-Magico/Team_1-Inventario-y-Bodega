@@ -1,4 +1,10 @@
 @startuml CU69-exc-saldo-insuficiente
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
 title CU-69 — Registrando cierre de trabajo de reparación (excepción 1: saldo de consumible insuficiente o NS inválido)
 skinparam style strictuml
 skinparam monochrome true
@@ -36,28 +42,37 @@ activate svc
 
 svc -> orm : startTransaction() · INSERT integracion_cierre
 activate orm
+orm --> svc : transacción iniciada · id_cierre
 
 group NS inválido: no existe en la empresa
   svc -> orm : SELECT unidad_equipo WHERE numero_serie = 'NS-NO-EXISTE'
-  orm -> uent : consulta
+  orm -> uent : SELECT
   activate uent
   uent --> orm : sin filas
   deactivate uent
+  orm --> svc : null
   svc -> svc : discrepancia SERIE_NO_EXISTE\n(ninguna unidad cambia de estado)
 end
 
 group Saldo insuficiente del consumible (CU-68)
   svc -> orm : SELECT tipo_equipo WHERE id_tipo_equipo = 7
-  orm -> tent : consulta
+  orm -> tent : SELECT
   activate tent
   tent --> orm : tipo 'Fibra drop QA' · unidad 'Metro'
   deactivate tent
+  orm --> svc : tipo de equipo
   svc -> orm : InventarioPersonalService.descontarHasta(...)\nSELECT inventario_personal_tecnico FOR UPDATE
-  orm -> invp : consulta con bloqueo de fila
+  orm -> invp : SELECT con bloqueo de fila
   activate invp
-  invp --> orm : saldo 2 Metro < 5 declarados
+  invp --> orm : saldo 2 Metro
   deactivate invp
+  orm --> svc : saldo 2 Metro < 5 declarados
   svc -> orm : UPDATE inventario_personal_tecnico SET cantidad = 0\n(se descuenta lo disponible; faltante 3 Metro)
+  orm -> invp : UPDATE
+  activate invp
+  invp --> orm : saldo actualizado
+  deactivate invp
+  orm --> svc : saldo 0
   svc -> svc : discrepancia SALDO_INSUFICIENTE_AJUSTADO:\n'Saldo insuficiente de [Fibra drop QA]: disponible 2 Metro,\ndeclarado 5 Metro. Se descontó lo disponible y el faltante\nquedó como ajuste.'
 end
 
@@ -68,12 +83,16 @@ note right of svc
 end note
 
 svc -> orm : INSERT cierre_reparacion\n(el consumible ajustado queda con descontado: false y su detalle)
-orm -> crep : registro insertado
+orm -> crep : INSERT
+activate crep
+crep --> orm : id_cierre_reparacion
+deactivate crep
+orm --> svc : id_cierre_reparacion
 svc -> orm : commitTransaction()
 orm --> svc : transacción confirmada
 deactivate orm
 
-svc --> ctrl : 200 { estado_proceso: 'PROCESADO_CON_DISCREPANCIAS',\ndiscrepancias: [SERIE_NO_EXISTE, SALDO_INSUFICIENTE_AJUSTADO],\nid_cierre_reparacion }
+svc --> ctrl : { estado_proceso: 'PROCESADO_CON_DISCREPANCIAS',\ndiscrepancias: [SERIE_NO_EXISTE, SALDO_INSUFICIENTE_AJUSTADO],\nid_cierre_reparacion }
 deactivate svc
 ctrl --> g3 : 200 OK
 deactivate ctrl

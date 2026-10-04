@@ -1,4 +1,10 @@
 @startuml
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
 skinparam style strictuml
 skinparam monochrome true
 skinparam shadowing false
@@ -21,6 +27,7 @@ S --> C : Datos de cliente
 C --> V : HTTP 200
 V --> Administrador : Muestra resultado
 else Validación o cliente no encontrado
+DB --> S : sin filas para el RUT
 S --> C : 404 Cliente no encontrado
 C --> V : Error de negocio
 V --> Administrador : Mensaje de validación
