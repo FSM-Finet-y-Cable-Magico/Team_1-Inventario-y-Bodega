@@ -1,4 +1,10 @@
 @startuml CU64-normal
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
 title CU-64 — Ejecutando acciones atómicas del cierre de instalación (flujo normal)
 skinparam style strictuml
 skinparam monochrome true
@@ -41,14 +47,14 @@ note right : (E) auditoría de integración: el payload completo\n+ acciones + d
 svc -> sec : INSERT ... ON CONFLICT DO UPDATE RETURNING ultimo
 sec --> svc : ultimo = 1 → SRV-2026-00001
 svc -> orm : UPDATE integracion_cierre SET srv, id_tecnico
-loop cada equipos_instalados[] (A)(B)
+== Inicio loop: cada equipos_instalados[] (A)(B) ==
   svc -> uni : SELECT WHERE numero_serie + id_empresa
   uni --> svc : estado 'Asignado a técnico', id_tecnico_asignado
   svc -> svc : valida acción INSTALADO_EN_CLIENTE (máquina T1)
   svc -> uni : UPDATE estado = 'Instalado en cliente',\ncliente_rut/nombre, direccion_instalacion, srv
   svc -> orm : INSERT historial_estado_equipo (usuario null, motivo integración)
-end
-loop cada materiales[] (C)
+== Fin loop ==
+== Inicio loop: cada materiales[] (C) ==
   svc -> ips : descontarHasta(manager, id_tecnico, id_tipo_equipo, cantidad)
   activate ips
   ips -> inv : SELECT ... FOR UPDATE
@@ -56,7 +62,7 @@ loop cada materiales[] (C)
   ips -> inv : UPDATE cantidad = 15 (nunca negativa)
   ips --> svc : { saldoAnterior: 25, descontado: 10, faltante: 0 }
   deactivate ips
-end
+== Fin loop ==
 svc -> orm : commitTransaction()
 svc --> ctrl : 200 { success, data: { srv: 'SRV-2026-00001',\nid_tecnico, acciones_aplicadas, materiales { descontados, ajustes } } }
 deactivate svc
