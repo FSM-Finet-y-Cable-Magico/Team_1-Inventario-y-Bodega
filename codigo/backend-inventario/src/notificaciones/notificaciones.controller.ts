@@ -13,19 +13,21 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 export class NotificacionesController {
   constructor(private readonly notificacionesService: NotificacionesService) {}
 
-  // Genera las pendientes (dedupe diario) y devuelve contador + no leídas
+  // CU-96: genera las pendientes (dedupe diario) y devuelve contador + no leídas
   @Get()
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   listarNoLeidas(@CurrentUser() actor: ActorJwt) {
     return this.notificacionesService.listarNoLeidas(actor);
   }
 
+  // CU-96: marcar una notificación como leída
   @Patch(':id/leer')
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   marcarLeida(@Param('id') id: string, @CurrentUser() actor: ActorJwt) {
     return this.notificacionesService.marcarLeida(Number(id), actor);
   }
 
+  // CU-96: marcar todas las notificaciones como leídas
   @Patch('leer-todas')
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   marcarTodasLeidas(@CurrentUser() actor: ActorJwt) {

@@ -169,6 +169,8 @@ export class ReportesController {
     );
   }
 
+  // CU-87: reporte de equipos instalados por cliente (RUT, nombre o NS).
+  // La E1 (sin resultados) la muestra el front con la lista vacía.
   @Get('equipos-instalados')
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   getEquiposInstalados(
@@ -190,6 +192,7 @@ export class ReportesController {
     );
   }
 
+  // CU-90: reporte de productividad de técnicos (rango máximo 90 días, E1).
   @Get('tecnicos/productividad')
   @Roles('ADMIN', 'SUPERUSUARIO')
   getTecnicosProductividad(
@@ -212,6 +215,7 @@ export class ReportesController {
     );
   }
 
+  // CU-92: exportación a Excel (.xlsx) del reporte indicado en ?tipo=.
   @Get('exportar/excel')
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   async exportarExcel(
@@ -259,6 +263,7 @@ export class ReportesController {
     );
   }
 
+  // CU-92: misma exportación a Excel, con el tipo de reporte en la ruta.
   @Get(':tipo/exportar/excel')
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   async exportarExcelPorTipo(
@@ -301,6 +306,7 @@ export class ReportesController {
     );
   }
 
+  // CU-92: arma los filtros, genera el .xlsx y lo devuelve como descarga.
   private async handleExportExcel(
     tipo: string,
     query: RawExportQuery,

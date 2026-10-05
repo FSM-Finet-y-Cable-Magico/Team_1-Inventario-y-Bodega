@@ -24,6 +24,7 @@ for (let n = 0; n < 256; n++) {
   CRC_TABLE[n] = c >>> 0;
 }
 
+// CU-92: generador .xlsx sin dependencias (encabezados en negrita).
 @Injectable()
 export class ExcelExportService {
   /**
