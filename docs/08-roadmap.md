@@ -13,10 +13,10 @@ no esté reflejado aquí.
 ## Resumen
 
 - **Total de casos de uso:** 96
-- **Implementados por T1:** 81 (CU-01 a CU-48, CU-49 a CU-62, CU-64, CU-68, CU-72, CU-74 a CU-84, CU-85, CU-86, CU-88, CU-89, CU-91) — incluye CU-47, CU-48, CU-57..62, CU-61, CU-64 y CU-68; en `dev` (hasta CU-68) y en la rama `feat/javier-cus` (CU-48 y CU-61)
+- **Implementados por T1:** 92 (CU-01 a CU-62, CU-64, CU-68 a CU-96) — incluye CU-47, CU-48, CU-57..62, CU-61, CU-64, CU-68 (integración G3), CU-87/CU-90/CU-92 (PR #60, rama `Kevin`) y CU-69/CU-70/CU-93 (PR #66, rama `tomas`)
 - **Tomados por G3 (no los implementa T1):** 4 (CU-63, CU-65, CU-66, CU-67) — verificados contra `Team-3-FSM` (26-sept-2026), evidencia en `docs/11` §6
-- **Pendientes (Incremento 3):** 11 (CU-69, CU-70, CU-71, CU-73, CU-87, CU-90, CU-92 a CU-96) — tickets **sc-147 a sc-157** con responsable asignado (ver columna Notas)
-- **Integración con otros grupos (fuera del conteo de 96):** **sc-158/sc-159** (G8 CRM, acuerdo v1 ratificado 24-sept-2026 · Javier) — sc-158 (P0) y sc-159 (P1) implementados en `feat/javier-cus`; pendiente solo la API key de G8. **sc-113** (G3, implementado)
+- **Pendientes (Incremento 3):** 0 — la entrega suma 19 CUs respecto de los 77 del Incremento 2: CU-48, CU-61, CU-63 a CU-71, CU-73, CU-87, CU-90 y CU-92 a CU-96. Los 11 tickets sc-147 a sc-157 corresponden a una parte del alcance, no al incremento completo
+- **Integración con otros grupos (fuera del conteo de 96):** **sc-158/sc-159** (G8 CRM, acuerdo v1 ratificado 24-sept-2026 · Javier) — sc-158 (P0) y sc-159 (P1) implementados en `feat/javier-cus`; keys de G3 y G8 configuradas en Railway (pendiente enviar la URL pública a G8 al cerrar el lote). **sc-113** (G3, implementado)
 
 ## Leyenda
 
@@ -136,16 +136,16 @@ no esté reflejado aquí.
 | CU-66 | Editando datos del cliente | [x] Implementado por G3 | Tomado por **G3-CU-28** (`PATCH /clientes/:id`). Verificado 26-sept-2026 — ver `docs/11` §6 |
 | CU-67 | Consultando datos y equipos del cliente | [x] Implementado por G3 | Tomado por **G3-CU-06/28** (`GET /clientes` + `GET /clientes/rut/:rut`, también S2S). Verificado 26-sept-2026 — ver `docs/11` §6 |
 | CU-68 | Verificando saldo de consumibles en cierre | [x] Implementado | Incremento 3 · sc-146 (Javier) — rama `feat/javier-cus` (pendiente PR). `validarSaldo`/`detectarInsuficientes` + ajuste en el webhook (nunca rechazo) |
-| CU-69 | Registrando cierre de trabajo de reparación | [ ] Pendiente | Incremento 3 · sc-147 (Tomás) |
-| CU-70 | Seleccionando tipo de trabajo codificado para cierre | [ ] Pendiente | Incremento 3 · sc-148 (Tomás) |
+| CU-69 | Registrando cierre de trabajo de reparación | [x] Implementado | PR #66 (`tomas`) · sc-147 (Tomás). Llega por el webhook de cierre de OT de G3: registra `cierre_reparacion`, aplica retiro y reemplazo, descuenta consumibles del inventario del técnico (CU-58/CU-68) y audita. Vista de solo lectura en `/unidades/[id]` |
+| CU-70 | Seleccionando tipo de trabajo codificado para cierre | [x] Implementado | PR #66 (`tomas`) · sc-148 (Tomás). Catálogo constante T-01..T-10 (`GET /api/tipos-trabajo`) y borrador de cierre por OT en `/jornada`: el tipo precompleta falla, solución, resultado y categoría, el técnico ajusta y el webhook de G3 completa con eso el cierre (CU-69) |
 
 ### Devolución de equipos desde clientes
 
 | CU | Nombre | Estado | Notas |
 |----|--------|--------|-------|
-| CU-71 | Registrando devolución de equipo desde cliente | [ ] Pendiente | Incremento 3 · sc-149 (Javiera) |
+| CU-71 | Registrando devolución de equipo desde cliente | [x] Implementado | PR #65 (`Javiera`). `GET /unidades/devolucion/:numeroSerie` + `POST /unidades/:id/devolucion`; página `/unidades/devolucion`. Cliente y dirección desde el cierre de OT de G3 persistido (`integracion_cierre`). |
 | CU-72 | Registrando resultado de revisión de equipo | [x] Implementado | |
-| CU-73 | Mostrando información de equipo en devolución | [ ] Pendiente | Incremento 3 · sc-150 (Javiera) |
+| CU-73 | Mostrando información de equipo en devolución | [x] Implementado | PR #65 (`Javiera`). Extiende `GET /unidades/devolucion/:numeroSerie` de CU-71: fechas DD/MM/YYYY (`Sin garantía`), últimos 5 cambios de estado y `campos_no_registrados` (E1); panel en `/unidades/devolucion`. |
 
 ### Reacondicionamiento y equipos defectuosos
 
@@ -179,18 +179,18 @@ no esté reflejado aquí.
 |----|--------|--------|-------|
 | CU-85 | Generando reporte de stock actual | [x] Implementado | Grupo 5 · RF-60 · `/reportes/stock` · filtros, estados, umbral y auditoría |
 | CU-86 | Generando reporte de movimientos de inventario | [x] Implementado | Grupo 5 · RF-61 · `/reportes` · filtros, rango máximo 365 días, aislamiento y auditoría |
-| CU-87 | Generando reporte de equipos instalados por cliente | [ ] Pendiente | Incremento 3 · sc-151 (Kevin) |
+| CU-87 | Generando reporte de equipos instalados por cliente | [x] Implementado | PR #60 (`Kevin`) · RF-62 · endpoint `/api/reportes/equipos-instalados` y pestaña Equipos por cliente |
 | CU-88 | Generando reporte de garantías | [x] Implementado | Grupo 5 · RF-63 · `/api/reportes/garantias` · filtro por empresa, tipo y período, empty state y auditoría |
 | CU-89 | Generando reporte de inventario actual de técnicos | [x] Implementado | Grupo 5 · RF-64 · endpoint `/api/reportes/tecnicos/inventario` y pestaña en `/reportes` |
-| CU-90 | Generando reporte de productividad de técnicos | [ ] Pendiente | Incremento 3 · sc-152 (Kevin) |
+| CU-90 | Generando reporte de productividad de técnicos | [x] Implementado | PR #60 (`Kevin`) · RF-65 · endpoint `/api/reportes/tecnicos/productividad` y pestaña Productividad |
 | CU-91 | Generando reporte de consumo de consumibles | [x] Implementado | Grupo 5 · RF-66 · endpoint `/api/reportes/consumo` y pestaña Consumo de consumibles |
-| CU-92 | Exportando reporte a Excel | [ ] Pendiente | Incremento 3 · sc-153 (Kevin) |
-| CU-93 | Exportando reporte a PDF | [ ] Pendiente | Incremento 3 · sc-154 (Tomás) |
+| CU-92 | Exportando reporte a Excel | [x] Implementado | PR #60 (`Kevin`) · RF-67 · endpoint `/api/reportes/exportar/excel` · exportación a .xlsx de 7 reportes con encabezados en negrita, nombre de hoja ReporteYYYYMMDD, timeout de 15s (E1) y auditoría |
+| CU-93 | Exportando reporte a PDF | [x] Implementado | PR #66 (`tomas`) · sc-154 (Tomás). `GET /api/reportes/exportar/:tipo/pdf` para los cinco reportes, con el generador sin dependencias de CU-80 extendido (encabezado corporativo, tabla con bordes y filas alternadas), límite de 15 s (E1) y auditoría `EXPORTAR_REPORTE_PDF` |
 
 ### Alertas y notificaciones
 
 | CU | Nombre | Estado | Notas |
 |----|--------|--------|-------|
-| CU-94 | Consultando alertas activas en el dashboard | [ ] Pendiente | Incremento 3 · sc-155 (Uriel) |
-| CU-95 | Mostrando aviso de garantía vigente al cambiar estado | [ ] Pendiente | Incremento 3 · sc-156 (Javiera) |
-| CU-96 | Recibiendo notificaciones visuales en la campana del sistema | [ ] Pendiente | Incremento 3 · sc-157 (Uriel) |
+| CU-94 | Consultando alertas activas en el dashboard | [x] Implementado | Incremento 3 · sc-155 (Uriel) — PR #61 (`feat/runa`) |
+| CU-95 | Mostrando aviso de garantía vigente al cambiar estado | [x] Implementado | PR #65 (`Javiera`). Helper `inventario/aviso-garantia.ts`: 409 `AVISO_GARANTIA` con el texto exacto y confirmación `forzar_aviso_garantia: true` → audita `AVISO_GARANTIA_IGNORADO`. Aplica a CU-35/40, CU-71, CU-72 (Baja), CU-76, CU-78 y CU-82; unifica los avisos previos de CU-72/CU-78. |
+| CU-96 | Recibiendo notificaciones visuales en la campana del sistema | [x] Implementado | Incremento 3 · sc-157 (Uriel) — PR #61 (`feat/runa`) |

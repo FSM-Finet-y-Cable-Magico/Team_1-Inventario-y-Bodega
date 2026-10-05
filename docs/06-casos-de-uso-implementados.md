@@ -84,16 +84,24 @@
 | 62 | Validación de stock con bloqueo de fila | `salidas` | `/salidas` (banner) |
 | 64 | Acciones atómicas del cierre de instalación (estado + cliente/dirección + materiales + SRV) | `integraciones` (webhook G3), `salidas`, `inventario` | `/unidades/[id]` (ficha) |
 | 68 | Verificación de saldo de consumibles en cierre (pre-check + transacción) | `integraciones` (webhook G3), `salidas` (`InventarioPersonalService`) | `/unidades/[id]` (sin UI propia; el cierre llega por webhook) |
+| 71 | Registrando devolución de equipo desde cliente (Instalado en cliente → En revisión) | `inventario/units`, `integraciones` (lectura de `integracion_cierre`) | `/unidades/devolucion` |
 | 72 | Registrando resultado de revisión (Operativo/Reparación externa/Baja) | `inventario/units` | `/unidades/[id]` |
+| 73 | Mostrando información de equipo en devolución (garantía, últimos 5 cambios, cliente, campos no registrados) | `inventario/units`, `integraciones` (lectura de `integracion_cierre`) | `/unidades/devolucion` |
 | 74 | Reacondicionando equipo operativo desde revisión a bodega | `inventario/units` | `/unidades/[id]` |
 | 75 | Enviando equipo a reparación externa | `inventario/units` | `/unidades/[id]` |
 | 76 | Reingresando equipo desde reparación externa | `inventario/units` | `/unidades/[id]` |
 | 77 | Consultando listado de equipos en revisión | `inventario/units` | `/unidades/en-revision` |
 | 85 | Reporte de stock actual | `reportes`, `bodegas`, `inventario`, `auditoria` | `/reportes/stock` |
 | 86 | Reporte de movimientos de inventario | `reportes`, `transferencias` | `/reportes` |
+| 87 | Reporte de equipos instalados por cliente | `reportes`, `inventario`, `auditoria` | `/reportes` (pestaña Equipos por cliente) |
 | 88 | Reporte de garantías | `reportes`, `inventario`, `auditoria` | `/reportes` (pestaña Garantías) |
 | 89 | Reporte de inventario actual de técnicos | `reportes`, `salidas`, `inventario`, `auditoria` | `/reportes` (pestaña Inventario de técnicos) |
+| 90 | Reporte de productividad de técnicos | `reportes`, `integraciones`, `auditoria` | `/reportes` (pestaña Productividad) |
 | 91 | Reporte de consumo de consumibles | `reportes`, `salidas`, `auditoria` | `/reportes` (pestaña Consumo de consumibles) |
+| 92 | Exportando reporte a Excel | `reportes`, `auditoria` | `/reportes/stock`, `/reportes` (botón Exportar → Excel en cada reporte) |
+| 94 | Alertas activas en el dashboard (stock bajo umbral, garantía con defecto, préstamo vencido, revisión prolongada) | `alertas` (reutiliza `companies`, `inventario/units`, `prestamos`) | `/dashboard` (sección Alertas activas) |
+| 95 | Aviso de garantía vigente al registrar Dado de baja / En revisión (Continuar sin garantía / Cancelar) | `inventario/units` (`aviso-garantia.ts`), `bajas`, `prestamos`, `auditoria` | `/unidades/[id]`, `/unidades/devolucion`, `/prestamos` |
+| 96 | Notificaciones visuales en la campana (préstamo vencido + stock bajo umbral, persistidas y marcables como leídas) | `notificaciones` (reutiliza `companies`, `prestamos`, `alertas`) | `Header` (campana, sección "Notificaciones del sistema") |
 | 78 | Baja definitiva de equipo (directa o por solicitud del técnico) | `bajas`, `inventario/units`, `companies` | `/unidades/[id]`, `/bajas`, `Header` (campana) |
 | 79 | Acciones automáticas posteriores a la baja (exclusión del inventario activo) | `inventario/units`, `bodegas`, `companies` | `/dashboard`, `/bodegas`, `/unidades` (sin UI propia) |
 | 80 | Donación de equipos dados de baja + resumen en PDF | `donaciones` | `/bajas` (pestaña Donaciones) |
@@ -101,6 +109,9 @@
 | 82 | Retorno total o parcial de préstamo externo | `prestamos`, `inventario/units`, `bodegas` | `/prestamos` |
 | 83 | Tabla de préstamos externos activos (días restantes, filtros) | `prestamos` | `/prestamos` |
 | 84 | Trazabilidad de la devolución (validaciones del retorno) | `prestamos` | `/prestamos` (errores por ítem en el modal) |
+| 69 | Cierre de trabajo de reparación desde el cierre de OT de G3 (retiro, reemplazo y consumibles) | `integraciones`, `inventario/units`, `salidas`, `auditoria` | `/unidades/[id]` (sección Cierres de reparación) |
+| 70 | Tipo de trabajo codificado (T-01..T-10) que precompleta el cierre | `integraciones` (`cierres-trabajo`), `auditoria` | `/jornada` (panel Preparar cierre) |
+| 93 | Exportación a PDF del reporte visible (encabezado corporativo, tabla y auditoría) | `reportes` (`exportacion`), `auditoria` | `/reportes` y `/reportes/stock` (botón Exportar a PDF) |
 
 ## 3. Diagramas disponibles (referencia para CUs pendientes)
 

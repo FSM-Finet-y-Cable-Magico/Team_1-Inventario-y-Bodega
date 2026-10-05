@@ -1,0 +1,82 @@
+[
+  {
+    "id": "AUD90-E1",
+    "cu": "CU-90",
+    "name": "Rango superior a 90 días",
+    "expect": "400 y mensaje de límite de 90 días",
+    "status": 400,
+    "data": {
+      "message": "El rango de fechas para este reporte no puede superar los 90 días.",
+      "error": "Bad Request",
+      "statusCode": 400
+    },
+    "passed": true,
+    "at": "2026-10-01T04:24:00.520Z",
+    "entrada": {
+      "fecha_desde": "2026-01-01",
+      "fecha_hasta": "2026-09-30"
+    }
+  },
+  {
+    "id": "AUD66-E1",
+    "cu": "CU-66",
+    "name": "Edición con formatos inválidos",
+    "expect": "400; no persistir teléfono ni correo inválidos",
+    "status": 400,
+    "data": {
+      "message": [
+        "email must be an email"
+      ],
+      "error": "Bad Request",
+      "statusCode": 400
+    },
+    "passed": true,
+    "at": "2026-10-01T04:24:00.827Z",
+    "entrada": {
+      "telefono": "abc",
+      "email": "correo-invalido"
+    },
+    "persistencia": {
+      "status": 200,
+      "data": {
+        "cliente": {
+          "id_cliente": 1,
+          "rut": "11111111-1",
+          "nombre_completo": "Cliente QA Incremento Tres Editado",
+          "email": "qa.incremento3@example.test",
+          "telefono": "987654321",
+          "estado": "PENDIENTE",
+          "es_conflictivo": false,
+          "obs_conflictivo": null,
+          "fecha_creacion": "2026-09-30T15:58:24.560Z",
+          "direccion_principal": {
+            "id_direccion": 1,
+            "id_cliente": 1,
+            "direccion_completa": "Av. Pruebas 123",
+            "comuna": "Santiago",
+            "ciudad": "Santiago",
+            "es_principal": true
+          },
+          "contratos_activos": []
+        },
+        "historial_ot": [
+          {
+            "id_ot": 1,
+            "tipo_ot": "INSTALACION",
+            "estado": "COMPLETADA",
+            "prioridad": "MEDIA",
+            "fecha_creacion": "2026-09-30T15:58:25.061Z",
+            "fecha_completada": "2026-09-30T15:58:25.110Z"
+          }
+        ],
+        "alerta_reparaciones_30_dias": {
+          "activa": false,
+          "total_reparaciones_30_dias": 0,
+          "desde": "2026-09-01T05:24:00.851Z",
+          "hasta": "2026-10-01T04:24:00.851Z",
+          "ots": []
+        }
+      }
+    }
+  }
+]

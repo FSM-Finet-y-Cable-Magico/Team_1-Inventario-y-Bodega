@@ -1,0 +1,50 @@
+@startuml CU90-exc-rango-90-dias
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
+title CU-90 — Generando reporte de productividad de técnicos (excepción: rango mayor a 90 días)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+<style>
+sequenceDiagram {
+  participant { Margin 25 }
+  actor { Margin 20 }
+}
+</style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador / Superusuario" as user
+participant "V_ReportesProductividad" as view
+participant "C_ReportesController" as ctrl
+participant "C_ReportesService" as svc
+
+user -> view : Ingresa rango de fechas con más de 90 días (ej. 91 días) y pulsa Generar
+activate view
+
+alt Validación preventiva en vista frontend
+  view --> user : Muestra alerta: "El rango de fechas para este reporte no puede superar los 90 días."
+else Envío de petición HTTP
+  view -> ctrl : GET /api/reportes/tecnicos/productividad\n?fecha_desde=2026-01-01&fecha_hasta=2026-04-02 (91 días)
+  activate ctrl
+  ctrl -> svc : getTecnicosProductividadReport(filtros, req.user)
+  activate svc
+  svc -> svc : Calcula diferencia en días:\n(fin - inicio) > 90 días
+  svc --> ctrl : 400 Bad Request:\n"El rango de fechas para este reporte no puede superar los 90 días."
+  deactivate svc
+  ctrl --> view : 400 Bad Request:\n"El rango de fechas para este reporte no puede superar los 90 días."
+  deactivate ctrl
+  view --> user : Despliega mensaje de error:\n"El rango de fechas para este reporte no puede superar los 90 días."
+end
+
+deactivate view
+
+@enduml

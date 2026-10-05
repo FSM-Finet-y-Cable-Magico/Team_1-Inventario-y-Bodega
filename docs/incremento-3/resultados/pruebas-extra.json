@@ -1,0 +1,84 @@
+[
+  {
+    "id": "P71-95",
+    "cu": "CU-71/CU-95",
+    "name": "Devolución con garantía vigente",
+    "expect": "409 aviso previo",
+    "status": 409,
+    "data": {
+      "statusCode": 409,
+      "error": "Conflict",
+      "codigo": "AVISO_GARANTIA",
+      "message": "AVISO: El equipo DEMO-RTR-0004 (TP-Link Archer C6) tiene garantía vigente hasta 31/07/2027. Considere contactar al proveedor Importadora Pacífico SpA antes de proceder. ¿Desea continuar de todas formas?"
+    },
+    "passed": true,
+    "at": "2026-09-30T16:00:36.202Z"
+  },
+  {
+    "id": "P71-N",
+    "cu": "CU-71",
+    "name": "Devolución confirmada",
+    "expect": "201; En revisión; bodega destino",
+    "status": 201,
+    "data": {
+      "success": true,
+      "estadoActual": "En revisión",
+      "id_bodega_actual": 1,
+      "message": "La devolución del equipo fue registrada correctamente."
+    },
+    "rows": [
+      {
+        "estado": "En revisión",
+        "id_bodega_actual": 1
+      }
+    ],
+    "passed": true,
+    "at": "2026-09-30T16:00:36.224Z"
+  },
+  {
+    "id": "P71-E1-POST",
+    "cu": "CU-71",
+    "name": "Intento de segunda devolución",
+    "expect": "400 estado no permitido",
+    "status": 400,
+    "data": {
+      "message": "Transición de estado no permitida para este equipo. Estado actual: En revisión.",
+      "error": "Bad Request",
+      "statusCode": 400
+    },
+    "passed": true,
+    "at": "2026-09-30T16:00:36.228Z"
+  },
+  {
+    "id": "P92-E1",
+    "cu": "CU-92",
+    "name": "Límite de generación con bloqueo temporal de lectura",
+    "expect": "408 después de 15s",
+    "status": 408,
+    "data": {
+      "message": "La generación del archivo superó los 15 segundos sin completarse. Por favor intente nuevamente.",
+      "error": "Request Timeout",
+      "statusCode": 408
+    },
+    "duracion_ms": 15005,
+    "contexto": "Bloqueo de tabla provocado exclusivamente en base QA; se libera a los 17s",
+    "passed": true,
+    "at": "2026-09-30T16:00:51.234Z"
+  },
+  {
+    "id": "P93-E1",
+    "cu": "CU-93",
+    "name": "Límite de generación con bloqueo temporal de lectura",
+    "expect": "408 después de 15s",
+    "status": 408,
+    "data": {
+      "message": "La generación del archivo superó los 15 segundos. Intente nuevamente.",
+      "error": "Request Timeout",
+      "statusCode": 408
+    },
+    "duracion_ms": 15006,
+    "contexto": "Bloqueo de tabla provocado exclusivamente en base QA; se libera a los 17s",
+    "passed": true,
+    "at": "2026-09-30T16:00:51.235Z"
+  }
+]

@@ -6,11 +6,20 @@ const BASE = '/api';
 
 class ApiError extends Error {
 	status: number;
-	constructor(message: string, status: number) {
+	// CU-95: código opcional del backend (p. ej. 'AVISO_GARANTIA' en un 409)
+	codigo?: string;
+	constructor(message: string, status: number, codigo?: string) {
 		super(message);
 		this.name = 'ApiError';
 		this.status = status;
+		this.codigo = codigo;
 	}
+}
+
+// CU-95: el backend interrumpe con 409 + codigo 'AVISO_GARANTIA' cuando la unidad
+// tiene garantía vigente y el actor aún no eligió "Continuar sin garantía"
+export function esAvisoGarantia(err: unknown): err is ApiError {
+	return err instanceof ApiError && err.status === 409 && err.codigo === 'AVISO_GARANTIA';
 }
 
 async function request<T>(
@@ -56,20 +65,53 @@ async function request<T>(
 		const msg = Array.isArray(raw)
 			? [...new Set(raw)].join('. ')
 			: (raw as string) || 'Error del servidor';
-		throw new ApiError(msg, res.status);
+		const codigo =
+			typeof data === 'object' && data !== null
+				? ((data as Record<string, unknown>).codigo as string | undefined)
+				: undefined;
+		throw new ApiError(msg, res.status, codigo);
 	}
 
 	return data;
 }
 
 // Descarga autenticada de archivos (el token viaja en el header Authorization,
-// por lo que un enlace <a href> directo no sirve). CU-29/CU-30.
-async function download(path: string, fallbackName: string): Promise<void> {
+// por lo que un enlace <a href> directo no sirve). CU-29/CU-30/CU-92.
+async function download(
+	path: string,
+	fallbackName: string,
+	timeoutMs?: number
+): Promise<void> {
 	const token = get(authStore).token;
 	const headers: Record<string, string> = {};
 	if (token) headers['Authorization'] = `Bearer ${token}`;
 
-	const res = await fetch(`${BASE}${path}`, { headers });
+	const controller = new AbortController();
+	let timer: ReturnType<typeof setTimeout> | undefined;
+
+	if (timeoutMs && timeoutMs > 0) {
+		timer = setTimeout(() => {
+			controller.abort();
+		}, timeoutMs);
+	}
+
+	let res: Response;
+	try {
+		res = await fetch(`${BASE}${path}`, {
+			headers,
+			signal: controller.signal
+		});
+	} catch (err: unknown) {
+		if (err instanceof Error && err.name === 'AbortError') {
+			throw new ApiError(
+				'La generación del archivo superó los 15 segundos sin completarse. Por favor intente nuevamente.',
+				408
+			);
+		}
+		throw err;
+	} finally {
+		if (timer) clearTimeout(timer);
+	}
 
 	if (res.status === 401) {
 		authStore.logout();

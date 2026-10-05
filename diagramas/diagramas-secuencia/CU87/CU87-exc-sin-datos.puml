@@ -1,0 +1,65 @@
+@startuml CU87-exc-sin-datos
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
+title CU-87 — Generando reporte de equipos instalados por cliente (excepción: sin datos)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+<style>
+sequenceDiagram {
+  participant { Margin 25 }
+  actor { Margin 20 }
+}
+</style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega / Administrador / Superusuario" as user
+participant "V_ReportesEquiposCliente" as view
+participant "C_ReportesController" as ctrl
+participant "C_ReportesService" as svc
+participant "C_ClientesG3Service" as g3svc
+participant "C_TypeORM" as orm
+participant "log_auditoria" as aent
+
+user -> view : Ingresa criterio sin coincidencias y pulsa Buscar
+activate view
+view -> ctrl : GET /api/reportes/equipos-instalados?criterios
+activate ctrl
+ctrl -> svc : getEquiposInstaladosReport(filtros, req.user)
+activate svc
+svc -> svc : Valida rol y filtros
+
+opt Consulta a G3
+  svc -> g3svc : Buscar clientes
+  activate g3svc
+  g3svc --> svc : Sin coincidencias en G3
+  deactivate g3svc
+end
+
+svc -> orm : SELECT unidad_equipo WHERE estado = 'Instalado en cliente'
+activate orm
+orm --> svc : 0 registros coincidentes
+deactivate orm
+
+svc -> aent : INSERT log_auditoria\n(GENERAR_REPORTE, reporte_equipos_instalados)
+activate aent
+aent --> svc : Auditoría registrada
+deactivate aent
+
+svc --> ctrl : [] (array vacío)
+deactivate svc
+ctrl --> view : 200 OK: []
+deactivate ctrl
+view --> user : "No se encontraron equipos instalados con ese criterio."
+deactivate view
+
+@enduml

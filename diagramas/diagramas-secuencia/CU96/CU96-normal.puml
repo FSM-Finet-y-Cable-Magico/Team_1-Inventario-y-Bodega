@@ -1,0 +1,175 @@
+@startuml CU96-normal
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
+title CU-96 — Recibiendo notificaciones visuales en la campana del sistema (flujo normal)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style>
+sequenceDiagram {
+  participant {
+    margin 35
+  }
+  actor {
+    margin 15
+  }
+}
+</style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega" as user
+participant "V_Header" as view
+participant "C_RolesGuard" as guard
+participant "C_NotificacionesController" as ctrl
+participant "C_NotificacionesService" as svc
+participant "C_CompaniesService" as comp
+participant "C_PrestamosService" as prest
+participant "C_TypeORM" as orm
+participant "notificacion" as nent
+participant "stock_consumible" as sent
+participant "prestamo_externo" as pent
+participant "C_AuditoriaService" as aud
+participant "log_auditoria" as aent
+
+user -> view : Abre la barra superior\n(campana con contador)
+activate view
+
+view -> guard : GET /api/notificaciones
+activate guard
+guard -> guard : AuthGuard('jwt') + RolesGuard:\nrol ADMIN_BODEGA / ADMIN / SUPERUSUARIO
+guard --> view : Autorizado (canActivate() = true)
+deactivate guard
+
+view -> ctrl : GET /api/notificaciones
+activate ctrl
+
+ctrl -> svc : listarNoLeidas(actor)
+activate svc
+
+note over svc : generarPendientes(): evalúa AMBAS empresas,\nno solo la del actor que consulta
+
+note over svc : inicio loop\n(por cada empresa: Finet, Cable Mágico)
+  svc -> comp : getAlertasStockMinimo(id_empresa) (CU-46)
+  activate comp
+  comp -> orm : stock_consumible JOIN bodega JOIN tipo_equipo\nWHERE umbral_minimo > 0
+  activate orm
+  orm -> sent : SELECT ... WHERE stock_actual < umbral_minimo
+  sent --> orm : filas con id_bodega / id_tipo_equipo
+  orm --> comp : filas
+  deactivate orm
+  comp --> svc : [{ bodega, tipo_equipo, cantidad_disponible,\numbral_minimo, id_bodega, id_tipo_equipo }]
+  deactivate comp
+note over svc : término loop
+
+svc -> svc : clave_dedupe = 'Stock bajo umbral:\n{id_bodega}-{id_tipo_equipo}:{YYYY-MM-DD}'
+
+svc -> prest : listar({ estado: 'ACTIVO' }, actorSistema) (CU-83)
+activate prest
+prest -> orm : find({ tipo: 'PRESTAMO_EXTERNO', estado: 'ACTIVO' })\n(sin filtro de empresa: vista de sistema)
+activate orm
+orm -> pent : SELECT prestamo_externo\nWHERE tipo = 'PRESTAMO_EXTERNO' AND estado = 'ACTIVO'
+pent --> orm : Préstamos activos (ambas empresas)
+orm --> prest : cabeceras
+deactivate orm
+prest --> svc : [{ id_prestamo, correlativo, nombre_receptor,\nempresa, dias_restantes }]
+deactivate prest
+
+svc -> svc : Filtra dias_restantes < 0;\nclave_dedupe = 'Préstamo vencido:\n{id_prestamo}:{YYYY-MM-DD}'
+
+note over svc : inicio loop\n(por cada notificación candidata)
+  svc -> orm : findOne(notificacion)\nWHERE clave_dedupe = :clave
+  activate orm
+  orm -> nent : SELECT * FROM notificacion\nWHERE clave_dedupe = ?
+  nent --> orm : sin coincidencias\n(no se generó hoy para esta referencia)
+  orm --> svc : null
+  deactivate orm
+  svc -> orm : save(notificacion)
+  activate orm
+  orm -> nent : INSERT INTO notificacion\n(tipo, id_empresa, descripcion, clave_dedupe, leida=false)
+  nent --> orm : fila insertada
+  orm --> svc : ok
+  deactivate orm
+note over svc : término loop\n(una clave ya existente se ignora: no duplica)
+
+svc -> orm : delete(notificacion)\nWHERE leida = true AND fecha_generacion < now() - 30 días
+activate orm
+orm -> nent : DELETE FROM notificacion\nWHERE leida AND fecha_generacion < :limite
+nent --> orm : filas eliminadas
+orm --> svc : purga completada
+deactivate orm
+
+svc -> orm : find(notificacion)\nWHERE leida = false [AND id_empresa = :actorEmpresa]\nORDER BY fecha_generacion DESC
+activate orm
+orm -> nent : SELECT * FROM notificacion\nWHERE leida = false ...
+nent --> orm : No leídas del alcance del actor
+orm --> svc : filas
+deactivate orm
+
+svc --> ctrl : { contador: N,\nnotificaciones: [{ id_notificacion, tipo,\nempresa, descripcion, fecha_hora }] }
+deactivate svc
+
+ctrl --> view : 200 OK
+deactivate ctrl
+
+view --> user : Campana con contador = N.\nAl hacer clic: listado con tipo, empresa,\ndescripción y fecha/hora DD/MM/YYYY HH:MM:SS
+deactivate view
+
+user -> view : Clic en "Marcar como leída"\nsobre una notificación
+activate view
+
+view -> ctrl : PATCH /api/notificaciones/{id}/leer
+activate ctrl
+ctrl -> svc : marcarLeida(id, actor)
+activate svc
+
+svc -> orm : findOne(notificacion)\nWHERE id_notificacion = :id
+activate orm
+orm -> nent : SELECT * FROM notificacion WHERE id_notificacion = ?
+nent --> orm : fila (misma empresa del actor)
+orm --> svc : notificación
+deactivate orm
+
+svc -> orm : save({ leida: true, fecha_leida: now() })
+activate orm
+orm -> nent : UPDATE notificacion\nSET leida = true, fecha_leida = now()\nWHERE id_notificacion = ?
+nent --> orm : fila actualizada
+orm --> svc : notificación marcada como leída
+deactivate orm
+
+svc -> aud : create({ accion: 'ACTUALIZAR',\nentidad_afectada: 'notificacion' })
+activate aud
+aud -> orm : save(log)
+activate orm
+orm -> aent : INSERT INTO log_auditoria
+aent --> orm : registrado
+orm --> aud : log guardado
+deactivate orm
+aud --> svc : Auditoría registrada
+deactivate aud
+
+svc --> ctrl : { success: true }
+deactivate svc
+ctrl --> view : 200 OK
+deactivate ctrl
+
+view --> user : La notificación desaparece del contador\n(sigue en el historial 30 días)
+deactivate view
+
+note over ctrl, svc
+  "Marcar todas como leídas" (PATCH /leer-todas) sigue el mismo
+  camino, pero el UPDATE aplica a TODAS las filas no leídas
+  visibles para el actor en un solo statement, y la auditoría
+  queda en una única entrada con id_entidad_afectada = 0
+end note
+
+@enduml

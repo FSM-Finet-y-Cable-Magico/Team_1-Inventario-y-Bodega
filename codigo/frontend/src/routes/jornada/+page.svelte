@@ -1,11 +1,16 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { getMiJornada } from '$lib/api/index';
-	import type { JornadaTecnico, TrabajoDelDia } from '$lib/types';
+	import {
+		getMiJornada,
+		getTiposTrabajo,
+		getBorradorCierre,
+		guardarBorradorCierre
+	} from '$lib/api/index';
+	import type { JornadaTecnico, TrabajoDelDia, TipoTrabajo } from '$lib/types';
 	import Button from '$lib/components/Button.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
-	import { MapPin, Phone, RotateCw } from '@lucide/svelte';
+	import { MapPin, Phone, RotateCw, ClipboardList } from '@lucide/svelte';
 
 	// CU-61: vista móvil del técnico. La página es su propia vista (responsive),
 	// con los trabajos del día (G3) y el inventario personal (CU-58).
@@ -13,11 +18,138 @@
 	let loading = $state(true);
 	let error = $state('');
 
+	// CU-70: catálogo codificado de tipos de trabajo (T-01..T-10) y borrador del cierre.
+	// El cierre de la OT lo ejecuta G3 (CU-63); lo que el técnico prepara aquí precompleta
+	// el cierre que llega por el webhook (CU-69).
+	let tiposTrabajo = $state<TipoTrabajo[]>([]);
+	let otAbierta = $state<number | null>(null);
+	let otManual = $state('');
+	let guardando = $state(false);
+	let mensajeCierre = $state('');
+	let errorCierre = $state('');
+	let formulario = $state({
+		codigo_trabajo: '',
+		falla_reportada: '',
+		solucion_aplicada: '',
+		resultado: '',
+		categoria_falla: ''
+	});
+
+	const RESULTADOS = [
+		{ valor: 'RESUELTO', etiqueta: 'Resuelto' },
+		{ valor: 'PARCIAL', etiqueta: 'Resuelto parcialmente' },
+		{ valor: 'SIN_SOLUCION', etiqueta: 'Sin solución' }
+	];
+
+	// Códigos que aplican a la OT abierta (T-10 aplica a instalación y reparación).
+	const tiposAplicables = $derived.by(() => {
+		const trabajo = jornada?.trabajos.find((t) => t.id_ot === otAbierta);
+		if (!trabajo?.tipo_ot) return tiposTrabajo;
+		return tiposTrabajo.filter(
+			(tipo) => tipo.tipo_ot === trabajo.tipo_ot || tipo.tipo_ot === 'AMBOS'
+		);
+	});
+
+	const tipoSeleccionado = $derived(
+		tiposTrabajo.find((tipo) => tipo.codigo === formulario.codigo_trabajo) ?? null
+	);
+
+	function limpiarFormulario() {
+		formulario = {
+			codigo_trabajo: '',
+			falla_reportada: '',
+			solucion_aplicada: '',
+			resultado: '',
+			categoria_falla: ''
+		};
+	}
+
+	async function abrirCierre(idOt: number | null) {
+		mensajeCierre = '';
+		errorCierre = '';
+		if (idOt === null || otAbierta === idOt) {
+			otAbierta = null;
+			return;
+		}
+		otAbierta = idOt;
+		limpiarFormulario();
+
+		// Si ya había un borrador para esta OT, se retoma tal como quedó.
+		const borrador = await getBorradorCierre(idOt).catch(() => null);
+		if (borrador) {
+			formulario = {
+				codigo_trabajo: borrador.codigoTrabajo ?? '',
+				falla_reportada: borrador.fallaReportada ?? '',
+				solucion_aplicada: borrador.solucionAplicada ?? '',
+				resultado: borrador.resultado ?? '',
+				categoria_falla: borrador.categoriaFalla ?? ''
+			};
+		}
+	}
+
+	// Si G3 no responde, el técnico igual puede preparar el cierre indicando la OT.
+	async function abrirCierrePorNumero() {
+		const numero = parseInt(otManual, 10);
+		if (!Number.isInteger(numero) || numero <= 0) {
+			errorCierre = 'Indique un número de OT válido.';
+			return;
+		}
+		await abrirCierre(numero);
+	}
+
+	// Precompletado del CU-70: al elegir un código se rellenan los campos que ese tipo
+	// define; lo que el técnico ya escribió no se pisa.
+	function aplicarTipo(codigo: string) {
+		formulario.codigo_trabajo = codigo;
+		const tipo = tiposTrabajo.find((t) => t.codigo === codigo);
+		if (!tipo) return;
+		for (const campo of ['falla_reportada', 'solucion_aplicada', 'resultado', 'categoria_falla'] as const) {
+			const predefinido = tipo.campos[campo];
+			if (predefinido && formulario[campo].trim() === '') formulario[campo] = predefinido;
+		}
+	}
+
+	// Reemplaza los campos por los del tipo seleccionado, descartando los ajustes.
+	function restaurarPredefinidos() {
+		const tipo = tipoSeleccionado;
+		if (!tipo) return;
+		formulario = {
+			codigo_trabajo: tipo.codigo,
+			falla_reportada: tipo.campos.falla_reportada ?? '',
+			solucion_aplicada: tipo.campos.solucion_aplicada ?? '',
+			resultado: tipo.campos.resultado ?? '',
+			categoria_falla: tipo.campos.categoria_falla ?? ''
+		};
+	}
+
+	async function guardarCierre() {
+		if (otAbierta === null) return;
+		guardando = true;
+		mensajeCierre = '';
+		errorCierre = '';
+		try {
+			await guardarBorradorCierre(otAbierta, {
+				codigo_trabajo: formulario.codigo_trabajo || null,
+				falla_reportada: formulario.falla_reportada || null,
+				solucion_aplicada: formulario.solucion_aplicada || null,
+				resultado: formulario.resultado || null,
+				categoria_falla: formulario.categoria_falla || null
+			});
+			mensajeCierre = 'Cierre preparado. Se aplicará cuando G3 cierre la OT.';
+		} catch (err: unknown) {
+			errorCierre = err instanceof Error ? err.message : 'No se pudo guardar el cierre preparado';
+		} finally {
+			guardando = false;
+		}
+	}
+
 	async function load() {
 		loading = true;
 		error = '';
 		try {
 			jornada = await getMiJornada();
+			// CU-70: el catálogo es fijo; si falla, el formulario sigue usable (E1).
+			tiposTrabajo = await getTiposTrabajo().catch(() => []);
 		} catch (err: unknown) {
 			error = err instanceof Error ? err.message : 'Error al cargar la jornada';
 		} finally {
@@ -59,6 +191,98 @@
 				? 'Reparación'
 				: (trabajo.tipo_ot ?? 'Trabajo');
 </script>
+
+<!-- CU-70: formulario de preparación del cierre. Lo comparten la tarjeta del trabajo
+     del día y la preparación manual de una OT que no está en la lista. -->
+{#snippet formularioCierre(idOt: number)}
+	<div class="mt-3 space-y-3">
+		<div>
+			<label class="block text-sm font-medium text-foreground mb-1" for="tipo-{idOt}">Tipo de trabajo</label>
+			<select
+				id="tipo-{idOt}"
+				class="w-full border border-border rounded-md px-3 py-2 text-sm bg-white"
+				value={formulario.codigo_trabajo}
+				onchange={(e) => aplicarTipo((e.currentTarget as HTMLSelectElement).value)}
+			>
+				<!-- Excepción 1: ningún código aplica; el técnico completa a mano -->
+				<option value="">Sin tipo (completar manualmente)</option>
+				{#each tiposAplicables as tipo (tipo.codigo)}
+					<option value={tipo.codigo}>{tipo.codigo} · {tipo.nombre}</option>
+				{/each}
+			</select>
+			{#if tipoSeleccionado && tipoSeleccionado.materiales_sugeridos.length > 0}
+				<p class="text-xs text-muted mt-1">
+					Materiales sugeridos: {tipoSeleccionado.materiales_sugeridos.join(', ')}
+				</p>
+			{/if}
+		</div>
+
+		<div>
+			<label class="block text-sm font-medium text-foreground mb-1" for="falla-{idOt}">Falla reportada</label>
+			<textarea
+				id="falla-{idOt}"
+				rows="2"
+				class="w-full border border-border rounded-md px-3 py-2 text-sm"
+				bind:value={formulario.falla_reportada}
+			></textarea>
+		</div>
+
+		<div>
+			<label class="block text-sm font-medium text-foreground mb-1" for="solucion-{idOt}">Solución aplicada</label>
+			<textarea
+				id="solucion-{idOt}"
+				rows="2"
+				class="w-full border border-border rounded-md px-3 py-2 text-sm"
+				bind:value={formulario.solucion_aplicada}
+			></textarea>
+		</div>
+
+		<div class="grid gap-3 sm:grid-cols-2">
+			<div>
+				<label class="block text-sm font-medium text-foreground mb-1" for="resultado-{idOt}">Resultado</label>
+				<select
+					id="resultado-{idOt}"
+					class="w-full border border-border rounded-md px-3 py-2 text-sm bg-white"
+					bind:value={formulario.resultado}
+				>
+					<option value="">Sin definir</option>
+					{#each RESULTADOS as opcion (opcion.valor)}
+						<option value={opcion.valor}>{opcion.etiqueta}</option>
+					{/each}
+				</select>
+			</div>
+			<div>
+				<label class="block text-sm font-medium text-foreground mb-1" for="categoria-{idOt}">Categoría de falla</label>
+				<input
+					id="categoria-{idOt}"
+					type="text"
+					class="w-full border border-border rounded-md px-3 py-2 text-sm"
+					bind:value={formulario.categoria_falla}
+				/>
+			</div>
+		</div>
+
+		{#if errorCierre}
+			<div class="bg-red-50 border border-red-200 text-destructive rounded-md p-3 text-sm">{errorCierre}</div>
+		{/if}
+		{#if mensajeCierre}
+			<div class="bg-green-50 border border-green-200 text-green-800 rounded-md p-3 text-sm">{mensajeCierre}</div>
+		{/if}
+
+		<div class="flex flex-wrap gap-2">
+			<Button onclick={guardarCierre} disabled={guardando}>
+				{guardando ? 'Guardando...' : 'Guardar'}
+			</Button>
+			{#if tipoSeleccionado}
+				<Button variant="secondary" onclick={restaurarPredefinidos}>Restaurar predefinidos</Button>
+			{/if}
+			<Button variant="secondary" onclick={limpiarFormulario}>Limpiar</Button>
+		</div>
+		<p class="text-xs text-muted">
+			El cierre de la orden lo confirma el sistema de terreno (G3); esto deja preparados los datos del cierre.
+		</p>
+	</div>
+{/snippet}
 
 <div class="max-w-3xl mx-auto">
 	<div class="flex items-center justify-between mb-6">
@@ -132,10 +356,47 @@
 							{#if trabajo.observaciones}
 								<p class="text-xs text-muted mt-1">{trabajo.observaciones}</p>
 							{/if}
+
+							<!-- CU-70: tipo de trabajo codificado que precompleta el cierre -->
+							<div class="mt-3 pt-3 border-t border-border">
+								<Button variant="secondary" onclick={() => abrirCierre(trabajo.id_ot)}>
+									<ClipboardList class="h-4 w-4" />
+									{otAbierta === trabajo.id_ot ? 'Cerrar formulario' : 'Preparar cierre'}
+								</Button>
+								{#if otAbierta !== null && otAbierta === trabajo.id_ot}
+									{@render formularioCierre(otAbierta)}
+								{/if}
+							</div>
 						</div>
 					{/each}
 				</div>
 			{/if}
+
+			<!-- CU-70: preparar el cierre de una OT que no está en la lista (G3 sin responder) -->
+			<div class="bg-white rounded-lg border border-border p-4 mt-3">
+				<h3 class="text-sm font-medium text-foreground mb-2">Preparar el cierre de otra OT</h3>
+				<div class="flex flex-wrap items-end gap-2">
+					<div>
+						<label class="block text-xs text-muted mb-1" for="ot-manual">N° de OT</label>
+						<input
+							id="ot-manual"
+							type="number"
+							min="1"
+							class="border border-border rounded-md px-3 py-2 text-sm w-32"
+							bind:value={otManual}
+						/>
+					</div>
+					<Button variant="secondary" onclick={abrirCierrePorNumero}>
+						<ClipboardList class="h-4 w-4" />
+						Preparar cierre
+					</Button>
+				</div>
+
+				{#if otAbierta !== null && !jornada.trabajos.some((t) => t.id_ot === otAbierta)}
+					<p class="text-sm font-medium text-foreground mt-3">OT #{otAbierta}</p>
+					{@render formularioCierre(otAbierta)}
+				{/if}
+			</div>
 		</section>
 
 		<!-- (B) Inventario personal (CU-58) -->

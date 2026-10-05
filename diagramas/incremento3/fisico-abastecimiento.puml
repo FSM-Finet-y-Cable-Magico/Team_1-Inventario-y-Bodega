@@ -1,0 +1,87 @@
+@startuml
+
+!theme plain
+
+hide circle
+
+skinparam linetype ortho
+
+skinparam shadowing false
+
+skinparam roundcorner 4
+
+skinparam classFontSize 11
+
+skinparam classFontName "Helvetica,Arial,sans-serif"
+
+skinparam arrowColor #333333
+
+skinparam packageBackgroundColor transparent
+
+skinparam class {
+
+    BackgroundColor #FFFFFF
+
+    BorderColor #2B5797
+
+    HeaderBackgroundColor #E8EEF7
+
+}
+
+title Modelo físico — detalle abastecimiento (dev)
+entity "proveedor" as proveedor {
+  * id_proveedor : integer <<PK>>
+  * nombre_comercial : varchar(100)
+  * rut : varchar(12)
+  nombre_contacto : varchar(80)
+  telefono : varchar(15)
+  email : varchar(150)
+  activa : boolean
+  fecha_creacion : timestamptz
+}
+entity "orden_ingreso" as orden_ingreso {
+  * id_orden : integer <<PK>>
+  * correlativo : varchar(10)
+  * id_proveedor : integer
+  * numero_documento : varchar(30)
+  * fecha_documento : date
+  * id_empresa_destino : integer
+  * id_bodega_destino : integer
+  * estado : varchar(30)
+  * id_usuario_registro : integer
+  fecha_creacion : timestamptz
+}
+entity "orden_ingreso_detalle" as orden_ingreso_detalle {
+  * id_detalle : integer <<PK>>
+  * id_orden : integer
+  * id_tipo_equipo : integer
+  * cantidad_esperada : integer
+  * garantia_dias : integer
+  * cantidad_recibida : integer
+}
+entity "salida_bodega" as salida_bodega {
+  * id_salida : integer <<PK>>
+  * id_tecnico : integer
+  * id_bodega_origen : integer
+  fecha_hora : timestamptz
+  id_empresa : integer
+  id_usuario_registro : integer
+}
+entity "salida_detalle" as salida_detalle {
+  * id_detalle : integer <<PK>>
+  * id_salida : integer
+  id_tipo_equipo : integer
+  id_unidad : integer
+  cantidad : numeric
+}
+entity "inventario_personal_tecnico" as inventario_personal_tecnico {
+  * id_inventario : integer <<PK>>
+  * id_tecnico : integer
+  * id_tipo_equipo : integer
+  cantidad : numeric
+  fecha_actualizacion : timestamptz
+}
+orden_ingreso }o--|| proveedor : id_proveedor
+orden_ingreso_detalle }o--|| orden_ingreso : id_orden
+salida_detalle }o--|| salida_bodega : id_salida
+@enduml

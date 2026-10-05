@@ -1,4 +1,10 @@
 @startuml CU64-normal
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
 title CU-64 — Ejecutando acciones atómicas del cierre de instalación (flujo normal)
 skinparam style strictuml
 skinparam monochrome true
@@ -36,29 +42,67 @@ ctrl -> svc : recibirCierreOt(781, payload, integracion)
 activate svc
 svc -> svc : validar X-API-KEY + scope id_empresa + payload
 svc -> orm : startTransaction()
-svc -> cierre : INSERT (clave_idempotencia UNIQUE, payload)
+activate orm
+orm --> svc : transacción iniciada
+svc -> orm : INSERT integracion_cierre\n(clave_idempotencia UNIQUE, payload)
+orm -> cierre : INSERT
+activate cierre
+cierre --> orm : id_cierre
+deactivate cierre
+orm --> svc : id_cierre
 note right : (E) auditoría de integración: el payload completo\n+ acciones + discrepancias quedan en integracion_cierre
-svc -> sec : INSERT ... ON CONFLICT DO UPDATE RETURNING ultimo
-sec --> svc : ultimo = 1 → SRV-2026-00001
+svc -> orm : INSERT secuencia_srv ... ON CONFLICT DO UPDATE RETURNING ultimo
+orm -> sec : UPSERT
+activate sec
+sec --> orm : ultimo = 1
+deactivate sec
+orm --> svc : SRV-2026-00001
 svc -> orm : UPDATE integracion_cierre SET srv, id_tecnico
-loop cada equipos_instalados[] (A)(B)
-  svc -> uni : SELECT WHERE numero_serie + id_empresa
-  uni --> svc : estado 'Asignado a técnico', id_tecnico_asignado
+orm -> cierre : UPDATE
+activate cierre
+cierre --> orm : actualizado
+deactivate cierre
+orm --> svc : cierre actualizado
+== Inicio loop: cada equipos_instalados[] (A)(B) ==
+  svc -> orm : SELECT unidad_equipo WHERE numero_serie + id_empresa
+  orm -> uni : SELECT
+  activate uni
+  uni --> orm : estado 'Asignado a técnico', id_tecnico_asignado
+  deactivate uni
+  orm --> svc : unidad
   svc -> svc : valida acción INSTALADO_EN_CLIENTE (máquina T1)
-  svc -> uni : UPDATE estado = 'Instalado en cliente',\ncliente_rut/nombre, direccion_instalacion, srv
+  svc -> orm : UPDATE unidad_equipo SET estado = 'Instalado en cliente',\ncliente_rut/nombre, direccion_instalacion, srv
+  orm -> uni : UPDATE
+  activate uni
+  uni --> orm : unidad actualizada
+  deactivate uni
+  orm --> svc : unidad actualizada
   svc -> orm : INSERT historial_estado_equipo (usuario null, motivo integración)
-end
-loop cada materiales[] (C)
+  orm --> svc : historial guardado
+== Fin loop ==
+== Inicio loop: cada materiales[] (C) ==
   svc -> ips : descontarHasta(manager, id_tecnico, id_tipo_equipo, cantidad)
   activate ips
-  ips -> inv : SELECT ... FOR UPDATE
-  inv --> ips : cantidad = 25
-  ips -> inv : UPDATE cantidad = 15 (nunca negativa)
+  ips -> orm : SELECT inventario_personal_tecnico FOR UPDATE
+  orm -> inv : SELECT con bloqueo
+  activate inv
+  inv --> orm : cantidad = 25
+  deactivate inv
+  orm --> ips : saldo 25
+  ips -> orm : UPDATE cantidad = 15 (nunca negativa)
+  orm -> inv : UPDATE
+  activate inv
+  inv --> orm : saldo actualizado
+  deactivate inv
+  orm --> ips : saldo 15
   ips --> svc : { saldoAnterior: 25, descontado: 10, faltante: 0 }
   deactivate ips
-end
+== Fin loop ==
 svc -> orm : commitTransaction()
-svc --> ctrl : 200 { success, data: { srv: 'SRV-2026-00001',\nid_tecnico, acciones_aplicadas, materiales { descontados, ajustes } } }
+orm --> svc : transacción confirmada
+deactivate orm
+svc --> ctrl : { success, data: { srv: 'SRV-2026-00001',\nid_tecnico, acciones_aplicadas, materiales { descontados, ajustes } } }
 deactivate svc
-ctrl --> g3 : 2xx (G3 guarda el SRV; nunca 4xx por regla de negocio)
+ctrl --> g3 : 200 OK (G3 guarda el SRV; nunca 4xx por regla de negocio)
+deactivate ctrl
 @enduml

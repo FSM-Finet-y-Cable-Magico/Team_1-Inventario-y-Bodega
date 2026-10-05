@@ -22,5 +22,7 @@ import { SolicitudBaja } from '../bajas/entities/solicitud-baja.entity';
   ],
   controllers: [CompaniesController],
   providers: [CompaniesService],
+  // CU-94: el módulo de alertas reutiliza la regla de stock mínimo (CU-46)
+  exports: [CompaniesService],
 })
 export class CompaniesModule {}

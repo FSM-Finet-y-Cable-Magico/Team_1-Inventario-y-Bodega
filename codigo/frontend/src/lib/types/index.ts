@@ -328,6 +328,29 @@ export interface EquipoEnRevision {
 	diagnostico_tecnico: string | null;
 }
 
+// CU-71: datos del equipo mostrados al ingresar el NS en la devolución
+export interface EquipoDevolucion {
+	id_unidad: number;
+	numero_serie: string;
+	tipo: string | null;
+	marca: string | null;
+	modelo: string | null;
+	estado: string;
+	nombre_cliente: string | null;
+	direccion_instalacion: string | null;
+	// CU-73: fechas en DD/MM/YYYY ('Sin garantía' si no hay vencimiento),
+	// últimos 5 cambios de estado y campos no registrados (Excepción 1)
+	fecha_adquisicion: string | null;
+	fecha_venc_garantia: string;
+	ultimos_cambios_estado: {
+		fecha_hora: string;
+		estado_anterior: string | null;
+		estado_nuevo: string | null;
+		observacion: string | null;
+	}[];
+	campos_no_registrados: string[];
+}
+
 export interface Bodega {
 	id_bodega: number;
 	id_empresa: number | null;
@@ -462,6 +485,55 @@ export interface ReporteConsumoFila {
 	cantidad_devuelta: number;
 	diferencia: number;
 	desvio: boolean;
+}
+
+// CU-87: fila del reporte de equipos instalados por cliente
+export interface ReporteEquiposInstaladosFila {
+	id_unidad: number;
+	numero_servicio: string;
+	rut_cliente: string;
+	nombre_cliente: string;
+	direccion_instalacion: string;
+	tipo_equipo: string;
+	numero_serie: string;
+	fecha_instalacion: string;
+	tecnico_instalacion: string;
+	id_empresa: number;
+}
+
+export interface FiltrosReporteEquiposInstalados {
+	rut?: string;
+	nombre?: string;
+	numero_serie?: string;
+	ns?: string;
+	id_empresa?: string | number;
+}
+
+// CU-90: reporte de productividad de técnicos
+export interface ConsumibleAgrupado {
+	tipo_consumible: string;
+	cantidad: number;
+	unidad_medida: string;
+}
+
+export interface ReporteProductividadTecnicoFila {
+	id_tecnico: number;
+	nombre_completo: string;
+	id_empresa: number;
+	empresa: string;
+	instalaciones_cerradas: number;
+	reparaciones_cerradas: number;
+	metros_fibra_optica: number;
+	unidades_conectores: number;
+	otros_consumibles: ConsumibleAgrupado[];
+	otros_consumibles_resumen: string;
+}
+
+export interface FiltrosProductividadTecnicos {
+	id_empresa?: string | number;
+	id_tecnico?: string | number;
+	fecha_desde?: string;
+	fecha_hasta?: string;
 }
 
 // Respuesta de GET /transferencias (CU-23)
@@ -612,6 +684,32 @@ export interface DashboardEmpresa {
 	total_bodegas: number;
 }
 
+// CU-94: alertas activas del dashboard (literales exactos del backend)
+export type TipoAlerta = 'Stock bajo umbral' | 'Garantía con defecto' | 'Préstamo vencido' | 'Revisión prolongada';
+
+export interface AlertaActiva {
+	tipo: TipoAlerta;
+	empresa: string;
+	descripcion: string;
+	fecha_hora: string;
+}
+
+// CU-96: notificación persistida de la campana (solo A: Stock bajo umbral y
+// C: Préstamo vencido, subconjunto de TipoAlerta). Todo lo que devuelve
+// GET /api/notificaciones está, por definición, sin leer.
+export interface NotificacionCampana {
+	id_notificacion: number;
+	tipo: TipoAlerta;
+	empresa: string;
+	descripcion: string;
+	fecha_hora: string;
+}
+
+export interface NotificacionesNoLeidas {
+	contador: number;
+	notificaciones: NotificacionCampana[];
+}
+
 export interface PaginatedResponse<T> {
 	data: T[];
 	total: number;
@@ -704,4 +802,66 @@ export interface JornadaTecnico {
 	trabajos_estado: 'OK' | 'NO_DISPONIBLE';
 	trabajos: TrabajoDelDia[];
 	inventario: InventarioTecnico;
+}
+
+// CU-70: catálogo codificado de tipos de trabajo (T-01..T-10) para el cierre.
+export interface TipoTrabajo {
+	codigo: string;
+	nombre: string;
+	tipo_ot: 'INSTALACION' | 'REPARACION' | 'AMBOS';
+	campos: {
+		falla_reportada?: string;
+		solucion_aplicada?: string;
+		resultado?: string;
+		categoria_falla?: string;
+	};
+	materiales_sugeridos: string[];
+}
+
+// CU-70: borrador del cierre que el técnico prepara para una OT.
+export interface BorradorCierre {
+	id_borrador: number;
+	id_ot: number;
+	id_empresa: number;
+	id_tecnico: number;
+	codigoTrabajo: string | null;
+	fallaReportada: string | null;
+	solucionAplicada: string | null;
+	resultado: string | null;
+	categoriaFalla: string | null;
+	fechaActualizacion: string;
+}
+
+// CU-69: cierre de trabajo de reparación registrado desde el cierre de OT de G3.
+export interface CierreReparacion {
+	id_cierre_reparacion: number;
+	id_ot: number;
+	id_empresa: number;
+	id_tecnico: number | null;
+	// El endpoint devuelve la entidad, así que los campos viajan en camelCase.
+	rutCliente: string | null;
+	direccionServicio: string | null;
+	fallaReportada: string;
+	solucionAplicada: string;
+	// 'Resuelto' | 'Resuelto parcialmente' | 'Sin solución'
+	resultado: string;
+	resueltoRemotamente: boolean;
+	categoriaFalla: string | null;
+	// CU-70: tipo de trabajo codificado con el que se preparó el cierre.
+	codigoTrabajo: string | null;
+	equiposRetirados: { numero_serie: string; estado_anterior: string; estado_nuevo: string }[] | null;
+	equiposInstalados: { numero_serie: string; estado_anterior: string; estado_nuevo: string }[] | null;
+	consumibles:
+		| {
+				id_tipo_equipo: number;
+				tipo_equipo?: string;
+				cantidad: number;
+				unidad_medida?: string;
+				descontado: boolean;
+				codigo?: string;
+				detalle?: string;
+		  }[]
+		| null;
+	fechaCierre: string | null;
+	fechaRegistro: string;
 }

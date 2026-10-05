@@ -1,0 +1,145 @@
+@startuml CU94-normal
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
+title CU-94 — Consultando alertas activas en el dashboard (flujo normal)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style>
+sequenceDiagram {
+  participant {
+    margin 35
+  }
+  actor {
+    margin 15
+  }
+}
+</style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega" as user
+participant "V_Dashboard" as view
+participant "C_RolesGuard" as guard
+participant "C_AlertasController" as ctrl
+participant "C_AlertasService" as svc
+participant "C_UnitsService" as units
+participant "C_CompaniesService" as comp
+participant "C_PrestamosService" as prest
+participant "C_TypeORM" as orm
+participant "unidad_equipo" as uent
+participant "historial_estado_equipo" as hent
+participant "stock_consumible" as sent
+participant "prestamo_externo" as pent
+
+user -> view : Navega a /dashboard
+activate view
+
+view -> guard : GET /api/alertas
+activate guard
+
+guard -> guard : AuthGuard('jwt') + RolesGuard:\nrol ADMIN_BODEGA / ADMIN / SUPERUSUARIO
+activate guard
+deactivate guard
+
+guard --> view : Autorizado\n(canActivate() = true)
+deactivate guard
+
+view -> ctrl : GET /api/alertas
+activate ctrl
+
+ctrl -> svc : listarAlertasActivas(actor)
+activate svc
+
+svc -> svc : Aislamiento: Superusuario → ambas empresas;\nresto → solo su id_empresa.\nFecha de evaluación = now() (America/Santiago)
+activate svc
+deactivate svc
+
+svc -> units : listarEnRevision(actor) (CU-77)
+activate units
+units -> orm : createQueryBuilder('unidad')\nWHERE estado = 'En revisión'\n[AND id_empresa = :idEmpresa]
+activate orm
+orm -> uent : SELECT unidad_equipo JOIN tipo_equipo\nWHERE estado = 'En revisión'
+activate uent
+uent --> orm : Unidades en revisión\n(con fecha_venc_garantia)
+deactivate uent
+orm -> hent : SELECT DISTINCT ON (id_unidad) ...\nWHERE estado_nuevo = 'En revisión'\nORDER BY id_unidad, fecha_hora DESC
+activate hent
+hent --> orm : Fecha de ingreso a revisión
+deactivate hent
+orm --> units : filas
+deactivate orm
+units --> svc : [{ numero_serie, empresa, fecha_ingreso_revision,\ndias_en_revision, fecha_venc_garantia }]
+deactivate units
+
+note over svc : inicio loop\n(por cada empresa visible para el actor)
+  svc -> comp : getAlertasStockMinimo(id_empresa) (CU-46)
+  activate comp
+  comp -> orm : stock_consumible JOIN bodega JOIN tipo_equipo\nWHERE umbral_minimo > 0
+  activate orm
+  orm -> sent : SELECT ... WHERE b.id_empresa = :empresa\nAND umbral_minimo IS NOT NULL AND umbral_minimo > 0
+  activate sent
+  sent --> orm : Umbrales configurados
+  deactivate sent
+  orm -> uent : COUNT(*) WHERE estado = 'En bodega'\n(solo tipos serializados)
+  activate uent
+  uent --> orm : stock activo
+  deactivate uent
+  orm --> comp : filas
+  deactivate orm
+  comp --> svc : [{ bodega, tipo_equipo,\ncantidad_disponible, umbral_minimo }]\ncon stock < umbral
+  deactivate comp
+note over svc : término loop
+
+svc -> svc : (A) Stock bajo umbral\nfecha_hora = fecha de evaluación
+activate svc
+deactivate svc
+
+svc -> svc : (B) Garantía con defecto:\nfecha_venc_garantia >= hoy\nfecha_hora = ingreso a 'En revisión'
+activate svc
+deactivate svc
+
+svc -> prest : listar({ estado: 'ACTIVO' }, actor) (CU-83)
+activate prest
+prest -> orm : find({ tipo: 'PRESTAMO_EXTERNO',\nestado: 'ACTIVO' [, id_empresa] })
+activate orm
+orm -> pent : SELECT prestamo_externo\nWHERE tipo = 'PRESTAMO_EXTERNO' AND estado = 'ACTIVO'
+activate pent
+pent --> orm : Préstamos activos
+deactivate pent
+orm --> prest : cabeceras
+deactivate orm
+prest --> svc : [{ correlativo, nombre_receptor, empresa,\nfecha_estimada_retorno, dias_restantes }]\n(días calculados en el servidor)
+deactivate prest
+
+svc -> svc : (C) Préstamo vencido: dias_restantes < 0\nfecha_hora = fecha estimada de retorno 00:00:00
+activate svc
+deactivate svc
+
+svc -> svc : (D) Revisión prolongada: dias_en_revision > 30\nfecha_hora = ingreso a 'En revisión'
+activate svc
+deactivate svc
+
+svc -> svc : Descripción recortada a 100 caracteres;\norden A → B → C → D, más recientes primero
+activate svc
+deactivate svc
+
+svc --> ctrl : [{ tipo, empresa, descripcion, fecha_hora }]
+deactivate svc
+
+ctrl --> view : 200 OK
+deactivate ctrl
+
+view --> user : Sección "Alertas activas": tipo (negrita), empresa,\ndescripción y fecha/hora DD/MM/YYYY HH:MM:SS
+deactivate view
+
+@enduml

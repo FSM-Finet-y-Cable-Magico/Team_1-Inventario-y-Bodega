@@ -1,5 +1,7 @@
 import { api } from './client';
-import type { LoginDto, LoginResponse, Usuario, EquipoEnRevision, VerificacionSerie, ItemSalida, SalidaResumen, InventarioTecnico, JornadaTecnico, ReporteStock } from '$lib/types';
+// CU-95: detección del 409 de aviso de garantía vigente
+export { esAvisoGarantia } from './client';
+import type { LoginDto, LoginResponse, Usuario, EquipoEnRevision, EquipoDevolucion, VerificacionSerie, ItemSalida, SalidaResumen, InventarioTecnico, JornadaTecnico, ReporteStock, AlertaActiva, NotificacionesNoLeidas } from '$lib/types';
 
 export async function login(dto: LoginDto): Promise<LoginResponse> {
 	return api.post<LoginResponse>('/auth/login', dto);
@@ -150,9 +152,22 @@ export function registrarRetornoReparacion(id: number, data: Record<string, unkn
 	return api.post<any>(`/unidades/${id}/retorno-reparacion`, data);
 }
 
+// CU-71: buscar equipo por NS para la devolución (valida "Instalado en cliente")
+export function getEquipoParaDevolucion(numeroSerie: string) {
+	return api.get<EquipoDevolucion>(`/unidades/devolucion/${encodeURIComponent(numeroSerie)}`);
+}
+
+// CU-71: registrar devolución de equipo desde cliente (equipo → "En revisión")
+export function registrarDevolucion(
+	id: number,
+	data: { fecha_devolucion: string; estado_visual: string; nombre_tecnico_retiro: string; id_bodega_destino: number; forzar_aviso_garantia?: boolean }
+) {
+	return api.post<any>(`/unidades/${id}/devolucion`, data);
+}
+
 // CU-78: registrar baja definitiva (ADMIN/SUPERUSUARIO/ADMIN_BODEGA la aplican
 // directo; el técnico de terreno genera una solicitud pendiente de aprobación)
-export function registrarBaja(data: { id_unidad: number; motivo: string; descripcion_otro?: string }) {
+export function registrarBaja(data: { id_unidad: number; motivo: string; descripcion_otro?: string; forzar_aviso_garantia?: boolean }) {
 	return api.post<any>('/bajas', data);
 }
 
@@ -236,7 +251,7 @@ export function registrarPrestamo(data: {
 // CU-82: retorno total o parcial de un préstamo externo
 export function registrarRetornoPrestamo(
 	id: number,
-	data: { fecha_retorno: string; observacion?: string; items: { id_detalle?: number; numero_serie?: string; cantidad?: number }[] }
+	data: { fecha_retorno: string; observacion?: string; items: { id_detalle?: number; numero_serie?: string; cantidad?: number }[]; forzar_aviso_garantia?: boolean }
 ) {
 	return api.post<any>(`/prestamos/${id}/retorno`, data);
 }
@@ -302,6 +317,24 @@ export function generarReporteGarantias(params?: { id_empresa?: string; id_tipo_
 	return api.get<import('$lib/types').ReporteGarantiaFila[]>(`/reportes/garantias${query ? '?' + query : ''}`);
 }
 
+// CU-93: exportación a PDF del reporte visible, con sus mismos filtros.
+// El navegador descarga el archivo; un 408 es la Excepción 1 (más de 15 s).
+export function exportarReportePdf(
+	tipo: 'stock' | 'movimientos' | 'garantias' | 'tecnicos-inventario' | 'consumo',
+	filtros: Record<string, string | undefined>
+) {
+	const qs = new URLSearchParams();
+	for (const [clave, valor] of Object.entries(filtros)) {
+		if (valor) qs.set(clave, valor);
+	}
+	const query = qs.toString();
+	const marca = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+	return api.download(
+		`/reportes/exportar/${tipo}/pdf${query ? '?' + query : ''}`,
+		`reporte-${tipo}-${marca}.pdf`
+	);
+}
+
 // CU-89: inventario actual de técnicos, por empresa y técnico opcional
 export function generarReporteInventarioTecnicos(params?: { id_empresa?: string; id_usuario?: string }) {
 	const qs = new URLSearchParams();
@@ -320,6 +353,62 @@ export function generarReporteConsumo(params?: { id_empresa?: string; id_tipo_eq
 	if (params?.fecha_hasta) qs.set('fecha_hasta', params.fecha_hasta);
 	const query = qs.toString();
 	return api.get<import('$lib/types').ReporteConsumoFila[]>(`/reportes/consumo${query ? '?' + query : ''}`);
+}
+
+// CU-87: reporte de equipos instalados por cliente
+export function generarReporteEquiposInstalados(params?: {
+	rut?: string;
+	nombre?: string;
+	numero_serie?: string;
+	id_empresa?: string;
+}) {
+	const qs = new URLSearchParams();
+	if (params?.rut) qs.set('rut', params.rut);
+	if (params?.nombre) qs.set('nombre', params.nombre);
+	if (params?.numero_serie) qs.set('numero_serie', params.numero_serie);
+	if (params?.id_empresa) qs.set('id_empresa', params.id_empresa);
+	const query = qs.toString();
+	return api.get<import('$lib/types').ReporteEquiposInstaladosFila[]>(
+		`/reportes/equipos-instalados${query ? '?' + query : ''}`,
+	);
+}
+
+// CU-90: reporte de productividad de técnicos
+export function generarReporteProductividadTecnicos(params?: {
+	id_empresa?: string;
+	id_tecnico?: string;
+	fecha_desde?: string;
+	fecha_hasta?: string;
+}) {
+	const qs = new URLSearchParams();
+	if (params?.id_empresa) qs.set('id_empresa', params.id_empresa);
+	if (params?.id_tecnico) qs.set('id_tecnico', params.id_tecnico);
+	if (params?.fecha_desde) qs.set('fecha_desde', params.fecha_desde);
+	if (params?.fecha_hasta) qs.set('fecha_hasta', params.fecha_hasta);
+	const query = qs.toString();
+	return api.get<import('$lib/types').ReporteProductividadTecnicoFila[]>(
+		`/reportes/tecnicos/productividad${query ? '?' + query : ''}`,
+	);
+}
+
+// CU-92: exportar reporte visible a Excel (.xlsx) compatible con Excel 2016+ y Calc 7.0+
+export function exportarReporteExcel(
+	tipo: string,
+	params?: Record<string, string | number | boolean | undefined | null>,
+	timeoutMs: number = 15000,
+) {
+	const qs = new URLSearchParams();
+	qs.set('tipo', tipo);
+	if (params) {
+		for (const [key, value] of Object.entries(params)) {
+			if (value !== undefined && value !== null && value !== '') {
+				qs.set(key, String(value));
+			}
+		}
+	}
+	const query = qs.toString();
+	const fallbackName = `reporte-${tipo}.xlsx`;
+	return api.download(`/reportes/exportar/excel?${query}`, fallbackName, timeoutMs);
 }
 
 // CU-23: filtros por estado, rango de fechas o empresa
@@ -357,6 +446,25 @@ export function getDashboard() {
 
 export function getMyDashboard() {
 	return api.get<any>('/empresas/mi-dashboard');
+}
+
+// CU-94: alertas activas del dashboard (el backend las calcula en cada consulta)
+export function getAlertasActivas(): Promise<AlertaActiva[]> {
+	return api.get<AlertaActiva[]>('/alertas');
+}
+
+// CU-96: campana del sistema (notificaciones persistidas, no leídas + contador).
+// Cada GET también dispara la generación con dedupe diario en el backend.
+export function getNotificaciones(): Promise<NotificacionesNoLeidas> {
+	return api.get<NotificacionesNoLeidas>('/notificaciones');
+}
+
+export function marcarNotificacionLeida(id: number) {
+	return api.patch<{ success: boolean }>(`/notificaciones/${id}/leer`);
+}
+
+export function marcarTodasNotificacionesLeidas() {
+	return api.patch<{ success: boolean; cantidad: number }>('/notificaciones/leer-todas');
 }
 
 export function getAuditLog(filters?: Record<string, string | number | undefined>) {
@@ -477,7 +585,51 @@ export function getInventarioTecnico(id: number, empresa?: number): Promise<Inve
 	return api.get<InventarioTecnico>(`/tecnicos/${id}/inventario${qs}`);
 }
 
-// CU-61: jornada del técnico autenticado (trabajos del día de G3 + inventario propio)
-export function getMiJornada(): Promise<JornadaTecnico> {
-	return api.get<JornadaTecnico>('/tecnicos/me/jornada');
+// CU-61: jornada del técnico autenticado (trabajos del día de G3 + inventario propio).
+// El endpoint responde con el envoltorio {success, data} del módulo de integraciones.
+export async function getMiJornada(): Promise<JornadaTecnico> {
+	const respuesta = await api.get<{ data: JornadaTecnico } | JornadaTecnico>(
+		'/tecnicos/me/jornada'
+	);
+	return 'data' in respuesta ? respuesta.data : respuesta;
+}
+
+// CU-70: catálogo codificado de tipos de trabajo para el cierre (T-01..T-10).
+export function getTiposTrabajo(tipoOt?: string) {
+	const qs = tipoOt ? `?tipo_ot=${encodeURIComponent(tipoOt)}` : '';
+	return api.get<import('$lib/types').TipoTrabajo[]>(`/tipos-trabajo${qs}`);
+}
+
+// CU-70: borrador del cierre que el técnico dejó preparado para una OT.
+export function getBorradorCierre(idOt: number) {
+	return api.get<import('$lib/types').BorradorCierre | null>(
+		`/cierres-trabajo/borradores/${idOt}`
+	);
+}
+
+export function guardarBorradorCierre(
+	idOt: number,
+	datos: {
+		codigo_trabajo?: string | null;
+		falla_reportada?: string | null;
+		solucion_aplicada?: string | null;
+		resultado?: string | null;
+		categoria_falla?: string | null;
+	}
+) {
+	return api.patch<import('$lib/types').BorradorCierre>(
+		`/cierres-trabajo/borradores/${idOt}`,
+		datos
+	);
+}
+
+// CU-69: cierres de reparación de una unidad (o de una OT).
+export function getCierresReparacion(params: { numero_serie?: string; id_ot?: number }) {
+	const qs = new URLSearchParams();
+	if (params.numero_serie) qs.set('numero_serie', params.numero_serie);
+	if (params.id_ot !== undefined) qs.set('id_ot', String(params.id_ot));
+	const query = qs.toString();
+	return api.get<import('$lib/types').CierreReparacion[]>(
+		`/cierres-reparacion${query ? '?' + query : ''}`
+	);
 }

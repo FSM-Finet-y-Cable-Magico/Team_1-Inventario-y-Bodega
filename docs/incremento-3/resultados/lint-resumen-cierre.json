@@ -1,0 +1,271 @@
+{
+  "fecha": "2026-10-02",
+  "scope": "Backend completo; ESLint sin --fix",
+  "errores": 1203,
+  "advertencias": 118,
+  "por_regla": {
+    "@typescript-eslint/no-unsafe-assignment": 284,
+    "@typescript-eslint/no-unsafe-call": 51,
+    "@typescript-eslint/no-unsafe-member-access": 564,
+    "@typescript-eslint/no-unused-vars": 11,
+    "@typescript-eslint/no-unsafe-return": 28,
+    "prettier/prettier": 243,
+    "@typescript-eslint/require-await": 14,
+    "@typescript-eslint/no-redundant-type-constituents": 2,
+    "@typescript-eslint/no-unnecessary-type-assertion": 1,
+    "no-useless-escape": 1,
+    "@typescript-eslint/no-base-to-string": 4
+  },
+  "archivos": [
+    {
+      "archivo": "codigo/backend-inventario/src/auth/auth.controller.ts",
+      "errores": 5,
+      "advertencias": 3
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/auth/auth.service.ts",
+      "errores": 2,
+      "advertencias": 0
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/auth/decorators/current-user.decorator.ts",
+      "errores": 3,
+      "advertencias": 0
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/auth/guards/company-isolation.guard.ts",
+      "errores": 11,
+      "advertencias": 0
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/auth/guards/roles.guard.ts",
+      "errores": 18,
+      "advertencias": 0
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/auth/jwt.strategy.ts",
+      "errores": 4,
+      "advertencias": 0
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/bodegas/bodegas.controller.ts",
+      "errores": 51,
+      "advertencias": 18
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/bodegas/bodegas.service.ts",
+      "errores": 7,
+      "advertencias": 0
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/companies/companies.controller.ts",
+      "errores": 1,
+      "advertencias": 1
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/companies/companies.service.ts",
+      "errores": 3,
+      "advertencias": 0
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/donaciones/pdf.ts",
+      "errores": 1,
+      "advertencias": 0
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/health/health.controller.ts",
+      "errores": 10,
+      "advertencias": 0
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/integraciones/cierres-reparacion.controller.ts",
+      "errores": 0,
+      "advertencias": 1
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/integraciones/cierres-trabajo.service.spec.ts",
+      "errores": 19,
+      "advertencias": 0
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/integraciones/cierres-trabajo.service.ts",
+      "errores": 17,
+      "advertencias": 0
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/integraciones/entities/borrador-cierre.entity.ts",
+      "errores": 1,
+      "advertencias": 0
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/integraciones/entities/cierre-reparacion.entity.ts",
+      "errores": 1,
+      "advertencias": 0
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/integraciones/g3/g3-client.service.spec.ts",
+      "errores": 12,
+      "advertencias": 0
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/integraciones/g3/g3-client.service.ts",
+      "errores": 15,
+      "advertencias": 1
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/integraciones/guards/api-key.guard.spec.ts",
+      "errores": 13,
+      "advertencias": 0
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/integraciones/guards/api-key.guard.ts",
+      "errores": 7,
+      "advertencias": 0
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/integraciones/integraciones.controller.ts",
+      "errores": 7,
+      "advertencias": 0
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/integraciones/integraciones.service.spec.ts",
+      "errores": 128,
+      "advertencias": 6
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/integraciones/integraciones.service.ts",
+      "errores": 396,
+      "advertencias": 4
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/integraciones/tipos-trabajo.ts",
+      "errores": 1,
+      "advertencias": 0
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/inventario/catalog.controller.ts",
+      "errores": 25,
+      "advertencias": 11
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/inventario/units.controller.ts",
+      "errores": 8,
+      "advertencias": 16
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/inventario/units.service.spec.ts",
+      "errores": 3,
+      "advertencias": 0
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/inventario/units.service.ts",
+      "errores": 78,
+      "advertencias": 11
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/ordenes-ingreso/ordenes-ingreso.controller.ts",
+      "errores": 30,
+      "advertencias": 0
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/prestamos/prestamos.service.ts",
+      "errores": 2,
+      "advertencias": 0
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/proveedores/proveedores.controller.ts",
+      "errores": 6,
+      "advertencias": 3
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/proveedores/proveedores.service.ts",
+      "errores": 2,
+      "advertencias": 0
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/reportes/exportacion.service.spec.ts",
+      "errores": 5,
+      "advertencias": 0
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/reportes/exportacion.service.ts",
+      "errores": 51,
+      "advertencias": 1
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/reportes/pdf-reporte.spec.ts",
+      "errores": 3,
+      "advertencias": 0
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/reportes/pdf-reporte.ts",
+      "errores": 2,
+      "advertencias": 0
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/reportes/reportes.service.spec.ts",
+      "errores": 14,
+      "advertencias": 11
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/reportes/reportes.service.ts",
+      "errores": 108,
+      "advertencias": 17
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/salidas/dto/crear-salida.dto.ts",
+      "errores": 4,
+      "advertencias": 0
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/salidas/inventario-personal.service.spec.ts",
+      "errores": 18,
+      "advertencias": 2
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/salidas/inventario-personal.service.ts",
+      "errores": 3,
+      "advertencias": 0
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/salidas/jornada.service.spec.ts",
+      "errores": 2,
+      "advertencias": 0
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/salidas/jornada.service.ts",
+      "errores": 34,
+      "advertencias": 1
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/salidas/salidas.controller.ts",
+      "errores": 10,
+      "advertencias": 4
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/salidas/salidas.service.ts",
+      "errores": 10,
+      "advertencias": 0
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/transferencias/transferencias.controller.ts",
+      "errores": 5,
+      "advertencias": 0
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/transferencias/transferencias.service.ts",
+      "errores": 28,
+      "advertencias": 0
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/usuarios/usuarios.controller.ts",
+      "errores": 7,
+      "advertencias": 7
+    },
+    {
+      "archivo": "codigo/backend-inventario/src/usuarios/usuarios.service.ts",
+      "errores": 12,
+      "advertencias": 0
+    }
+  ]
+}

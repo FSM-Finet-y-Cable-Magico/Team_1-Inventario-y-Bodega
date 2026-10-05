@@ -145,6 +145,41 @@ UNIQUE en `(id_proveedor, id_tipo_equipo)`.
 
 > `unidad_equipo` suma la columna `id_tecnico_asignado` (integer, nullable) desde CU-57.
 
+### `notificacion` — campana del sistema (CU-96)
+`id_notificacion` PK · `tipo` varchar(40) (comparte los literales de CU-94: `'Stock bajo umbral'`,
+`'Préstamo vencido'`) · `id_empresa` · `descripcion` varchar(150) (máx. 100 caracteres útiles,
+recortada igual que CU-94) · `clave_dedupe` varchar(120) **UNIQUE** · `leida` boolean (default
+`false`) · `fecha_generacion` timestamptz (auto) · `fecha_leida` timestamptz (nullable).
+
+`clave_dedupe` es `'<tipo>:<referencia>:<YYYY-MM-DD>'` (p. ej. `Préstamo vencido:12:2026-09-28`).
+El `UNIQUE` es la garantía real de "no duplicar una notificación ya generada": generar dos veces
+el mismo día para la misma referencia (préstamo, o bodega+tipo de equipo) intenta insertar la
+misma clave y se ignora. Las notificaciones `leida=true` se purgan a los 30 días de
+`fecha_generacion` (no hay endpoint de historial: es limpieza de tabla, no algo visible).
+
+### `cierre_reparacion` — parte de inventario del cierre de reparación (CU-69)
+`id_cierre_reparacion` PK · `id_cierre` (el `integracion_cierre` que lo originó) · `id_ot` ·
+`id_empresa` · `id_tecnico` · `rut_cliente` · `direccion_servicio` · `falla_reportada` /
+`solucion_aplicada` varchar(300) · `resultado` varchar(30) (`'Resuelto'`,
+`'Resuelto parcialmente'`, `'Sin solución'`) · `resuelto_remotamente` · `categoria_falla` ·
+`equipos_retirados` / `equipos_instalados` / `consumibles` JSONB · `codigo_trabajo` varchar(10)
+(CU-70) · `fecha_cierre` · `fecha_registro`.
+
+El cierre de la OT lo ejecuta G3; esta tabla guarda lo que nos toca (qué se retiró, qué se instaló
+en reemplazo y qué consumibles se descontaron). Sin FK a `integracion_cierre`, igual que el resto
+de las tablas de integración.
+
+### `borrador_cierre` — cierre preparado por el técnico (CU-70)
+`id_borrador` PK · `id_ot` · `id_empresa` · `id_tecnico` · `codigo_trabajo` varchar(10)
+(`'T-01'`..`'T-10'`, nullable por la Excepción 1: el técnico completa a mano) · `falla_reportada` /
+`solucion_aplicada` varchar(300) · `resultado` varchar(30) (`RESUELTO` | `PARCIAL` |
+`SIN_SOLUCION`, los literales que envía G3) · `categoria_falla` varchar(120) ·
+`fecha_actualizacion`. **UNIQUE(id_ot, id_empresa)**: un borrador por OT, que el técnico edita
+hasta que llega el cierre.
+
+El catálogo T-01..T-10 **no es una tabla**: son los 10 códigos fijos de la especificación y viven
+en `src/integraciones/tipos-trabajo.ts` con los campos que precompletan cada cierre.
+
 
 ---
 
@@ -282,7 +317,8 @@ de prueba específicos, agregarlos con verificación de existencia (idempotente)
 ## 5. Referencias a diagramas de BDD
 
 - `diagramas/diagrama_mere/mere-chen.png` — Modelo Entidad-Relación (notación Chen).
-- `diagramas/diagrama_modelo_fisico/modelo_bdd.png` — Modelo físico de tablas.
+- `diagramas/diagrama_modelo_fisico/modelo_relacional.png` + `.puml` — Modelo relacional (32 tablas; PK/FK).
+- `diagramas/diagrama_modelo_fisico/modelo_bdd.png` + `.puml` — Modelo físico PostgreSQL 16 (32 tablas, columnas/tipos y relaciones del esquema tras migraciones de dev). Se generó desde una base QA vacía, ejecutando `init.sql` y `npm run migrar`; el esquema desplegable se mantiene en `init.sql` + `scripts/migrar.ts`.
 - `diagramas/diagrama-clases/` — diagrama de clases backend con las entidades TypeORM.
 
 ---

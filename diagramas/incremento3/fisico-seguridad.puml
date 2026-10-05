@@ -1,0 +1,79 @@
+@startuml
+
+!theme plain
+
+hide circle
+
+skinparam linetype ortho
+
+skinparam shadowing false
+
+skinparam roundcorner 4
+
+skinparam classFontSize 11
+
+skinparam classFontName "Helvetica,Arial,sans-serif"
+
+skinparam arrowColor #333333
+
+skinparam packageBackgroundColor transparent
+
+skinparam class {
+
+    BackgroundColor #FFFFFF
+
+    BorderColor #2B5797
+
+    HeaderBackgroundColor #E8EEF7
+
+}
+
+title Modelo físico — detalle seguridad (dev)
+entity "empresa" as empresa {
+  * id_empresa : integer <<PK>>
+  * nombre : varchar(100)
+}
+entity "rol" as rol {
+  * id_rol : integer <<PK>>
+  * nombre_rol : varchar(50)
+  descripcion : varchar(200)
+}
+entity "usuario" as usuario {
+  * id_usuario : integer <<PK>>
+  id_empresa : integer
+  * nombre_completo : varchar(150)
+  nombre_usuario : varchar(50)
+  email : varchar(150)
+  * password_hash : varchar(255)
+  activo : boolean
+  * intentos_fallidos : integer
+  bloqueado_hasta : timestamptz
+  * debe_cambiar_password : boolean
+  fecha_creacion : timestamptz
+  rut : varchar(12)
+}
+entity "usuario_rol" as usuario_rol {
+  * id_usuario_rol : integer <<PK>>
+  id_usuario : integer
+  * id_rol : integer
+  fecha_asignacion : timestamptz
+}
+entity "log_auditoria" as log_auditoria {
+  * id_log : integer <<PK>>
+  * id_usuario : integer
+  * accion : varchar(100)
+  entidad_afectada : varchar(100)
+  * id_entidad_afectada : integer
+  valor_anterior : jsonb
+  * valor_nuevo : jsonb
+  ip_origen : inet
+  fecha_hora : timestamptz
+}
+entity "proveedor_tipo_equipo" as proveedor_tipo_equipo {
+  * id : integer <<PK>>
+  * id_proveedor : integer
+  * id_tipo_equipo : integer
+}
+usuario_rol }o--|| rol : id_rol
+usuario_rol }o--|| usuario : id_usuario
+@enduml

@@ -1,0 +1,81 @@
+@startuml CU94-exc-sin-alertas
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
+title CU-94 — Consultando alertas activas en el dashboard (excepción 1: no existen alertas activas)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style>
+sequenceDiagram {
+  participant {
+    margin 35
+  }
+  actor {
+    margin 15
+  }
+}
+</style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega" as user
+participant "V_Dashboard" as view
+participant "C_RolesGuard" as guard
+participant "C_AlertasController" as ctrl
+participant "C_AlertasService" as svc
+participant "C_UnitsService" as units
+participant "C_CompaniesService" as comp
+participant "C_PrestamosService" as prest
+
+user -> view : Navega a /dashboard\n(su empresa no tiene alertas activas)
+activate view
+
+view -> guard : GET /api/alertas
+activate guard
+guard --> view : Autorizado\n(ADMIN_BODEGA / ADMIN / SUPERUSUARIO)
+deactivate guard
+
+view -> ctrl : GET /api/alertas
+activate ctrl
+
+ctrl -> svc : listarAlertasActivas(actor)
+activate svc
+
+svc -> units : listarEnRevision(actor) (CU-77)
+activate units
+units --> svc : [] (ningún equipo 'En revisión')
+deactivate units
+
+svc -> comp : getAlertasStockMinimo(id_empresa) (CU-46)
+activate comp
+comp --> svc : [] (sin umbrales o stock >= umbral)
+deactivate comp
+
+svc -> prest : listar({ estado: 'ACTIVO' }, actor) (CU-83)
+activate prest
+prest --> svc : préstamos activos, ninguno con\ndias_restantes < 0
+deactivate prest
+
+svc -> svc : Sin alertas A, B, C ni D\n→ retorna [] (no es un error)
+activate svc
+deactivate svc
+
+svc --> ctrl : []
+deactivate svc
+
+ctrl --> view : 200 OK []
+deactivate ctrl
+
+view --> user : EmptyState en la sección "Alertas activas":\n'No hay alertas activas actualmente.'
+deactivate view
+
+@enduml

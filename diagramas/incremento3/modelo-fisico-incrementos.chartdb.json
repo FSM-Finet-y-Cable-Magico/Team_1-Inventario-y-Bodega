@@ -1,0 +1,4771 @@
+{
+  "id": "incremento3-oct2026",
+  "name": "Inventario y Bodega - Incrementos I1 I2 I3",
+  "createdAt": "2026-10-03T03:00:00.000Z",
+  "updatedAt": "2026-10-03T03:00:00.000Z",
+  "databaseType": "postgresql",
+  "tables": [
+    {
+      "id": "t_empresa",
+      "name": "empresa",
+      "schema": "public",
+      "order": 6,
+      "fields": [
+        {
+          "id": "empresa_id_empresa",
+          "name": "id_empresa",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "default": "nextval('empresa_id_empresa_seq'::regclass)",
+          "createdAt": 1790996400000,
+          "increment": true
+        },
+        {
+          "id": "empresa_nombre",
+          "name": "nombre",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "100"
+        }
+      ],
+      "indexes": [],
+      "x": 0,
+      "y": 80,
+      "color": "#8eb7ff",
+      "isView": false,
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026",
+      "width": 400
+    },
+    {
+      "id": "t_rol",
+      "name": "rol",
+      "schema": "public",
+      "order": 21,
+      "fields": [
+        {
+          "id": "rol_id_rol",
+          "name": "id_rol",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "default": "nextval('rol_id_rol_seq'::regclass)",
+          "createdAt": 1790996400000,
+          "increment": true
+        },
+        {
+          "id": "rol_nombre_rol",
+          "name": "nombre_rol",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": true,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "50"
+        },
+        {
+          "id": "rol_descripcion",
+          "name": "descripcion",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "200"
+        }
+      ],
+      "indexes": [],
+      "x": 0,
+      "y": 254,
+      "color": "#8eb7ff",
+      "isView": false,
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026",
+      "width": 400
+    },
+    {
+      "id": "t_usuario",
+      "name": "usuario",
+      "schema": "public",
+      "order": 30,
+      "fields": [
+        {
+          "id": "usuario_id_usuario",
+          "name": "id_usuario",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "default": "nextval('usuario_id_usuario_seq'::regclass)",
+          "createdAt": 1790996400000,
+          "increment": true
+        },
+        {
+          "id": "usuario_id_empresa",
+          "name": "id_empresa",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "usuario_nombre_completo",
+          "name": "nombre_completo",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "150"
+        },
+        {
+          "id": "usuario_nombre_usuario",
+          "name": "nombre_usuario",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": true,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "50"
+        },
+        {
+          "id": "usuario_email",
+          "name": "email",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": true,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "150"
+        },
+        {
+          "id": "usuario_password_hash",
+          "name": "password_hash",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "255"
+        },
+        {
+          "id": "usuario_activo",
+          "name": "activo",
+          "type": {
+            "id": "boolean",
+            "name": "boolean"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "true",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "usuario_intentos_fallidos",
+          "name": "intentos_fallidos",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "0",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "usuario_bloqueado_hasta",
+          "name": "bloqueado_hasta",
+          "type": {
+            "id": "timestamptz",
+            "name": "timestamptz"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "usuario_debe_cambiar_password",
+          "name": "debe_cambiar_password",
+          "type": {
+            "id": "boolean",
+            "name": "boolean"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "false",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "usuario_fecha_creacion",
+          "name": "fecha_creacion",
+          "type": {
+            "id": "timestamptz",
+            "name": "timestamptz"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "now()",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "usuario_rut",
+          "name": "rut",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "12"
+        }
+      ],
+      "indexes": [],
+      "x": 0,
+      "y": 460,
+      "color": "#8eb7ff",
+      "isView": false,
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026",
+      "width": 400
+    },
+    {
+      "id": "t_usuario_rol",
+      "name": "usuario_rol",
+      "schema": "public",
+      "order": 31,
+      "fields": [
+        {
+          "id": "usuario_rol_id_usuario_rol",
+          "name": "id_usuario_rol",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "default": "nextval('usuario_rol_id_usuario_rol_seq'::regclass)",
+          "createdAt": 1790996400000,
+          "increment": true
+        },
+        {
+          "id": "usuario_rol_id_usuario",
+          "name": "id_usuario",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "usuario_rol_id_rol",
+          "name": "id_rol",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "usuario_rol_fecha_asignacion",
+          "name": "fecha_asignacion",
+          "type": {
+            "id": "timestamptz",
+            "name": "timestamptz"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "now()",
+          "createdAt": 1790996400000,
+          "increment": false
+        }
+      ],
+      "indexes": [],
+      "x": 0,
+      "y": 890,
+      "color": "#8eb7ff",
+      "isView": false,
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026",
+      "width": 400
+    },
+    {
+      "id": "t_log_auditoria",
+      "name": "log_auditoria",
+      "schema": "public",
+      "order": 11,
+      "fields": [
+        {
+          "id": "log_auditoria_id_log",
+          "name": "id_log",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "default": "nextval('log_auditoria_id_log_seq'::regclass)",
+          "createdAt": 1790996400000,
+          "increment": true
+        },
+        {
+          "id": "log_auditoria_id_usuario",
+          "name": "id_usuario",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "log_auditoria_accion",
+          "name": "accion",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "100"
+        },
+        {
+          "id": "log_auditoria_entidad_afectada",
+          "name": "entidad_afectada",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "100"
+        },
+        {
+          "id": "log_auditoria_id_entidad_afectada",
+          "name": "id_entidad_afectada",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "log_auditoria_valor_anterior",
+          "name": "valor_anterior",
+          "type": {
+            "id": "jsonb",
+            "name": "jsonb"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "log_auditoria_valor_nuevo",
+          "name": "valor_nuevo",
+          "type": {
+            "id": "jsonb",
+            "name": "jsonb"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "log_auditoria_ip_origen",
+          "name": "ip_origen",
+          "type": {
+            "id": "inet",
+            "name": "inet"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "log_auditoria_fecha_hora",
+          "name": "fecha_hora",
+          "type": {
+            "id": "timestamptz",
+            "name": "timestamptz"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "now()",
+          "createdAt": 1790996400000,
+          "increment": false
+        }
+      ],
+      "indexes": [],
+      "x": 0,
+      "y": 1128,
+      "color": "#8eb7ff",
+      "isView": false,
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026",
+      "width": 400
+    },
+    {
+      "id": "t_bodega",
+      "name": "bodega",
+      "schema": "public",
+      "order": 1,
+      "fields": [
+        {
+          "id": "bodega_id_bodega",
+          "name": "id_bodega",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "default": "nextval('bodega_id_bodega_seq'::regclass)",
+          "createdAt": 1790996400000,
+          "increment": true
+        },
+        {
+          "id": "bodega_id_empresa",
+          "name": "id_empresa",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "bodega_nombre",
+          "name": "nombre",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "100"
+        },
+        {
+          "id": "bodega_direccion",
+          "name": "direccion",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "200"
+        },
+        {
+          "id": "bodega_id_usuario_responsable",
+          "name": "id_usuario_responsable",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "bodega_activa",
+          "name": "activa",
+          "type": {
+            "id": "boolean",
+            "name": "boolean"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "true",
+          "createdAt": 1790996400000,
+          "increment": false
+        }
+      ],
+      "indexes": [],
+      "x": 560,
+      "y": 80,
+      "color": "#8eb7ff",
+      "isView": false,
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026",
+      "width": 400
+    },
+    {
+      "id": "t_tipo_equipo",
+      "name": "tipo_equipo",
+      "schema": "public",
+      "order": 27,
+      "fields": [
+        {
+          "id": "tipo_equipo_id_tipo_equipo",
+          "name": "id_tipo_equipo",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "default": "nextval('tipo_equipo_id_tipo_equipo_seq'::regclass)",
+          "createdAt": 1790996400000,
+          "increment": true
+        },
+        {
+          "id": "tipo_equipo_id_empresa",
+          "name": "id_empresa",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "tipo_equipo_nombre",
+          "name": "nombre",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "100"
+        },
+        {
+          "id": "tipo_equipo_categoria",
+          "name": "categoria",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "40"
+        },
+        {
+          "id": "tipo_equipo_marca",
+          "name": "marca",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "50"
+        },
+        {
+          "id": "tipo_equipo_modelo",
+          "name": "modelo",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "50"
+        },
+        {
+          "id": "tipo_equipo_descripcion_tecnica",
+          "name": "descripcion_tecnica",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "500"
+        },
+        {
+          "id": "tipo_equipo_unidad_medida",
+          "name": "unidad_medida",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "20"
+        },
+        {
+          "id": "tipo_equipo_garantia_dias",
+          "name": "garantia_dias",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "0",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "tipo_equipo_requiere_serie_individual",
+          "name": "requiere_serie_individual",
+          "type": {
+            "id": "boolean",
+            "name": "boolean"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "tipo_equipo_ficha_tecnica_pdf_url",
+          "name": "ficha_tecnica_pdf_url",
+          "type": {
+            "id": "text",
+            "name": "text"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "tipo_equipo_ficha_tecnica_nombre",
+          "name": "ficha_tecnica_nombre",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "255"
+        },
+        {
+          "id": "tipo_equipo_activo",
+          "name": "activo",
+          "type": {
+            "id": "boolean",
+            "name": "boolean"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "true",
+          "createdAt": 1790996400000,
+          "increment": false
+        }
+      ],
+      "indexes": [],
+      "x": 560,
+      "y": 382,
+      "color": "#8eb7ff",
+      "isView": false,
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026",
+      "width": 400
+    },
+    {
+      "id": "t_unidad_equipo",
+      "name": "unidad_equipo",
+      "schema": "public",
+      "order": 29,
+      "fields": [
+        {
+          "id": "unidad_equipo_id_unidad",
+          "name": "id_unidad",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "default": "nextval('unidad_equipo_id_unidad_seq'::regclass)",
+          "createdAt": 1790996400000,
+          "increment": true
+        },
+        {
+          "id": "unidad_equipo_id_tipo_equipo",
+          "name": "id_tipo_equipo",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "unidad_equipo_id_empresa",
+          "name": "id_empresa",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "unidad_equipo_numero_serie",
+          "name": "numero_serie",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": true,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "80"
+        },
+        {
+          "id": "unidad_equipo_modelo",
+          "name": "modelo",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "80"
+        },
+        {
+          "id": "unidad_equipo_estado",
+          "name": "estado",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "30"
+        },
+        {
+          "id": "unidad_equipo_fecha_adquisicion",
+          "name": "fecha_adquisicion",
+          "type": {
+            "id": "date",
+            "name": "date"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "unidad_equipo_fecha_venc_garantia",
+          "name": "fecha_venc_garantia",
+          "type": {
+            "id": "date",
+            "name": "date"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "unidad_equipo_diagnostico_tecnico",
+          "name": "diagnostico_tecnico",
+          "type": {
+            "id": "text",
+            "name": "text"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "unidad_equipo_id_cliente_instalado",
+          "name": "id_cliente_instalado",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "unidad_equipo_id_bodega_actual",
+          "name": "id_bodega_actual",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "unidad_equipo_numero_poste",
+          "name": "numero_poste",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "30"
+        },
+        {
+          "id": "unidad_equipo_id_caja_nap",
+          "name": "id_caja_nap",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "unidad_equipo_mac_address",
+          "name": "mac_address",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": true,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "17"
+        },
+        {
+          "id": "unidad_equipo_proveedor",
+          "name": "proveedor",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "80"
+        },
+        {
+          "id": "unidad_equipo_observaciones",
+          "name": "observaciones",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "300"
+        },
+        {
+          "id": "unidad_equipo_ubicacion_fisica",
+          "name": "ubicacion_fisica",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "60"
+        },
+        {
+          "id": "unidad_equipo_motivo_baja",
+          "name": "motivo_baja",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "40"
+        },
+        {
+          "id": "unidad_equipo_motivo_baja_detalle",
+          "name": "motivo_baja_detalle",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "200"
+        },
+        {
+          "id": "unidad_equipo_id_tecnico_asignado",
+          "name": "id_tecnico_asignado",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "unidad_equipo_cliente_rut",
+          "name": "cliente_rut",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "20"
+        },
+        {
+          "id": "unidad_equipo_cliente_nombre",
+          "name": "cliente_nombre",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "150"
+        },
+        {
+          "id": "unidad_equipo_direccion_instalacion",
+          "name": "direccion_instalacion",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "300"
+        },
+        {
+          "id": "unidad_equipo_comuna_instalacion",
+          "name": "comuna_instalacion",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "100"
+        },
+        {
+          "id": "unidad_equipo_srv",
+          "name": "srv",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "20"
+        }
+      ],
+      "indexes": [],
+      "x": 560,
+      "y": 812,
+      "color": "#8eb7ff",
+      "isView": false,
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026",
+      "width": 400
+    },
+    {
+      "id": "t_historial_estado_equipo",
+      "name": "historial_estado_equipo",
+      "schema": "public",
+      "order": 7,
+      "fields": [
+        {
+          "id": "historial_estado_equipo_id_historial",
+          "name": "id_historial",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "default": "nextval('historial_estado_equipo_id_historial_seq'::regclass)",
+          "createdAt": 1790996400000,
+          "increment": true
+        },
+        {
+          "id": "historial_estado_equipo_id_unidad",
+          "name": "id_unidad",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "historial_estado_equipo_id_usuario",
+          "name": "id_usuario",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "historial_estado_equipo_estado_anterior",
+          "name": "estado_anterior",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "30"
+        },
+        {
+          "id": "historial_estado_equipo_estado_nuevo",
+          "name": "estado_nuevo",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "30"
+        },
+        {
+          "id": "historial_estado_equipo_motivo",
+          "name": "motivo",
+          "type": {
+            "id": "text",
+            "name": "text"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "historial_estado_equipo_fecha_hora",
+          "name": "fecha_hora",
+          "type": {
+            "id": "timestamp",
+            "name": "timestamp"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "CURRENT_TIMESTAMP",
+          "createdAt": 1790996400000,
+          "increment": false
+        }
+      ],
+      "indexes": [],
+      "x": 560,
+      "y": 1242,
+      "color": "#8eb7ff",
+      "isView": false,
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026",
+      "width": 400
+    },
+    {
+      "id": "t_stock_consumible",
+      "name": "stock_consumible",
+      "schema": "public",
+      "order": 26,
+      "fields": [
+        {
+          "id": "stock_consumible_id_stock",
+          "name": "id_stock",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "default": "nextval('stock_consumible_id_stock_seq'::regclass)",
+          "createdAt": 1790996400000,
+          "increment": true
+        },
+        {
+          "id": "stock_consumible_id_tipo_equipo",
+          "name": "id_tipo_equipo",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "stock_consumible_id_bodega",
+          "name": "id_bodega",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "stock_consumible_cantidad_disponible",
+          "name": "cantidad_disponible",
+          "type": {
+            "id": "numeric",
+            "name": "numeric"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "0",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "stock_consumible_umbral_minimo",
+          "name": "umbral_minimo",
+          "type": {
+            "id": "numeric",
+            "name": "numeric"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        }
+      ],
+      "indexes": [],
+      "x": 560,
+      "y": 1576,
+      "color": "#8eb7ff",
+      "isView": false,
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026",
+      "width": 400
+    },
+    {
+      "id": "t_movimiento_inventario",
+      "name": "movimiento_inventario",
+      "schema": "public",
+      "order": 12,
+      "fields": [
+        {
+          "id": "movimiento_inventario_id_movimiento",
+          "name": "id_movimiento",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "default": "nextval('movimiento_inventario_id_movimiento_seq'::regclass)",
+          "createdAt": 1790996400000,
+          "increment": true
+        },
+        {
+          "id": "movimiento_inventario_id_tipo_equipo",
+          "name": "id_tipo_equipo",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "movimiento_inventario_id_unidad",
+          "name": "id_unidad",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "movimiento_inventario_id_empresa_origen",
+          "name": "id_empresa_origen",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "movimiento_inventario_id_empresa_destino",
+          "name": "id_empresa_destino",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "movimiento_inventario_id_bodega_origen",
+          "name": "id_bodega_origen",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "movimiento_inventario_id_bodega_destino",
+          "name": "id_bodega_destino",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "movimiento_inventario_id_usuario",
+          "name": "id_usuario",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "movimiento_inventario_tipo_movimiento",
+          "name": "tipo_movimiento",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "30"
+        },
+        {
+          "id": "movimiento_inventario_cantidad",
+          "name": "cantidad",
+          "type": {
+            "id": "numeric",
+            "name": "numeric"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "1",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "movimiento_inventario_fecha",
+          "name": "fecha",
+          "type": {
+            "id": "timestamp",
+            "name": "timestamp"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "movimiento_inventario_referencia_id",
+          "name": "referencia_id",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        }
+      ],
+      "indexes": [],
+      "x": 560,
+      "y": 1846,
+      "color": "#8eb7ff",
+      "isView": false,
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026",
+      "width": 400
+    },
+    {
+      "id": "t_transferencia_equipo",
+      "name": "transferencia_equipo",
+      "schema": "public",
+      "order": 28,
+      "fields": [
+        {
+          "id": "transferencia_equipo_id_transferencia",
+          "name": "id_transferencia",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "default": "nextval('transferencia_equipo_id_transferencia_seq'::regclass)",
+          "createdAt": 1790996400000,
+          "increment": true
+        },
+        {
+          "id": "transferencia_equipo_id_empresa_origen",
+          "name": "id_empresa_origen",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "transferencia_equipo_id_empresa_destino",
+          "name": "id_empresa_destino",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "transferencia_equipo_id_usuario_registro",
+          "name": "id_usuario_registro",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "transferencia_equipo_fecha_transferencia",
+          "name": "fecha_transferencia",
+          "type": {
+            "id": "date",
+            "name": "date"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "transferencia_equipo_observaciones",
+          "name": "observaciones",
+          "type": {
+            "id": "text",
+            "name": "text"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        }
+      ],
+      "indexes": [],
+      "x": 560,
+      "y": 2276,
+      "color": "#8eb7ff",
+      "isView": false,
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026",
+      "width": 400
+    },
+    {
+      "id": "t_proveedor",
+      "name": "proveedor",
+      "schema": "public",
+      "order": 19,
+      "fields": [
+        {
+          "id": "proveedor_id_proveedor",
+          "name": "id_proveedor",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "default": "nextval('proveedor_id_proveedor_seq'::regclass)",
+          "createdAt": 1790996400000,
+          "increment": true
+        },
+        {
+          "id": "proveedor_nombre_comercial",
+          "name": "nombre_comercial",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "100"
+        },
+        {
+          "id": "proveedor_rut",
+          "name": "rut",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": true,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "12"
+        },
+        {
+          "id": "proveedor_nombre_contacto",
+          "name": "nombre_contacto",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "80"
+        },
+        {
+          "id": "proveedor_telefono",
+          "name": "telefono",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "15"
+        },
+        {
+          "id": "proveedor_email",
+          "name": "email",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "150"
+        },
+        {
+          "id": "proveedor_activa",
+          "name": "activa",
+          "type": {
+            "id": "boolean",
+            "name": "boolean"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "true",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "proveedor_fecha_creacion",
+          "name": "fecha_creacion",
+          "type": {
+            "id": "timestamptz",
+            "name": "timestamptz"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "now()",
+          "createdAt": 1790996400000,
+          "increment": false
+        }
+      ],
+      "indexes": [],
+      "x": 1120,
+      "y": 80,
+      "color": "#8dd6b0",
+      "isView": false,
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026",
+      "width": 400
+    },
+    {
+      "id": "t_proveedor_tipo_equipo",
+      "name": "proveedor_tipo_equipo",
+      "schema": "public",
+      "order": 20,
+      "fields": [
+        {
+          "id": "proveedor_tipo_equipo_id",
+          "name": "id",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "default": "nextval('proveedor_tipo_equipo_id_seq'::regclass)",
+          "createdAt": 1790996400000,
+          "increment": true
+        },
+        {
+          "id": "proveedor_tipo_equipo_id_proveedor",
+          "name": "id_proveedor",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": true,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "proveedor_tipo_equipo_id_tipo_equipo",
+          "name": "id_tipo_equipo",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": true,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        }
+      ],
+      "indexes": [],
+      "x": 1120,
+      "y": 446,
+      "color": "#8dd6b0",
+      "isView": false,
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026",
+      "width": 400
+    },
+    {
+      "id": "t_orden_ingreso",
+      "name": "orden_ingreso",
+      "schema": "public",
+      "order": 14,
+      "fields": [
+        {
+          "id": "orden_ingreso_id_orden",
+          "name": "id_orden",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "default": "nextval('orden_ingreso_id_orden_seq'::regclass)",
+          "createdAt": 1790996400000,
+          "increment": true
+        },
+        {
+          "id": "orden_ingreso_correlativo",
+          "name": "correlativo",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": true,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "10"
+        },
+        {
+          "id": "orden_ingreso_id_proveedor",
+          "name": "id_proveedor",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "orden_ingreso_numero_documento",
+          "name": "numero_documento",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "30"
+        },
+        {
+          "id": "orden_ingreso_fecha_documento",
+          "name": "fecha_documento",
+          "type": {
+            "id": "date",
+            "name": "date"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "orden_ingreso_id_empresa_destino",
+          "name": "id_empresa_destino",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "orden_ingreso_id_bodega_destino",
+          "name": "id_bodega_destino",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "orden_ingreso_estado",
+          "name": "estado",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "'Pendiente de recepción'::character varying",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "30"
+        },
+        {
+          "id": "orden_ingreso_id_usuario_registro",
+          "name": "id_usuario_registro",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "orden_ingreso_fecha_creacion",
+          "name": "fecha_creacion",
+          "type": {
+            "id": "timestamptz",
+            "name": "timestamptz"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "now()",
+          "createdAt": 1790996400000,
+          "increment": false
+        }
+      ],
+      "indexes": [],
+      "x": 1120,
+      "y": 652,
+      "color": "#8dd6b0",
+      "isView": false,
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026",
+      "width": 400
+    },
+    {
+      "id": "t_orden_ingreso_detalle",
+      "name": "orden_ingreso_detalle",
+      "schema": "public",
+      "order": 15,
+      "fields": [
+        {
+          "id": "orden_ingreso_detalle_id_detalle",
+          "name": "id_detalle",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "default": "nextval('orden_ingreso_detalle_id_detalle_seq'::regclass)",
+          "createdAt": 1790996400000,
+          "increment": true
+        },
+        {
+          "id": "orden_ingreso_detalle_id_orden",
+          "name": "id_orden",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "orden_ingreso_detalle_id_tipo_equipo",
+          "name": "id_tipo_equipo",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "orden_ingreso_detalle_cantidad_esperada",
+          "name": "cantidad_esperada",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "orden_ingreso_detalle_garantia_dias",
+          "name": "garantia_dias",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "0",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "orden_ingreso_detalle_cantidad_recibida",
+          "name": "cantidad_recibida",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "0",
+          "createdAt": 1790996400000,
+          "increment": false
+        }
+      ],
+      "indexes": [],
+      "x": 1120,
+      "y": 1082,
+      "color": "#8dd6b0",
+      "isView": false,
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026",
+      "width": 400
+    },
+    {
+      "id": "t_salida_bodega",
+      "name": "salida_bodega",
+      "schema": "public",
+      "order": 22,
+      "fields": [
+        {
+          "id": "salida_bodega_id_salida",
+          "name": "id_salida",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "default": "nextval('salida_bodega_id_salida_seq'::regclass)",
+          "createdAt": 1790996400000,
+          "increment": true
+        },
+        {
+          "id": "salida_bodega_id_tecnico",
+          "name": "id_tecnico",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "salida_bodega_id_bodega_origen",
+          "name": "id_bodega_origen",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "salida_bodega_fecha_hora",
+          "name": "fecha_hora",
+          "type": {
+            "id": "timestamptz",
+            "name": "timestamptz"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "now()",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "salida_bodega_id_empresa",
+          "name": "id_empresa",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "salida_bodega_id_usuario_registro",
+          "name": "id_usuario_registro",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        }
+      ],
+      "indexes": [],
+      "x": 1120,
+      "y": 1384,
+      "color": "#8dd6b0",
+      "isView": false,
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026",
+      "width": 400
+    },
+    {
+      "id": "t_salida_detalle",
+      "name": "salida_detalle",
+      "schema": "public",
+      "order": 23,
+      "fields": [
+        {
+          "id": "salida_detalle_id_detalle",
+          "name": "id_detalle",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "default": "nextval('salida_detalle_id_detalle_seq'::regclass)",
+          "createdAt": 1790996400000,
+          "increment": true
+        },
+        {
+          "id": "salida_detalle_id_salida",
+          "name": "id_salida",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "salida_detalle_id_tipo_equipo",
+          "name": "id_tipo_equipo",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "salida_detalle_id_unidad",
+          "name": "id_unidad",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "salida_detalle_cantidad",
+          "name": "cantidad",
+          "type": {
+            "id": "numeric",
+            "name": "numeric"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        }
+      ],
+      "indexes": [],
+      "x": 1120,
+      "y": 1686,
+      "color": "#8dd6b0",
+      "isView": false,
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026",
+      "width": 400
+    },
+    {
+      "id": "t_inventario_personal_tecnico",
+      "name": "inventario_personal_tecnico",
+      "schema": "public",
+      "order": 10,
+      "fields": [
+        {
+          "id": "inventario_personal_tecnico_id_inventario",
+          "name": "id_inventario",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "default": "nextval('inventario_personal_tecnico_id_inventario_seq'::regclass)",
+          "createdAt": 1790996400000,
+          "increment": true
+        },
+        {
+          "id": "inventario_personal_tecnico_id_tecnico",
+          "name": "id_tecnico",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": true,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "inventario_personal_tecnico_id_tipo_equipo",
+          "name": "id_tipo_equipo",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": true,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "inventario_personal_tecnico_cantidad",
+          "name": "cantidad",
+          "type": {
+            "id": "numeric",
+            "name": "numeric"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "0",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "inventario_personal_tecnico_fecha_actualizacion",
+          "name": "fecha_actualizacion",
+          "type": {
+            "id": "timestamptz",
+            "name": "timestamptz"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "now()",
+          "createdAt": 1790996400000,
+          "increment": false
+        }
+      ],
+      "indexes": [],
+      "x": 1120,
+      "y": 1956,
+      "color": "#8dd6b0",
+      "isView": false,
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026",
+      "width": 400
+    },
+    {
+      "id": "t_solicitud_baja",
+      "name": "solicitud_baja",
+      "schema": "public",
+      "order": 25,
+      "fields": [
+        {
+          "id": "solicitud_baja_id_solicitud",
+          "name": "id_solicitud",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "default": "nextval('solicitud_baja_id_solicitud_seq'::regclass)",
+          "createdAt": 1790996400000,
+          "increment": true
+        },
+        {
+          "id": "solicitud_baja_id_unidad",
+          "name": "id_unidad",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "solicitud_baja_id_empresa",
+          "name": "id_empresa",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "solicitud_baja_id_usuario_solicitante",
+          "name": "id_usuario_solicitante",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "solicitud_baja_motivo",
+          "name": "motivo",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "40"
+        },
+        {
+          "id": "solicitud_baja_motivo_otro",
+          "name": "motivo_otro",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "200"
+        },
+        {
+          "id": "solicitud_baja_estado",
+          "name": "estado",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "30"
+        },
+        {
+          "id": "solicitud_baja_id_usuario_aprobador",
+          "name": "id_usuario_aprobador",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "solicitud_baja_fecha_solicitud",
+          "name": "fecha_solicitud",
+          "type": {
+            "id": "timestamptz",
+            "name": "timestamptz"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "now()",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "solicitud_baja_fecha_resolucion",
+          "name": "fecha_resolucion",
+          "type": {
+            "id": "timestamptz",
+            "name": "timestamptz"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "solicitud_baja_motivo_rechazo",
+          "name": "motivo_rechazo",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "200"
+        }
+      ],
+      "indexes": [],
+      "x": 1680,
+      "y": 80,
+      "color": "#8dd6b0",
+      "isView": false,
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026",
+      "width": 400
+    },
+    {
+      "id": "t_donacion",
+      "name": "donacion",
+      "schema": "public",
+      "order": 4,
+      "fields": [
+        {
+          "id": "donacion_id_donacion",
+          "name": "id_donacion",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "default": "nextval('donacion_id_donacion_seq'::regclass)",
+          "createdAt": 1790996400000,
+          "increment": true
+        },
+        {
+          "id": "donacion_nombre_institucion",
+          "name": "nombre_institucion",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "100"
+        },
+        {
+          "id": "donacion_rut_institucion",
+          "name": "rut_institucion",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "12"
+        },
+        {
+          "id": "donacion_fecha_donacion",
+          "name": "fecha_donacion",
+          "type": {
+            "id": "date",
+            "name": "date"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "donacion_numero_resolucion",
+          "name": "numero_resolucion",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "30"
+        },
+        {
+          "id": "donacion_id_usuario",
+          "name": "id_usuario",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "donacion_id_empresa",
+          "name": "id_empresa",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "donacion_fecha_creacion",
+          "name": "fecha_creacion",
+          "type": {
+            "id": "timestamptz",
+            "name": "timestamptz"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "now()",
+          "createdAt": 1790996400000,
+          "increment": false
+        }
+      ],
+      "indexes": [],
+      "x": 1680,
+      "y": 510,
+      "color": "#8dd6b0",
+      "isView": false,
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026",
+      "width": 400
+    },
+    {
+      "id": "t_donacion_detalle",
+      "name": "donacion_detalle",
+      "schema": "public",
+      "order": 5,
+      "fields": [
+        {
+          "id": "donacion_detalle_id_detalle",
+          "name": "id_detalle",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "default": "nextval('donacion_detalle_id_detalle_seq'::regclass)",
+          "createdAt": 1790996400000,
+          "increment": true
+        },
+        {
+          "id": "donacion_detalle_id_donacion",
+          "name": "id_donacion",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "donacion_detalle_id_unidad",
+          "name": "id_unidad",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        }
+      ],
+      "indexes": [],
+      "x": 1680,
+      "y": 876,
+      "color": "#8dd6b0",
+      "isView": false,
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026",
+      "width": 400
+    },
+    {
+      "id": "t_prestamo_externo",
+      "name": "prestamo_externo",
+      "schema": "public",
+      "order": 17,
+      "fields": [
+        {
+          "id": "prestamo_externo_id_prestamo",
+          "name": "id_prestamo",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "default": "nextval('prestamo_externo_id_prestamo_seq'::regclass)",
+          "createdAt": 1790996400000,
+          "increment": true
+        },
+        {
+          "id": "prestamo_externo_tipo",
+          "name": "tipo",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "30"
+        },
+        {
+          "id": "prestamo_externo_id_empresa",
+          "name": "id_empresa",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "prestamo_externo_id_unidad",
+          "name": "id_unidad",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "prestamo_externo_nombre_receptor",
+          "name": "nombre_receptor",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "80"
+        },
+        {
+          "id": "prestamo_externo_rut_receptor",
+          "name": "rut_receptor",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "12"
+        },
+        {
+          "id": "prestamo_externo_fecha_salida",
+          "name": "fecha_salida",
+          "type": {
+            "id": "timestamptz",
+            "name": "timestamptz"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "now()",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "prestamo_externo_fecha_retorno_estimada",
+          "name": "fecha_retorno_estimada",
+          "type": {
+            "id": "date",
+            "name": "date"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "prestamo_externo_fecha_retorno_real",
+          "name": "fecha_retorno_real",
+          "type": {
+            "id": "date",
+            "name": "date"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "prestamo_externo_detalle",
+          "name": "detalle",
+          "type": {
+            "id": "text",
+            "name": "text"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "prestamo_externo_estado",
+          "name": "estado",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "'ACTIVO'::character varying",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "20"
+        },
+        {
+          "id": "prestamo_externo_resultado",
+          "name": "resultado",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "20"
+        },
+        {
+          "id": "prestamo_externo_id_usuario_registro",
+          "name": "id_usuario_registro",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "prestamo_externo_correlativo",
+          "name": "correlativo",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": true,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "12"
+        },
+        {
+          "id": "prestamo_externo_id_bodega_origen",
+          "name": "id_bodega_origen",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        }
+      ],
+      "indexes": [],
+      "x": 1680,
+      "y": 1082,
+      "color": "#8dd6b0",
+      "isView": false,
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026",
+      "width": 400
+    },
+    {
+      "id": "t_prestamo_detalle",
+      "name": "prestamo_detalle",
+      "schema": "public",
+      "order": 16,
+      "fields": [
+        {
+          "id": "prestamo_detalle_id_detalle",
+          "name": "id_detalle",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "default": "nextval('prestamo_detalle_id_detalle_seq'::regclass)",
+          "createdAt": 1790996400000,
+          "increment": true
+        },
+        {
+          "id": "prestamo_detalle_id_prestamo",
+          "name": "id_prestamo",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "prestamo_detalle_id_unidad",
+          "name": "id_unidad",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "prestamo_detalle_id_tipo_equipo",
+          "name": "id_tipo_equipo",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "prestamo_detalle_cantidad",
+          "name": "cantidad",
+          "type": {
+            "id": "numeric",
+            "name": "numeric"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "prestamo_detalle_cantidad_retornada",
+          "name": "cantidad_retornada",
+          "type": {
+            "id": "numeric",
+            "name": "numeric"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "0",
+          "createdAt": 1790996400000,
+          "increment": false
+        }
+      ],
+      "indexes": [],
+      "x": 1680,
+      "y": 1512,
+      "color": "#8dd6b0",
+      "isView": false,
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026",
+      "width": 400
+    },
+    {
+      "id": "t_prestamo_retorno",
+      "name": "prestamo_retorno",
+      "schema": "public",
+      "order": 18,
+      "fields": [
+        {
+          "id": "prestamo_retorno_id_retorno",
+          "name": "id_retorno",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "default": "nextval('prestamo_retorno_id_retorno_seq'::regclass)",
+          "createdAt": 1790996400000,
+          "increment": true
+        },
+        {
+          "id": "prestamo_retorno_id_detalle",
+          "name": "id_detalle",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "prestamo_retorno_cantidad",
+          "name": "cantidad",
+          "type": {
+            "id": "numeric",
+            "name": "numeric"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "prestamo_retorno_fecha_retorno",
+          "name": "fecha_retorno",
+          "type": {
+            "id": "timestamptz",
+            "name": "timestamptz"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "prestamo_retorno_observacion",
+          "name": "observacion",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "300"
+        },
+        {
+          "id": "prestamo_retorno_id_usuario",
+          "name": "id_usuario",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        }
+      ],
+      "indexes": [],
+      "x": 1680,
+      "y": 1814,
+      "color": "#8dd6b0",
+      "isView": false,
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026",
+      "width": 400
+    },
+    {
+      "id": "t_integracion_cierre",
+      "name": "integracion_cierre",
+      "schema": "public",
+      "order": 9,
+      "fields": [
+        {
+          "id": "integracion_cierre_id_cierre",
+          "name": "id_cierre",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "default": "nextval('integracion_cierre_id_cierre_seq'::regclass)",
+          "createdAt": 1790996400000,
+          "increment": true
+        },
+        {
+          "id": "integracion_cierre_clave_idempotencia",
+          "name": "clave_idempotencia",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": true,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "120"
+        },
+        {
+          "id": "integracion_cierre_id_ot",
+          "name": "id_ot",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "integracion_cierre_id_empresa",
+          "name": "id_empresa",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "integracion_cierre_tipo_ot",
+          "name": "tipo_ot",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "30"
+        },
+        {
+          "id": "integracion_cierre_payload",
+          "name": "payload",
+          "type": {
+            "id": "jsonb",
+            "name": "jsonb"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "integracion_cierre_estado_proceso",
+          "name": "estado_proceso",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "'PROCESADO'::character varying",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "40"
+        },
+        {
+          "id": "integracion_cierre_discrepancias",
+          "name": "discrepancias",
+          "type": {
+            "id": "jsonb",
+            "name": "jsonb"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "integracion_cierre_acciones_aplicadas",
+          "name": "acciones_aplicadas",
+          "type": {
+            "id": "jsonb",
+            "name": "jsonb"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "integracion_cierre_fecha_proceso",
+          "name": "fecha_proceso",
+          "type": {
+            "id": "timestamptz",
+            "name": "timestamptz"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "now()",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "integracion_cierre_srv",
+          "name": "srv",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "20"
+        },
+        {
+          "id": "integracion_cierre_id_tecnico",
+          "name": "id_tecnico",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "integracion_cierre_materiales_aplicados",
+          "name": "materiales_aplicados",
+          "type": {
+            "id": "jsonb",
+            "name": "jsonb"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        }
+      ],
+      "indexes": [],
+      "x": 2240,
+      "y": 80,
+      "color": "#8dd6b0",
+      "isView": false,
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026",
+      "width": 400
+    },
+    {
+      "id": "t_cierre_reparacion",
+      "name": "cierre_reparacion",
+      "schema": "public",
+      "order": 3,
+      "fields": [
+        {
+          "id": "cierre_reparacion_id_cierre_reparacion",
+          "name": "id_cierre_reparacion",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "default": "nextval('cierre_reparacion_id_cierre_reparacion_seq'::regclass)",
+          "createdAt": 1790996400000,
+          "increment": true
+        },
+        {
+          "id": "cierre_reparacion_id_cierre",
+          "name": "id_cierre",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "cierre_reparacion_id_ot",
+          "name": "id_ot",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "cierre_reparacion_id_empresa",
+          "name": "id_empresa",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "cierre_reparacion_id_tecnico",
+          "name": "id_tecnico",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "cierre_reparacion_rut_cliente",
+          "name": "rut_cliente",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "12"
+        },
+        {
+          "id": "cierre_reparacion_direccion_servicio",
+          "name": "direccion_servicio",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "200"
+        },
+        {
+          "id": "cierre_reparacion_falla_reportada",
+          "name": "falla_reportada",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "300"
+        },
+        {
+          "id": "cierre_reparacion_solucion_aplicada",
+          "name": "solucion_aplicada",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "300"
+        },
+        {
+          "id": "cierre_reparacion_resultado",
+          "name": "resultado",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "30"
+        },
+        {
+          "id": "cierre_reparacion_resuelto_remotamente",
+          "name": "resuelto_remotamente",
+          "type": {
+            "id": "boolean",
+            "name": "boolean"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "false",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "cierre_reparacion_categoria_falla",
+          "name": "categoria_falla",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "120"
+        },
+        {
+          "id": "cierre_reparacion_equipos_retirados",
+          "name": "equipos_retirados",
+          "type": {
+            "id": "jsonb",
+            "name": "jsonb"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "cierre_reparacion_equipos_instalados",
+          "name": "equipos_instalados",
+          "type": {
+            "id": "jsonb",
+            "name": "jsonb"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "cierre_reparacion_consumibles",
+          "name": "consumibles",
+          "type": {
+            "id": "jsonb",
+            "name": "jsonb"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "cierre_reparacion_codigo_trabajo",
+          "name": "codigo_trabajo",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "10"
+        },
+        {
+          "id": "cierre_reparacion_fecha_cierre",
+          "name": "fecha_cierre",
+          "type": {
+            "id": "timestamptz",
+            "name": "timestamptz"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "cierre_reparacion_fecha_registro",
+          "name": "fecha_registro",
+          "type": {
+            "id": "timestamptz",
+            "name": "timestamptz"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "now()",
+          "createdAt": 1790996400000,
+          "increment": false
+        }
+      ],
+      "indexes": [],
+      "x": 2240,
+      "y": 510,
+      "color": "#ffc870",
+      "isView": false,
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026",
+      "width": 400
+    },
+    {
+      "id": "t_borrador_cierre",
+      "name": "borrador_cierre",
+      "schema": "public",
+      "order": 2,
+      "fields": [
+        {
+          "id": "borrador_cierre_id_borrador",
+          "name": "id_borrador",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "default": "nextval('borrador_cierre_id_borrador_seq'::regclass)",
+          "createdAt": 1790996400000,
+          "increment": true
+        },
+        {
+          "id": "borrador_cierre_id_ot",
+          "name": "id_ot",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": true,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "borrador_cierre_id_empresa",
+          "name": "id_empresa",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": true,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "borrador_cierre_id_tecnico",
+          "name": "id_tecnico",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "borrador_cierre_codigo_trabajo",
+          "name": "codigo_trabajo",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "10"
+        },
+        {
+          "id": "borrador_cierre_falla_reportada",
+          "name": "falla_reportada",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "300"
+        },
+        {
+          "id": "borrador_cierre_solucion_aplicada",
+          "name": "solucion_aplicada",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "300"
+        },
+        {
+          "id": "borrador_cierre_resultado",
+          "name": "resultado",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "30"
+        },
+        {
+          "id": "borrador_cierre_categoria_falla",
+          "name": "categoria_falla",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "120"
+        },
+        {
+          "id": "borrador_cierre_fecha_actualizacion",
+          "name": "fecha_actualizacion",
+          "type": {
+            "id": "timestamptz",
+            "name": "timestamptz"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "now()",
+          "createdAt": 1790996400000,
+          "increment": false
+        }
+      ],
+      "indexes": [],
+      "x": 2240,
+      "y": 940,
+      "color": "#ffc870",
+      "isView": false,
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026",
+      "width": 400
+    },
+    {
+      "id": "t_secuencia_srv",
+      "name": "secuencia_srv",
+      "schema": "public",
+      "order": 24,
+      "fields": [
+        {
+          "id": "secuencia_srv_id_empresa",
+          "name": "id_empresa",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "secuencia_srv_anio",
+          "name": "anio",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "secuencia_srv_ultimo",
+          "name": "ultimo",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "0",
+          "createdAt": 1790996400000,
+          "increment": false
+        }
+      ],
+      "indexes": [],
+      "x": 2240,
+      "y": 1370,
+      "color": "#ffc870",
+      "isView": false,
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026",
+      "width": 400
+    },
+    {
+      "id": "t_notificacion",
+      "name": "notificacion",
+      "schema": "public",
+      "order": 13,
+      "fields": [
+        {
+          "id": "notificacion_id_notificacion",
+          "name": "id_notificacion",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "default": "nextval('notificacion_id_notificacion_seq'::regclass)",
+          "createdAt": 1790996400000,
+          "increment": true
+        },
+        {
+          "id": "notificacion_tipo",
+          "name": "tipo",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "40"
+        },
+        {
+          "id": "notificacion_id_empresa",
+          "name": "id_empresa",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "notificacion_descripcion",
+          "name": "descripcion",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "150"
+        },
+        {
+          "id": "notificacion_clave_dedupe",
+          "name": "clave_dedupe",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": true,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "120"
+        },
+        {
+          "id": "notificacion_leida",
+          "name": "leida",
+          "type": {
+            "id": "boolean",
+            "name": "boolean"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "false",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "notificacion_fecha_generacion",
+          "name": "fecha_generacion",
+          "type": {
+            "id": "timestamptz",
+            "name": "timestamptz"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "now()",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "notificacion_fecha_leida",
+          "name": "fecha_leida",
+          "type": {
+            "id": "timestamptz",
+            "name": "timestamptz"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        }
+      ],
+      "indexes": [],
+      "x": 2240,
+      "y": 1576,
+      "color": "#ffc870",
+      "isView": false,
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026",
+      "width": 400
+    },
+    {
+      "id": "t_integracion_activacion",
+      "name": "integracion_activacion",
+      "schema": "public",
+      "order": 8,
+      "fields": [
+        {
+          "id": "integracion_activacion_id_activacion",
+          "name": "id_activacion",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "default": "nextval('integracion_activacion_id_activacion_seq'::regclass)",
+          "createdAt": 1790996400000,
+          "increment": true
+        },
+        {
+          "id": "integracion_activacion_event_id",
+          "name": "event_id",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": true,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "100"
+        },
+        {
+          "id": "integracion_activacion_trace_id",
+          "name": "trace_id",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "100"
+        },
+        {
+          "id": "integracion_activacion_id_empresa",
+          "name": "id_empresa",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "integracion_activacion_id_ot",
+          "name": "id_ot",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "integracion_activacion_id_cliente_externo",
+          "name": "id_cliente_externo",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "integracion_activacion_rut_cliente",
+          "name": "rut_cliente",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "20"
+        },
+        {
+          "id": "integracion_activacion_id_servicio_externo",
+          "name": "id_servicio_externo",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "integracion_activacion_id_contrato_externo",
+          "name": "id_contrato_externo",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "integracion_activacion_payload",
+          "name": "payload",
+          "type": {
+            "id": "jsonb",
+            "name": "jsonb"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "integracion_activacion_estado_proceso",
+          "name": "estado_proceso",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "40"
+        },
+        {
+          "id": "integracion_activacion_equipos_asociados",
+          "name": "equipos_asociados",
+          "type": {
+            "id": "jsonb",
+            "name": "jsonb"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "integracion_activacion_discrepancias",
+          "name": "discrepancias",
+          "type": {
+            "id": "jsonb",
+            "name": "jsonb"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "integracion_activacion_fecha_proceso",
+          "name": "fecha_proceso",
+          "type": {
+            "id": "timestamptz",
+            "name": "timestamptz"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "now()",
+          "createdAt": 1790996400000,
+          "increment": false
+        }
+      ],
+      "indexes": [],
+      "x": 2240,
+      "y": 1942,
+      "color": "#ffc870",
+      "isView": false,
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026",
+      "width": 400
+    },
+    {
+      "id": "t_asignacion_equipo_servicio",
+      "name": "asignacion_equipo_servicio",
+      "schema": "public",
+      "order": 0,
+      "fields": [
+        {
+          "id": "asignacion_equipo_servicio_id_asignacion",
+          "name": "id_asignacion",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "default": "nextval('asignacion_equipo_servicio_id_asignacion_seq'::regclass)",
+          "createdAt": 1790996400000,
+          "increment": true
+        },
+        {
+          "id": "asignacion_equipo_servicio_id_unidad",
+          "name": "id_unidad",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "asignacion_equipo_servicio_id_empresa",
+          "name": "id_empresa",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "asignacion_equipo_servicio_event_id",
+          "name": "event_id",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "100"
+        },
+        {
+          "id": "asignacion_equipo_servicio_id_cliente_externo",
+          "name": "id_cliente_externo",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "asignacion_equipo_servicio_rut_cliente",
+          "name": "rut_cliente",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "20"
+        },
+        {
+          "id": "asignacion_equipo_servicio_id_servicio_externo",
+          "name": "id_servicio_externo",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "asignacion_equipo_servicio_id_contrato_externo",
+          "name": "id_contrato_externo",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "asignacion_equipo_servicio_id_ot",
+          "name": "id_ot",
+          "type": {
+            "id": "int",
+            "name": "int"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "asignacion_equipo_servicio_fecha_instalacion",
+          "name": "fecha_instalacion",
+          "type": {
+            "id": "timestamptz",
+            "name": "timestamptz"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "asignacion_equipo_servicio_fecha_retiro",
+          "name": "fecha_retiro",
+          "type": {
+            "id": "timestamptz",
+            "name": "timestamptz"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "asignacion_equipo_servicio_activa",
+          "name": "activa",
+          "type": {
+            "id": "boolean",
+            "name": "boolean"
+          },
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "default": "true",
+          "createdAt": 1790996400000,
+          "increment": false
+        },
+        {
+          "id": "asignacion_equipo_servicio_origen",
+          "name": "origen",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "30"
+        },
+        {
+          "id": "asignacion_equipo_servicio_trace_id",
+          "name": "trace_id",
+          "type": {
+            "id": "varchar",
+            "name": "varchar"
+          },
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "default": "",
+          "createdAt": 1790996400000,
+          "increment": false,
+          "characterMaximumLength": "100"
+        }
+      ],
+      "indexes": [],
+      "x": 2240,
+      "y": 2372,
+      "color": "#ffc870",
+      "isView": false,
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026",
+      "width": 400
+    }
+  ],
+  "relationships": [
+    {
+      "id": "rel1",
+      "name": "fk_asignacion_unidad",
+      "sourceSchema": "public",
+      "targetSchema": "public",
+      "sourceTableId": "t_unidad_equipo",
+      "targetTableId": "t_asignacion_equipo_servicio",
+      "sourceFieldId": "unidad_equipo_id_unidad",
+      "targetFieldId": "asignacion_equipo_servicio_id_unidad",
+      "sourceCardinality": "one",
+      "targetCardinality": "many",
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026"
+    },
+    {
+      "id": "rel11",
+      "name": "fk_donacion_detalle_donacion",
+      "sourceSchema": "public",
+      "targetSchema": "public",
+      "sourceTableId": "t_donacion",
+      "targetTableId": "t_donacion_detalle",
+      "sourceFieldId": "donacion_id_donacion",
+      "targetFieldId": "donacion_detalle_id_donacion",
+      "sourceCardinality": "one",
+      "targetCardinality": "many",
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026"
+    },
+    {
+      "id": "rel12",
+      "name": "fk_donacion_detalle_unidad",
+      "sourceSchema": "public",
+      "targetSchema": "public",
+      "sourceTableId": "t_unidad_equipo",
+      "targetTableId": "t_donacion_detalle",
+      "sourceFieldId": "unidad_equipo_id_unidad",
+      "targetFieldId": "donacion_detalle_id_unidad",
+      "sourceCardinality": "one",
+      "targetCardinality": "many",
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026"
+    },
+    {
+      "id": "rel14",
+      "name": "fk_historial_unidad",
+      "sourceSchema": "public",
+      "targetSchema": "public",
+      "sourceTableId": "t_unidad_equipo",
+      "targetTableId": "t_historial_estado_equipo",
+      "sourceFieldId": "unidad_equipo_id_unidad",
+      "targetFieldId": "historial_estado_equipo_id_unidad",
+      "sourceCardinality": "one",
+      "targetCardinality": "many",
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026"
+    },
+    {
+      "id": "rel29",
+      "name": "fk_oi_bodega",
+      "sourceSchema": "public",
+      "targetSchema": "public",
+      "sourceTableId": "t_bodega",
+      "targetTableId": "t_orden_ingreso",
+      "sourceFieldId": "bodega_id_bodega",
+      "targetFieldId": "orden_ingreso_id_bodega_destino",
+      "sourceCardinality": "one",
+      "targetCardinality": "many",
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026"
+    },
+    {
+      "id": "rel30",
+      "name": "fk_oi_proveedor",
+      "sourceSchema": "public",
+      "targetSchema": "public",
+      "sourceTableId": "t_proveedor",
+      "targetTableId": "t_orden_ingreso",
+      "sourceFieldId": "proveedor_id_proveedor",
+      "targetFieldId": "orden_ingreso_id_proveedor",
+      "sourceCardinality": "one",
+      "targetCardinality": "many",
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026"
+    },
+    {
+      "id": "rel33",
+      "name": "fk_oid_orden",
+      "sourceSchema": "public",
+      "targetSchema": "public",
+      "sourceTableId": "t_orden_ingreso",
+      "targetTableId": "t_orden_ingreso_detalle",
+      "sourceFieldId": "orden_ingreso_id_orden",
+      "targetFieldId": "orden_ingreso_detalle_id_orden",
+      "sourceCardinality": "one",
+      "targetCardinality": "many",
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026"
+    },
+    {
+      "id": "rel34",
+      "name": "fk_oid_tipo_equipo",
+      "sourceSchema": "public",
+      "targetSchema": "public",
+      "sourceTableId": "t_tipo_equipo",
+      "targetTableId": "t_orden_ingreso_detalle",
+      "sourceFieldId": "tipo_equipo_id_tipo_equipo",
+      "targetFieldId": "orden_ingreso_detalle_id_tipo_equipo",
+      "sourceCardinality": "one",
+      "targetCardinality": "many",
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026"
+    },
+    {
+      "id": "rel36",
+      "name": "fk_prestamo_detalle_prestamo",
+      "sourceSchema": "public",
+      "targetSchema": "public",
+      "sourceTableId": "t_prestamo_externo",
+      "targetTableId": "t_prestamo_detalle",
+      "sourceFieldId": "prestamo_externo_id_prestamo",
+      "targetFieldId": "prestamo_detalle_id_prestamo",
+      "sourceCardinality": "one",
+      "targetCardinality": "many",
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026"
+    },
+    {
+      "id": "rel37",
+      "name": "fk_prestamo_detalle_unidad",
+      "sourceSchema": "public",
+      "targetSchema": "public",
+      "sourceTableId": "t_unidad_equipo",
+      "targetTableId": "t_prestamo_detalle",
+      "sourceFieldId": "unidad_equipo_id_unidad",
+      "targetFieldId": "prestamo_detalle_id_unidad",
+      "sourceCardinality": "one",
+      "targetCardinality": "many",
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026"
+    },
+    {
+      "id": "rel40",
+      "name": "prestamo_externo_id_unidad_fkey",
+      "sourceSchema": "public",
+      "targetSchema": "public",
+      "sourceTableId": "t_unidad_equipo",
+      "targetTableId": "t_prestamo_externo",
+      "sourceFieldId": "unidad_equipo_id_unidad",
+      "targetFieldId": "prestamo_externo_id_unidad",
+      "sourceCardinality": "one",
+      "targetCardinality": "many",
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026"
+    },
+    {
+      "id": "rel42",
+      "name": "fk_prestamo_retorno_detalle",
+      "sourceSchema": "public",
+      "targetSchema": "public",
+      "sourceTableId": "t_prestamo_detalle",
+      "targetTableId": "t_prestamo_retorno",
+      "sourceFieldId": "prestamo_detalle_id_detalle",
+      "targetFieldId": "prestamo_retorno_id_detalle",
+      "sourceCardinality": "one",
+      "targetCardinality": "many",
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026"
+    },
+    {
+      "id": "rel46",
+      "name": "fk_pte_proveedor",
+      "sourceSchema": "public",
+      "targetSchema": "public",
+      "sourceTableId": "t_proveedor",
+      "targetTableId": "t_proveedor_tipo_equipo",
+      "sourceFieldId": "proveedor_id_proveedor",
+      "targetFieldId": "proveedor_tipo_equipo_id_proveedor",
+      "sourceCardinality": "one",
+      "targetCardinality": "many",
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026"
+    },
+    {
+      "id": "rel47",
+      "name": "fk_pte_tipo_equipo",
+      "sourceSchema": "public",
+      "targetSchema": "public",
+      "sourceTableId": "t_tipo_equipo",
+      "targetTableId": "t_proveedor_tipo_equipo",
+      "sourceFieldId": "tipo_equipo_id_tipo_equipo",
+      "targetFieldId": "proveedor_tipo_equipo_id_tipo_equipo",
+      "sourceCardinality": "one",
+      "targetCardinality": "many",
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026"
+    },
+    {
+      "id": "rel56",
+      "name": "fk_salida_detalle_salida",
+      "sourceSchema": "public",
+      "targetSchema": "public",
+      "sourceTableId": "t_salida_bodega",
+      "targetTableId": "t_salida_detalle",
+      "sourceFieldId": "salida_bodega_id_salida",
+      "targetFieldId": "salida_detalle_id_salida",
+      "sourceCardinality": "one",
+      "targetCardinality": "many",
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026"
+    },
+    {
+      "id": "rel62",
+      "name": "fk_solicitud_baja_unidad",
+      "sourceSchema": "public",
+      "targetSchema": "public",
+      "sourceTableId": "t_unidad_equipo",
+      "targetTableId": "t_solicitud_baja",
+      "sourceFieldId": "unidad_equipo_id_unidad",
+      "targetFieldId": "solicitud_baja_id_unidad",
+      "sourceCardinality": "one",
+      "targetCardinality": "many",
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026"
+    },
+    {
+      "id": "rel64",
+      "name": "fk_stock_bodega",
+      "sourceSchema": "public",
+      "targetSchema": "public",
+      "sourceTableId": "t_bodega",
+      "targetTableId": "t_stock_consumible",
+      "sourceFieldId": "bodega_id_bodega",
+      "targetFieldId": "stock_consumible_id_bodega",
+      "sourceCardinality": "one",
+      "targetCardinality": "many",
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026"
+    },
+    {
+      "id": "rel65",
+      "name": "fk_stock_tipo_equipo",
+      "sourceSchema": "public",
+      "targetSchema": "public",
+      "sourceTableId": "t_tipo_equipo",
+      "targetTableId": "t_stock_consumible",
+      "sourceFieldId": "tipo_equipo_id_tipo_equipo",
+      "targetFieldId": "stock_consumible_id_tipo_equipo",
+      "sourceCardinality": "one",
+      "targetCardinality": "many",
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026"
+    },
+    {
+      "id": "rel69",
+      "name": "fk_unidad_tipo_equipo",
+      "sourceSchema": "public",
+      "targetSchema": "public",
+      "sourceTableId": "t_tipo_equipo",
+      "targetTableId": "t_unidad_equipo",
+      "sourceFieldId": "tipo_equipo_id_tipo_equipo",
+      "targetFieldId": "unidad_equipo_id_tipo_equipo",
+      "sourceCardinality": "one",
+      "targetCardinality": "many",
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026"
+    },
+    {
+      "id": "rel76",
+      "name": "fk_usuario_rol_rol",
+      "sourceSchema": "public",
+      "targetSchema": "public",
+      "sourceTableId": "t_rol",
+      "targetTableId": "t_usuario_rol",
+      "sourceFieldId": "rol_id_rol",
+      "targetFieldId": "usuario_rol_id_rol",
+      "sourceCardinality": "one",
+      "targetCardinality": "many",
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026"
+    },
+    {
+      "id": "rel77",
+      "name": "fk_usuario_rol_usuario",
+      "sourceSchema": "public",
+      "targetSchema": "public",
+      "sourceTableId": "t_usuario",
+      "targetTableId": "t_usuario_rol",
+      "sourceFieldId": "usuario_id_usuario",
+      "targetFieldId": "usuario_rol_id_usuario",
+      "sourceCardinality": "one",
+      "targetCardinality": "many",
+      "createdAt": 1790996400000,
+      "diagramId": "incremento3-oct2026"
+    }
+  ],
+  "dependencies": [],
+  "areas": [],
+  "customTypes": [],
+  "notes": []
+}

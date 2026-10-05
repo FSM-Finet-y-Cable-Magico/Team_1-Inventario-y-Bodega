@@ -1,0 +1,98 @@
+@startuml CU90-normal
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
+title CU-90 — Generando reporte de productividad de técnicos (flujo normal)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+<style>
+sequenceDiagram {
+  participant { Margin 25 }
+  actor { Margin 20 }
+}
+</style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador / Superusuario" as user
+participant "V_ReportesProductividad" as view
+participant "C_ReportesController" as ctrl
+participant "C_ReportesService" as svc
+participant "C_OrdenesG3Service" as g3svc
+participant "G3_API_Ordenes" as g3api
+participant "C_TypeORM" as orm
+participant "usuario" as uent
+participant "integracion_cierre" as icent
+participant "tipo_equipo" as teent
+participant "log_auditoria" as aent
+
+user -> view : Configura filtros (empresa, técnico o Todos, rango <= 90 días) y pulsa Generar
+activate view
+view -> ctrl : GET /api/reportes/tecnicos/productividad\n?id_empresa=&id_tecnico=&fecha_desde=&fecha_hasta=
+activate ctrl
+ctrl -> svc : getTecnicosProductividadReport(filtros, req.user)
+activate svc
+
+svc -> svc : Valida rol (ADMIN/SUPERUSUARIO), aislamiento por empresa\ny rango de fechas (diffDays <= 90)
+
+svc -> orm : Consulta técnicos de terreno activos
+activate orm
+orm -> uent : SELECT * FROM usuario u INNER JOIN usuario_rol ... WHERE nombre_rol = 'TECNICO_TERRENO'
+activate uent
+uent --> orm : Lista de técnicos
+deactivate uent
+orm --> svc : Técnicos encontrados
+deactivate orm
+
+par Consulta cierres a G3 y base local
+  svc -> g3svc : consultarOrdenesCerradas(filtros)
+  activate g3svc
+  g3svc -> g3api : GET /ordenes?estado=CERRADA&fecha_desde=&fecha_hasta= (X-API-KEY)
+  activate g3api
+  g3api --> g3svc : 200 OK: Lista de órdenes cerradas + materiales
+  deactivate g3api
+  g3svc --> svc : Órdenes G3 consolidadas
+  deactivate g3svc
+else Consulta cierres locales
+  svc -> orm : Consulta cierres registrados por webhook
+  activate orm
+  orm -> icent : SELECT * FROM integracion_cierre WHERE fecha_proceso BETWEEN ...
+  activate icent
+  icent --> orm : Cierres locales con payload de materiales
+  deactivate icent
+  orm --> svc : Cierres locales
+  deactivate orm
+else Consulta catálogo de consumibles
+  svc -> orm : Consulta tipos de equipo consumibles
+  activate orm
+  orm -> teent : SELECT * FROM tipo_equipo WHERE requiere_serial_number = false
+  activate teent
+  teent --> orm : Tipos consumibles (categorías: fibra, conector, otros)
+  deactivate teent
+  orm --> svc : Catálogo de consumibles
+  deactivate orm
+end
+
+svc -> svc : Agrupa por técnico:\n- instalaciones cerradas\n- reparaciones cerradas\n- metros de fibra óptica\n- unidades de conectores\n- otros consumibles por tipo
+
+svc -> aent : INSERT log_auditoria\n(GENERAR_REPORTE, reporte_productividad_tecnicos)
+activate aent
+aent --> svc : Auditoría registrada
+deactivate aent
+
+svc --> ctrl : 200 OK: Filas de productividad por técnico
+deactivate svc
+ctrl --> view : 200 OK: Filas de productividad por técnico
+deactivate ctrl
+view --> user : Renderiza tabla de productividad (técnico, empresa, cierres, fibra, conectores, otros)
+deactivate view
+
+@enduml

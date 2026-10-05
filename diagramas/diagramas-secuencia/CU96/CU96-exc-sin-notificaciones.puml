@@ -1,0 +1,89 @@
+@startuml CU96-exc-sin-notificaciones
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
+title CU-96 — Recibiendo notificaciones visuales en la campana del sistema (excepción 1: sin notificaciones pendientes)
+
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style>
+sequenceDiagram {
+  participant {
+    margin 35
+  }
+  actor {
+    margin 15
+  }
+}
+</style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Administrador de bodega" as user
+participant "V_Header" as view
+participant "C_RolesGuard" as guard
+participant "C_NotificacionesController" as ctrl
+participant "C_NotificacionesService" as svc
+participant "C_CompaniesService" as comp
+participant "C_PrestamosService" as prest
+participant "C_TypeORM" as orm
+participant "notificacion" as nent
+
+user -> view : Abre la campana\n(sin préstamos vencidos ni stock bajo umbral)
+activate view
+
+view -> guard : GET /api/notificaciones
+activate guard
+guard --> view : Autorizado\n(ADMIN_BODEGA / ADMIN / SUPERUSUARIO)
+deactivate guard
+
+view -> ctrl : GET /api/notificaciones
+activate ctrl
+
+ctrl -> svc : listarNoLeidas(actor)
+activate svc
+
+svc -> comp : getAlertasStockMinimo(id_empresa)\n(por cada empresa)
+activate comp
+comp --> svc : [] (sin umbrales o stock >= umbral)
+deactivate comp
+
+svc -> prest : listar({ estado: 'ACTIVO' }, actorSistema)
+activate prest
+prest --> svc : préstamos activos, ninguno con\ndias_restantes < 0
+deactivate prest
+
+svc -> svc : Sin candidatas nuevas → no inserta nada
+
+svc -> orm : delete(notificacion)\nWHERE leida = true AND fecha_generacion < now() - 30 días
+activate orm
+orm -> nent : DELETE ... (purga rutinaria,\npuede no afectar filas)
+nent --> orm : filas eliminadas
+orm --> svc : purga completada
+deactivate orm
+
+svc -> orm : find(notificacion)\nWHERE leida = false [AND id_empresa = :actorEmpresa]
+activate orm
+orm -> nent : SELECT * FROM notificacion\nWHERE leida = false ...
+nent --> orm : [] (ninguna fila no leída\nen el alcance del actor)
+orm --> svc : []
+deactivate orm
+
+svc --> ctrl : { contador: 0, notificaciones: [] }
+deactivate svc
+
+ctrl --> view : 200 OK
+deactivate ctrl
+
+view --> user : Campana sin contador visible (0).\nAl hacer clic, listado vacío con:\n'No tiene notificaciones pendientes.'
+deactivate view
+
+@enduml

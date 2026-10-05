@@ -1,0 +1,36 @@
+@startuml
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+hide footbox
+title CU-63 — Registrando cierre de instalación (G3 y recepción G1)
+actor "Técnico" as T
+participant "OrdenesController G3" as C
+participant "OrdenesService G3" as S
+database "PostgreSQL G3" as D
+participant "WebhookFanOut" as F
+participant "IntegracionesController G1" as G1
+T -> C : POST /api/ordenes/:id/cerrar (JWT)
+C -> S : cerrarOT(id, dto, actor)
+S -> S : Valida OT EN_CURSO y asignación\nfotos, potencia y resultado
+alt Datos válidos
+S -> D : Transacción: cierre, fotos, materiales,\nequipos, historial, estado COMPLETADA
+D --> S : commit
+S -> F : notificar(payload de cierre)
+F -> G1 : POST /api/integraciones/ordenes/:id/cierre\nX-API-KEY + clave_idempotencia
+G1 --> F : 201 PROCESADO / CON_DISCREPANCIAS
+F --> S : aviso de cierre entregado
+S --> C : OT completada
+C --> T : HTTP 201
+else Datos inválidos o estado distinto de EN_CURSO
+S --> C : 400 / 403
+C --> T : Error sin cerrar la OT
+end
+@enduml

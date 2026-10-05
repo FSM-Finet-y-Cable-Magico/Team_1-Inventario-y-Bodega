@@ -1,0 +1,124 @@
+@startuml
+
+!theme plain
+
+hide circle
+
+skinparam linetype ortho
+
+skinparam shadowing false
+
+skinparam roundcorner 4
+
+skinparam classFontSize 11
+
+skinparam classFontName "Helvetica,Arial,sans-serif"
+
+skinparam arrowColor #333333
+
+skinparam packageBackgroundColor transparent
+
+skinparam class {
+
+    BackgroundColor #FFFFFF
+
+    BorderColor #2B5797
+
+    HeaderBackgroundColor #E8EEF7
+
+}
+
+title Modelo físico — detalle inventario (dev)
+entity "bodega" as bodega {
+  * id_bodega : integer <<PK>>
+  id_empresa : integer
+  * nombre : varchar(100)
+  direccion : varchar(200)
+  id_usuario_responsable : integer
+  activa : boolean
+}
+entity "tipo_equipo" as tipo_equipo {
+  * id_tipo_equipo : integer <<PK>>
+  id_empresa : integer
+  * nombre : varchar(100)
+  categoria : varchar(40)
+  marca : varchar(50)
+  modelo : varchar(50)
+  descripcion_tecnica : varchar(500)
+  unidad_medida : varchar(20)
+  garantia_dias : integer
+  requiere_serie_individual : boolean
+  ficha_tecnica_pdf_url : text
+  ficha_tecnica_nombre : varchar(255)
+  activo : boolean
+}
+entity "unidad_equipo" as unidad_equipo {
+  * id_unidad : integer <<PK>>
+  id_tipo_equipo : integer
+  id_empresa : integer
+  * numero_serie : varchar(80)
+  modelo : varchar(80)
+  * estado : varchar(30)
+  fecha_adquisicion : date
+  fecha_venc_garantia : date
+  diagnostico_tecnico : text
+  id_cliente_instalado : integer
+  id_bodega_actual : integer
+  numero_poste : varchar(30)
+  id_caja_nap : integer
+  mac_address : varchar(17)
+  proveedor : varchar(80)
+  observaciones : varchar(300)
+  ubicacion_fisica : varchar(60)
+  motivo_baja : varchar(40)
+  motivo_baja_detalle : varchar(200)
+  id_tecnico_asignado : integer
+  cliente_rut : varchar(20)
+  cliente_nombre : varchar(150)
+  direccion_instalacion : varchar(300)
+  comuna_instalacion : varchar(100)
+  srv : varchar(20)
+}
+entity "stock_consumible" as stock_consumible {
+  * id_stock : integer <<PK>>
+  * id_tipo_equipo : integer
+  * id_bodega : integer
+  cantidad_disponible : numeric
+  umbral_minimo : numeric
+}
+entity "historial_estado_equipo" as historial_estado_equipo {
+  * id_historial : integer <<PK>>
+  id_unidad : integer
+  id_usuario : integer
+  estado_anterior : varchar(30)
+  estado_nuevo : varchar(30)
+  motivo : text
+  fecha_hora : timestamp
+}
+entity "movimiento_inventario" as movimiento_inventario {
+  * id_movimiento : integer <<PK>>
+  id_tipo_equipo : integer
+  id_unidad : integer
+  id_empresa_origen : integer
+  id_empresa_destino : integer
+  id_bodega_origen : integer
+  id_bodega_destino : integer
+  id_usuario : integer
+  tipo_movimiento : varchar(30)
+  cantidad : numeric
+  fecha : timestamp
+  referencia_id : integer
+}
+entity "transferencia_equipo" as transferencia_equipo {
+  * id_transferencia : integer <<PK>>
+  id_empresa_origen : integer
+  id_empresa_destino : integer
+  id_usuario_registro : integer
+  fecha_transferencia : date
+  observaciones : text
+}
+historial_estado_equipo }o--|| unidad_equipo : id_unidad
+stock_consumible }o--|| bodega : id_bodega
+stock_consumible }o--|| tipo_equipo : id_tipo_equipo
+unidad_equipo }o--|| tipo_equipo : id_tipo_equipo
+@enduml

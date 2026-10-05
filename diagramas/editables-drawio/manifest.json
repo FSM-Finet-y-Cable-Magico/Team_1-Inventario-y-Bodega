@@ -1,0 +1,1172 @@
+[
+  {
+    "archivo": "CU01-Login-Normal.drawio",
+    "objetos_editables": 123,
+    "fuente_svg": "CU01-Login-Normal.svg"
+  },
+  {
+    "archivo": "CU01-exc-credenciales-invalidas.drawio",
+    "objetos_editables": 100,
+    "fuente_svg": "CU01-exc-credenciales-invalidas.svg"
+  },
+  {
+    "archivo": "CU01-exc-cuenta-bloqueada.drawio",
+    "objetos_editables": 105,
+    "fuente_svg": "CU01-exc-cuenta-bloqueada.svg"
+  },
+  {
+    "archivo": "CU01-exc-formato-invalido.drawio",
+    "objetos_editables": 37,
+    "fuente_svg": "CU01-exc-formato-invalido.svg"
+  },
+  {
+    "archivo": "CU02-exc-acceso-denegado.drawio",
+    "objetos_editables": 92,
+    "fuente_svg": "CU02-exc-acceso-denegado.svg"
+  },
+  {
+    "archivo": "CU02-normal.drawio",
+    "objetos_editables": 103,
+    "fuente_svg": "CU02-normal.svg"
+  },
+  {
+    "archivo": "CU03-exc-recurso-no-autorizado.drawio",
+    "objetos_editables": 85,
+    "fuente_svg": "CU03-exc-recurso-no-autorizado.svg"
+  },
+  {
+    "archivo": "CU03-normal.drawio",
+    "objetos_editables": 90,
+    "fuente_svg": "CU03-normal.svg"
+  },
+  {
+    "archivo": "CU04-exc-formato-invalido.drawio",
+    "objetos_editables": 51,
+    "fuente_svg": "CU04-exc-formato-invalido.svg"
+  },
+  {
+    "archivo": "CU04-exc-nombre-duplicado.drawio",
+    "objetos_editables": 88,
+    "fuente_svg": "CU04-exc-nombre-duplicado.svg"
+  },
+  {
+    "archivo": "CU04-exc-rol-superusuario-denegado.drawio",
+    "objetos_editables": 62,
+    "fuente_svg": "CU04-exc-rol-superusuario-denegado.svg"
+  },
+  {
+    "archivo": "CU04-normal.drawio",
+    "objetos_editables": 154,
+    "fuente_svg": "CU04-normal.svg"
+  },
+  {
+    "archivo": "CU05-exc-sin-resultados.drawio",
+    "objetos_editables": 89,
+    "fuente_svg": "CU05-exc-sin-resultados.svg"
+  },
+  {
+    "archivo": "CU05-normal.drawio",
+    "objetos_editables": 87,
+    "fuente_svg": "CU05-normal.svg"
+  },
+  {
+    "archivo": "CU06-exc-formato-invalido.drawio",
+    "objetos_editables": 51,
+    "fuente_svg": "CU06-exc-formato-invalido.svg"
+  },
+  {
+    "archivo": "CU06-exc-rol-superusuario-denegado.drawio",
+    "objetos_editables": 90,
+    "fuente_svg": "CU06-exc-rol-superusuario-denegado.svg"
+  },
+  {
+    "archivo": "CU06-normal.drawio",
+    "objetos_editables": 142,
+    "fuente_svg": "CU06-normal.svg"
+  },
+  {
+    "archivo": "CU07-exc-propia-cuenta.drawio",
+    "objetos_editables": 61,
+    "fuente_svg": "CU07-exc-propia-cuenta.svg"
+  },
+  {
+    "archivo": "CU07-normal.drawio",
+    "objetos_editables": 138,
+    "fuente_svg": "CU07-normal.svg"
+  },
+  {
+    "archivo": "CU08-exc-error-escritura.drawio",
+    "objetos_editables": 129,
+    "fuente_svg": "CU08-exc-error-escritura.svg"
+  },
+  {
+    "archivo": "CU08-normal.drawio",
+    "objetos_editables": 128,
+    "fuente_svg": "CU08-normal.svg"
+  },
+  {
+    "archivo": "CU09-exc-sin-resultados.drawio",
+    "objetos_editables": 100,
+    "fuente_svg": "CU09-exc-sin-resultados.svg"
+  },
+  {
+    "archivo": "CU09-normal.drawio",
+    "objetos_editables": 100,
+    "fuente_svg": "CU09-normal.svg"
+  },
+  {
+    "archivo": "CU10-exc-usuario-inactivo.drawio",
+    "objetos_editables": 73,
+    "fuente_svg": "CU10-exc-usuario-inactivo.svg"
+  },
+  {
+    "archivo": "CU10-normal.drawio",
+    "objetos_editables": 139,
+    "fuente_svg": "CU10-normal.svg"
+  },
+  {
+    "archivo": "CU11-exc-sesion-expirada.drawio",
+    "objetos_editables": 138,
+    "fuente_svg": "CU11-exc-sesion-expirada.svg"
+  },
+  {
+    "archivo": "CU11-normal.drawio",
+    "objetos_editables": 134,
+    "fuente_svg": "CU11-normal.svg"
+  },
+  {
+    "archivo": "CU12-exc-cancelacion.drawio",
+    "objetos_editables": 28,
+    "fuente_svg": "CU12-exc-cancelacion.svg"
+  },
+  {
+    "archivo": "CU12-normal.drawio",
+    "objetos_editables": 90,
+    "fuente_svg": "CU12-normal.svg"
+  },
+  {
+    "archivo": "CU13-exc-sin-empresa.drawio",
+    "objetos_editables": 94,
+    "fuente_svg": "CU13-exc-sin-empresa.svg"
+  },
+  {
+    "archivo": "CU13-normal.drawio",
+    "objetos_editables": 145,
+    "fuente_svg": "CU13-normal.svg"
+  },
+  {
+    "archivo": "CU14-exc-sin-empresa.drawio",
+    "objetos_editables": 95,
+    "fuente_svg": "CU14-exc-sin-empresa.svg"
+  },
+  {
+    "archivo": "CU14-normal.drawio",
+    "objetos_editables": 148,
+    "fuente_svg": "CU14-normal.svg"
+  },
+  {
+    "archivo": "CU15-exc-empresa-sin-datos.drawio",
+    "objetos_editables": 159,
+    "fuente_svg": "CU15-exc-empresa-sin-datos.svg"
+  },
+  {
+    "archivo": "CU15-normal.drawio",
+    "objetos_editables": 214,
+    "fuente_svg": "CU15-normal.svg"
+  },
+  {
+    "archivo": "CU16-exc-acceso-otra-empresa.drawio",
+    "objetos_editables": 63,
+    "fuente_svg": "CU16-exc-acceso-otra-empresa.svg"
+  },
+  {
+    "archivo": "CU16-normal.drawio",
+    "objetos_editables": 101,
+    "fuente_svg": "CU16-normal.svg"
+  },
+  {
+    "archivo": "CU17-exc-empresa-manipulada.drawio",
+    "objetos_editables": 47,
+    "fuente_svg": "CU17-exc-empresa-manipulada.svg"
+  },
+  {
+    "archivo": "CU17-normal.drawio",
+    "objetos_editables": 145,
+    "fuente_svg": "CU17-normal.svg"
+  },
+  {
+    "archivo": "CU18-exc-registro-otra-empresa.drawio",
+    "objetos_editables": 118,
+    "fuente_svg": "CU18-exc-registro-otra-empresa.svg"
+  },
+  {
+    "archivo": "CU18-normal.drawio",
+    "objetos_editables": 187,
+    "fuente_svg": "CU18-normal.svg"
+  },
+  {
+    "archivo": "CU19-exc-registro-otra-empresa.drawio",
+    "objetos_editables": 98,
+    "fuente_svg": "CU19-exc-registro-otra-empresa.svg"
+  },
+  {
+    "archivo": "CU19-normal.drawio",
+    "objetos_editables": 147,
+    "fuente_svg": "CU19-normal.svg"
+  },
+  {
+    "archivo": "CU20-exc-campos-invalidos.drawio",
+    "objetos_editables": 59,
+    "fuente_svg": "CU20-exc-campos-invalidos.svg"
+  },
+  {
+    "archivo": "CU20-exc-sin-unidades.drawio",
+    "objetos_editables": 67,
+    "fuente_svg": "CU20-exc-sin-unidades.svg"
+  },
+  {
+    "archivo": "CU20-exc-unidad-invalida.drawio",
+    "objetos_editables": 104,
+    "fuente_svg": "CU20-exc-unidad-invalida.svg"
+  },
+  {
+    "archivo": "CU20-normal.drawio",
+    "objetos_editables": 216,
+    "fuente_svg": "CU20-normal.svg"
+  },
+  {
+    "archivo": "CU21-exc-unidad-cambio-estado.drawio",
+    "objetos_editables": 120,
+    "fuente_svg": "CU21-exc-unidad-cambio-estado.svg"
+  },
+  {
+    "archivo": "CU21-normal.drawio",
+    "objetos_editables": 216,
+    "fuente_svg": "CU21-normal.svg"
+  },
+  {
+    "archivo": "CU22-exc-motivo-largo.drawio",
+    "objetos_editables": 83,
+    "fuente_svg": "CU22-exc-motivo-largo.svg"
+  },
+  {
+    "archivo": "CU22-exc-sin-motivo.drawio",
+    "objetos_editables": 75,
+    "fuente_svg": "CU22-exc-sin-motivo.svg"
+  },
+  {
+    "archivo": "CU22-normal.drawio",
+    "objetos_editables": 155,
+    "fuente_svg": "CU22-normal.svg"
+  },
+  {
+    "archivo": "CU23-exc-sin-resultados.drawio",
+    "objetos_editables": 120,
+    "fuente_svg": "CU23-exc-sin-resultados.svg"
+  },
+  {
+    "archivo": "CU23-normal.drawio",
+    "objetos_editables": 119,
+    "fuente_svg": "CU23-normal.svg"
+  },
+  {
+    "archivo": "CU24-exc-campos-invalidos.drawio",
+    "objetos_editables": 66,
+    "fuente_svg": "CU24-exc-campos-invalidos.svg"
+  },
+  {
+    "archivo": "CU24-exc-consumible-sin-unidad.drawio",
+    "objetos_editables": 75,
+    "fuente_svg": "CU24-exc-consumible-sin-unidad.svg"
+  },
+  {
+    "archivo": "CU24-exc-nombre-duplicado.drawio",
+    "objetos_editables": 93,
+    "fuente_svg": "CU24-exc-nombre-duplicado.svg"
+  },
+  {
+    "archivo": "CU24-normal.drawio",
+    "objetos_editables": 121,
+    "fuente_svg": "CU24-normal.svg"
+  },
+  {
+    "archivo": "CU25-exc-sin-resultados.drawio",
+    "objetos_editables": 94,
+    "fuente_svg": "CU25-exc-sin-resultados.svg"
+  },
+  {
+    "archivo": "CU25-normal.drawio",
+    "objetos_editables": 95,
+    "fuente_svg": "CU25-normal.svg"
+  },
+  {
+    "archivo": "CU26-exc-campo-serie-bloqueado.drawio",
+    "objetos_editables": 120,
+    "fuente_svg": "CU26-exc-campo-serie-bloqueado.svg"
+  },
+  {
+    "archivo": "CU26-exc-nombre-duplicado.drawio",
+    "objetos_editables": 116,
+    "fuente_svg": "CU26-exc-nombre-duplicado.svg"
+  },
+  {
+    "archivo": "CU26-normal.drawio",
+    "objetos_editables": 176,
+    "fuente_svg": "CU26-normal.svg"
+  },
+  {
+    "archivo": "CU27-exc-tiene-unidades.drawio",
+    "objetos_editables": 102,
+    "fuente_svg": "CU27-exc-tiene-unidades.svg"
+  },
+  {
+    "archivo": "CU27-normal.drawio",
+    "objetos_editables": 126,
+    "fuente_svg": "CU27-normal.svg"
+  },
+  {
+    "archivo": "CU28-exc-cantidad-invalida.drawio",
+    "objetos_editables": 100,
+    "fuente_svg": "CU28-exc-cantidad-invalida.svg"
+  },
+  {
+    "archivo": "CU28-exc-formato-invalido.drawio",
+    "objetos_editables": 112,
+    "fuente_svg": "CU28-exc-formato-invalido.svg"
+  },
+  {
+    "archivo": "CU28-normal.drawio",
+    "objetos_editables": 138,
+    "fuente_svg": "CU28-normal.svg"
+  },
+  {
+    "archivo": "CU29-exc-archivo-invalido.drawio",
+    "objetos_editables": 45,
+    "fuente_svg": "CU29-exc-archivo-invalido.svg"
+  },
+  {
+    "archivo": "CU29-normal.drawio",
+    "objetos_editables": 108,
+    "fuente_svg": "CU29-normal.svg"
+  },
+  {
+    "archivo": "CU30-exc-sin-ficha.drawio",
+    "objetos_editables": 109,
+    "fuente_svg": "CU30-exc-sin-ficha.svg"
+  },
+  {
+    "archivo": "CU30-normal.drawio",
+    "objetos_editables": 110,
+    "fuente_svg": "CU30-normal.svg"
+  },
+  {
+    "archivo": "CU31-exc-tipo-sin-configurar.drawio",
+    "objetos_editables": 101,
+    "fuente_svg": "CU31-exc-tipo-sin-configurar.svg"
+  },
+  {
+    "archivo": "CU31-normal.drawio",
+    "objetos_editables": 124,
+    "fuente_svg": "CU31-normal.svg"
+  },
+  {
+    "archivo": "CU32-exc-mac-invalida.drawio",
+    "objetos_editables": 81,
+    "fuente_svg": "CU32-exc-mac-invalida.svg"
+  },
+  {
+    "archivo": "CU32-exc-serie-duplicada.drawio",
+    "objetos_editables": 133,
+    "fuente_svg": "CU32-exc-serie-duplicada.svg"
+  },
+  {
+    "archivo": "CU32-exc-serie-invalida.drawio",
+    "objetos_editables": 111,
+    "fuente_svg": "CU32-exc-serie-invalida.svg"
+  },
+  {
+    "archivo": "CU32-normal.drawio",
+    "objetos_editables": 150,
+    "fuente_svg": "CU32-normal.svg"
+  },
+  {
+    "archivo": "CU33-exc-unidad-no-encontrada.drawio",
+    "objetos_editables": 87,
+    "fuente_svg": "CU33-exc-unidad-no-encontrada.svg"
+  },
+  {
+    "archivo": "CU33-normal.drawio",
+    "objetos_editables": 112,
+    "fuente_svg": "CU33-normal.svg"
+  },
+  {
+    "archivo": "CU34-exc-formato-invalido.drawio",
+    "objetos_editables": 67,
+    "fuente_svg": "CU34-exc-formato-invalido.svg"
+  },
+  {
+    "archivo": "CU34-normal.drawio",
+    "objetos_editables": 120,
+    "fuente_svg": "CU34-normal.svg"
+  },
+  {
+    "archivo": "CU35-exc-transicion-invalida.drawio",
+    "objetos_editables": 94,
+    "fuente_svg": "CU35-exc-transicion-invalida.svg"
+  },
+  {
+    "archivo": "CU35-normal.drawio",
+    "objetos_editables": 144,
+    "fuente_svg": "CU35-normal.svg"
+  },
+  {
+    "archivo": "CU36-exc-error-historial.drawio",
+    "objetos_editables": 138,
+    "fuente_svg": "CU36-exc-error-historial.svg"
+  },
+  {
+    "archivo": "CU36-normal.drawio",
+    "objetos_editables": 137,
+    "fuente_svg": "CU36-normal.svg"
+  },
+  {
+    "archivo": "CU37-exc-serie-no-encontrada.drawio",
+    "objetos_editables": 109,
+    "fuente_svg": "CU37-exc-serie-no-encontrada.svg"
+  },
+  {
+    "archivo": "CU37-normal.drawio",
+    "objetos_editables": 111,
+    "fuente_svg": "CU37-normal.svg"
+  },
+  {
+    "archivo": "CU38-exc-garantia-no-disponible.drawio",
+    "objetos_editables": 127,
+    "fuente_svg": "CU38-exc-garantia-no-disponible.svg"
+  },
+  {
+    "archivo": "CU38-normal.drawio",
+    "objetos_editables": 127,
+    "fuente_svg": "CU38-normal.svg"
+  },
+  {
+    "archivo": "CU39-exc-garantia-vencida.drawio",
+    "objetos_editables": 91,
+    "fuente_svg": "CU39-exc-garantia-vencida.svg"
+  },
+  {
+    "archivo": "CU39-normal.drawio",
+    "objetos_editables": 91,
+    "fuente_svg": "CU39-normal.svg"
+  },
+  {
+    "archivo": "CU40-exc-diagnostico-sin-descripcion.drawio",
+    "objetos_editables": 118,
+    "fuente_svg": "CU40-exc-diagnostico-sin-descripcion.svg"
+  },
+  {
+    "archivo": "CU40-normal.drawio",
+    "objetos_editables": 195,
+    "fuente_svg": "CU40-normal.svg"
+  },
+  {
+    "archivo": "CU41-exc-nombre-duplicado.drawio",
+    "objetos_editables": 90,
+    "fuente_svg": "CU41-exc-nombre-duplicado.svg"
+  },
+  {
+    "archivo": "CU41-normal.drawio",
+    "objetos_editables": 141,
+    "fuente_svg": "CU41-normal.svg"
+  },
+  {
+    "archivo": "CU42-exc-nombre-duplicado.drawio",
+    "objetos_editables": 105,
+    "fuente_svg": "CU42-exc-nombre-duplicado.svg"
+  },
+  {
+    "archivo": "CU42-normal.drawio",
+    "objetos_editables": 167,
+    "fuente_svg": "CU42-normal.svg"
+  },
+  {
+    "archivo": "CU43-exc-ultima-bodega.drawio",
+    "objetos_editables": 90,
+    "fuente_svg": "CU43-exc-ultima-bodega.svg"
+  },
+  {
+    "archivo": "CU43-normal.drawio",
+    "objetos_editables": 147,
+    "fuente_svg": "CU43-normal.svg"
+  },
+  {
+    "archivo": "CU44-exc-sin-resultados.drawio",
+    "objetos_editables": 93,
+    "fuente_svg": "CU44-exc-sin-resultados.svg"
+  },
+  {
+    "archivo": "CU44-normal.drawio",
+    "objetos_editables": 200,
+    "fuente_svg": "CU44-normal.svg"
+  },
+  {
+    "archivo": "CU45-exc-bodega-sin-equipos.drawio",
+    "objetos_editables": 81,
+    "fuente_svg": "CU45-exc-bodega-sin-equipos.svg"
+  },
+  {
+    "archivo": "CU45-normal.drawio",
+    "objetos_editables": 150,
+    "fuente_svg": "CU45-normal.svg"
+  },
+  {
+    "archivo": "CU46-exc-umbral-invalido.drawio",
+    "objetos_editables": 49,
+    "fuente_svg": "CU46-exc-umbral-invalido.svg"
+  },
+  {
+    "archivo": "CU46-normal.drawio",
+    "objetos_editables": 188,
+    "fuente_svg": "CU46-normal.svg"
+  },
+  {
+    "archivo": "CU47-exc-sin-ubicacion.drawio",
+    "objetos_editables": 169,
+    "fuente_svg": "CU47-exc-sin-ubicacion.svg"
+  },
+  {
+    "archivo": "CU47-normal.drawio",
+    "objetos_editables": 190,
+    "fuente_svg": "CU47-normal.svg"
+  },
+  {
+    "archivo": "CU48-exc-campos-incompletos.drawio",
+    "objetos_editables": 92,
+    "fuente_svg": "CU48-exc-campos-incompletos.svg"
+  },
+  {
+    "archivo": "CU48-normal.drawio",
+    "objetos_editables": 126,
+    "fuente_svg": "CU48-normal.svg"
+  },
+  {
+    "archivo": "CU49-Crear-Proveedor-Normal.drawio",
+    "objetos_editables": 152,
+    "fuente_svg": "CU49-Crear-Proveedor-Normal.svg"
+  },
+  {
+    "archivo": "CU49-exc-rut-duplicado.drawio",
+    "objetos_editables": 81,
+    "fuente_svg": "CU49-exc-rut-duplicado.svg"
+  },
+  {
+    "archivo": "CU50-Editar-Proveedor-Normal.drawio",
+    "objetos_editables": 197,
+    "fuente_svg": "CU50-Editar-Proveedor-Normal.svg"
+  },
+  {
+    "archivo": "CU50-exc-rut-duplicado.drawio",
+    "objetos_editables": 100,
+    "fuente_svg": "CU50-exc-rut-duplicado.svg"
+  },
+  {
+    "archivo": "CU51-Consultar-Proveedores-Normal.drawio",
+    "objetos_editables": 98,
+    "fuente_svg": "CU51-Consultar-Proveedores-Normal.svg"
+  },
+  {
+    "archivo": "CU51-exc-sin-resultados.drawio",
+    "objetos_editables": 76,
+    "fuente_svg": "CU51-exc-sin-resultados.svg"
+  },
+  {
+    "archivo": "CU52-OrdenIngreso-Exc-ItemsVacios.drawio",
+    "objetos_editables": 65,
+    "fuente_svg": "CU52-OrdenIngreso-Exc-ItemsVacios.svg"
+  },
+  {
+    "archivo": "CU52-OrdenIngreso-Normal.drawio",
+    "objetos_editables": 209,
+    "fuente_svg": "CU52-OrdenIngreso-Normal.svg"
+  },
+  {
+    "archivo": "CU53-ConsultarOrdenesIngreso-Exc-SinResultados.drawio",
+    "objetos_editables": 85,
+    "fuente_svg": "CU53-ConsultarOrdenesIngreso-Exc-SinResultados.svg"
+  },
+  {
+    "archivo": "CU53-ConsultarOrdenesIngreso-Normal.drawio",
+    "objetos_editables": 160,
+    "fuente_svg": "CU53-ConsultarOrdenesIngreso-Normal.svg"
+  },
+  {
+    "archivo": "CU54-RecepcionOrdenIngreso-Exc-CantidadExcedePendiente.drawio",
+    "objetos_editables": 135,
+    "fuente_svg": "CU54-RecepcionOrdenIngreso-Exc-CantidadExcedePendiente.svg"
+  },
+  {
+    "archivo": "CU54-RecepcionOrdenIngreso-Normal.drawio",
+    "objetos_editables": 244,
+    "fuente_svg": "CU54-RecepcionOrdenIngreso-Normal.svg"
+  },
+  {
+    "archivo": "CU54-normal.drawio",
+    "objetos_editables": 245,
+    "fuente_svg": "CU54-normal.svg"
+  },
+  {
+    "archivo": "CU55-NumSerieRecepcion-Exc-FormatoInvalido.drawio",
+    "objetos_editables": 70,
+    "fuente_svg": "CU55-NumSerieRecepcion-Exc-FormatoInvalido.svg"
+  },
+  {
+    "archivo": "CU55-NumSerieRecepcion-Exc-NSPendientes.drawio",
+    "objetos_editables": 81,
+    "fuente_svg": "CU55-NumSerieRecepcion-Exc-NSPendientes.svg"
+  },
+  {
+    "archivo": "CU55-NumerosSerieRecepcion-Exc-SerieDuplicada.drawio",
+    "objetos_editables": 110,
+    "fuente_svg": "CU55-NumerosSerieRecepcion-Exc-SerieDuplicada.svg"
+  },
+  {
+    "archivo": "CU55-NumerosSerieRecepcion-Normal.drawio",
+    "objetos_editables": 200,
+    "fuente_svg": "CU55-NumerosSerieRecepcion-Normal.svg"
+  },
+  {
+    "archivo": "CU56-FechaAdquisicionReal-Exc-FechaFutura.drawio",
+    "objetos_editables": 100,
+    "fuente_svg": "CU56-FechaAdquisicionReal-Exc-FechaFutura.svg"
+  },
+  {
+    "archivo": "CU56-FechaAdquisicionReal-Exc-SinFecha.drawio",
+    "objetos_editables": 58,
+    "fuente_svg": "CU56-FechaAdquisicionReal-Exc-SinFecha.svg"
+  },
+  {
+    "archivo": "CU56-FechaAdquisicionReal-Normal.drawio",
+    "objetos_editables": 154,
+    "fuente_svg": "CU56-FechaAdquisicionReal-Normal.svg"
+  },
+  {
+    "archivo": "CU57-exc-equipo-no-disponible.drawio",
+    "objetos_editables": 170,
+    "fuente_svg": "CU57-exc-equipo-no-disponible.svg"
+  },
+  {
+    "archivo": "CU57-exc-ns-no-encontrado.drawio",
+    "objetos_editables": 164,
+    "fuente_svg": "CU57-exc-ns-no-encontrado.svg"
+  },
+  {
+    "archivo": "CU57-exc-stock-insuficiente.drawio",
+    "objetos_editables": 138,
+    "fuente_svg": "CU57-exc-stock-insuficiente.svg"
+  },
+  {
+    "archivo": "CU57-normal.drawio",
+    "objetos_editables": 386,
+    "fuente_svg": "CU57-normal.svg"
+  },
+  {
+    "archivo": "CU58-exc-saldo-negativo.drawio",
+    "objetos_editables": 54,
+    "fuente_svg": "CU58-exc-saldo-negativo.svg"
+  },
+  {
+    "archivo": "CU58-normal.drawio",
+    "objetos_editables": 84,
+    "fuente_svg": "CU58-normal.svg"
+  },
+  {
+    "archivo": "CU59-exc-ns-no-existe.drawio",
+    "objetos_editables": 47,
+    "fuente_svg": "CU59-exc-ns-no-existe.svg"
+  },
+  {
+    "archivo": "CU59-exc-otra-bodega-o-estado.drawio",
+    "objetos_editables": 55,
+    "fuente_svg": "CU59-exc-otra-bodega-o-estado.svg"
+  },
+  {
+    "archivo": "CU59-normal.drawio",
+    "objetos_editables": 80,
+    "fuente_svg": "CU59-normal.svg"
+  },
+  {
+    "archivo": "CU60-exc-cantidad-invalida.drawio",
+    "objetos_editables": 49,
+    "fuente_svg": "CU60-exc-cantidad-invalida.svg"
+  },
+  {
+    "archivo": "CU60-exc-stock-insuficiente.drawio",
+    "objetos_editables": 51,
+    "fuente_svg": "CU60-exc-stock-insuficiente.svg"
+  },
+  {
+    "archivo": "CU60-normal.drawio",
+    "objetos_editables": 111,
+    "fuente_svg": "CU60-normal.svg"
+  },
+  {
+    "archivo": "CU61-exc-g3-no-disponible.drawio",
+    "objetos_editables": 82,
+    "fuente_svg": "CU61-exc-g3-no-disponible.svg"
+  },
+  {
+    "archivo": "CU61-exc-sin-trabajos.drawio",
+    "objetos_editables": 57,
+    "fuente_svg": "CU61-exc-sin-trabajos.svg"
+  },
+  {
+    "archivo": "CU61-normal.drawio",
+    "objetos_editables": 106,
+    "fuente_svg": "CU61-normal.svg"
+  },
+  {
+    "archivo": "CU62-exc-stock-insuficiente.drawio",
+    "objetos_editables": 54,
+    "fuente_svg": "CU62-exc-stock-insuficiente.svg"
+  },
+  {
+    "archivo": "CU62-normal.drawio",
+    "objetos_editables": 50,
+    "fuente_svg": "CU62-normal.svg"
+  },
+  {
+    "archivo": "CU63-g3-secuencia.drawio",
+    "objetos_editables": 75,
+    "fuente_svg": "CU63-g3-secuencia.svg"
+  },
+  {
+    "archivo": "CU64-exc-fallo-accion.drawio",
+    "objetos_editables": 60,
+    "fuente_svg": "CU64-exc-fallo-accion.svg"
+  },
+  {
+    "archivo": "CU64-normal.drawio",
+    "objetos_editables": 129,
+    "fuente_svg": "CU64-normal.svg"
+  },
+  {
+    "archivo": "CU65-g3-secuencia.drawio",
+    "objetos_editables": 68,
+    "fuente_svg": "CU65-g3-secuencia.svg"
+  },
+  {
+    "archivo": "CU66-g3-secuencia.drawio",
+    "objetos_editables": 68,
+    "fuente_svg": "CU66-g3-secuencia.svg"
+  },
+  {
+    "archivo": "CU67-g3-secuencia.drawio",
+    "objetos_editables": 68,
+    "fuente_svg": "CU67-g3-secuencia.svg"
+  },
+  {
+    "archivo": "CU68-exc-saldo-insuficiente.drawio",
+    "objetos_editables": 87,
+    "fuente_svg": "CU68-exc-saldo-insuficiente.svg"
+  },
+  {
+    "archivo": "CU68-normal.drawio",
+    "objetos_editables": 87,
+    "fuente_svg": "CU68-normal.svg"
+  },
+  {
+    "archivo": "CU69-exc-saldo-insuficiente.drawio",
+    "objetos_editables": 141,
+    "fuente_svg": "CU69-exc-saldo-insuficiente.svg"
+  },
+  {
+    "archivo": "CU69-normal-reemplazo.drawio",
+    "objetos_editables": 137,
+    "fuente_svg": "CU69-normal-reemplazo.svg"
+  },
+  {
+    "archivo": "CU69-normal.drawio",
+    "objetos_editables": 187,
+    "fuente_svg": "CU69-normal.svg"
+  },
+  {
+    "archivo": "CU70-exc-sin-tipo-aplicable.drawio",
+    "objetos_editables": 87,
+    "fuente_svg": "CU70-exc-sin-tipo-aplicable.svg"
+  },
+  {
+    "archivo": "CU70-normal.drawio",
+    "objetos_editables": 172,
+    "fuente_svg": "CU70-normal.svg"
+  },
+  {
+    "archivo": "CU71-exc-estado-no-permitido.drawio",
+    "objetos_editables": 88,
+    "fuente_svg": "CU71-exc-estado-no-permitido.svg"
+  },
+  {
+    "archivo": "CU71-normal.drawio",
+    "objetos_editables": 309,
+    "fuente_svg": "CU71-normal.svg"
+  },
+  {
+    "archivo": "CU72-exc-campos-incompletos.drawio",
+    "objetos_editables": 95,
+    "fuente_svg": "CU72-exc-campos-incompletos.svg"
+  },
+  {
+    "archivo": "CU72-exc-garantia-vigente.drawio",
+    "objetos_editables": 140,
+    "fuente_svg": "CU72-exc-garantia-vigente.svg"
+  },
+  {
+    "archivo": "CU72-normal.drawio",
+    "objetos_editables": 265,
+    "fuente_svg": "CU72-normal.svg"
+  },
+  {
+    "archivo": "CU73-exc-datos-incompletos.drawio",
+    "objetos_editables": 134,
+    "fuente_svg": "CU73-exc-datos-incompletos.svg"
+  },
+  {
+    "archivo": "CU73-normal.drawio",
+    "objetos_editables": 159,
+    "fuente_svg": "CU73-normal.svg"
+  },
+  {
+    "archivo": "CU74-exc-sin-bodega.drawio",
+    "objetos_editables": 71,
+    "fuente_svg": "CU74-exc-sin-bodega.svg"
+  },
+  {
+    "archivo": "CU74-normal.drawio",
+    "objetos_editables": 211,
+    "fuente_svg": "CU74-normal.svg"
+  },
+  {
+    "archivo": "CU75-exc-campos-incompletos.drawio",
+    "objetos_editables": 93,
+    "fuente_svg": "CU75-exc-campos-incompletos.svg"
+  },
+  {
+    "archivo": "CU75-normal.drawio",
+    "objetos_editables": 201,
+    "fuente_svg": "CU75-normal.svg"
+  },
+  {
+    "archivo": "CU76-exc-observacion-corta.drawio",
+    "objetos_editables": 111,
+    "fuente_svg": "CU76-exc-observacion-corta.svg"
+  },
+  {
+    "archivo": "CU76-normal.drawio",
+    "objetos_editables": 219,
+    "fuente_svg": "CU76-normal.svg"
+  },
+  {
+    "archivo": "CU77-exc-sin-resultados.drawio",
+    "objetos_editables": 80,
+    "fuente_svg": "CU77-exc-sin-resultados.svg"
+  },
+  {
+    "archivo": "CU77-normal.drawio",
+    "objetos_editables": 152,
+    "fuente_svg": "CU77-normal.svg"
+  },
+  {
+    "archivo": "CU78-exc-garantia-vigente.drawio",
+    "objetos_editables": 118,
+    "fuente_svg": "CU78-exc-garantia-vigente.svg"
+  },
+  {
+    "archivo": "CU78-exc-otro-sin-descripcion.drawio",
+    "objetos_editables": 87,
+    "fuente_svg": "CU78-exc-otro-sin-descripcion.svg"
+  },
+  {
+    "archivo": "CU78-exc-transicion-no-permitida.drawio",
+    "objetos_editables": 94,
+    "fuente_svg": "CU78-exc-transicion-no-permitida.svg"
+  },
+  {
+    "archivo": "CU78-normal-directa.drawio",
+    "objetos_editables": 209,
+    "fuente_svg": "CU78-normal-directa.svg"
+  },
+  {
+    "archivo": "CU78-normal-solicitud.drawio",
+    "objetos_editables": 239,
+    "fuente_svg": "CU78-normal-solicitud.svg"
+  },
+  {
+    "archivo": "CU79-exc-error-registro.drawio",
+    "objetos_editables": 116,
+    "fuente_svg": "CU79-exc-error-registro.svg"
+  },
+  {
+    "archivo": "CU79-normal.drawio",
+    "objetos_editables": 155,
+    "fuente_svg": "CU79-normal.svg"
+  },
+  {
+    "archivo": "CU80-exc-ns-no-cumple.drawio",
+    "objetos_editables": 110,
+    "fuente_svg": "CU80-exc-ns-no-cumple.svg"
+  },
+  {
+    "archivo": "CU80-normal.drawio",
+    "objetos_editables": 279,
+    "fuente_svg": "CU80-normal.svg"
+  },
+  {
+    "archivo": "CU81-exc-ns-invalido.drawio",
+    "objetos_editables": 101,
+    "fuente_svg": "CU81-exc-ns-invalido.svg"
+  },
+  {
+    "archivo": "CU81-normal.drawio",
+    "objetos_editables": 278,
+    "fuente_svg": "CU81-normal.svg"
+  },
+  {
+    "archivo": "CU82-exc-fecha-futura.drawio",
+    "objetos_editables": 72,
+    "fuente_svg": "CU82-exc-fecha-futura.svg"
+  },
+  {
+    "archivo": "CU82-exc-item-invalido.drawio",
+    "objetos_editables": 78,
+    "fuente_svg": "CU82-exc-item-invalido.svg"
+  },
+  {
+    "archivo": "CU82-normal-parcial.drawio",
+    "objetos_editables": 131,
+    "fuente_svg": "CU82-normal-parcial.svg"
+  },
+  {
+    "archivo": "CU82-normal-total.drawio",
+    "objetos_editables": 285,
+    "fuente_svg": "CU82-normal-total.svg"
+  },
+  {
+    "archivo": "CU83-exc-sin-activos.drawio",
+    "objetos_editables": 77,
+    "fuente_svg": "CU83-exc-sin-activos.svg"
+  },
+  {
+    "archivo": "CU83-normal.drawio",
+    "objetos_editables": 194,
+    "fuente_svg": "CU83-normal.svg"
+  },
+  {
+    "archivo": "CU84-exc-item-invalido.drawio",
+    "objetos_editables": 95,
+    "fuente_svg": "CU84-exc-item-invalido.svg"
+  },
+  {
+    "archivo": "CU84-normal.drawio",
+    "objetos_editables": 143,
+    "fuente_svg": "CU84-normal.svg"
+  },
+  {
+    "archivo": "CU85-exc-sin-datos.drawio",
+    "objetos_editables": 72,
+    "fuente_svg": "CU85-exc-sin-datos.svg"
+  },
+  {
+    "archivo": "CU85-excepciones.drawio",
+    "objetos_editables": 74,
+    "fuente_svg": "CU85-excepciones.svg"
+  },
+  {
+    "archivo": "CU85-normal.drawio",
+    "objetos_editables": 135,
+    "fuente_svg": "CU85-normal.svg"
+  },
+  {
+    "archivo": "CU86-exc-rango-fechas.drawio",
+    "objetos_editables": 50,
+    "fuente_svg": "CU86-exc-rango-fechas.svg"
+  },
+  {
+    "archivo": "CU86-normal.drawio",
+    "objetos_editables": 140,
+    "fuente_svg": "CU86-normal.svg"
+  },
+  {
+    "archivo": "CU87-exc-sin-datos.drawio",
+    "objetos_editables": 89,
+    "fuente_svg": "CU87-exc-sin-datos.svg"
+  },
+  {
+    "archivo": "CU87-normal.drawio",
+    "objetos_editables": 120,
+    "fuente_svg": "CU87-normal.svg"
+  },
+  {
+    "archivo": "CU88-exc-sin-resultados.drawio",
+    "objetos_editables": 73,
+    "fuente_svg": "CU88-exc-sin-resultados.svg"
+  },
+  {
+    "archivo": "CU88-normal.drawio",
+    "objetos_editables": 103,
+    "fuente_svg": "CU88-normal.svg"
+  },
+  {
+    "archivo": "CU89-exc-tecnico-sin-items.drawio",
+    "objetos_editables": 81,
+    "fuente_svg": "CU89-exc-tecnico-sin-items.svg"
+  },
+  {
+    "archivo": "CU89-normal.drawio",
+    "objetos_editables": 130,
+    "fuente_svg": "CU89-normal.svg"
+  },
+  {
+    "archivo": "CU90-exc-rango-90-dias.drawio",
+    "objetos_editables": 62,
+    "fuente_svg": "CU90-exc-rango-90-dias.svg"
+  },
+  {
+    "archivo": "CU90-normal.drawio",
+    "objetos_editables": 169,
+    "fuente_svg": "CU90-normal.svg"
+  },
+  {
+    "archivo": "CU91-exc-sin-consumibles.drawio",
+    "objetos_editables": 73,
+    "fuente_svg": "CU91-exc-sin-consumibles.svg"
+  },
+  {
+    "archivo": "CU91-normal.drawio",
+    "objetos_editables": 143,
+    "fuente_svg": "CU91-normal.svg"
+  },
+  {
+    "archivo": "CU92-exc-timeout.drawio",
+    "objetos_editables": 84,
+    "fuente_svg": "CU92-exc-timeout.svg"
+  },
+  {
+    "archivo": "CU92-normal.drawio",
+    "objetos_editables": 132,
+    "fuente_svg": "CU92-normal.svg"
+  },
+  {
+    "archivo": "CU93-exc-timeout.drawio",
+    "objetos_editables": 84,
+    "fuente_svg": "CU93-exc-timeout.svg"
+  },
+  {
+    "archivo": "CU93-normal.drawio",
+    "objetos_editables": 134,
+    "fuente_svg": "CU93-normal.svg"
+  },
+  {
+    "archivo": "CU94-exc-sin-alertas.drawio",
+    "objetos_editables": 102,
+    "fuente_svg": "CU94-exc-sin-alertas.svg"
+  },
+  {
+    "archivo": "CU94-normal.drawio",
+    "objetos_editables": 257,
+    "fuente_svg": "CU94-normal.svg"
+  },
+  {
+    "archivo": "CU95-exc-cancelar.drawio",
+    "objetos_editables": 117,
+    "fuente_svg": "CU95-exc-cancelar.svg"
+  },
+  {
+    "archivo": "CU95-normal.drawio",
+    "objetos_editables": 203,
+    "fuente_svg": "CU95-normal.svg"
+  },
+  {
+    "archivo": "CU96-exc-sin-notificaciones.drawio",
+    "objetos_editables": 124,
+    "fuente_svg": "CU96-exc-sin-notificaciones.svg"
+  },
+  {
+    "archivo": "CU96-normal.drawio",
+    "objetos_editables": 311,
+    "fuente_svg": "CU96-normal.svg"
+  },
+  {
+    "archivo": "casos-uso-incremento3.drawio",
+    "objetos_editables": 118,
+    "fuente_svg": "casos-uso-incremento3.svg"
+  },
+  {
+    "archivo": "diagrama-clases-backend.drawio",
+    "objetos_editables": 939,
+    "fuente_svg": "diagrama-clases-backend.svg"
+  },
+  {
+    "archivo": "diagrama-componentes.drawio",
+    "objetos_editables": 304,
+    "fuente_svg": "diagrama-componentes.svg"
+  },
+  {
+    "archivo": "diagrama-objetos-salida-tecnico.drawio",
+    "objetos_editables": 153,
+    "fuente_svg": "diagrama-objetos-salida-tecnico.svg"
+  },
+  {
+    "archivo": "fisico-abastecimiento.drawio",
+    "objetos_editables": 136,
+    "fuente_svg": "fisico-abastecimiento.svg"
+  },
+  {
+    "archivo": "fisico-cierres_integracion.drawio",
+    "objetos_editables": 166,
+    "fuente_svg": "fisico-cierres_integracion.svg"
+  },
+  {
+    "archivo": "fisico-inventario.drawio",
+    "objetos_editables": 173,
+    "fuente_svg": "fisico-inventario.svg"
+  },
+  {
+    "archivo": "fisico-prestamos_bajas.drawio",
+    "objetos_editables": 147,
+    "fuente_svg": "fisico-prestamos_bajas.svg"
+  },
+  {
+    "archivo": "fisico-seguridad.drawio",
+    "objetos_editables": 113,
+    "fuente_svg": "fisico-seguridad.svg"
+  },
+  {
+    "archivo": "formas-normales.drawio",
+    "objetos_editables": 92,
+    "fuente_svg": "formas-normales.svg"
+  },
+  {
+    "archivo": "mere-chen.drawio",
+    "objetos_editables": 540,
+    "fuente_svg": "mere-chen.svg"
+  },
+  {
+    "archivo": "modelo-entidades-me.drawio",
+    "objetos_editables": 463,
+    "fuente_svg": "modelo-entidades-me.svg"
+  },
+  {
+    "archivo": "modelo-estados-unidad.drawio",
+    "objetos_editables": 43,
+    "fuente_svg": "modelo-estados-unidad.svg"
+  },
+  {
+    "archivo": "modelo_bdd.drawio",
+    "objetos_editables": 799,
+    "fuente_svg": "modelo_bdd.svg"
+  },
+  {
+    "archivo": "modelo_relacional.drawio",
+    "objetos_editables": 799,
+    "fuente_svg": "modelo_relacional.svg"
+  }
+]

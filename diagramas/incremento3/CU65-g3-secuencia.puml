@@ -1,0 +1,35 @@
+@startuml
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+hide footbox
+title CU-65 — Creando datos del cliente (implementación G3 verificada)
+actor Administrador
+participant "Vista G3" as V
+participant "ClientesController" as C
+participant "ClientesService" as S
+database "PostgreSQL G3 / Prisma" as DB
+Administrador -> V : Introduce criterios/datos del cliente
+V -> C : POST /api/clientes (JWT)
+C -> S : registrarCliente(datos, actor.id_empresa)
+S -> S : Valida formato, rol y empresa
+S -> DB : INSERT cliente + direccion_servicio
+alt Datos válidos
+DB --> S : Registro(s) persistidos/consultados
+S --> C : Datos de cliente
+C --> V : HTTP 201
+V --> Administrador : Muestra resultado
+else Validación o cliente no encontrado
+DB --> S : RUT duplicado (restricción UNIQUE) o datos inválidos
+S --> C : 400 RUT inválido / 409 duplicado
+C --> V : Error de negocio
+V --> Administrador : Mensaje de validación
+end
+@enduml

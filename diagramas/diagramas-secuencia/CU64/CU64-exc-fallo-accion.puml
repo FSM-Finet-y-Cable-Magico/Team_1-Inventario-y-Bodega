@@ -1,4 +1,10 @@
 @startuml CU64-exc-fallo-accion
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
 title CU-64 — Ejecutando acciones atómicas del cierre de instalación (excepción: una acción falla → rollback total)
 skinparam style strictuml
 skinparam monochrome true
@@ -30,12 +36,26 @@ participant "inventario_personal_tecnico" as inv
 g3 -> svc : POST /api/integraciones/ordenes/781/cierre (INSTALACION)
 activate svc
 svc -> orm : startTransaction()
-svc -> cierre : INSERT (clave UNIQUE, payload)
-svc -> uni : UPDATE estado = 'Instalado en cliente' (acción A/B OK)
+activate orm
+orm --> svc : transacción iniciada
+svc -> orm : INSERT integracion_cierre (clave UNIQUE, payload)
+orm -> cierre : INSERT
+activate cierre
+cierre --> orm : id_cierre
+deactivate cierre
+orm --> svc : id_cierre
+svc -> orm : UPDATE unidad_equipo SET estado = 'Instalado en cliente' (acción A/B)
+orm -> uni : UPDATE
+activate uni
+uni --> orm : unidad actualizada
+deactivate uni
+orm --> svc : unidad actualizada
 svc -> orm : INSERT historial_estado_equipo
-orm --> svc : ✗ fallo inesperado (p. ej. error de BD)
-note right : Excepción 1 (E1): "alguna acción falla" →
+orm --> svc : <font:DejaVu Sans Mono>✗</font> fallo inesperado (p. ej. error de BD)
+note right : Excepción 1 (E1): "alguna acción falla"
 svc -> orm : ROLLBACK total (QueryRunner)
+orm --> svc : transacción revertida
+deactivate orm
 note right : ninguna acción parcial queda aplicada:\nla unidad vuelve a 'Asignado a técnico' y el material no se descuenta
 svc --> g3 : 5xx con el error específico (G3 reintenta con backoff;\nun 4xx de payload malformado no se reintenta)
 deactivate svc

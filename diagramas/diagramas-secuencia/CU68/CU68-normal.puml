@@ -1,4 +1,10 @@
 @startuml CU68-normal
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
 title CU-68 — Verificando saldo de consumibles en cierre (flujo normal: saldo suficiente)
 skinparam style strictuml
 skinparam monochrome true
@@ -30,25 +36,47 @@ participant "tipo_equipo" as tipo
 note over sys : Cierre de instalación (CU-64, webhook G3) o confirmación humana (CU-63).
 sys -> ips : detectarInsuficientes(manager, id_tecnico, materiales[])\n(pre-check sin bloqueo)
 activate ips
-loop cada material declarado
-  ips -> inv : SELECT cantidad WHERE (id_tecnico, id_tipo_equipo)
-  inv --> ips : saldo
-  ips -> tipo : SELECT nombre, unidad_medida
-  tipo --> ips : 'Cable UTP Cat6' / 'Metro'
-  ips -> ips : saldo ≥ declarado → suficiente ✓
-end
-ips --> svc : insuficientes = [] → el cierre puede confirmarse
+== Inicio loop: cada material declarado ==
+  ips -> orm : SELECT cantidad WHERE (id_tecnico, id_tipo_equipo)
+  activate orm
+  orm -> inv : SELECT
+  activate inv
+  inv --> orm : saldo
+  deactivate inv
+  orm -> tipo : SELECT nombre, unidad_medida
+  activate tipo
+  tipo --> orm : 'Cable UTP Cat6' / 'Metro'
+  deactivate tipo
+  orm --> ips : saldo y unidad de medida
+  deactivate orm
+  ips -> ips : saldo ≥ declarado → suficiente <font:DejaVu Sans Mono>✓</font>
+== Fin loop ==
+ips --> sys : insuficientes = [] → el cierre puede confirmarse
 deactivate ips
 sys -> svc : validarSaldo(...) / transacción del cierre
 activate svc
 svc -> ips : descontarHasta(manager, id_tecnico, id_tipo_equipo, cantidad)
 activate ips
-ips -> inv : SELECT ... FOR UPDATE (validación definitiva)
-inv --> ips : saldo 25
-ips -> inv : UPDATE cantidad = 15
+ips -> orm : SELECT ... FOR UPDATE (validación definitiva)
+activate orm
+orm -> inv : SELECT con bloqueo
+activate inv
+inv --> orm : saldo 25
+deactivate inv
+orm --> ips : saldo 25
+ips -> orm : UPDATE cantidad = 15
+orm -> inv : UPDATE
+activate inv
+inv --> orm : saldo actualizado
+deactivate inv
+orm --> ips : saldo 15
+deactivate orm
 ips --> svc : { saldoAnterior: 25, descontado: 10, faltante: 0 }
 deactivate ips
 svc -> orm : commitTransaction()
+activate orm
+orm --> svc : transacción confirmada
+deactivate orm
 svc --> sys : 200 (materiales.descontados) — el saldo nunca queda negativo
 deactivate svc
 @enduml

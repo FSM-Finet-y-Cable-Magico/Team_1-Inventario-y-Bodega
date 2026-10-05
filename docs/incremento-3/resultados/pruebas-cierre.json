@@ -1,0 +1,504 @@
+[
+  {
+    "id": "CI94-E1",
+    "cu": "CU-94",
+    "name": "Dashboard sin alertas activas de Cable Mágico",
+    "expect": "200 y lista vacía",
+    "status": 200,
+    "data": [],
+    "duracion_ms": 11,
+    "passed": true,
+    "at": "2026-10-01T21:31:38.985Z"
+  },
+  {
+    "id": "CI06-STOCK",
+    "cu": "RNF-06",
+    "name": "20 solicitudes concurrentes /reportes/stock",
+    "expect": "Todas HTTP 200 y duración menor a 3000ms",
+    "status": 200,
+    "data": {
+      "solicitudes": 20,
+      "concurrencia": 20,
+      "limite_ms": 3000,
+      "max_ms": 48,
+      "respuestas": [
+        {
+          "status": 200,
+          "duracion_ms": 38
+        },
+        {
+          "status": 200,
+          "duracion_ms": 48
+        },
+        {
+          "status": 200,
+          "duracion_ms": 47
+        },
+        {
+          "status": 200,
+          "duracion_ms": 45
+        },
+        {
+          "status": 200,
+          "duracion_ms": 46
+        },
+        {
+          "status": 200,
+          "duracion_ms": 47
+        },
+        {
+          "status": 200,
+          "duracion_ms": 45
+        },
+        {
+          "status": 200,
+          "duracion_ms": 43
+        },
+        {
+          "status": 200,
+          "duracion_ms": 42
+        },
+        {
+          "status": 200,
+          "duracion_ms": 45
+        },
+        {
+          "status": 200,
+          "duracion_ms": 40
+        },
+        {
+          "status": 200,
+          "duracion_ms": 42
+        },
+        {
+          "status": 200,
+          "duracion_ms": 41
+        },
+        {
+          "status": 200,
+          "duracion_ms": 40
+        },
+        {
+          "status": 200,
+          "duracion_ms": 40
+        },
+        {
+          "status": 200,
+          "duracion_ms": 44
+        },
+        {
+          "status": 200,
+          "duracion_ms": 42
+        },
+        {
+          "status": 200,
+          "duracion_ms": 43
+        },
+        {
+          "status": 200,
+          "duracion_ms": 44
+        },
+        {
+          "status": 200,
+          "duracion_ms": 44
+        }
+      ],
+      "alcance": "Servidor local, misma cuenta, base QA pequeña; no representa 20 sesiones de usuarios ni carga productiva."
+    },
+    "passed": true,
+    "at": "2026-10-01T21:31:39.251Z"
+  },
+  {
+    "id": "CI06-SERIE",
+    "cu": "RNF-06",
+    "name": "20 solicitudes concurrentes /unidades/devolucion/QA-ONT-F-0003",
+    "expect": "Todas HTTP 200 y duración menor a 2000ms",
+    "status": 200,
+    "data": {
+      "solicitudes": 20,
+      "concurrencia": 20,
+      "limite_ms": 2000,
+      "max_ms": 24,
+      "respuestas": [
+        {
+          "status": 200,
+          "duracion_ms": 23
+        },
+        {
+          "status": 200,
+          "duracion_ms": 23
+        },
+        {
+          "status": 200,
+          "duracion_ms": 23
+        },
+        {
+          "status": 200,
+          "duracion_ms": 23
+        },
+        {
+          "status": 200,
+          "duracion_ms": 23
+        },
+        {
+          "status": 200,
+          "duracion_ms": 24
+        },
+        {
+          "status": 200,
+          "duracion_ms": 23
+        },
+        {
+          "status": 200,
+          "duracion_ms": 23
+        },
+        {
+          "status": 200,
+          "duracion_ms": 24
+        },
+        {
+          "status": 200,
+          "duracion_ms": 24
+        },
+        {
+          "status": 200,
+          "duracion_ms": 24
+        },
+        {
+          "status": 200,
+          "duracion_ms": 24
+        },
+        {
+          "status": 200,
+          "duracion_ms": 24
+        },
+        {
+          "status": 200,
+          "duracion_ms": 24
+        },
+        {
+          "status": 200,
+          "duracion_ms": 24
+        },
+        {
+          "status": 200,
+          "duracion_ms": 24
+        },
+        {
+          "status": 200,
+          "duracion_ms": 24
+        },
+        {
+          "status": 200,
+          "duracion_ms": 24
+        },
+        {
+          "status": 200,
+          "duracion_ms": 24
+        },
+        {
+          "status": 200,
+          "duracion_ms": 24
+        }
+      ],
+      "alcance": "Servidor local, misma cuenta, base QA pequeña; no representa 20 sesiones de usuarios ni carga productiva."
+    },
+    "passed": true,
+    "at": "2026-10-01T21:31:39.276Z"
+  },
+  {
+    "id": "CI06-REPORTE",
+    "cu": "RNF-06",
+    "name": "20 solicitudes concurrentes /reportes/tecnicos/productividad?fecha_desde=2026-09-01&fecha_hasta=2026-09-30",
+    "expect": "Todas HTTP 200 y duración menor a 8000ms",
+    "status": 200,
+    "data": {
+      "solicitudes": 20,
+      "concurrencia": 20,
+      "limite_ms": 8000,
+      "max_ms": 18,
+      "respuestas": [
+        {
+          "status": 200,
+          "duracion_ms": 16
+        },
+        {
+          "status": 200,
+          "duracion_ms": 13
+        },
+        {
+          "status": 200,
+          "duracion_ms": 15
+        },
+        {
+          "status": 200,
+          "duracion_ms": 14
+        },
+        {
+          "status": 200,
+          "duracion_ms": 15
+        },
+        {
+          "status": 200,
+          "duracion_ms": 15
+        },
+        {
+          "status": 200,
+          "duracion_ms": 14
+        },
+        {
+          "status": 200,
+          "duracion_ms": 15
+        },
+        {
+          "status": 200,
+          "duracion_ms": 17
+        },
+        {
+          "status": 200,
+          "duracion_ms": 16
+        },
+        {
+          "status": 200,
+          "duracion_ms": 17
+        },
+        {
+          "status": 200,
+          "duracion_ms": 17
+        },
+        {
+          "status": 200,
+          "duracion_ms": 18
+        },
+        {
+          "status": 200,
+          "duracion_ms": 17
+        },
+        {
+          "status": 200,
+          "duracion_ms": 17
+        },
+        {
+          "status": 200,
+          "duracion_ms": 15
+        },
+        {
+          "status": 200,
+          "duracion_ms": 17
+        },
+        {
+          "status": 200,
+          "duracion_ms": 17
+        },
+        {
+          "status": 200,
+          "duracion_ms": 17
+        },
+        {
+          "status": 200,
+          "duracion_ms": 17
+        }
+      ],
+      "alcance": "Servidor local, misma cuenta, base QA pequeña; no representa 20 sesiones de usuarios ni carga productiva."
+    },
+    "passed": true,
+    "at": "2026-10-01T21:31:39.294Z",
+    "nota_preparacion": "Primer intento sin periodo devolvió 400; se repitió con fechas válidas 01–30 septiembre para medir rendimiento de una consulta aceptada."
+  },
+  {
+    "id": "CI06-XLSX",
+    "cu": "RNF-06/CU-92",
+    "name": "20 solicitudes concurrentes /reportes/exportar/excel?tipo=stock",
+    "expect": "Todas HTTP 200 y duración menor a 15000ms",
+    "status": 200,
+    "data": {
+      "solicitudes": 20,
+      "concurrencia": 20,
+      "limite_ms": 15000,
+      "max_ms": 42,
+      "respuestas": [
+        {
+          "status": 200,
+          "duracion_ms": 37
+        },
+        {
+          "status": 200,
+          "duracion_ms": 38
+        },
+        {
+          "status": 200,
+          "duracion_ms": 38
+        },
+        {
+          "status": 200,
+          "duracion_ms": 39
+        },
+        {
+          "status": 200,
+          "duracion_ms": 39
+        },
+        {
+          "status": 200,
+          "duracion_ms": 39
+        },
+        {
+          "status": 200,
+          "duracion_ms": 40
+        },
+        {
+          "status": 200,
+          "duracion_ms": 39
+        },
+        {
+          "status": 200,
+          "duracion_ms": 39
+        },
+        {
+          "status": 200,
+          "duracion_ms": 41
+        },
+        {
+          "status": 200,
+          "duracion_ms": 42
+        },
+        {
+          "status": 200,
+          "duracion_ms": 41
+        },
+        {
+          "status": 200,
+          "duracion_ms": 42
+        },
+        {
+          "status": 200,
+          "duracion_ms": 39
+        },
+        {
+          "status": 200,
+          "duracion_ms": 40
+        },
+        {
+          "status": 200,
+          "duracion_ms": 41
+        },
+        {
+          "status": 200,
+          "duracion_ms": 41
+        },
+        {
+          "status": 200,
+          "duracion_ms": 42
+        },
+        {
+          "status": 200,
+          "duracion_ms": 41
+        },
+        {
+          "status": 200,
+          "duracion_ms": 42
+        }
+      ],
+      "alcance": "Servidor local, misma cuenta, base QA pequeña; no representa 20 sesiones de usuarios ni carga productiva."
+    },
+    "passed": true,
+    "at": "2026-10-01T21:31:39.337Z"
+  },
+  {
+    "id": "CI06-PDF",
+    "cu": "RNF-06/CU-93",
+    "name": "20 solicitudes concurrentes /reportes/exportar/stock/pdf",
+    "expect": "Todas HTTP 200 y duración menor a 15000ms",
+    "status": 200,
+    "data": {
+      "solicitudes": 20,
+      "concurrencia": 20,
+      "limite_ms": 15000,
+      "max_ms": 39,
+      "respuestas": [
+        {
+          "status": 200,
+          "duracion_ms": 36
+        },
+        {
+          "status": 200,
+          "duracion_ms": 38
+        },
+        {
+          "status": 200,
+          "duracion_ms": 36
+        },
+        {
+          "status": 200,
+          "duracion_ms": 36
+        },
+        {
+          "status": 200,
+          "duracion_ms": 39
+        },
+        {
+          "status": 200,
+          "duracion_ms": 36
+        },
+        {
+          "status": 200,
+          "duracion_ms": 36
+        },
+        {
+          "status": 200,
+          "duracion_ms": 37
+        },
+        {
+          "status": 200,
+          "duracion_ms": 36
+        },
+        {
+          "status": 200,
+          "duracion_ms": 37
+        },
+        {
+          "status": 200,
+          "duracion_ms": 38
+        },
+        {
+          "status": 200,
+          "duracion_ms": 37
+        },
+        {
+          "status": 200,
+          "duracion_ms": 39
+        },
+        {
+          "status": 200,
+          "duracion_ms": 38
+        },
+        {
+          "status": 200,
+          "duracion_ms": 39
+        },
+        {
+          "status": 200,
+          "duracion_ms": 38
+        },
+        {
+          "status": 200,
+          "duracion_ms": 39
+        },
+        {
+          "status": 200,
+          "duracion_ms": 39
+        },
+        {
+          "status": 200,
+          "duracion_ms": 38
+        },
+        {
+          "status": 200,
+          "duracion_ms": 38
+        }
+      ],
+      "alcance": "Servidor local, misma cuenta, base QA pequeña; no representa 20 sesiones de usuarios ni carga productiva."
+    },
+    "passed": true,
+    "at": "2026-10-01T21:31:39.376Z"
+  }
+]

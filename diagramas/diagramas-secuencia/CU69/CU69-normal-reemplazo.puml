@@ -1,0 +1,114 @@
+@startuml CU69-normal-reemplazo
+skinparam sequenceDividerBorderThickness 0.6
+skinparam sequenceDividerBorderColor 888888
+skinparam sequenceDividerBackgroundColor white
+skinparam sequenceDividerFontStyle italic
+skinparam sequenceDividerFontColor 444444
+skinparam sequenceDividerShadowing false
+title CU-69 — Registrando cierre de trabajo de reparación (flujo normal: con reemplazo de equipo)
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style>
+sequenceDiagram {
+  participant {
+    margin 30
+  }
+  actor {
+    margin 12
+  }
+}
+</style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "G3 (FSM) — cierre de OT" as g3
+participant "C_IntegracionesController" as ctrl
+participant "C_IntegracionesService" as svc
+participant "C_TypeORM (transacción)" as orm
+participant "unidad_equipo" as uent
+participant "historial_estado_equipo" as hent
+participant "cierre_reparacion" as crep
+participant "log_auditoria" as aent
+
+note over g3 : Reemplazo: el equipo con falla se retira a revisión y\nel equipo del técnico queda instalado en el cliente, en la misma transacción
+
+g3 -> ctrl : POST /api/integraciones/ordenes/124/cierre\n{ tipo_ot: 'REPARACION', reparacion { ..., resultado: 'PARCIAL' },\nequipos_retirados: ['NS-RET-001'], equipos_instalados: ['NS-NEW-002'] }
+activate ctrl
+ctrl -> svc : recibirCierreOt(124, payload, integracion)
+activate svc
+
+svc -> orm : startTransaction() · INSERT integracion_cierre
+activate orm
+orm --> svc : transacción iniciada · id_cierre
+
+group Equipo retirado (CU-71)
+  svc -> orm : SELECT unidad_equipo WHERE numero_serie = 'NS-RET-001'
+  orm -> uent : SELECT
+  activate uent
+  uent --> orm : unidad (estado 'Instalado en cliente')
+  deactivate uent
+  orm --> svc : unidad
+  svc -> orm : UPDATE unidad_equipo SET estado = 'En revisión'
+  orm -> uent : UPDATE
+  activate uent
+  uent --> orm : unidad actualizada
+  deactivate uent
+  orm -> hent : INSERT historial_estado_equipo\n('Instalado en cliente' → 'En revisión')
+  activate hent
+  hent --> orm : registro insertado
+  deactivate hent
+  orm --> svc : unidad en revisión
+end
+
+group Equipo instalado en reemplazo (CU-57 → cliente)
+  svc -> orm : SELECT unidad_equipo WHERE numero_serie = 'NS-NEW-002'
+  orm -> uent : SELECT
+  activate uent
+  uent --> orm : unidad (estado 'Asignado a técnico')
+  deactivate uent
+  orm --> svc : unidad
+  svc -> orm : UPDATE unidad_equipo SET estado = 'Instalado en cliente'
+  orm -> uent : UPDATE
+  activate uent
+  uent --> orm : unidad actualizada
+  deactivate uent
+  orm -> hent : INSERT historial_estado_equipo\n('Asignado a técnico' → 'Instalado en cliente')
+  activate hent
+  hent --> orm : registro insertado
+  deactivate hent
+  orm --> svc : unidad instalada en el cliente
+end
+
+svc -> svc : Mapea el resultado de G3: PARCIAL → 'Resuelto parcialmente'
+
+svc -> orm : INSERT cierre_reparacion\n(equipos_retirados y equipos_instalados con su transición)
+orm -> crep : INSERT
+activate crep
+crep --> orm : id_cierre_reparacion
+deactivate crep
+orm --> svc : id_cierre_reparacion
+
+svc -> orm : commitTransaction()\n(si algo falla, ninguna de las dos unidades cambia)
+orm --> svc : transacción confirmada
+deactivate orm
+
+svc -> orm : auditoriaService.create({ accion: 'CIERRE_REPARACION' })
+activate orm
+orm -> aent : INSERT log_auditoria
+activate aent
+aent --> orm : registrado
+deactivate aent
+orm --> svc : auditoría registrada
+deactivate orm
+
+svc --> ctrl : { estado_proceso: 'PROCESADO', id_cierre_reparacion }
+deactivate svc
+ctrl --> g3 : 200 OK
+deactivate ctrl
+
+@enduml

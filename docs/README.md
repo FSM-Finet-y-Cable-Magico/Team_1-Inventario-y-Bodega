@@ -2,11 +2,11 @@
 
 > **Propósito:** esta documentación existe para que cualquier desarrollador (humano o agente de IA)
 > pueda **incorporar los casos de uso restantes** al sistema fullstack de la misma forma en que ya se
-> incorporaron los primeros 46, sin necesidad de "descifrar" el código desde cero.
+> incorporaron los anteriores, sin necesidad de "descifrar" el código desde cero.
 
 **Proyecto:** Sistema de inventario y bodega para ISP (Finet / Cable Mágico)
 **Stack:** Frontend SvelteKit (Svelte 5) · Backend NestJS (TypeORM) · Base de datos PostgreSQL
-**Avance:** ~46 de 96 casos de uso implementados (Incremento 1: CU-01 a CU-46).
+**Avance:** 96 de 96 casos de uso implementados (92 en T1 y 4 en G3) (estado por CU en [`08-roadmap.md`](./08-roadmap.md)).
 
 ---
 
@@ -58,8 +58,10 @@ Team_1-Inventario-y-Bodega/
 │   ├── database/init.sql        ← Esquema SQL inicial (se ejecuta al primer arranque)
 │   ├── nginx/nginx.conf         ← Proxy único (puerto 80): /api/* → backend, /* → frontend
 │   ├── backend-inventario/      ← Backend NestJS (API REST en /api)
-│   │   └── src/                 ← módulos: auth, usuarios, roles, auditoria,
-│   │                                companies, bodegas, inventario, transferencias, health
+│   │   └── src/                 ← módulos: auth, usuarios, roles, auditoria, companies,
+│   │                                bodegas, inventario, transferencias, proveedores,
+│   │                                ordenes-ingreso, salidas, bajas, donaciones, prestamos,
+│   │                                reportes, alertas, notificaciones, integraciones, health
 │   └── frontend/                ← Frontend SvelteKit (SPA, fetch client-side)
 │       └── src/
 │           ├── lib/             ← componentes, api client, store auth, tipos
@@ -69,6 +71,7 @@ Team_1-Inventario-y-Bodega/
 ├── diagramas/                   ← Diagramas del proyecto
 │   ├── arbol-navegacion/        ← Navegación de la UI (draw.io)
 │   ├── diagrama-clases/         ← Clases backend (PlantUML + README)
+│   ├── diagrama-objetos/        ← Diagramas de objetos (escenarios clave)
 │   ├── diagrama-componentes/    ← Componentes / arquitectura
 │   ├── diagrama-despliegue/     ← Infraestructura
 │   ├── diagrama_mere/           ← Modelo Entidad-Relación (Chen)
@@ -136,6 +139,6 @@ Team_1-Inventario-y-Bodega/
 
 ---
 
-*Documentación v1 — generada con el estado actual del repositorio (46 CU implementados).*
+*Documentación v1 — generada con el estado actual del repositorio (83 CU implementados).*
 *Si un CU nuevo requiere un cambio de arquitectura o de diseño, detener la implementación y
 consultar al jefe de grupo.*

@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { getEmpresas, generarReporteStock, getWarehouses, getCatalog } from '$lib/api/index';
+	import { getEmpresas, generarReporteStock, getWarehouses, getCatalog, exportarReportePdf, exportarReporteExcel } from '$lib/api/index';
 	import type { Bodega, Empresa, ReporteStockFila, TipoEquipo } from '$lib/types';
 	import Button from '$lib/components/Button.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import { userRoles, currentUser } from '$lib/stores/auth';
-	import { RotateCw, Filter } from '@lucide/svelte';
+	import { RotateCw, Filter, FileDown, FileSpreadsheet } from '@lucide/svelte';
 
 	let filas = $state<ReporteStockFila[]>([]);
 	let empresas = $state<Empresa[]>([]);
@@ -14,6 +14,8 @@
 	let tipos = $state<TipoEquipo[]>([]);
 	let loading = $state(false);
 	let error = $state('');
+	let exporting = $state(false);
+	let exportError = $state('');
 	let filters = $state({ id_empresa: '', id_bodega: '', id_tipo_equipo: '' });
 	const esSuperusuario = $derived($userRoles.includes('SUPERUSUARIO'));
 	const empresaActual = $derived($currentUser?.id_empresa);
@@ -54,6 +56,24 @@
 		}
 	}
 
+	// CU-93: exporta a PDF el reporte visible, con los mismos filtros.
+	let exportando = $state(false);
+	let errorExportacion = $state('');
+
+	async function exportarPdf() {
+		exportando = true;
+		errorExportacion = '';
+		try {
+			await exportarReportePdf('stock', { ...filters });
+		} catch (err: unknown) {
+			// Excepción 1: el backend responde 408 si la generación pasa de 15 segundos.
+			errorExportacion =
+				err instanceof Error ? err.message : 'No se pudo exportar el reporte a PDF.';
+		} finally {
+			exportando = false;
+		}
+	}
+
 	async function loadReport() {
 		loading = true;
 		error = '';
@@ -88,12 +108,35 @@
 		}
 	}
 
+	async function handleExportExcel() {
+		exporting = true;
+		exportError = '';
+		try {
+			await exportarReporteExcel('stock', {
+				id_empresa: filters.id_empresa || undefined,
+				id_bodega: filters.id_bodega || undefined,
+				id_tipo_equipo: filters.id_tipo_equipo || undefined,
+			});
+		} catch (err: unknown) {
+			exportError = err instanceof Error ? err.message : 'No se pudo exportar el reporte a Excel.';
+		} finally {
+			exporting = false;
+		}
+	}
+
 	$effect(() => {
 		if (!esSuperusuario && filters.id_empresa) filters.id_empresa = '';
 	});
 </script>
 
 <div class="max-w-7xl mx-auto">
+	{#if exportError}
+		<div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700 flex justify-between items-center">
+			<span>{exportError}</span>
+			<button type="button" class="text-xs font-semibold underline ml-2 cursor-pointer" onclick={() => (exportError = '')}>Cerrar</button>
+		</div>
+	{/if}
+
 	<div class="flex items-center justify-between mb-6">
 		<div>
 			<p class="text-sm font-medium text-accent">Reportes</p>
@@ -104,8 +147,23 @@
 				<RotateCw class="h-4 w-4" />
 				Actualizar
 			</Button>
+			{#if filas.length > 0}
+				<Button variant="secondary" onclick={handleExportExcel} disabled={exporting}>
+					<FileSpreadsheet class="h-4 w-4 text-emerald-600" />
+					{exporting ? 'Exportando...' : 'Exportar → Excel'}
+				</Button>
+			{/if}
+			<!-- CU-93: exporta a PDF lo que está visible, con los mismos filtros -->
+			<Button variant="secondary" onclick={exportarPdf} disabled={exportando}>
+				<FileDown class="h-4 w-4" />
+				{exportando ? 'Exportando...' : 'Exportar a PDF'}
+			</Button>
 		</div>
 	</div>
+
+	{#if errorExportacion}
+		<div class="bg-red-50 border border-red-200 text-destructive rounded-md p-4 text-sm mb-4">{errorExportacion}</div>
+	{/if}
 
 	<div class="bg-white border border-border rounded-lg p-4 mb-6">
 		<div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">

@@ -230,27 +230,6 @@ CREATE TABLE IF NOT EXISTS donacion_detalle (
     CONSTRAINT fk_donacion_detalle_unidad   FOREIGN KEY (id_unidad)   REFERENCES unidad_equipo (id_unidad)
 );
 
--- CU-81/CU-82: ítems y retornos de los préstamos externos por lote
-CREATE TABLE IF NOT EXISTS prestamo_detalle (
-    id_detalle         SERIAL PRIMARY KEY,
-    id_prestamo        INTEGER NOT NULL,
-    id_unidad          INTEGER,
-    id_tipo_equipo     INTEGER,
-    cantidad           NUMERIC(10,2),
-    cantidad_retornada NUMERIC(10,2) DEFAULT 0,
-    CONSTRAINT fk_prestamo_detalle_prestamo FOREIGN KEY (id_prestamo) REFERENCES prestamo_externo (id_prestamo) ON DELETE CASCADE,
-    CONSTRAINT fk_prestamo_detalle_unidad   FOREIGN KEY (id_unidad)   REFERENCES unidad_equipo (id_unidad)
-);
-CREATE TABLE IF NOT EXISTS prestamo_retorno (
-    id_retorno     SERIAL PRIMARY KEY,
-    id_detalle     INTEGER NOT NULL,
-    cantidad       NUMERIC(10,2),
-    fecha_retorno  TIMESTAMPTZ NOT NULL,
-    observacion    VARCHAR(300),
-    id_usuario     INTEGER NOT NULL,
-    CONSTRAINT fk_prestamo_retorno_detalle FOREIGN KEY (id_detalle) REFERENCES prestamo_detalle (id_detalle) ON DELETE CASCADE
-);
-
 -- Stock de consumibles por bodega
 CREATE TABLE IF NOT EXISTS stock_consumible (
     id_stock             SERIAL PRIMARY KEY,
@@ -282,6 +261,28 @@ CREATE TABLE IF NOT EXISTS prestamo_externo (
     id_bodega_origen        INTEGER
 );
 
+-- CU-81/CU-82: ítems y retornos de los préstamos externos por lote.
+-- La tabla detalle va después de prestamo_externo porque depende de su PK.
+CREATE TABLE IF NOT EXISTS prestamo_detalle (
+    id_detalle         SERIAL PRIMARY KEY,
+    id_prestamo        INTEGER NOT NULL,
+    id_unidad          INTEGER,
+    id_tipo_equipo     INTEGER,
+    cantidad           NUMERIC(10,2),
+    cantidad_retornada NUMERIC(10,2) DEFAULT 0,
+    CONSTRAINT fk_prestamo_detalle_prestamo FOREIGN KEY (id_prestamo) REFERENCES prestamo_externo (id_prestamo) ON DELETE CASCADE,
+    CONSTRAINT fk_prestamo_detalle_unidad   FOREIGN KEY (id_unidad)   REFERENCES unidad_equipo (id_unidad)
+);
+CREATE TABLE IF NOT EXISTS prestamo_retorno (
+    id_retorno     SERIAL PRIMARY KEY,
+    id_detalle     INTEGER NOT NULL,
+    cantidad       NUMERIC(10,2),
+    fecha_retorno  TIMESTAMPTZ NOT NULL,
+    observacion    VARCHAR(300),
+    id_usuario     INTEGER NOT NULL,
+    CONSTRAINT fk_prestamo_retorno_detalle FOREIGN KEY (id_detalle) REFERENCES prestamo_detalle (id_detalle) ON DELETE CASCADE
+);
+
 -- Cierres de OT recibidos por integración (webhook de G3) — sc-113
 -- Idempotencia por clave_idempotencia: "{id_ot}:{fecha_completada ISO}"
 CREATE TABLE IF NOT EXISTS integracion_cierre (
@@ -295,6 +296,43 @@ CREATE TABLE IF NOT EXISTS integracion_cierre (
     discrepancias       JSONB,
     acciones_aplicadas  JSONB,
     fecha_proceso       TIMESTAMPTZ DEFAULT now()
+);
+
+-- CU-69: cierre de trabajo de reparación (parte de inventario del cierre de OT de G3)
+CREATE TABLE IF NOT EXISTS cierre_reparacion (
+    id_cierre_reparacion SERIAL PRIMARY KEY,
+    id_cierre            INTEGER,
+    id_ot                INTEGER NOT NULL,
+    id_empresa           INTEGER NOT NULL,
+    id_tecnico           INTEGER,
+    rut_cliente          VARCHAR(12),
+    direccion_servicio   VARCHAR(200),
+    falla_reportada      VARCHAR(300) NOT NULL,
+    solucion_aplicada    VARCHAR(300) NOT NULL,
+    resultado            VARCHAR(30) NOT NULL,
+    resuelto_remotamente BOOLEAN NOT NULL DEFAULT false,
+    categoria_falla      VARCHAR(120),
+    equipos_retirados    JSONB,
+    equipos_instalados   JSONB,
+    consumibles          JSONB,
+    codigo_trabajo       VARCHAR(10),
+    fecha_cierre         TIMESTAMPTZ,
+    fecha_registro       TIMESTAMPTZ DEFAULT now()
+);
+
+-- CU-70: borrador del cierre preparado por el técnico con el catálogo T-01..T-10
+CREATE TABLE IF NOT EXISTS borrador_cierre (
+    id_borrador         SERIAL PRIMARY KEY,
+    id_ot               INTEGER NOT NULL,
+    id_empresa          INTEGER NOT NULL,
+    id_tecnico          INTEGER NOT NULL,
+    codigo_trabajo      VARCHAR(10),
+    falla_reportada     VARCHAR(300),
+    solucion_aplicada   VARCHAR(300),
+    resultado           VARCHAR(30),
+    categoria_falla     VARCHAR(120),
+    fecha_actualizacion TIMESTAMPTZ DEFAULT now(),
+    CONSTRAINT uq_borrador_cierre_ot UNIQUE (id_ot, id_empresa)
 );
 
 -- Salidas de bodega a técnico (CU-57/59/60/62)
@@ -325,6 +363,20 @@ CREATE TABLE IF NOT EXISTS inventario_personal_tecnico (
     cantidad            NUMERIC(10,2) DEFAULT 0,
     fecha_actualizacion TIMESTAMPTZ DEFAULT now(),
     CONSTRAINT uq_inventario_tecnico_tipo UNIQUE (id_tecnico, id_tipo_equipo)
+);
+
+-- Notificaciones de la campana del sistema (CU-96): préstamo vencido +
+-- stock bajo umbral. clave_dedupe es UNIQUE: garantiza no duplicar una
+-- notificación ya generada el mismo día para la misma referencia.
+CREATE TABLE IF NOT EXISTS notificacion (
+    id_notificacion   SERIAL PRIMARY KEY,
+    tipo              VARCHAR(40) NOT NULL,
+    id_empresa        INTEGER NOT NULL,
+    descripcion       VARCHAR(150) NOT NULL,
+    clave_dedupe      VARCHAR(120) NOT NULL UNIQUE,
+    leida             BOOLEAN NOT NULL DEFAULT false,
+    fecha_generacion  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    fecha_leida       TIMESTAMPTZ
 );
 
 -- CU-57: técnico que tiene asignada la unidad
