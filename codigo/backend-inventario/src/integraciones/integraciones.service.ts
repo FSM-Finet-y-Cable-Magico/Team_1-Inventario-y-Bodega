@@ -569,6 +569,8 @@ export class IntegracionesService {
   }
 
   // POST /integraciones/ordenes/:idOt/cierre — webhook receptor del cierre de OT de G3.
+  // CU-63 lo ejecuta G3; aquí se aplican CU-64 (instalación), CU-68 (saldo de
+  // consumibles), CU-69 (reparación) y CU-70 (tipo de trabajo del borrador).
   // Contrato: payload válido → 2xx SIEMPRE, registrando discrepancias por ítem (un serial
   // mal tecleado nunca hace perder el cierre completo). 4xx solo para payloads mal formados.
   async recibirCierreOt(

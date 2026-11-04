@@ -87,7 +87,8 @@ export class UnitsController {
     );
   }
 
-  // CU-71: búsqueda por NS para la devolución (valida 'Instalado en cliente')
+  // CU-71 + CU-73: búsqueda por NS para la devolución (valida 'Instalado en cliente')
+  // y muestra la información del equipo (fechas, últimos 5 estados, campos faltantes)
   @Get('devolucion/:numeroSerie')
   @Roles('TECNICO_TERRENO', 'ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   async consultarParaDevolucion(
@@ -108,6 +109,8 @@ export class UnitsController {
     return this.unitsService.registrarDevolucion(parseInt(id), body, actor);
   }
 
+  // CU-33: ficha de seguimiento de la unidad. Incluye la ubicación externa
+  // fuera de bodega (CU-48) y el cliente/SRV del cierre de instalación (CU-64).
   @Get(':id/ficha')
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
   async verFichaDeSeguimiento(
@@ -117,6 +120,7 @@ export class UnitsController {
     return this.unitsService.verFichaDetalle(parseInt(id), actor.id_empresa);
   }
 
+  // CU-37: historial completo de cambios de estado por número de serie
   @Get(':serialNumber/historial')
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
   async verHistorialCompleto(
@@ -129,6 +133,8 @@ export class UnitsController {
     );
   }
 
+  // CU-35: cambio de estado según la máquina de estados (con aviso de
+  // garantía vigente de CU-95 al pasar a 'En revisión' o 'Dado de baja')
   @Patch(':id/cambiar-estado')
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
   async transicionarEstadoEquipo(

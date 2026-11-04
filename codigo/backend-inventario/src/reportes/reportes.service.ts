@@ -506,7 +506,7 @@ export class ReportesService {
         const entregadoNum = Number(entregado?.cantidad ?? 0);
         const devueltoNum = Number(devuelto?.cantidad ?? 0);
 
-        // CU-64/CU-68 aún no están implementados: se deja la columna lista.
+        // Uso en cierres (CU-64/CU-68): este reporte aún no lo suma, se deja la columna lista.
         const usadoEnCierres = 0;
         const diferencia = ingresadoNum - entregadoNum + devueltoNum;
         return {
@@ -970,6 +970,8 @@ export class ReportesService {
     return 'documento';
   }
 
+  // CU-87: equipos 'Instalado en cliente' filtrados por RUT, nombre o NS,
+  // enriquecidos con el cliente de G3 y el cierre de instalación (CU-64).
   async getEquiposInstaladosReport(
     filtros: FiltrosEquiposInstalados,
     actor: Actor,
@@ -1287,6 +1289,8 @@ export class ReportesService {
     return filas;
   }
 
+  // CU-90: productividad por técnico (instalaciones/reparaciones cerradas y
+  // consumibles usados) a partir de los cierres de OT locales y de G3.
   async getTecnicosProductividadReport(
     filtros: FiltrosProductividadTecnicos,
     actor: Actor,
@@ -1309,7 +1313,7 @@ export class ReportesService {
       );
     }
 
-    // Validación del rango de fechas (E1: máximo 90 días)
+    // CU-90 Excepción 1: el rango de fechas no puede superar los 90 días
     const fechaDesde = filtros.fecha_desde?.trim();
     const fechaHasta = filtros.fecha_hasta?.trim();
 
@@ -1602,6 +1606,7 @@ export class ReportesService {
     });
   }
 
+  // CU-92: exportación a Excel con límite de 15 segundos (Excepción 1).
   async exportarReporteExcel(
     query: {
       tipo: string;
@@ -1644,6 +1649,8 @@ export class ReportesService {
     }
   }
 
+  // CU-92: según el tipo, reutiliza el reporte visible (CU-85..CU-91), define
+  // hoja ReporteYYYYMMDD y columnas, genera el .xlsx y audita la exportación.
   private async procesarExportacionExcel(
     query: {
       tipo: string;

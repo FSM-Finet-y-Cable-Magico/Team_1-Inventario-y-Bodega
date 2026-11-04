@@ -7,7 +7,19 @@ skinparam sequenceDividerFontColor 444444
 skinparam sequenceDividerShadowing false
 title CU-64 — Ejecutando acciones atómicas del cierre de instalación (flujo normal)
 skinparam style strictuml
-skinparam monochrome true
+skinparam ParticipantBackgroundColor white
+skinparam ParticipantBorderColor black
+skinparam ActorBackgroundColor white
+skinparam ActorBorderColor black
+skinparam ArrowColor black
+skinparam SequenceLifeLineBackgroundColor white
+skinparam SequenceGroupBorderColor black
+skinparam SequenceGroupBackgroundColor white
+skinparam SequenceGroupHeaderFontColor black
+skinparam NoteBackgroundColor white
+skinparam NoteBorderColor black
+skinparam TitleFontColor black
+hide stereotype
 skinparam shadowing false
 skinparam sequenceMessageAlign center
 <style>
@@ -18,6 +30,9 @@ sequenceDiagram {
   actor {
     margin 12
   }
+  .vista { BackGroundColor #BDD7EF ; FontColor #223C67 }
+  .controlador { BackGroundColor #C7E1B5 ; FontColor #37571F }
+  .persistencia { BackGroundColor #F9CBAD ; FontColor #894212 }
 }
 </style>
 skinparam sequence {
@@ -26,16 +41,18 @@ skinparam sequence {
 }
 hide footbox
 
-actor "Técnico de terreno (G3)" as g3
-participant "C_IntegracionesController" as ctrl
-participant "C_IntegracionesService" as svc
-participant "C_InventarioPersonalService" as ips
-participant "C_TypeORM (transacción)" as orm
-participant "integracion_cierre" as cierre
-participant "secuencia_srv" as sec
-participant "unidad_equipo" as uni
-participant "inventario_personal_tecnico" as inv
-
+actor "Técnico de terreno" as tec
+participant "V_CierreOT (sistema G3)" as g3 <<vista>>
+participant "C_IntegracionesController" as ctrl <<controlador>>
+participant "C_IntegracionesService" as svc <<controlador>>
+participant "C_InventarioPersonalService" as ips <<controlador>>
+participant "C_TypeORM (transacción)" as orm <<controlador>>
+participant "integracion_cierre" as cierre <<persistencia>>
+participant "secuencia_srv" as sec <<persistencia>>
+participant "unidad_equipo" as uni <<persistencia>>
+participant "inventario_personal_tecnico" as inv <<persistencia>>
+tec -> g3 : Confirma el cierre de la OT 781\n(equipos instalados, materiales y evidencia)
+activate g3
 g3 -> ctrl : POST /api/integraciones/ordenes/781/cierre\nX-API-KEY + { clave_idempotencia, tipo_ot: INSTALACION,\ncliente{rut,nombre}, direccion{...}, materiales[], equipos_instalados[] }
 activate ctrl
 ctrl -> svc : recibirCierreOt(781, payload, integracion)
@@ -105,4 +122,6 @@ svc --> ctrl : { success, data: { srv: 'SRV-2026-00001',\nid_tecnico, acciones_a
 deactivate svc
 ctrl --> g3 : 200 OK (G3 guarda el SRV; nunca 4xx por regla de negocio)
 deactivate ctrl
+g3 --> tec : OT completada con SRV-2026-00001
+deactivate g3
 @enduml

@@ -85,6 +85,9 @@ export class IntegracionesController {
     return this.integracionesService.registrarActivacion(payload, integracion);
   }
 
+  // CU-64/CU-68/CU-69/CU-70: webhook del cierre de OT. El cierre lo ejecuta G3
+  // (CU-63) y aquí se reciben sus efectos en inventario: instalación (CU-64),
+  // saldo de consumibles (CU-68) y reparación (CU-69, con el borrador de CU-70).
   @Post('ordenes/:idOt/cierre')
   recibirCierreOt(
     @Param('idOt') idOt: string,

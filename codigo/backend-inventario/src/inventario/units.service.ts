@@ -1433,6 +1433,7 @@ export class UnitsService {
 
   // CU-71: el actor ingresa el NS; se valida que esté 'Instalado en cliente'
   // (Excepción 1) y se muestran NS, tipo, marca, modelo, cliente y dirección.
+  // CU-73: la misma respuesta agrega la información del equipo en devolución.
   async consultarParaDevolucion(numeroSerie: string, actor: any) {
     const serie = (numeroSerie ?? '').trim();
     if (serie === '') {
@@ -1671,6 +1672,8 @@ export class UnitsService {
     };
   }
 
+  // CU-33: ficha de la unidad (CU-38 garantía, CU-48 ubicación externa,
+  // CU-64 cliente/SRV del cierre de instalación).
   async verFichaDetalle(idUnidad: number, idEmpresaContexto: number) {
     if (!idUnidad || isNaN(idUnidad)) {
       throw new BadRequestException(
