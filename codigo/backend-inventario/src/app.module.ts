@@ -24,6 +24,7 @@ import { IntegracionesModule } from './integraciones/integraciones.module';
 import { SalidasModule } from './salidas/salidas.module';
 import { AlertasModule } from './alertas/alertas.module';
 import { NotificacionesModule } from './notificaciones/notificaciones.module';
+import { TomasInventarioModule } from './tomas-inventario/tomas-inventario.module';
 
 @Module({
   imports: [
@@ -64,6 +65,7 @@ import { NotificacionesModule } from './notificaciones/notificaciones.module';
     SalidasModule,
     AlertasModule,
     NotificacionesModule,
+    TomasInventarioModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],

@@ -13,6 +13,7 @@ Todas en `codigo/frontend/src/routes/`. Sin loaders SSR; carga client-side con `
 | Bodegas | `/bodegas` | SUPERUSUARIO, ADMIN, ADMIN_BODEGA |
 | Transferencias | `/transferencias` | SUPERUSUARIO, ADMIN |
 | Órdenes de ingreso | `/ordenes-ingreso` | SUPERUSUARIO, ADMIN, ADMIN_BODEGA |
+| Toma de inventario | `/tomas-inventario` | SUPERUSUARIO, ADMIN, ADMIN_BODEGA |
 | Préstamos | `/prestamos` | SUPERUSUARIO, ADMIN, ADMIN_BODEGA |
 | Bajas | `/bajas` | todos (aprobar/rechazar y pestaña Donaciones solo SUPERUSUARIO, ADMIN) |
 | Auditoría | `/auditoria` | SUPERUSUARIO, ADMIN |
@@ -273,3 +274,11 @@ Redirige: con token → `/dashboard`, sin token → `/login`.
 4. La paginación solo existe en auditoría; las demás listas cargan todo.
 5. `TransferenciaDetalle` usa `motivo` mientras que el listado usa `observaciones` (inconsistencia menor).
 6. No hay `+layout.ts`/`+page.ts`: todo es CSR.
+
+### `/tomas-inventario`
+CU-97. Lista las tomas y abre una nueva para una bodega activa (`Modal`).
+
+### `/tomas-inventario/[id]`
+CU-97. Registra lo contado (consumibles por cantidad, series una por línea), muestra las diferencias y
+permite guardar, confirmar o cancelar. Si hubo movimientos durante el conteo (409
+`MOVIMIENTOS_DURANTE_CONTEO`), avisa y ofrece «Ajustar de todos modos».

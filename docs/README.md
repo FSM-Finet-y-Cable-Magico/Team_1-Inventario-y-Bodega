@@ -6,7 +6,7 @@
 
 **Proyecto:** Sistema de inventario y bodega para ISP (Finet / Cable Mágico)
 **Stack:** Frontend SvelteKit (Svelte 5) · Backend NestJS (TypeORM) · Base de datos PostgreSQL
-**Avance:** 96 de 96 casos de uso implementados (92 en T1 y 4 en G3) (estado por CU en [`08-roadmap.md`](./08-roadmap.md)).
+**Avance:** 97 de 97 casos de uso implementados (93 en T1 y 4 en G3; CU-97 es el requerimiento nuevo del Incremento 4) (estado por CU en [`08-roadmap.md`](./08-roadmap.md)).
 
 ---
 

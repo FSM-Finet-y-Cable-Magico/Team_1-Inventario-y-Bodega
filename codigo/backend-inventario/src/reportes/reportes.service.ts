@@ -967,6 +967,7 @@ export class ReportesService {
     if (tipoMovimiento.startsWith('TRANSFERENCIA')) return 'transferencia';
     if (tipoMovimiento.startsWith('INGRESO')) return 'orden_ingreso';
     if (tipoMovimiento.startsWith('PRESTAMO')) return 'prestamo';
+    if (tipoMovimiento.startsWith('AJUSTE')) return 'toma_inventario';
     return 'documento';
   }
 

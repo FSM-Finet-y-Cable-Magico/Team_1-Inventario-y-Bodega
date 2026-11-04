@@ -1,0 +1,74 @@
+@startuml CU97-exc-movimientos-conteo
+title CU-97 — Excepción E3: hubo movimientos durante el conteo
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style>
+sequenceDiagram {
+  participant {
+    margin 25
+  }
+  actor {
+    margin 20
+  }
+}
+</style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Encargado de bodega" as user
+participant "V_TomaInventario" as view
+participant "C_RolesGuard" as guard
+participant "C_TomasInventarioController" as ctrl
+participant "C_TomasInventarioService" as svc
+participant "C_AuditoriaService" as aud
+participant "C_TypeORM" as orm
+database "postgres" as db
+
+user -> view : Confirma el ajuste
+activate view
+view -> ctrl : POST /tomas-inventario/:id/confirmar
+activate ctrl
+ctrl -> svc : confirmar(id, false, actor)
+activate svc
+svc -> orm : Compara la foto con el stock\ny las unidades actuales
+activate orm
+orm -> db : SELECT ... FOR UPDATE
+db --> orm : El stock o las unidades cambiaron
+orm --> svc : Cambios detectados
+deactivate orm
+svc --> ctrl : ConflictException\n(MOVIMIENTOS_DURANTE_CONTEO)
+deactivate svc
+ctrl --> view : 409 Conflict
+deactivate ctrl
+view --> user : Avisa que hubo movimientos
+deactivate view
+
+user -> view : Elige ajustar de todos modos
+activate view
+view -> ctrl : POST /tomas-inventario/:id/confirmar\n{ forzar_movimientos: true }
+activate ctrl
+ctrl -> svc : confirmar(id, true, actor)
+activate svc
+svc -> orm : Aplica la diferencia sobre el stock actual\ny cierra la toma
+activate orm
+orm -> db : UPDATE stock_consumible,\nINSERT movimiento_inventario,\nUPDATE toma_inventario; COMMIT
+db --> orm : Transacción confirmada
+orm --> svc : Ajustes aplicados
+deactivate orm
+svc -> aud : create(CONFIRMAR_TOMA_INVENTARIO)
+activate aud
+aud --> svc : Evento registrado
+deactivate aud
+svc --> ctrl : Toma confirmada
+deactivate svc
+ctrl --> view : 201 Created
+deactivate ctrl
+view --> user : Toma confirmada
+deactivate view
+@enduml
+

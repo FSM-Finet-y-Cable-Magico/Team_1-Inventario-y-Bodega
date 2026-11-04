@@ -16,6 +16,7 @@
 		Building2,
 		BarChart3,
 		ClipboardList,
+		ClipboardCheck,
 		Smartphone
 	} from '@lucide/svelte';
 	import { authStore, userRoles } from '$lib/stores/auth';
@@ -40,6 +41,8 @@
 		{ label: 'Catálogo', icon: Package, path: '/catalogo', roles: ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'] },
 		{ label: 'Unidades', icon: Wrench, path: '/unidades', roles: ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA', 'TECNICO_TERRENO'] },
 		{ label: 'Bodegas', icon: Warehouse, path: '/bodegas', roles: ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'] },
+		// CU-97: toma de inventario físico
+		{ label: 'Toma de inventario', icon: ClipboardCheck, path: '/tomas-inventario', roles: ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'] },
 		{ label: 'Salidas', icon: Truck, path: '/salidas', roles: ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA', 'TECNICO_TERRENO'] },
 		{ label: 'Transferencias', icon: ArrowLeftRight, path: '/transferencias', roles: ['SUPERUSUARIO', 'ADMIN'] },
 		// CU-78: bandeja de solicitudes de baja definitiva

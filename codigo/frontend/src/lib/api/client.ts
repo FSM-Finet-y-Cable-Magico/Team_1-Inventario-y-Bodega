@@ -16,6 +16,11 @@ class ApiError extends Error {
 	}
 }
 
+// CU-97 E3: el stock o las series cambiaron durante el conteo; se pide confirmar de nuevo
+export function esMovimientosDuranteConteo(err: unknown): boolean {
+	return err instanceof ApiError && err.status === 409 && err.codigo === 'MOVIMIENTOS_DURANTE_CONTEO';
+}
+
 // CU-95: el backend interrumpe con 409 + codigo 'AVISO_GARANTIA' cuando la unidad
 // tiene garantía vigente y el actor aún no eligió "Continuar sin garantía"
 export function esAvisoGarantia(err: unknown): err is ApiError {
