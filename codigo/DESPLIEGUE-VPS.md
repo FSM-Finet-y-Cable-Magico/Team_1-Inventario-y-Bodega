@@ -117,6 +117,31 @@ Algún aviso de `psql` sobre `transaction_timeout` es normal (viene de `pg_dump`
 no afecta. Las fichas técnicas PDF subidas en Railway no viajan con la base; si
 importan, hay que volver a subirlas.
 
+## Integraciones con G3 y G8
+
+El administrador de la VPS publicó solo las rutas de integración de cada grupo
+con un nginx propio y certificado válido:
+
+| Grupo | URL pública de integración | Llega a |
+|---|---|---|
+| G1 (nosotros) | `https://38.7.201.104:8143/api/integraciones/...` | `127.0.0.1:8100` |
+| G3 | `https://38.7.201.104:8343/api/integraciones/...` | `127.0.0.1:8300` |
+
+G3 y G8 nos llaman a esa URL con su `X-API-KEY`, que se configura en
+`INTEGRACION_API_KEYS` del `.env`.
+
+### Cargar equipos para las integraciones
+
+`database/poblar-equipos-vps.sql` agrega unidades serializadas (ONT, routers,
+decodificadores y switches, en bodega y asignadas a los técnicos del seed) y stock
+de consumibles en ambas empresas. Se puede ejecutar más de una vez sin duplicar:
+
+```bash
+docker compose -f docker-compose.vps.yml exec -T db \
+  sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
+  < database/poblar-equipos-vps.sql
+```
+
 ## Actualizar a una versión nueva
 
 Ya no hay despliegue automático: después de mergear a `main`, alguien entra a la VPS y ejecuta
