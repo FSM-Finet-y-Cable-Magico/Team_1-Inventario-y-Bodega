@@ -1,0 +1,111 @@
+@startuml CU97-normal
+title CU-97 — Registrando toma de inventario físico y ajuste de diferencias (flujo normal)
+skinparam style strictuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style>
+sequenceDiagram {
+  participant {
+    margin 25
+  }
+  actor {
+    margin 20
+  }
+}
+</style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Encargado de bodega" as user
+participant "V_TomaInventario" as view
+participant "C_RolesGuard" as guard
+participant "C_TomasInventarioController" as ctrl
+participant "C_TomasInventarioService" as svc
+participant "C_AuditoriaService" as aud
+participant "C_TypeORM" as orm
+database "postgres" as db
+
+user -> view : Selecciona la bodega\ny abre la toma
+activate view
+view -> guard : POST /tomas-inventario\n{ id_bodega }
+activate guard
+guard --> view : Acceso permitido\n(ADMIN / SUPERUSUARIO / ADMIN_BODEGA)
+deactivate guard
+view -> ctrl : POST /tomas-inventario\n{ id_bodega }
+activate ctrl
+ctrl -> svc : abrir(id_bodega, actor)
+activate svc
+svc -> orm : Valida bodega activa de la empresa\ny que no tenga toma abierta
+activate orm
+orm -> db : SELECT bodega, toma_inventario
+db --> orm : Bodega sin toma abierta
+orm --> svc : Validación correcta
+deactivate orm
+svc -> orm : Guarda la toma y la foto\nde unidades y consumibles
+activate orm
+orm -> db : INSERT toma_inventario,\ntoma_inventario_detalle
+db --> orm : Filas creadas
+orm --> svc : id_toma
+deactivate orm
+svc -> aud : create(ABRIR_TOMA_INVENTARIO)
+activate aud
+aud --> svc : Evento registrado
+deactivate aud
+svc --> ctrl : Toma con líneas esperadas
+deactivate svc
+ctrl --> view : 201 Created
+deactivate ctrl
+view --> user : Muestra lo esperado
+deactivate view
+
+user -> view : Registra cantidades y series contadas
+activate view
+view -> ctrl : PATCH /tomas-inventario/:id/conteo\n{ consumibles, series }
+activate ctrl
+ctrl -> svc : registrarConteo(id, dto, actor)
+activate svc
+svc -> orm : Guarda el conteo y clasifica\nlas series fuera de lugar
+activate orm
+orm -> db : UPDATE/INSERT toma_inventario_detalle
+db --> orm : Conteo guardado
+orm --> svc : Líneas actualizadas
+deactivate orm
+svc --> ctrl : Toma con diferencias
+deactivate svc
+ctrl --> view : 200 OK
+deactivate ctrl
+view --> user : Muestra las diferencias
+deactivate view
+
+user -> view : Confirma el ajuste
+activate view
+view -> ctrl : POST /tomas-inventario/:id/confirmar
+activate ctrl
+ctrl -> svc : confirmar(id, false, actor)
+activate svc
+svc -> orm : BEGIN; bloquea toma y stock
+activate orm
+orm -> db : SELECT ... FOR UPDATE
+db --> orm : Stock sin cambios desde la foto
+orm --> svc : Stock actual
+svc -> orm : Aplica cada diferencia y cierra la toma
+orm -> db : UPDATE stock_consumible,\nINSERT movimiento_inventario (AJUSTE_INVENTARIO),\nUPDATE toma_inventario (CONFIRMADA); COMMIT
+db --> orm : Transacción confirmada
+orm --> svc : Ajustes aplicados
+deactivate orm
+svc -> aud : create(CONFIRMAR_TOMA_INVENTARIO)
+activate aud
+aud --> svc : Evento registrado
+deactivate aud
+svc --> ctrl : Toma confirmada y ajustes aplicados
+deactivate svc
+ctrl --> view : 201 Created
+deactivate ctrl
+view --> user : Toma confirmada. Las series faltantes\nquedan informadas, sin cambiar de estado
+deactivate view
+@enduml
+

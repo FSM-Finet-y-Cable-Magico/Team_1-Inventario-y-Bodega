@@ -449,3 +449,30 @@ ALTER TABLE unidad_equipo ADD COLUMN IF NOT EXISTS srv VARCHAR(20);
 
 -- CU-48: RUT del usuario para la ubicación externa de equipos asignados
 ALTER TABLE usuario ADD COLUMN IF NOT EXISTS rut VARCHAR(12);
+
+-- CU-97: toma de inventario físico y ajuste de diferencias
+CREATE TABLE IF NOT EXISTS toma_inventario (
+    id_toma             SERIAL PRIMARY KEY,
+    id_bodega           INTEGER NOT NULL REFERENCES bodega(id_bodega),
+    id_empresa          INTEGER NOT NULL,
+    estado              VARCHAR(20) NOT NULL DEFAULT 'ABIERTA'
+                        CHECK (estado IN ('ABIERTA', 'CONFIRMADA', 'CANCELADA')),
+    id_usuario_apertura INTEGER NOT NULL REFERENCES usuario(id_usuario),
+    id_usuario_cierre   INTEGER REFERENCES usuario(id_usuario),
+    fecha_apertura      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    fecha_cierre        TIMESTAMPTZ
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_toma_abierta_por_bodega
+    ON toma_inventario (id_bodega) WHERE estado = 'ABIERTA';
+CREATE TABLE IF NOT EXISTS toma_inventario_detalle (
+    id_detalle        SERIAL PRIMARY KEY,
+    id_toma           INTEGER NOT NULL REFERENCES toma_inventario(id_toma) ON DELETE CASCADE,
+    id_tipo_equipo    INTEGER REFERENCES tipo_equipo(id_tipo_equipo),
+    id_unidad         INTEGER REFERENCES unidad_equipo(id_unidad),
+    numero_serie      VARCHAR(80),
+    es_esperada       BOOLEAN NOT NULL DEFAULT true,
+    cantidad_esperada NUMERIC(10,2) NOT NULL DEFAULT 0,
+    cantidad_contada  NUMERIC(10,2),
+    resultado         VARCHAR(20)
+);
+CREATE INDEX IF NOT EXISTS idx_toma_detalle_toma ON toma_inventario_detalle (id_toma);

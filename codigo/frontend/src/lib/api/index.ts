@@ -1,7 +1,9 @@
 import { api } from './client';
 // CU-95: detección del 409 de aviso de garantía vigente
 export { esAvisoGarantia } from './client';
-import type { LoginDto, LoginResponse, Usuario, EquipoEnRevision, EquipoDevolucion, VerificacionSerie, ItemSalida, SalidaResumen, InventarioTecnico, JornadaTecnico, ReporteStock, AlertaActiva, NotificacionesNoLeidas } from '$lib/types';
+// CU-97 E3: detección del 409 por movimientos durante el conteo
+export { esMovimientosDuranteConteo } from './client';
+import type { LoginDto, LoginResponse, Usuario, EquipoEnRevision, EquipoDevolucion, VerificacionSerie, ItemSalida, SalidaResumen, InventarioTecnico, JornadaTecnico, ReporteStock, AlertaActiva, NotificacionesNoLeidas, TomaInventario, TomaInventarioResumen } from '$lib/types';
 
 export async function login(dto: LoginDto): Promise<LoginResponse> {
 	return api.post<LoginResponse>('/auth/login', dto);
@@ -632,4 +634,32 @@ export function getCierresReparacion(params: { numero_serie?: string; id_ot?: nu
 	return api.get<import('$lib/types').CierreReparacion[]>(
 		`/cierres-reparacion${query ? '?' + query : ''}`
 	);
+}
+
+// CU-97: toma de inventario físico y ajuste de diferencias
+export function listarTomasInventario(): Promise<TomaInventarioResumen[]> {
+	return api.get<TomaInventarioResumen[]>('/tomas-inventario');
+}
+
+export function abrirTomaInventario(id_bodega: number): Promise<TomaInventario> {
+	return api.post<TomaInventario>('/tomas-inventario', { id_bodega });
+}
+
+export function obtenerTomaInventario(id: number): Promise<TomaInventario> {
+	return api.get<TomaInventario>(`/tomas-inventario/${id}`);
+}
+
+export function registrarConteoToma(
+	id: number,
+	data: { consumibles: { id_detalle: number; cantidad_contada: number }[]; series: string[] }
+): Promise<TomaInventario> {
+	return api.patch<TomaInventario>(`/tomas-inventario/${id}/conteo`, data);
+}
+
+export function confirmarTomaInventario(id: number, forzar_movimientos = false): Promise<TomaInventario> {
+	return api.post<TomaInventario>(`/tomas-inventario/${id}/confirmar`, { forzar_movimientos });
+}
+
+export function cancelarTomaInventario(id: number): Promise<TomaInventario> {
+	return api.post<TomaInventario>(`/tomas-inventario/${id}/cancelar`, {});
 }

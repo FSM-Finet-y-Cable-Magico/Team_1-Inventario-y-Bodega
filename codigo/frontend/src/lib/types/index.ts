@@ -865,3 +865,41 @@ export interface CierreReparacion {
 	fechaCierre: string | null;
 	fechaRegistro: string;
 }
+
+// CU-97: toma de inventario físico y ajuste de diferencias
+export interface TomaInventarioResumen {
+	id_toma: number;
+	id_bodega: number;
+	id_empresa: number;
+	estado: 'ABIERTA' | 'CONFIRMADA' | 'CANCELADA';
+	fecha_apertura: string;
+	fecha_cierre: string | null;
+	bodega_nombre: string | null;
+}
+
+export interface TomaInventarioLinea {
+	id_detalle: number;
+	id_tipo_equipo: number | null;
+	tipo_equipo_nombre: string | null;
+	unidad_medida: string | null;
+	id_unidad: number | null;
+	numero_serie: string | null;
+	es_esperada: boolean;
+	cantidad_esperada: number;
+	cantidad_contada: number | null;
+	diferencia: number | null;
+	resultado: string | null;
+}
+
+export interface TomaInventario extends TomaInventarioResumen {
+	consumibles: TomaInventarioLinea[];
+	series: TomaInventarioLinea[];
+	resumen: {
+		consumibles_sin_contar: number;
+		consumibles_con_diferencia: number;
+		series_contadas: number;
+		series_faltantes: number;
+		series_fuera_de_lugar: number;
+	};
+	ajustes_aplicados?: number;
+}

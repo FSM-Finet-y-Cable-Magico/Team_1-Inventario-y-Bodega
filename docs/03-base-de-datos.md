@@ -145,6 +145,16 @@ UNIQUE en `(id_proveedor, id_tipo_equipo)`.
 
 > `unidad_equipo` suma la columna `id_tecnico_asignado` (integer, nullable) desde CU-57.
 
+### `toma_inventario` y `toma_inventario_detalle` — toma de inventario físico (CU-97)
+`toma_inventario`: `id_toma` PK · `id_bodega` FK · `id_empresa` · `estado` (`ABIERTA`, `CONFIRMADA`,
+`CANCELADA`) · `id_usuario_apertura` FK · `id_usuario_cierre` FK · `fecha_apertura` · `fecha_cierre`.
+El índice único parcial `uq_toma_abierta_por_bodega` permite una sola toma abierta por bodega.
+
+`toma_inventario_detalle`: `id_detalle` PK · `id_toma` FK · `id_tipo_equipo` FK · `id_unidad` FK ·
+`numero_serie` · `es_esperada` · `cantidad_esperada` · `cantidad_contada` · `resultado` (`COINCIDE`,
+`FALTANTE`, `SOBRANTE`, `OTRA_UBICACION`, `NO_REGISTRADA`). Las líneas con `numero_serie` nulo son
+consumibles. Al confirmar, cada diferencia deja `AJUSTE_INVENTARIO` en `movimiento_inventario`.
+
 ### `notificacion` — campana del sistema (CU-96)
 `id_notificacion` PK · `tipo` varchar(40) (comparte los literales de CU-94: `'Stock bajo umbral'`,
 `'Préstamo vencido'`) · `id_empresa` · `descripcion` varchar(150) (máx. 100 caracteres útiles,
