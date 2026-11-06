@@ -12,7 +12,7 @@ no esté reflejado aquí.
 
 ## Resumen
 
-- **Total de casos de uso:** 96
+- **Total de casos de uso:** 97 (96 originales + CU-97, requerimiento nuevo del Incremento 4)
 - **Implementados por T1:** 92 (CU-01 a CU-62, CU-64, CU-68 a CU-96) — incluye CU-47, CU-48, CU-57..62, CU-61, CU-64, CU-68 (integración G3), CU-87/CU-90/CU-92 (PR #60, rama `Kevin`) y CU-69/CU-70/CU-93 (PR #66, rama `tomas`)
 - **Tomados por G3 (no los implementa T1):** 4 (CU-63, CU-65, CU-66, CU-67) — verificados contra `Team-3-FSM` (26-sept-2026), evidencia en `docs/11` §6
 - **Pendientes (Incremento 3):** 0 — la entrega suma 19 CUs respecto de los 77 del Incremento 2: CU-48, CU-61, CU-63 a CU-71, CU-73, CU-87, CU-90 y CU-92 a CU-96. Los 11 tickets sc-147 a sc-157 corresponden a una parte del alcance, no al incremento completo
@@ -194,3 +194,9 @@ no esté reflejado aquí.
 | CU-94 | Consultando alertas activas en el dashboard | [x] Implementado | Incremento 3 · sc-155 (Uriel) — PR #61 (`feat/runa`) |
 | CU-95 | Mostrando aviso de garantía vigente al cambiar estado | [x] Implementado | PR #65 (`Javiera`). Helper `inventario/aviso-garantia.ts`: 409 `AVISO_GARANTIA` con el texto exacto y confirmación `forzar_aviso_garantia: true` → audita `AVISO_GARANTIA_IGNORADO`. Aplica a CU-35/40, CU-71, CU-72 (Baja), CU-76, CU-78 y CU-82; unifica los avisos previos de CU-72/CU-78. |
 | CU-96 | Recibiendo notificaciones visuales en la campana del sistema | [x] Implementado | Incremento 3 · sc-157 (Uriel) — PR #61 (`feat/runa`) |
+
+### Toma de inventario físico (Incremento 4)
+
+| CU | Nombre | Estado | Notas |
+|----|--------|--------|-------|
+| CU-97 | Registrando toma de inventario físico y ajuste de diferencias | [x] Implementado | Incremento 4 · RF-71 · sc-177. Módulo `tomas-inventario` y páginas `/tomas-inventario`. Especificación formal en sc-176; capturas de evidencia en sc-181 |

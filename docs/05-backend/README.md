@@ -97,6 +97,7 @@ Mensajes **en español**, específicos por validación. Excepción: login usa me
 | [prestamos.md](./prestamos.md) | `prestamos` (préstamos externos y retornos, CU-81/CU-82) |
 | [alertas.md](./alertas.md) | `alertas` (alertas activas del dashboard, CU-94) |
 | [notificaciones.md](./notificaciones.md) | `notificaciones` (campana persistida, CU-96) |
+| [tomas-inventario.md](./tomas-inventario.md) | `tomas-inventario` (toma de inventario físico, CU-97) |
 
 > Para cada módulo se listan: endpoints, lógica de negocio, entidades, y qué CU cubre.
 
