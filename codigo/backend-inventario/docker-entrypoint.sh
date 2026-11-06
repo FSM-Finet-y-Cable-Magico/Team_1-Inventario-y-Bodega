@@ -16,13 +16,24 @@ async function wait() {
 wait();
 "
 
-# Migraciones de esquema (idempotentes)
-echo "[entrypoint] Ejecutando migraciones de esquema..."
-node dist/scripts/migrar.js
+# Migraciones de esquema (idempotentes).
+# OMITIR_MIGRACIONES=true: para una BD compartida (BDD global) cuyo esquema
+# administra otro grupo; ahí el usuario de G1 no es dueño de las tablas.
+if [ "$OMITIR_MIGRACIONES" = "true" ]; then
+  echo "[entrypoint] OMITIR_MIGRACIONES=true: se omiten las migraciones."
+else
+  echo "[entrypoint] Ejecutando migraciones de esquema..."
+  node dist/scripts/migrar.js
+fi
 
-# Seed de datos QA (idempotente: crea empresas, bodegas, roles y usuarios)
-echo "[entrypoint] Ejecutando seed de datos de demostración..."
-node dist/scripts/seed-qa.js
+# Seed de datos QA (idempotente: crea empresas, bodegas, roles y usuarios).
+# OMITIR_SEED=true: no cargar usuarios ni datos de demostración (BDD global).
+if [ "$OMITIR_SEED" = "true" ]; then
+  echo "[entrypoint] OMITIR_SEED=true: se omite el seed de demostración."
+else
+  echo "[entrypoint] Ejecutando seed de datos de demostración..."
+  node dist/scripts/seed-qa.js
+fi
 
 # Ubicación del punto de entrada compilado (depende de la config de Nest)
 if [ -f dist/src/main.js ]; then
