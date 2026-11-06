@@ -165,6 +165,16 @@ OMITIR_SEED=true
 y `docker compose -f docker-compose.vps.yml up -d backend`. Para volver a la base propia,
 basta con comentar esas tres líneas y repetir el comando.
 
+### Datos de prueba en la BDD global
+
+`database/global/seed-prueba-inventario.sql` carga datos de inventario para que G2, G3 y G8
+prueben sus integraciones: 3 bodegas, 11 tipos de equipo, 3 proveedores, 115 unidades
+(`En bodega` y `En revisión`) y stock de consumibles. Todo lleva `PRUEBA` en el nombre o la
+serie, y se puede ejecutar más de una vez sin duplicar. Requiere el usuario `superinventario`.
+
+No crea usuarios ni unidades `Asignado a técnico`, porque la base global aún no tiene técnicos
+con el rol que usa G1.
+
 ## Actualizar a una versión nueva
 
 Ya no hay despliegue automático: después de mergear a `main`, alguien entra a la VPS y ejecuta
