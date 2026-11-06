@@ -142,6 +142,29 @@ docker compose -f docker-compose.vps.yml exec -T db \
   < database/poblar-equipos-vps.sql
 ```
 
+## Conectar a la BDD global (pendiente de acuerdo con el administrador y G8)
+
+La BDD global de los 4 grupos es `crm_g8_prueba` (Postgres 15, contenedor de G8,
+`127.0.0.1:15432`). Su esquema `public` ya tiene 29 de nuestras tablas; faltan 5, que
+crea su administrador con `database/global/tablas-g1-faltantes.sql`.
+
+Requisitos antes de cambiar:
+1. Usuario de G1 en esa base con permisos sobre nuestras tablas (lo crea su administrador).
+2. Una ruta de red desde nuestro contenedor al puerto (hoy los Docker rootless no ven el
+   localhost del servidor).
+3. Respaldo de la base propia.
+
+Luego, en `.env`:
+
+```
+DATABASE_URL=postgresql://USUARIO_G1:CONTRASEÑA@HOST:PUERTO/crm_g8_prueba
+OMITIR_MIGRACIONES=true
+OMITIR_SEED=true
+```
+
+y `docker compose -f docker-compose.vps.yml up -d backend`. Para volver a la base propia,
+basta con comentar esas tres líneas y repetir el comando.
+
 ## Actualizar a una versión nueva
 
 Ya no hay despliegue automático: después de mergear a `main`, alguien entra a la VPS y ejecuta

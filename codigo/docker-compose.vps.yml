@@ -39,7 +39,12 @@ services:
     restart: unless-stopped
     environment:
       PORT: 3003
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      # Por defecto, la base propia del compose (servicio db). Para la BDD global,
+      # definir DATABASE_URL en .env (ver DESPLIEGUE-VPS.md).
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}}
+      # true en la BDD global: el esquema lo administra otro grupo y no se cargan datos de demo
+      OMITIR_MIGRACIONES: ${OMITIR_MIGRACIONES:-false}
+      OMITIR_SEED: ${OMITIR_SEED:-false}
       JWT_SECRET: ${JWT_SECRET:?Falta JWT_SECRET en .env}
       # sc-113: keys que aceptamos de otros grupos (JSON). Vacío = ninguna.
       INTEGRACION_API_KEYS: ${INTEGRACION_API_KEYS:-[]}
