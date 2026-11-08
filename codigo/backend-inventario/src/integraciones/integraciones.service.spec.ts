@@ -667,6 +667,28 @@ describe('IntegracionesService — sc-158 (acuerdo G8 P0)', () => {
       expect(codigos).not.toContain('TECNICO_NO_ENCONTRADO');
     });
 
+    it('BDD global: identifica al técnico por usuario_tecnico', async () => {
+      const { service } = crearServicio({
+        ...seedCierre(25),
+        Usuario: [{ id_usuario: 45, nombre_usuario: 'tecnico.prueba1' }],
+      });
+
+      const respuesta = await service.recibirCierreOt(
+        781,
+        payloadCierreInstalacion({
+          id_tecnico: 5,
+          usuario_tecnico: 'tecnico.prueba1',
+        }),
+        G8,
+      );
+
+      expect(respuesta.data.id_tecnico).toBe(45);
+      const codigos = (respuesta.data.discrepancias ?? []).map(
+        (d: Fila) => d.codigo,
+      );
+      expect(codigos).not.toContain('TECNICO_NO_ENCONTRADO');
+    });
+
     it('descuenta materiales, persiste cliente/dirección y devuelve SRV', async () => {
       const { service, manager } = crearServicio(seedCierre(25));
 
