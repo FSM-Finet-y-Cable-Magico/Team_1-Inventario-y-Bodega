@@ -82,6 +82,9 @@ otros datos de activación. Respuestas envueltas `{ success, data }`.
   - **(C) materiales:** `materiales[]` se descuenta del inventario personal del técnico
     (`InventarioPersonalService.descontarHasta`, bloqueo de fila). Técnico = `payload.id_tecnico`
     o, si no viene, el `id_tecnico_asignado` de las unidades del cierre.
+    **BDD global:** G3 y G1 no comparten los ids, así que el técnico se busca en `usuario`, en
+    este orden: `usuario_tecnico` (`nombre_usuario`), `id_tecnico` y `rut_tecnico`. Si ninguno
+    existe, el cierre sigue sin técnico y queda la discrepancia `TECNICO_NO_ENCONTRADO`.
   - **(D) SRV:** para `tipo_ot = INSTALACION` se genera `SRV-YYYY-XXXXX` con secuencia atómica por
     empresa/año (`secuencia_srv`); un re-cierre de la misma OT conserva el SRV original. Viaja en
     `data.srv` de la respuesta 2xx.

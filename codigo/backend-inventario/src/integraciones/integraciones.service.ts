@@ -666,12 +666,14 @@ export class IntegracionesService {
       }
 
       // Acuerdo G3/G8 (BDD global): el técnico es el usuario compartido, por
-      // id_tecnico o rut_tecnico. Si no existe, el cierre sigue sin técnico y queda
-      // la discrepancia, en vez de guardar un id que no apunta a nadie.
+      // usuario_tecnico (nombre_usuario), rut_tecnico o id_tecnico. Si no existe,
+      // el cierre sigue sin técnico y queda la discrepancia, en vez de guardar un
+      // id que no apunta a nadie.
       const tecnico = await this.resolverTecnico(
         queryRunner.manager,
         idTecnico,
         payload.rut_tecnico,
+        payload.usuario_tecnico,
       );
       idTecnico = tecnico.id;
       if (tecnico.discrepancia) discrepancias.push(tecnico.discrepancia);
@@ -976,13 +978,27 @@ export class IntegracionesService {
     manager: EntityManager,
     idTecnico: number | null,
     rutTecnicoRaw: unknown,
+    usuarioTecnicoRaw: unknown = null,
   ): Promise<{ id: number | null; discrepancia?: any }> {
     const rut =
       typeof rutTecnicoRaw === 'string' && rutTecnicoRaw.trim() !== ''
         ? rutTecnicoRaw.trim()
         : null;
-    if (idTecnico === null && rut === null) return { id: null };
+    const nombreUsuario =
+      typeof usuarioTecnicoRaw === 'string' && usuarioTecnicoRaw.trim() !== ''
+        ? usuarioTecnicoRaw.trim()
+        : null;
+    if (idTecnico === null && rut === null && nombreUsuario === null) {
+      return { id: null };
+    }
 
+    // G3 y G1 no comparten ids: el nombre de usuario es el dato más confiable.
+    if (nombreUsuario !== null) {
+      const porUsuario = await manager.findOne(Usuario, {
+        where: { nombre_usuario: nombreUsuario },
+      });
+      if (porUsuario) return { id: porUsuario.id_usuario };
+    }
     if (idTecnico !== null) {
       const porId = await manager.findOne(Usuario, {
         where: { id_usuario: idTecnico },
@@ -1003,6 +1019,7 @@ export class IntegracionesService {
           'El técnico informado no existe en usuario; el cierre se procesó sin técnico. Revisar manualmente.',
         id_tecnico: idTecnico,
         rut_tecnico: rut,
+        usuario_tecnico: nombreUsuario,
       },
     };
   }
