@@ -18,6 +18,7 @@ import { IntegracionCierre } from './entities/cierre-integracion.entity';
 import { IntegracionActivacion } from './entities/integracion-activacion.entity';
 import { AsignacionEquipoServicio } from './entities/asignacion-equipo-servicio.entity';
 import { UnidadEquipo } from '../inventario/entities/unidad-equipo.entity';
+import { Usuario } from '../usuarios/entities/usuario.entity';
 import { HistorialEstado } from '../inventario/entities/historial-estado.entity';
 import { TipoEquipo } from '../inventario/entities/tipo-equipo.entity';
 import { StockConsumible } from '../bodegas/entities/stock-consumible.entity';
@@ -650,6 +651,17 @@ export class IntegracionesService {
 
       const accionesAplicadas: any[] = [];
       const discrepancias: any[] = [];
+
+      // BDD global: G3 y G1 no comparten los ids de técnico, así que el técnico
+      // se busca por RUT si viene, o se valida que su id exista en usuario.
+      // Si no se encuentra, el cierre sigue sin técnico y queda la discrepancia.
+      const tecnico = await this.resolverTecnicoCierre(
+        queryRunner.manager,
+        payload,
+        idTecnico,
+      );
+      idTecnico = tecnico.id;
+      if (tecnico.discrepancia) discrepancias.push(tecnico.discrepancia);
 
       // CU-64 (D): identificador de servicio SRV-YYYY-XXXXX para instalaciones
       // (secuencia por empresa/año; re-cierres de la misma OT conservan su SRV).
@@ -1356,6 +1368,56 @@ export class IntegracionesService {
       }
       return { numero_serie: serie };
     });
+  }
+
+  // Técnico del cierre (BDD global): por RUT (rut_tecnico) si viene, o el id
+  // informado si existe en usuario. Nunca rechaza el cierre.
+  private async resolverTecnicoCierre(
+    manager: EntityManager,
+    payload: any,
+    idTecnico: number | null,
+  ): Promise<{ id: number | null; discrepancia?: any }> {
+    const rut =
+      typeof payload?.rut_tecnico === 'string' ? payload.rut_tecnico.trim() : '';
+    if (rut) {
+      const porRut = await manager.findOne(Usuario, {
+        where: { rut: In(this.variantesRut(rut)) },
+      });
+      if (porRut) return { id: porRut.id_usuario };
+      return {
+        id: null,
+        discrepancia: {
+          codigo: 'TECNICO_NO_ENCONTRADO',
+          rut_tecnico: rut,
+          id_tecnico: idTecnico,
+          detalle: `No existe un usuario con RUT ${rut}. El cierre se registra sin técnico. Revisar manualmente.`,
+        },
+      };
+    }
+    if (idTecnico === null) return { id: null };
+    const porId = await manager.findOne(Usuario, {
+      where: { id_usuario: idTecnico },
+    });
+    if (porId) return { id: idTecnico };
+    return {
+      id: null,
+      discrepancia: {
+        codigo: 'TECNICO_NO_ENCONTRADO',
+        id_tecnico: idTecnico,
+        detalle: `No existe un usuario con id ${idTecnico}. El cierre se registra sin técnico. Revisar manualmente.`,
+      },
+    };
+  }
+
+  // Formas habituales de escribir un RUT: 12345678-5, 12.345.678-5 y 123456785.
+  private variantesRut(rut: string): string[] {
+    const limpio = rut.replace(/[.\s]/g, '').toUpperCase();
+    const [cuerpo, dv] = limpio.includes('-')
+      ? limpio.split('-', 2)
+      : [limpio.slice(0, -1), limpio.slice(-1)];
+    const conPuntos = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    const formas = [`${cuerpo}-${dv}`, `${conPuntos}-${dv}`, `${cuerpo}${dv}`];
+    return [...new Set([...formas, ...formas.map((f) => f.toLowerCase())])];
   }
 
   private enteroPositivo(valor: any): number | null {

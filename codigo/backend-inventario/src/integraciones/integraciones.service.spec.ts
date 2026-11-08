@@ -117,6 +117,13 @@ class FakeManager {
   }
 
   async find(entity: any, opciones: any = {}): Promise<Fila[]> {
+    // Técnicos: si la prueba no siembra usuarios, todo id_usuario consultado existe
+    // (así las pruebas anteriores no dependen de la validación del técnico).
+    const nombre = typeof entity === 'string' ? entity : entity?.name;
+    if (nombre === 'Usuario' && !this.store.Usuario) {
+      const id = opciones.where?.id_usuario;
+      return typeof id === 'number' ? [{ id_usuario: id }] : [];
+    }
     const filas = this.tabla(entity).filter((f) => this.coincide(f, opciones.where ?? {}));
     return this.ordenar(filas, opciones.order);
   }
@@ -692,6 +699,65 @@ describe('IntegracionesService — sc-158 (acuerdo G8 P0)', () => {
       const unidad = manager.tabla(UnidadEquipo)[0];
       expect(unidad.estado).toBe('Asignado a técnico');
       expect(unidad.idTecnicoAsignado).toBe(4);
+    });
+
+    it('técnico inexistente en la BDD global: cierre sin técnico y discrepancia', async () => {
+      const { service, manager } = crearServicio({
+        ...seedCierre(25),
+        Usuario: [{ id_usuario: 7, rut: '11111111-1' }],
+      });
+
+      const respuesta = await service.recibirCierreOt(
+        781,
+        payloadCierreInstalacion({ id_tecnico: 4 }),
+        G8,
+      );
+
+      expect(respuesta.data.discrepancias).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ codigo: 'TECNICO_NO_ENCONTRADO', id_tecnico: 4 }),
+        ]),
+      );
+      expect(respuesta.data.estado_proceso).toBe('PROCESADO_CON_DISCREPANCIAS');
+      // El id 4 se descarta; el técnico queda inferido de la unidad asignada (45).
+      expect(respuesta.data.id_tecnico).toBe(45);
+      expect(Number(manager.tabla(InventarioPersonal)[0].cantidad)).toBe(15);
+    });
+
+    it('rut_tecnico: se usa el usuario con ese RUT aunque el id no coincida', async () => {
+      const { service, manager } = crearServicio({
+        ...seedCierre(25),
+        Usuario: [{ id_usuario: 45, rut: '12345678-5' }],
+      });
+
+      const respuesta = await service.recibirCierreOt(
+        781,
+        payloadCierreInstalacion({ id_tecnico: 4, rut_tecnico: '12.345.678-5' }),
+        G8,
+      );
+
+      expect(respuesta.data.id_tecnico).toBe(45);
+      expect(respuesta.data.estado_proceso).toBe('PROCESADO');
+      expect(Number(manager.tabla(InventarioPersonal)[0].cantidad)).toBe(15);
+    });
+
+    it('rut_tecnico sin usuario: discrepancia y el cierre no se rechaza', async () => {
+      const { service } = crearServicio({
+        ...seedCierre(25),
+        Usuario: [{ id_usuario: 45, rut: '12345678-5' }],
+      });
+
+      const respuesta = await service.recibirCierreOt(
+        781,
+        payloadCierreInstalacion({ rut_tecnico: '9876543-2' }),
+        G8,
+      );
+
+      expect(respuesta.data.discrepancias).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ codigo: 'TECNICO_NO_ENCONTRADO', rut_tecnico: '9876543-2' }),
+        ]),
+      );
     });
 
     it('saldo exacto (disponible == declarado) permite el cierre', async () => {
