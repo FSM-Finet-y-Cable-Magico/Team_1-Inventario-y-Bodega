@@ -1240,14 +1240,18 @@ export class IntegracionesService {
     );
     const predefinido = preparado?.campos ?? {};
 
+    // G3 puede mandar los datos dentro de `reparacion` o en el primer nivel del JSON.
     const falla =
       this.textoObligatorio(bloque.falla_reportada) ??
+      this.textoObligatorio(payload.falla_reportada) ??
       this.textoObligatorio(predefinido.falla_reportada);
     const solucion =
       this.textoObligatorio(bloque.solucion_aplicada) ??
+      this.textoObligatorio(payload.solucion_aplicada) ??
       this.textoObligatorio(predefinido.solucion_aplicada);
     const resultado =
       RESULTADOS_G3[String(bloque.resultado ?? '').trim().toUpperCase()] ??
+      RESULTADOS_G3[String(payload.resultado ?? '').trim().toUpperCase()] ??
       RESULTADOS_G3[String(predefinido.resultado ?? '').trim().toUpperCase()];
 
     const faltantes = [
