@@ -15,11 +15,6 @@
 
 ### Login (CU-01)
 - Busca usuario por `nombre_usuario` con `usuarioRoles.rol`.
-- **Roles de la BDD global:** `Rol.nombre_rol` se traduce al leer (`src/roles/equivalencias-rol.ts`):
-  `Administrador` → `ADMIN`, `Inventario` → `ADMIN_BODEGA`, `Terreno` → `TECNICO_TERRENO`;
-  `SUPERUSUARIO` y los nombres propios de G1 quedan igual, y `Comercial`/`Soporte` no tienen acceso.
-  Así el token, los `@Roles` y el frontend siguen usando los nombres internos. Las consultas SQL que
-  filtran por rol usan `nombresRolEnBase(...)`.
 - **Excepción 1/2:** usuario no existe o password incorrecto → **mensaje genérico**
   `'Usuario o contraseña incorrectos.'` (no revela cuál falló).
 - **Excepción 3:** cuenta bloqueada (`bloqueado_hasta > now`) → mensaje de bloqueo.
