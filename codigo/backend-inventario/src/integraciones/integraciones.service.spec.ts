@@ -29,6 +29,7 @@ const PK: Record<string, string> = {
   StockConsumible: 'id_stock',
   CierreReparacion: 'id_cierre_reparacion',
   BorradorCierre: 'id_borrador',
+  Usuario: 'id_usuario',
 };
 
 class FakeManager {
@@ -137,6 +138,8 @@ function crearServicio(
   seed: Record<string, Fila[]> = {},
   inventarioPersonalService?: unknown,
 ) {
+  // BDD global: el técnico del cierre debe existir en usuario (id 45 por defecto).
+  if (!seed.Usuario) seed.Usuario = [{ id_usuario: 45, rut: '11.111.111-1' }];
   const manager = new FakeManager(seed);
   const queryRunner = {
     connect: jest.fn().mockResolvedValue(undefined),
@@ -633,6 +636,36 @@ describe('IntegracionesService — sc-158 (acuerdo G8 P0)', () => {
         ],
       };
     }
+
+    it('BDD global: técnico inexistente se registra como discrepancia sin romper el cierre', async () => {
+      const { service } = crearServicio({ ...seedCierre(25), Usuario: [] });
+
+      const respuesta = await service.recibirCierreOt(
+        781,
+        payloadCierreInstalacion({ id_tecnico: 4 }),
+        G8,
+      );
+
+      const codigos = (respuesta.data.discrepancias ?? []).map((d: Fila) => d.codigo);
+      expect(codigos).toContain('TECNICO_NO_ENCONTRADO');
+    });
+
+    it('BDD global: identifica al técnico por rut_tecnico si el id no existe', async () => {
+      const { service } = crearServicio({
+        ...seedCierre(25),
+        Usuario: [{ id_usuario: 45, rut: '11111111-1' }],
+      });
+
+      const respuesta = await service.recibirCierreOt(
+        781,
+        payloadCierreInstalacion({ id_tecnico: 4, rut_tecnico: '11.111.111-1' }),
+        G8,
+      );
+
+      expect(respuesta.data.id_tecnico).toBe(45);
+      const codigos = (respuesta.data.discrepancias ?? []).map((d: Fila) => d.codigo);
+      expect(codigos).not.toContain('TECNICO_NO_ENCONTRADO');
+    });
 
     it('descuenta materiales, persiste cliente/dirección y devuelve SRV', async () => {
       const { service, manager } = crearServicio(seedCierre(25));

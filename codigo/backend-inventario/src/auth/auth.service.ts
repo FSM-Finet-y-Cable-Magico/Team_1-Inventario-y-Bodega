@@ -1,3 +1,4 @@
+import { codigoRol } from '../common/roles-equivalencia';
 import {
   Injectable,
   UnauthorizedException,
@@ -93,7 +94,11 @@ export class AuthService {
       );
     }
 
-    const roles = usuario.usuarioRoles?.map((ur) => ur.rol.nombre_rol) ?? [];
+    const roles = [
+      ...new Set(
+        usuario.usuarioRoles?.map((ur) => codigoRol(ur.rol.nombre_rol)) ?? [],
+      ),
+    ];
     const payload = {
       sub: usuario.id_usuario,
       nombre_usuario: usuario.nombre_usuario,
@@ -118,7 +123,11 @@ export class AuthService {
       access_token,
       usuario: {
         ...usuarioSeguro,
-        roles: usuario.usuarioRoles?.map((ur) => ur.rol) ?? [],
+        roles:
+          usuario.usuarioRoles?.map((ur) => ({
+            ...ur.rol,
+            nombre_rol: codigoRol(ur.rol.nombre_rol),
+          })) ?? [],
         empresa: EMPRESAS.find((e) => e.id === usuario.id_empresa) ?? null,
       },
     };
