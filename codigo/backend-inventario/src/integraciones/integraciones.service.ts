@@ -27,6 +27,7 @@ import { CierreReparacion } from './entities/cierre-reparacion.entity';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { CierresTrabajoService } from './cierres-trabajo.service';
 import { IntegracionContexto } from './guards/api-key.guard';
+import { Usuario } from '../usuarios/entities/usuario.entity';
 
 // sc-113: mapeo de las acciones semánticas que emite G3 en el cierre de OT
 // hacia los literales exactos de nuestra máquina de estados (con tildes).
@@ -664,6 +665,17 @@ export class IntegracionesService {
         );
       }
 
+      // Acuerdo G3/G8 (BDD global): el técnico es el usuario compartido, por
+      // id_tecnico o rut_tecnico. Si no existe, el cierre sigue sin técnico y queda
+      // la discrepancia, en vez de guardar un id que no apunta a nadie.
+      const tecnico = await this.resolverTecnico(
+        queryRunner.manager,
+        idTecnico,
+        payload.rut_tecnico,
+      );
+      idTecnico = tecnico.id;
+      if (tecnico.discrepancia) discrepancias.push(tecnico.discrepancia);
+
       // Acuerdo G3: el diagnóstico del retiro para revisión es la categoria_falla
       // del cierre; si no viene, 'Causa desconocida'.
       const categoriaFalla = extraerCategoriaFalla(payload);
@@ -957,6 +969,41 @@ export class IntegracionesService {
         estado_nuevo: regla.estado,
       },
       id_tecnico: idTecnicoUnidad,
+    };
+  }
+
+  private async resolverTecnico(
+    manager: EntityManager,
+    idTecnico: number | null,
+    rutTecnicoRaw: unknown,
+  ): Promise<{ id: number | null; discrepancia?: any }> {
+    const rut =
+      typeof rutTecnicoRaw === 'string' && rutTecnicoRaw.trim() !== ''
+        ? rutTecnicoRaw.trim()
+        : null;
+    if (idTecnico === null && rut === null) return { id: null };
+
+    if (idTecnico !== null) {
+      const porId = await manager.findOne(Usuario, {
+        where: { id_usuario: idTecnico },
+      });
+      if (porId) return { id: idTecnico };
+    }
+    if (rut !== null) {
+      for (const variante of [...new Set([rut, rut.replace(/\./g, '').toUpperCase()])]) {
+        const porRut = await manager.findOne(Usuario, { where: { rut: variante } });
+        if (porRut) return { id: porRut.id_usuario };
+      }
+    }
+    return {
+      id: null,
+      discrepancia: {
+        codigo: 'TECNICO_NO_ENCONTRADO',
+        detalle:
+          'El técnico informado no existe en usuario; el cierre se procesó sin técnico. Revisar manualmente.',
+        id_tecnico: idTecnico,
+        rut_tecnico: rut,
+      },
     };
   }
 

@@ -1,3 +1,4 @@
+import { nombresDeRol } from '../common/roles-equivalencia';
 import {
   BadRequestException,
   ForbiddenException,
@@ -202,7 +203,9 @@ export class ReportesService {
       .innerJoin('u.usuarioRoles', 'ur')
       .innerJoin('ur.rol', 'r')
       .where('u.activo = true')
-      .andWhere('r.nombre_rol = :rol', { rol: 'TECNICO_TERRENO' });
+      .andWhere('r.nombre_rol IN (:...rolesTecnico)', {
+        rolesTecnico: nombresDeRol('TECNICO_TERRENO'),
+      });
     if (idEmpresa !== undefined && idEmpresa !== null) {
       tecnicosQb.andWhere('u.id_empresa = :idEmpresa', { idEmpresa });
     }
@@ -1359,11 +1362,15 @@ export class ReportesService {
        INNER JOIN usuario_rol ur ON ur.id_usuario = u.id_usuario
        INNER JOIN rol r ON r.id_rol = ur.id_rol
        WHERE u.activo = true
-         AND r.nombre_rol = 'TECNICO_TERRENO'
+         AND r.nombre_rol = ANY($3::text[])
          AND ($1::int IS NULL OR u.id_empresa = $1)
          AND ($2::int IS NULL OR u.id_usuario = $2)
        ORDER BY u.nombre_completo ASC, u.id_usuario ASC`,
-      [idEmpresa ?? null, filtros.id_tecnico ?? null],
+      [
+        idEmpresa ?? null,
+        filtros.id_tecnico ?? null,
+        nombresDeRol('TECNICO_TERRENO'),
+      ],
     );
 
     if (filtros.id_tecnico !== undefined && tecnicos.length === 0) {
