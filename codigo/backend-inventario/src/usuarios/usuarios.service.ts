@@ -1,3 +1,4 @@
+import { codigoRol } from '../common/roles-equivalencia';
 import {
   Injectable,
   BadRequestException,
@@ -60,7 +61,7 @@ export class UsuariosService {
 
     if (filtros.rol) {
       resultado = resultado.filter((u) =>
-        u.roles.some((r) => r.nombre_rol === filtros.rol),
+        u.roles.some((r) => r.nombre_rol === codigoRol(filtros.rol)),
       );
     }
 
@@ -99,7 +100,11 @@ export class UsuariosService {
     const { password_hash, ...usuarioSeguro } = usuario;
     return {
       ...usuarioSeguro,
-      roles: usuario.usuarioRoles?.map((ur) => ur.rol).filter(Boolean) ?? [],
+      roles:
+        usuario.usuarioRoles
+          ?.map((ur) => ur.rol)
+          .filter(Boolean)
+          .map((r) => ({ ...r, nombre_rol: codigoRol(r.nombre_rol) })) ?? [],
     } as Usuario & { roles: Rol[] };
   }
 
@@ -145,7 +150,7 @@ export class UsuariosService {
       }
       // CU-04 Excepción 2: el Administrador no puede asignar rol Superusuario
       if (
-        rolesAsignar.some((r) => r.nombre_rol === 'SUPERUSUARIO') &&
+        rolesAsignar.some((r) => codigoRol(r.nombre_rol) === 'SUPERUSUARIO') &&
         !esSuperusuario
       ) {
         throw new ForbiddenException(
@@ -301,7 +306,7 @@ export class UsuariosService {
       }
       // CU-06 Excepción 2: el Administrador no puede asignar rol Superusuario
       if (
-        rolesAsignar.some((r) => r.nombre_rol === 'SUPERUSUARIO') &&
+        rolesAsignar.some((r) => codigoRol(r.nombre_rol) === 'SUPERUSUARIO') &&
         !actorRoles.includes('SUPERUSUARIO')
       ) {
         throw new ForbiddenException(
