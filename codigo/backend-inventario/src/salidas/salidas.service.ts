@@ -1,3 +1,4 @@
+import { codigoRol } from '../common/roles-equivalencia';
 import {
   BadRequestException,
   Injectable,
@@ -74,7 +75,7 @@ export class SalidasService {
       relations: { usuarioRoles: { rol: true } },
     });
     const rolesTecnico = (tecnico?.usuarioRoles ?? []).map(
-      (ur) => ur.rol?.nombre_rol,
+      (ur) => codigoRol(ur.rol?.nombre_rol),
     );
     if (!tecnico || !rolesTecnico.includes('TECNICO_TERRENO')) {
       throw new BadRequestException(
