@@ -1333,6 +1333,27 @@ describe('IntegracionesService — sc-159 (acuerdo G8 P1)', () => {
       );
     });
 
+    it('acepta falla, solución y resultado en el primer nivel del JSON', async () => {
+      const { service, manager } = crearServicio(seed());
+
+      await service.recibirCierreOt(
+        900,
+        payloadReparacion({
+          reparacion: undefined,
+          falla_reportada: 'Fibra drop dañada entre caja NAP y el domicilio',
+          solucion_aplicada: 'Se reemplazó el tramo de fibra drop',
+          resultado: 'RESUELTO',
+        }),
+        G8,
+      );
+
+      expect(cierre(manager)).toMatchObject({
+        fallaReportada: 'Fibra drop dañada entre caja NAP y el domicilio',
+        solucionAplicada: 'Se reemplazó el tramo de fibra drop',
+        resultado: 'Resuelto',
+      });
+    });
+
     it('audita el cierre con el técnico como actor', async () => {
       const { service, auditoriaService, manager } = crearServicio(seed());
 
