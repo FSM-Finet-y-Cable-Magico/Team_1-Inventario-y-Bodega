@@ -666,12 +666,13 @@ export class IntegracionesService {
       }
 
       // Acuerdo G3/G8 (BDD global): el técnico es el usuario compartido, por
-      // id_tecnico o rut_tecnico. Si no existe, el cierre sigue sin técnico y queda
+      // id_tecnico, rut_tecnico o usuario_tecnico. Si no existe, el cierre sigue sin técnico y queda
       // la discrepancia, en vez de guardar un id que no apunta a nadie.
       const tecnico = await this.resolverTecnico(
         queryRunner.manager,
         idTecnico,
         payload.rut_tecnico,
+        payload.usuario_tecnico,
       );
       idTecnico = tecnico.id;
       if (tecnico.discrepancia) discrepancias.push(tecnico.discrepancia);
@@ -976,12 +977,15 @@ export class IntegracionesService {
     manager: EntityManager,
     idTecnico: number | null,
     rutTecnicoRaw: unknown,
+    usuarioTecnicoRaw?: unknown,
   ): Promise<{ id: number | null; discrepancia?: any }> {
-    const rut =
-      typeof rutTecnicoRaw === 'string' && rutTecnicoRaw.trim() !== ''
-        ? rutTecnicoRaw.trim()
-        : null;
-    if (idTecnico === null && rut === null) return { id: null };
+    const texto = (valor: unknown): string | null =>
+      typeof valor === 'string' && valor.trim() !== '' ? valor.trim() : null;
+    const rut = texto(rutTecnicoRaw);
+    const usuario = texto(usuarioTecnicoRaw);
+    if (idTecnico === null && rut === null && usuario === null) {
+      return { id: null };
+    }
 
     if (idTecnico !== null) {
       const porId = await manager.findOne(Usuario, {
@@ -995,6 +999,13 @@ export class IntegracionesService {
         if (porRut) return { id: porRut.id_usuario };
       }
     }
+    // G3 envía usuario_tecnico (nombre_usuario de la tabla compartida).
+    if (usuario !== null) {
+      const porUsuario = await manager.findOne(Usuario, {
+        where: { nombre_usuario: usuario },
+      });
+      if (porUsuario) return { id: porUsuario.id_usuario };
+    }
     return {
       id: null,
       discrepancia: {
@@ -1003,6 +1014,7 @@ export class IntegracionesService {
           'El técnico informado no existe en usuario; el cierre se procesó sin técnico. Revisar manualmente.',
         id_tecnico: idTecnico,
         rut_tecnico: rut,
+        usuario_tecnico: usuario,
       },
     };
   }
