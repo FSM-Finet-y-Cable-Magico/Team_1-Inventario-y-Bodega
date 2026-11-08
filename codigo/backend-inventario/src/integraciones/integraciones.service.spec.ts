@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { IntegracionesService } from './integraciones.service';
 import { IntegracionActivacion } from './entities/integracion-activacion.entity';
 import { IntegracionCierre } from './entities/cierre-integracion.entity';
@@ -96,11 +92,7 @@ class FakeManager {
       // Soporte mínimo de operadores TypeORM usados por el service.
       if (valor && typeof valor === 'object' && valor._type === 'not') {
         const interno = valor._value;
-        if (
-          interno &&
-          typeof interno === 'object' &&
-          interno._type === 'isNull'
-        ) {
+        if (interno && typeof interno === 'object' && interno._type === 'isNull') {
           return fila[campo] !== null && fila[campo] !== undefined;
         }
       }
@@ -112,10 +104,7 @@ class FakeManager {
     });
   }
 
-  private ordenar(
-    filas: Fila[],
-    order?: Record<string, 'ASC' | 'DESC'>,
-  ): Fila[] {
+  private ordenar(filas: Fila[], order?: Record<string, 'ASC' | 'DESC'>): Fila[] {
     if (!order) return filas;
     const criterios = Object.entries(order);
     return [...filas].sort((a, b) => {
@@ -129,9 +118,7 @@ class FakeManager {
   }
 
   async find(entity: any, opciones: any = {}): Promise<Fila[]> {
-    const filas = this.tabla(entity).filter((f) =>
-      this.coincide(f, opciones.where ?? {}),
-    );
+    const filas = this.tabla(entity).filter((f) => this.coincide(f, opciones.where ?? {}));
     return this.ordenar(filas, opciones.order);
   }
 
@@ -162,31 +149,19 @@ function crearServicio(
     release: jest.fn().mockResolvedValue(undefined),
     manager,
   };
-  const dataSource = {
-    createQueryRunner: jest.fn().mockReturnValue(queryRunner),
-  };
+  const dataSource = { createQueryRunner: jest.fn().mockReturnValue(queryRunner) };
   const cierreRepository = {
-    findOne: jest.fn((opciones: any) =>
-      manager.findOne(IntegracionCierre, opciones),
-    ),
+    findOne: jest.fn((opciones: any) => manager.findOne(IntegracionCierre, opciones)),
   };
   const activacionRepository = {
-    findOne: jest.fn((opciones: any) =>
-      manager.findOne(IntegracionActivacion, opciones),
-    ),
+    findOne: jest.fn((opciones: any) => manager.findOne(IntegracionActivacion, opciones)),
   };
   const asignacionRepository = {
-    findOne: jest.fn((opciones: any) =>
-      manager.findOne(AsignacionEquipoServicio, opciones),
-    ),
-    find: jest.fn((opciones: any) =>
-      manager.find(AsignacionEquipoServicio, opciones),
-    ),
+    findOne: jest.fn((opciones: any) => manager.findOne(AsignacionEquipoServicio, opciones)),
+    find: jest.fn((opciones: any) => manager.find(AsignacionEquipoServicio, opciones)),
   };
   const unitRepository = {
-    findOne: jest.fn((opciones: any) =>
-      manager.findOne(UnidadEquipo, opciones),
-    ),
+    findOne: jest.fn((opciones: any) => manager.findOne(UnidadEquipo, opciones)),
     find: jest.fn((opciones: any) => manager.find(UnidadEquipo, opciones)),
   };
   const tipoRepository = {
@@ -197,18 +172,12 @@ function crearServicio(
   };
   // CU-69: cierres de reparación registrados junto al cierre de OT.
   const reparacionRepository = {
-    findOne: jest.fn((opciones: any) =>
-      manager.findOne(CierreReparacion, opciones),
-    ),
+    findOne: jest.fn((opciones: any) => manager.findOne(CierreReparacion, opciones)),
   };
   const auditoriaService = { create: jest.fn() };
   // CU-70: el cierre consulta el borrador del técnico (catálogo T-01..T-10).
   const cierresTrabajoService = new CierresTrabajoService(
-    {
-      findOne: jest.fn((opciones: any) =>
-        manager.findOne(BorradorCierre, opciones),
-      ),
-    } as never,
+    { findOne: jest.fn((opciones: any) => manager.findOne(BorradorCierre, opciones)) } as never,
     auditoriaService as never,
   );
   const catalogService = { consultar: jest.fn().mockResolvedValue([]) };
@@ -286,18 +255,16 @@ describe('IntegracionesService — sc-158 (acuerdo G8 P0)', () => {
 
     it('exige id_empresa numérico (400)', () => {
       const { service } = crearServicio();
-      expect(() => service.validarScope(G8, Number(undefined))).toThrow(
-        BadRequestException,
-      );
+      expect(() => service.validarScope(G8, Number(undefined))).toThrow(BadRequestException);
     });
   });
 
   describe('GET /integraciones/unidades/{serie}', () => {
     it('404 genérico cuando la serie no existe en la empresa', async () => {
       const { service } = crearServicio({ UnidadEquipo: [] });
-      await expect(
-        service.consultarUnidadPorSerie('NO-EXISTE', 1),
-      ).rejects.toThrow('Número de serie no encontrado.');
+      await expect(service.consultarUnidadPorSerie('NO-EXISTE', 1)).rejects.toThrow(
+        'Número de serie no encontrado.',
+      );
     });
 
     it('amplía la respuesta con tipo, garantía y asignación actual', async () => {
@@ -365,9 +332,7 @@ describe('IntegracionesService — sc-158 (acuerdo G8 P0)', () => {
         },
       ]);
 
-      const respuesta = await service.consultarTiposEquipo(1, {
-        categoria: 'ONT/ONU',
-      });
+      const respuesta = await service.consultarTiposEquipo(1, { categoria: 'ONT/ONU' });
 
       expect(catalogService.consultar).toHaveBeenCalledWith({
         categoria: 'ONT/ONU',
@@ -392,9 +357,9 @@ describe('IntegracionesService — sc-158 (acuerdo G8 P0)', () => {
 
     it('rechaza un filtro activo distinto de true/false (400)', async () => {
       const { service } = crearServicio();
-      await expect(
-        service.consultarTiposEquipo(1, { activo: '1' }),
-      ).rejects.toThrow("El filtro activo debe ser 'true' o 'false'.");
+      await expect(service.consultarTiposEquipo(1, { activo: '1' })).rejects.toThrow(
+        "El filtro activo debe ser 'true' o 'false'.",
+      );
     });
   });
 
@@ -407,35 +372,20 @@ describe('IntegracionesService — sc-158 (acuerdo G8 P0)', () => {
       ).rejects.toThrow('Falta el event_id de la activación.');
 
       await expect(
-        service.registrarActivacion(
-          payloadActivacion({ id_ot: undefined }),
-          G8,
-        ),
+        service.registrarActivacion(payloadActivacion({ id_ot: undefined }), G8),
       ).rejects.toThrow('Falta el id_ot de la activación o no es numérico.');
 
       await expect(
-        service.registrarActivacion(
-          payloadActivacion({ id_contrato: undefined }),
-          G8,
-        ),
-      ).rejects.toThrow(
-        'Falta el id_contrato de la activación o no es numérico.',
-      );
+        service.registrarActivacion(payloadActivacion({ id_contrato: undefined }), G8),
+      ).rejects.toThrow('Falta el id_contrato de la activación o no es numérico.');
 
       await expect(
-        service.registrarActivacion(
-          payloadActivacion({ id_servicio: undefined }),
-          G8,
-        ),
-      ).rejects.toThrow(
-        'Falta el id_servicio de la activación o no es numérico.',
-      );
+        service.registrarActivacion(payloadActivacion({ id_servicio: undefined }), G8),
+      ).rejects.toThrow('Falta el id_servicio de la activación o no es numérico.');
 
       await expect(
         service.registrarActivacion(payloadActivacion({ equipos: [] }), G8),
-      ).rejects.toThrow(
-        'La activación debe incluir al menos un equipo en el campo equipos.',
-      );
+      ).rejects.toThrow('La activación debe incluir al menos un equipo en el campo equipos.');
     });
 
     it('misma activación dos veces → una sola asignación y duplicado: true', async () => {
@@ -447,22 +397,13 @@ describe('IntegracionesService — sc-158 (acuerdo G8 P0)', () => {
             claveIdempotencia: '781:2026-09-25T10:00:00Z',
             id_ot: 781,
             id_empresa: 1,
-            payload: {
-              id_empresa: 1,
-              fecha_completada: '2026-09-25T10:00:00Z',
-            },
+            payload: { id_empresa: 1, fecha_completada: '2026-09-25T10:00:00Z' },
           },
         ],
       });
 
-      const primera = await service.registrarActivacion(
-        payloadActivacion(),
-        G8,
-      );
-      const segunda = await service.registrarActivacion(
-        payloadActivacion(),
-        G8,
-      );
+      const primera = await service.registrarActivacion(payloadActivacion(), G8);
+      const segunda = await service.registrarActivacion(payloadActivacion(), G8);
 
       expect(primera.data).toMatchObject({
         event_id: 'client-activation-ot-781',
@@ -470,10 +411,7 @@ describe('IntegracionesService — sc-158 (acuerdo G8 P0)', () => {
         equipos_asociados: 1,
         duplicado: false,
       });
-      expect(segunda.data).toMatchObject({
-        equipos_asociados: 1,
-        duplicado: true,
-      });
+      expect(segunda.data).toMatchObject({ equipos_asociados: 1, duplicado: true });
       expect(manager.tabla(AsignacionEquipoServicio)).toHaveLength(1);
       expect(manager.tabla(AsignacionEquipoServicio)[0].activa).toBe(true);
     });
@@ -485,25 +423,16 @@ describe('IntegracionesService — sc-158 (acuerdo G8 P0)', () => {
 
       await service.registrarActivacion(payloadActivacion(), G8);
       await expect(
-        service.registrarActivacion(
-          payloadActivacion({ id_servicio: 999 }),
-          G8,
-        ),
+        service.registrarActivacion(payloadActivacion({ id_servicio: 999 }), G8),
       ).rejects.toThrow(ConflictException);
     });
 
     it('activación sin cierre → PENDIENTE_CIERRE y sin asignaciones', async () => {
       const { service, manager } = crearServicio();
 
-      const respuesta = await service.registrarActivacion(
-        payloadActivacion(),
-        G8,
-      );
+      const respuesta = await service.registrarActivacion(payloadActivacion(), G8);
 
-      expect(respuesta.data).toMatchObject({
-        equipos_asociados: 0,
-        duplicado: false,
-      });
+      expect(respuesta.data).toMatchObject({ equipos_asociados: 0, duplicado: false });
       expect(manager.tabla(AsignacionEquipoServicio)).toHaveLength(0);
       const cabecera = manager.tabla(IntegracionActivacion)[0];
       expect(cabecera.estadoProceso).toBe('PENDIENTE_CIERRE');
@@ -522,20 +451,14 @@ describe('IntegracionesService — sc-158 (acuerdo G8 P0)', () => {
             claveIdempotencia: '781:2026-09-25T10:00:00Z',
             id_ot: 781,
             id_empresa: 1,
-            payload: {
-              id_empresa: 1,
-              fecha_completada: '2026-09-25T10:00:00Z',
-            },
+            payload: { id_empresa: 1, fecha_completada: '2026-09-25T10:00:00Z' },
           },
         ],
       });
 
       const respuesta = await service.registrarActivacion(
         payloadActivacion({
-          equipos: [
-            { numero_serie: 'ONT-123456' },
-            { numero_serie: 'ONT-999999' },
-          ],
+          equipos: [{ numero_serie: 'ONT-123456' }, { numero_serie: 'ONT-999999' }],
         }),
         G8,
       );
@@ -543,12 +466,8 @@ describe('IntegracionesService — sc-158 (acuerdo G8 P0)', () => {
       expect(respuesta.data.equipos_asociados).toBe(2);
       const asignaciones = manager.tabla(AsignacionEquipoServicio);
       expect(asignaciones).toHaveLength(2);
-      expect(
-        asignaciones.every((a) => a.eventId === 'client-activation-ot-781'),
-      ).toBe(true);
-      expect(manager.tabla(IntegracionActivacion)[0].estadoProceso).toBe(
-        'COMPLETO',
-      );
+      expect(asignaciones.every((a) => a.eventId === 'client-activation-ot-781')).toBe(true);
+      expect(manager.tabla(IntegracionActivacion)[0].estadoProceso).toBe('COMPLETO');
     });
 
     it('reemplazo: retira la asignación activa anterior del mismo servicio', async () => {
@@ -571,24 +490,17 @@ describe('IntegracionesService — sc-158 (acuerdo G8 P0)', () => {
             claveIdempotencia: '781:2026-09-25T10:00:00Z',
             id_ot: 781,
             id_empresa: 1,
-            payload: {
-              id_empresa: 1,
-              fecha_completada: '2026-09-25T10:00:00Z',
-            },
+            payload: { id_empresa: 1, fecha_completada: '2026-09-25T10:00:00Z' },
           },
         ],
       });
 
       await service.registrarActivacion(payloadActivacion(), G8);
 
-      const anteriores = manager
-        .tabla(AsignacionEquipoServicio)
-        .filter((a) => a.id_asignacion === 77);
+      const anteriores = manager.tabla(AsignacionEquipoServicio).filter((a) => a.id_asignacion === 77);
       expect(anteriores[0].activa).toBe(false);
       expect(anteriores[0].fechaRetiro).toBeTruthy();
-      const nuevas = manager
-        .tabla(AsignacionEquipoServicio)
-        .filter((a) => a.id_unidad === 501);
+      const nuevas = manager.tabla(AsignacionEquipoServicio).filter((a) => a.id_unidad === 501);
       expect(nuevas).toHaveLength(1);
       expect(nuevas[0].activa).toBe(true);
     });
@@ -601,10 +513,7 @@ describe('IntegracionesService — sc-158 (acuerdo G8 P0)', () => {
             claveIdempotencia: '781:2026-09-25T10:00:00Z',
             id_ot: 781,
             id_empresa: 1,
-            payload: {
-              id_empresa: 1,
-              fecha_completada: '2026-09-25T10:00:00Z',
-            },
+            payload: { id_empresa: 1, fecha_completada: '2026-09-25T10:00:00Z' },
           },
         ],
       });
@@ -628,27 +537,19 @@ describe('IntegracionesService — sc-158 (acuerdo G8 P0)', () => {
       id_empresa: 1,
       tipo_ot: 'INSTALACION',
       fecha_completada: '2026-09-25T10:00:00Z',
-      equipos_instalados: [
-        { numero_serie: 'ONT-123456', accion: 'INSTALADO_EN_CLIENTE' },
-      ],
+      equipos_instalados: [{ numero_serie: 'ONT-123456', accion: 'INSTALADO_EN_CLIENTE' }],
       equipos_retirados: [],
     });
 
     it('activación→cierre: el cierre completa la activación pendiente', async () => {
       const { service, manager } = crearServicio({
         UnidadEquipo: [
-          {
-            ...UNIDAD_INSTALADA,
-            estado: 'Asignado a técnico',
-            tipoEquipo: undefined,
-          },
+          { ...UNIDAD_INSTALADA, estado: 'Asignado a técnico', tipoEquipo: undefined },
         ],
       });
 
       await service.registrarActivacion(payloadActivacion(), G8);
-      expect(manager.tabla(IntegracionActivacion)[0].estadoProceso).toBe(
-        'PENDIENTE_CIERRE',
-      );
+      expect(manager.tabla(IntegracionActivacion)[0].estadoProceso).toBe('PENDIENTE_CIERRE');
 
       await service.recibirCierreOt(781, payloadCierre(), G8);
 
@@ -668,11 +569,7 @@ describe('IntegracionesService — sc-158 (acuerdo G8 P0)', () => {
     it('cierre→activación: deja PENDIENTE_ACTIVACION y la activación lo completa', async () => {
       const { service, manager } = crearServicio({
         UnidadEquipo: [
-          {
-            ...UNIDAD_INSTALADA,
-            estado: 'Asignado a técnico',
-            tipoEquipo: undefined,
-          },
+          { ...UNIDAD_INSTALADA, estado: 'Asignado a técnico', tipoEquipo: undefined },
         ],
       });
 
@@ -682,17 +579,12 @@ describe('IntegracionesService — sc-158 (acuerdo G8 P0)', () => {
       expect(placeholder.estadoProceso).toBe('PENDIENTE_ACTIVACION');
       expect(placeholder.eventId).toBeNull();
 
-      const respuesta = await service.registrarActivacion(
-        payloadActivacion(),
-        G8,
-      );
+      const respuesta = await service.registrarActivacion(payloadActivacion(), G8);
 
       expect(respuesta.data.duplicado).toBe(false);
       expect(respuesta.data.equipos_asociados).toBe(1);
       expect(manager.tabla(IntegracionActivacion)).toHaveLength(1);
-      expect(manager.tabla(IntegracionActivacion)[0].estadoProceso).toBe(
-        'COMPLETO',
-      );
+      expect(manager.tabla(IntegracionActivacion)[0].estadoProceso).toBe('COMPLETO');
       expect(manager.tabla(AsignacionEquipoServicio)).toHaveLength(1);
     });
   });
@@ -714,10 +606,7 @@ describe('IntegracionesService — sc-158 (acuerdo G8 P0)', () => {
       id_tecnico: 45,
       fecha_completada: '2026-09-25T10:00:00Z',
       cliente: { rut: '12345678-5', nombre_completo: 'Juan Pérez' },
-      direccion: {
-        direccion_completa: 'Av. Siempre Viva 742',
-        comuna: 'Santiago',
-      },
+      direccion: { direccion_completa: 'Av. Siempre Viva 742', comuna: 'Santiago' },
       equipos_instalados: [
         { numero_serie: 'ONT-123456', accion: 'INSTALADO_EN_CLIENTE' },
       ],
@@ -757,9 +646,7 @@ describe('IntegracionesService — sc-158 (acuerdo G8 P0)', () => {
         G8,
       );
 
-      const codigos = (respuesta.data.discrepancias ?? []).map(
-        (d: Fila) => d.codigo,
-      );
+      const codigos = (respuesta.data.discrepancias ?? []).map((d: Fila) => d.codigo);
       expect(codigos).toContain('TECNICO_NO_ENCONTRADO');
     });
 
@@ -771,17 +658,12 @@ describe('IntegracionesService — sc-158 (acuerdo G8 P0)', () => {
 
       const respuesta = await service.recibirCierreOt(
         781,
-        payloadCierreInstalacion({
-          id_tecnico: 4,
-          rut_tecnico: '11.111.111-1',
-        }),
+        payloadCierreInstalacion({ id_tecnico: 4, rut_tecnico: '11.111.111-1' }),
         G8,
       );
 
       expect(respuesta.data.id_tecnico).toBe(45);
-      const codigos = (respuesta.data.discrepancias ?? []).map(
-        (d: Fila) => d.codigo,
-      );
+      const codigos = (respuesta.data.discrepancias ?? []).map((d: Fila) => d.codigo);
       expect(codigos).not.toContain('TECNICO_NO_ENCONTRADO');
     });
 
@@ -830,7 +712,9 @@ describe('IntegracionesService — sc-158 (acuerdo G8 P0)', () => {
       ]);
       expect(respuesta.data.materiales.ajustes).toEqual([]);
       // El saldo real quedó descontado en el inventario personal del técnico.
-      expect(Number(manager.tabla(InventarioPersonal)[0].cantidad)).toBe(15);
+      expect(
+        Number(manager.tabla(InventarioPersonal)[0].cantidad),
+      ).toBe(15);
       // Cliente/dirección persistidos en la unidad instalada (CU-48/71/73/87).
       const unidad = manager.tabla(UnidadEquipo)[0];
       expect(unidad.estado).toBe('Instalado en cliente');
@@ -921,18 +805,8 @@ describe('IntegracionesService — sc-158 (acuerdo G8 P0)', () => {
           },
         ],
         InventarioPersonal: [
-          {
-            id_inventario: 1,
-            id_tecnico: 45,
-            id_tipo_equipo: 7,
-            cantidad: '100',
-          },
-          {
-            id_inventario: 2,
-            id_tecnico: 45,
-            id_tipo_equipo: 8,
-            cantidad: '2',
-          },
+          { id_inventario: 1, id_tecnico: 45, id_tipo_equipo: 7, cantidad: '100' },
+          { id_inventario: 2, id_tecnico: 45, id_tipo_equipo: 8, cantidad: '2' },
         ],
       });
 
@@ -991,9 +865,7 @@ describe('IntegracionesService — sc-158 (acuerdo G8 P0)', () => {
         G8,
       );
 
-      expect(respuesta.data.discrepancias[0].codigo).toBe(
-        'TECNICO_NO_IDENTIFICADO',
-      );
+      expect(respuesta.data.discrepancias[0].codigo).toBe('TECNICO_NO_IDENTIFICADO');
       expect(Number(manager.tabla(InventarioPersonal)[0].cantidad)).toBe(25);
     });
 
@@ -1093,11 +965,7 @@ describe('IntegracionesService — sc-159 (acuerdo G8 P1)', () => {
         id_tipo_equipo: 3,
         serialNumber: 'ONT-123456',
         estado: 'Instalado en cliente',
-        tipoEquipo: {
-          id_tipo_equipo: 3,
-          nombre: 'ONT Huawei',
-          categoria: 'ONT/ONU',
-        },
+        tipoEquipo: { id_tipo_equipo: 3, nombre: 'ONT Huawei', categoria: 'ONT/ONU' },
       },
       {
         id_unidad: 502,
@@ -1105,11 +973,7 @@ describe('IntegracionesService — sc-159 (acuerdo G8 P1)', () => {
         id_tipo_equipo: 3,
         serialNumber: 'ONT-000001',
         estado: 'Instalado en cliente',
-        tipoEquipo: {
-          id_tipo_equipo: 3,
-          nombre: 'ONT Huawei',
-          categoria: 'ONT/ONU',
-        },
+        tipoEquipo: { id_tipo_equipo: 3, nombre: 'ONT Huawei', categoria: 'ONT/ONU' },
       },
     ];
 
@@ -1179,36 +1043,14 @@ describe('IntegracionesService — sc-159 (acuerdo G8 P1)', () => {
       const { service } = crearServicio({
         TipoEquipo: TIPOS.map((t) => ({ ...t })),
         UnidadEquipo: [
-          {
-            id_unidad: 1,
-            id_empresa: 1,
-            id_tipo_equipo: 3,
-            estado: 'En bodega',
-          },
-          {
-            id_unidad: 2,
-            id_empresa: 1,
-            id_tipo_equipo: 3,
-            estado: 'En bodega',
-          },
-          {
-            id_unidad: 3,
-            id_empresa: 1,
-            id_tipo_equipo: 3,
-            estado: 'Asignado a técnico',
-          },
-          {
-            id_unidad: 4,
-            id_empresa: 1,
-            id_tipo_equipo: 3,
-            estado: 'Instalado en cliente',
-          },
+          { id_unidad: 1, id_empresa: 1, id_tipo_equipo: 3, estado: 'En bodega' },
+          { id_unidad: 2, id_empresa: 1, id_tipo_equipo: 3, estado: 'En bodega' },
+          { id_unidad: 3, id_empresa: 1, id_tipo_equipo: 3, estado: 'Asignado a técnico' },
+          { id_unidad: 4, id_empresa: 1, id_tipo_equipo: 3, estado: 'Instalado en cliente' },
         ],
       });
 
-      const respuesta = await service.consultarStock(1, {
-        id_tipo_equipo: '3',
-      });
+      const respuesta = await service.consultarStock(1, { id_tipo_equipo: '3' });
 
       expect(respuesta.data).toEqual([
         {
@@ -1229,24 +1071,12 @@ describe('IntegracionesService — sc-159 (acuerdo G8 P1)', () => {
       const { service } = crearServicio({
         TipoEquipo: TIPOS.map((t) => ({ ...t })),
         StockConsumible: [
-          {
-            id_stock: 1,
-            id_tipo_equipo: 7,
-            id_bodega: 1,
-            cantidad_disponible: '25.5',
-          },
-          {
-            id_stock: 2,
-            id_tipo_equipo: 7,
-            id_bodega: 2,
-            cantidad_disponible: '10',
-          },
+          { id_stock: 1, id_tipo_equipo: 7, id_bodega: 1, cantidad_disponible: '25.5' },
+          { id_stock: 2, id_tipo_equipo: 7, id_bodega: 2, cantidad_disponible: '10' },
         ],
       });
 
-      const respuesta = await service.consultarStock(1, {
-        id_tipo_equipo: '7',
-      });
+      const respuesta = await service.consultarStock(1, { id_tipo_equipo: '7' });
 
       expect(respuesta.data[0]).toMatchObject({
         id_tipo_equipo: 7,
@@ -1257,9 +1087,7 @@ describe('IntegracionesService — sc-159 (acuerdo G8 P1)', () => {
     });
 
     it('filtra por categoría y devuelve 200 con lista vacía si no hay tipos', async () => {
-      const { service } = crearServicio({
-        TipoEquipo: TIPOS.map((t) => ({ ...t })),
-      });
+      const { service } = crearServicio({ TipoEquipo: TIPOS.map((t) => ({ ...t })) });
 
       const respuesta = await service.consultarStock(1, {
         categoria: 'No existe',
@@ -1269,9 +1097,7 @@ describe('IntegracionesService — sc-159 (acuerdo G8 P1)', () => {
     });
 
     it('tipo inexistente en la empresa → 404', async () => {
-      const { service } = crearServicio({
-        TipoEquipo: TIPOS.map((t) => ({ ...t })),
-      });
+      const { service } = crearServicio({ TipoEquipo: TIPOS.map((t) => ({ ...t })) });
 
       await expect(
         service.consultarStock(1, { id_tipo_equipo: '999' }),
@@ -1306,10 +1132,7 @@ describe('IntegracionesService — sc-159 (acuerdo G8 P1)', () => {
       id_tecnico: 45,
       fecha_completada: '2026-09-25T10:00:00Z',
       cliente: { rut: '12345678-5', nombre_completo: 'Juan Pérez' },
-      direccion: {
-        direccion_completa: 'Av. Siempre Viva 742',
-        comuna: 'Santiago',
-      },
+      direccion: { direccion_completa: 'Av. Siempre Viva 742', comuna: 'Santiago' },
       reparacion: {
         falla_reportada: 'Sin señal óptica en la ONT del cliente',
         solucion_aplicada: 'Se limpió el conector y se reconfiguró el equipo',
@@ -1330,12 +1153,7 @@ describe('IntegracionesService — sc-159 (acuerdo G8 P1)', () => {
     const seed = (extra: Record<string, Fila[]> = {}) => ({
       TipoEquipo: [{ ...TIPO_FIBRA }],
       InventarioPersonal: [
-        {
-          id_inventario: 1,
-          id_tecnico: 45,
-          id_tipo_equipo: 7,
-          cantidad: '50.5',
-        },
+        { id_inventario: 1, id_tecnico: 45, id_tipo_equipo: 7, cantidad: '50.5' },
       ],
       ...extra,
     });
@@ -1346,11 +1164,7 @@ describe('IntegracionesService — sc-159 (acuerdo G8 P1)', () => {
     it('flujo normal: registra el cierre con el resultado y los datos del cliente', async () => {
       const { service, manager } = crearServicio(seed());
 
-      const respuesta = await service.recibirCierreOt(
-        900,
-        payloadReparacion(),
-        G8,
-      );
+      const respuesta = await service.recibirCierreOt(900, payloadReparacion(), G8);
 
       expect(respuesta.data.estado_proceso).toBe('PROCESADO');
       expect(respuesta.data.id_cierre_reparacion).toBe(
@@ -1372,9 +1186,7 @@ describe('IntegracionesService — sc-159 (acuerdo G8 P1)', () => {
 
       await service.recibirCierreOt(
         900,
-        payloadReparacion({
-          equipos_retirados: [{ numero_serie: 'NS-RET-001' }],
-        }),
+        payloadReparacion({ equipos_retirados: [{ numero_serie: 'NS-RET-001' }] }),
         G8,
       );
 
@@ -1429,8 +1241,7 @@ describe('IntegracionesService — sc-159 (acuerdo G8 P1)', () => {
           payloadReparacion({
             reparacion: {
               falla_reportada: 'Sin señal óptica en la ONT del cliente',
-              solucion_aplicada:
-                'Se limpió el conector y se reconfiguró el equipo',
+              solucion_aplicada: 'Se limpió el conector y se reconfiguró el equipo',
               resultado: g3,
             },
           }),
@@ -1445,9 +1256,7 @@ describe('IntegracionesService — sc-159 (acuerdo G8 P1)', () => {
 
       await service.recibirCierreOt(
         900,
-        payloadReparacion({
-          materiales: [{ id_tipo_equipo: 7, cantidad: 10.5 }],
-        }),
+        payloadReparacion({ materiales: [{ id_tipo_equipo: 7, cantidad: 10.5 }] }),
         G8,
       );
 
@@ -1467,12 +1276,7 @@ describe('IntegracionesService — sc-159 (acuerdo G8 P1)', () => {
       const { service, manager } = crearServicio(
         seed({
           InventarioPersonal: [
-            {
-              id_inventario: 1,
-              id_tecnico: 45,
-              id_tipo_equipo: 7,
-              cantidad: '2',
-            },
+            { id_inventario: 1, id_tecnico: 45, id_tipo_equipo: 7, cantidad: '2' },
           ],
         }),
       );
@@ -1497,9 +1301,7 @@ describe('IntegracionesService — sc-159 (acuerdo G8 P1)', () => {
 
       const respuesta = await service.recibirCierreOt(
         900,
-        payloadReparacion({
-          equipos_retirados: [{ numero_serie: 'NS-NO-EXISTE' }],
-        }),
+        payloadReparacion({ equipos_retirados: [{ numero_serie: 'NS-NO-EXISTE' }] }),
         G8,
       );
 
@@ -1600,11 +1402,7 @@ describe('IntegracionesService — sc-159 (acuerdo G8 P1)', () => {
 
       await service.recibirCierreOt(
         901,
-        payloadReparacion({
-          id_ot: 901,
-          tipo_ot: 'INSTALACION',
-          reparacion: undefined,
-        }),
+        payloadReparacion({ id_ot: 901, tipo_ot: 'INSTALACION', reparacion: undefined }),
         G8,
       );
 
