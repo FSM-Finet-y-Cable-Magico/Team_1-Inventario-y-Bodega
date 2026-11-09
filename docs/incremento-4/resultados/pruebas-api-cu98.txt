@@ -5,7 +5,7 @@
 ### CU98-E2 desactivar proveedor 1 con ordenes pendientes
 {"message":"El proveedor tiene 1 orden(es) de ingreso pendiente(s) de recepción. Complete o reciba esas órdenes antes de desactivarlo.","error":"Conflict","statusCode":409}  [HTTP 409]
 ### CU98-OI orden de ingreso con proveedor inactivo
-{"message":["El número de documento debe ser alfanumérico","items.0.La garantía en días no puede superar 3650","items.0.La garantía en días debe ser al menos 0","items.0.La garantía en días debe ser un número entero"],"error":"Bad Request","statusCode":400}  [HTTP 400]
+{"message":"El proveedor seleccionado está inactivo.","error":"Bad Request","statusCode":400}  [HTTP 400]
 ### CU98-R reactivar proveedor 3
 {"id_proveedor":3,"nombre_comercial":"Importadora Pacífico SpA","rut":"78345678-8","nombre_contacto":"Camila Fuentes","telefono":"+56934567890","email":"pedidos@importadorapacifico.cl","activa":true,"fecha_creacion":"2026-11-09T14:38:08.194Z","tipos_equipo":[{"id_tipo_equipo":3,"nombre":"Router Wi-Fi QA"},{"id_tipo_equipo":8,"nombre":"Cable UTP Cat6 QA"}]}  [HTTP 200]
 ### CU99 abrir toma bodega 1
