@@ -280,5 +280,5 @@ CU-97. Lista las tomas y abre una nueva para una bodega activa (`Modal`).
 
 ### `/tomas-inventario/[id]`
 CU-97. Registra lo contado (consumibles por cantidad, series una por línea), muestra las diferencias y
-permite guardar, confirmar o cancelar. Si hubo movimientos durante el conteo (409
+permite guardar, confirmar o cancelar. **CU-99:** con la toma confirmada muestra «Descargar acta PDF». Si hubo movimientos durante el conteo (409
 `MOVIMIENTOS_DURANTE_CONTEO`), avisa y ofrece «Ajustar de todos modos».

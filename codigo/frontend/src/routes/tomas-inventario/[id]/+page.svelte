@@ -5,6 +5,7 @@
 	import {
 		cancelarTomaInventario,
 		confirmarTomaInventario,
+		descargarActaToma,
 		esMovimientosDuranteConteo,
 		obtenerTomaInventario,
 		registrarConteoToma
@@ -14,7 +15,7 @@
 	import Button from '$lib/components/Button.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
-	import { ArrowLeft, Save } from '@lucide/svelte';
+	import { ArrowLeft, FileDown, Save } from '@lucide/svelte';
 
 	// CU-97: registro del conteo, revisión de diferencias y confirmación del ajuste
 	let toma = $state<TomaInventario | null>(null);
@@ -135,6 +136,21 @@
 		}
 	}
 
+	// CU-99: acta PDF de la toma confirmada
+	let descargandoActa = $state(false);
+	async function descargarActa() {
+		if (!toma) return;
+		error = '';
+		descargandoActa = true;
+		try {
+			await descargarActaToma(toma.id_toma);
+		} catch (err: unknown) {
+			error = err instanceof Error ? err.message : 'No se pudo generar el acta';
+		} finally {
+			descargandoActa = false;
+		}
+	}
+
 	function textoDiferencia(linea: TomaInventarioLinea): string {
 		if (linea.diferencia === null) return '—';
 		return linea.diferencia > 0 ? `+${linea.diferencia}` : String(linea.diferencia);
@@ -176,6 +192,11 @@
 						</Button>
 						<Button loading={saving} onclick={pedirConfirmacion}>Confirmar y ajustar</Button>
 					</div>
+				{:else if toma.estado === 'CONFIRMADA'}
+					<Button variant="secondary" loading={descargandoActa} onclick={descargarActa}>
+						<FileDown class="h-4 w-4" />
+						Descargar acta PDF
+					</Button>
 				{/if}
 			</div>
 		</div>

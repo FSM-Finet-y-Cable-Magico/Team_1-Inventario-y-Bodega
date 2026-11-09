@@ -7,8 +7,10 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -76,5 +78,22 @@ export class TomasInventarioController {
     @CurrentUser() actor: ActorToma,
   ) {
     return this.service.cancelar(id, actor);
+  }
+
+  // CU-99: acta PDF de una toma confirmada
+  @Get(':id/acta')
+  @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
+  async acta(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() actor: ActorToma,
+    @Res() res: Response,
+  ) {
+    const { archivo, nombre } = await this.service.generarActa(id, actor);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${nombre}"`,
+      'Content-Length': archivo.length.toString(),
+    });
+    res.end(archivo);
   }
 }

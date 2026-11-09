@@ -321,3 +321,52 @@ describe('TomasInventarioService (CU-97)', () => {
     );
   });
 });
+
+describe('TomasInventarioService (CU-99)', () => {
+  const confirmada = {
+    id_toma: 1,
+    id_bodega: 3,
+    id_empresa: 1,
+    estado: 'CONFIRMADA',
+    id_usuario_apertura: 7,
+    id_usuario_cierre: 7,
+    fecha_apertura: new Date('2026-11-09T10:00:00'),
+    fecha_cierre: new Date('2026-11-09T12:00:00'),
+  };
+
+  it('genera el acta en PDF de una toma confirmada y la audita', async () => {
+    const { service, auditoria } = crear({
+      toma: confirmada,
+      detalles: [
+        { ...consumible(10, 8), resultado: 'FALTANTE' },
+        { ...serie('SN-5', 1), resultado: 'COINCIDE' },
+      ],
+    });
+    const { archivo, nombre } = await service.generarActa(1, ACTOR);
+    expect(archivo.toString('latin1').startsWith('%PDF')).toBe(true);
+    expect(archivo.toString('latin1')).toContain('SN-5');
+    expect(nombre).toMatch(/^acta-toma-1-\d{8}\.pdf$/);
+    expect(auditoria.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        accion: 'GENERAR_ACTA_TOMA_INVENTARIO',
+        id_entidad_afectada: 1,
+        valor_nuevo: { formato: 'PDF', lineas: 2 },
+      }),
+    );
+  });
+
+  it('E1: rechaza el acta de una toma abierta', async () => {
+    const { service, auditoria } = crear();
+    await expect(service.generarActa(1, ACTOR)).rejects.toThrow(
+      ConflictException,
+    );
+    expect(auditoria.create).not.toHaveBeenCalled();
+  });
+
+  it('E2: una toma de otra empresa responde 404', async () => {
+    const { service } = crear({ toma: { ...confirmada, id_empresa: 2 } });
+    await expect(service.generarActa(1, ACTOR)).rejects.toThrow(
+      NotFoundException,
+    );
+  });
+});

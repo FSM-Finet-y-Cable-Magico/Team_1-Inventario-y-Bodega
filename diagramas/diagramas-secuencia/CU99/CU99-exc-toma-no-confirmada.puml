@@ -1,0 +1,48 @@
+@startuml CU99-exc-toma-no-confirmada
+title CU-99 — Excepción 1: la toma no está confirmada
+skinparam style strictuml
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+  ParticipantBorderColor black
+  ActorBorderColor black
+}
+skinparam participant {
+  BackgroundColor<<vista>> #BDD7EF
+  BackgroundColor<<control>> #C7E1B5
+  BackgroundColor<<persistencia>> #F9CBAD
+}
+skinparam database {
+  BackgroundColor<<persistencia>> #F9CBAD
+}
+hide stereotype
+hide footbox
+
+actor "Encargado de bodega" as user
+participant "V_TomaInventario" as view <<vista>>
+participant "C_TomasInventarioController" as ctrl <<control>>
+participant "C_TomasInventarioService" as svc <<control>>
+participant "C_TypeORM" as orm <<persistencia>>
+database "postgres" as db <<persistencia>>
+
+user -> view : Pide el acta de una toma\nabierta o cancelada
+activate view
+view -> ctrl : GET /tomas-inventario/:id/acta
+activate ctrl
+ctrl -> svc : generarActa(id, actor)
+activate svc
+svc -> orm : Lee la toma y sus líneas
+activate orm
+orm -> db : SELECT toma_inventario, toma_inventario_detalle
+db --> orm : Toma ABIERTA
+orm --> svc : Toma
+deactivate orm
+svc --> ctrl : ConflictException\n(solo tomas confirmadas)
+deactivate svc
+ctrl --> view : 409 Conflict
+deactivate ctrl
+view --> user : «Solo se puede generar el acta\nde una toma confirmada»
+deactivate view
+@enduml
