@@ -307,6 +307,12 @@ class Informe:
                             r.text = r.text.replace('Incremento 3', f'Incremento {self.incremento}')
 
     def save(self, path):
+        part = self.d.part
+        used = {e.get(qn('r:embed')) for e in part.element.iter() if e.get(qn('r:embed'))}
+        used |= {e.get(qn('r:id')) for e in part.element.iter() if e.get(qn('r:id'))}
+        for rid, rel in list(part.rels.items()):
+            if rel.reltype.endswith('/image') and rid not in used:
+                part.drop_rel(rid)
         self.d.save(path)
 
 
