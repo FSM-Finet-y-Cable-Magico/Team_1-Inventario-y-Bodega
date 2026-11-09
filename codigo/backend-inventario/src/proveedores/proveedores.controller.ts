@@ -8,6 +8,7 @@ import {
   UseGuards,
   Req,
   Query,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -43,5 +44,21 @@ export class ProveedoresController {
     const activaFlag =
       activa === 'true' ? true : activa === 'false' ? false : undefined;
     return this.proveedoresService.findAll({ buscar, activa: activaFlag });
+  }
+
+  // CU-98: desactivar proveedor
+  @Patch(':id/desactivar')
+  @Roles('ADMIN', 'SUPERUSUARIO')
+  desactivar(@Param('id', ParseIntPipe) id: number, @Req() req) {
+    const actorId = req.user.id_usuario ?? req.user.sub;
+    return this.proveedoresService.desactivar(id, actorId);
+  }
+
+  // CU-98: reactivar proveedor
+  @Patch(':id/reactivar')
+  @Roles('ADMIN', 'SUPERUSUARIO')
+  reactivar(@Param('id', ParseIntPipe) id: number, @Req() req) {
+    const actorId = req.user.id_usuario ?? req.user.sub;
+    return this.proveedoresService.reactivar(id, actorId);
   }
 }

@@ -520,6 +520,15 @@ export function editProveedor(id: number, data: Record<string, unknown>) {
 	return api.patch<any>(`/proveedores/${id}`, data);
 }
 
+// CU-98: desactivar o reactivar proveedor
+export function desactivarProveedor(id: number) {
+	return api.patch<any>(`/proveedores/${id}/desactivar`, {});
+}
+
+export function reactivarProveedor(id: number) {
+	return api.patch<any>(`/proveedores/${id}/reactivar`, {});
+}
+
 // CU-52/CU-53: órdenes de ingreso desde proveedor
 export function getOrdenesIngreso(params?: {
 	buscar?: string;
@@ -662,4 +671,9 @@ export function confirmarTomaInventario(id: number, forzar_movimientos = false):
 
 export function cancelarTomaInventario(id: number): Promise<TomaInventario> {
 	return api.post<TomaInventario>(`/tomas-inventario/${id}/cancelar`, {});
+}
+
+// CU-99: acta PDF de una toma confirmada (descarga autenticada)
+export function descargarActaToma(id: number) {
+	return api.download(`/tomas-inventario/${id}/acta`, `acta-toma-${id}.pdf`);
 }

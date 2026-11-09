@@ -5,12 +5,16 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Proveedor } from './entities/proveedor.entity';
 import { ProveedorTipoEquipo } from './entities/proveedor-tipo-equipo.entity';
 import { TipoEquipo } from '../inventario/entities/tipo-equipo.entity';
 import { CreateProveedorDto } from './dto/create-proveedor.dto';
 import { AuditoriaService } from '../auditoria/auditoria.service';
+import { OrdenIngreso } from '../ordenes-ingreso/entities/orden-ingreso.entity';
+
+// CU-98: estados de orden_ingreso que todavía esperan mercadería del proveedor.
+const ESTADOS_ORDEN_ABIERTA = ['Pendiente de recepción', 'Recepción parcial'];
 
 @Injectable()
 export class ProveedoresService {
@@ -22,6 +26,8 @@ export class ProveedoresService {
     @InjectRepository(TipoEquipo)
     private readonly tipoEquipoRepository: Repository<TipoEquipo>,
     private readonly auditoriaService: AuditoriaService,
+    @InjectRepository(OrdenIngreso)
+    private readonly ordenIngresoRepository: Repository<OrdenIngreso>,
   ) {}
 
   // CU-49: calcula el dígito verificador del RUT chileno (módulo 11)
@@ -189,6 +195,63 @@ export class ProveedoresService {
     });
 
     return actualizado;
+  }
+
+  //CU-98: desactivar proveedor. Deja de ofrecerse en órdenes de ingreso nuevas,
+  // pero su historial (órdenes y unidades recibidas) se conserva.
+  async desactivar(id: number, actorId: number): Promise<any> {
+    const proveedor = await this.proveedorRepository.findOne({
+      where: { id_proveedor: id },
+    });
+    if (!proveedor) {
+      throw new NotFoundException('Proveedor no encontrado.');
+    }
+    // CU-98 Excepción 1: ya estaba inactivo
+    if (!proveedor.activa) {
+      throw new ConflictException('El proveedor ya está inactivo.');
+    }
+    // CU-98 Excepción 2: tiene órdenes de ingreso esperando recepción
+    const pendientes = await this.ordenIngresoRepository.count({
+      where: { id_proveedor: id, estado: In(ESTADOS_ORDEN_ABIERTA) },
+    });
+    if (pendientes > 0) {
+      throw new ConflictException(
+        `El proveedor tiene ${pendientes} orden(es) de ingreso pendiente(s) de recepción. Complete o reciba esas órdenes antes de desactivarlo.`,
+      );
+    }
+    return this.cambiarEstado(proveedor, false, actorId);
+  }
+
+  //CU-98: reactivar un proveedor desactivado
+  async reactivar(id: number, actorId: number): Promise<any> {
+    const proveedor = await this.proveedorRepository.findOne({
+      where: { id_proveedor: id },
+    });
+    if (!proveedor) {
+      throw new NotFoundException('Proveedor no encontrado.');
+    }
+    if (proveedor.activa) {
+      throw new ConflictException('El proveedor ya está activo.');
+    }
+    return this.cambiarEstado(proveedor, true, actorId);
+  }
+
+  private async cambiarEstado(
+    proveedor: Proveedor,
+    activa: boolean,
+    actorId: number,
+  ): Promise<any> {
+    proveedor.activa = activa;
+    await this.proveedorRepository.save(proveedor);
+    await this.auditoriaService.create({
+      id_usuario: actorId,
+      accion: activa ? 'REACTIVAR' : 'DESACTIVAR',
+      entidad_afectada: 'proveedor',
+      id_entidad_afectada: proveedor.id_proveedor,
+      valor_anterior: { activa: !activa },
+      valor_nuevo: { activa },
+    });
+    return this.findOneConTipos(proveedor.id_proveedor);
   }
 
   //CU-51

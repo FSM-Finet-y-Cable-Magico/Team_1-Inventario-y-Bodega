@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { getProveedores, createProveedor, editProveedor, getCatalog } from '$lib/api/index';
+	import { getProveedores, createProveedor, editProveedor, getCatalog, desactivarProveedor, reactivarProveedor } from '$lib/api/index';
 	import type { Proveedor, TipoEquipo } from '$lib/types';
 	import { userRoles } from '$lib/stores/auth';
 	import SearchInput from '$lib/components/SearchInput.svelte';
@@ -9,7 +9,7 @@
 	import FormField from '$lib/components/FormField.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
-	import { Plus, RotateCw, Pencil } from '@lucide/svelte';
+	import { Plus, RotateCw, Pencil, Power, PowerOff } from '@lucide/svelte';
 
 	let proveedores = $state<Proveedor[]>([]);
 	let tiposEquipo = $state<TipoEquipo[]>([]);
@@ -99,6 +99,32 @@
 			editForm.ids_tipos_equipo = editForm.ids_tipos_equipo.filter((x) => x !== id);
 		} else {
 			editForm.ids_tipos_equipo = [...editForm.ids_tipos_equipo, id];
+		}
+	}
+
+	// CU-98: desactivar o reactivar, con confirmación previa
+	let estadoTarget = $state<Proveedor | null>(null);
+	let estadoError = $state('');
+	let cambiandoEstado = $state(false);
+
+	function openEstado(p: Proveedor) {
+		estadoTarget = p;
+		estadoError = '';
+	}
+
+	async function handleEstado() {
+		if (!estadoTarget) return;
+		estadoError = '';
+		cambiandoEstado = true;
+		try {
+			if (estadoTarget.activa) await desactivarProveedor(estadoTarget.id_proveedor);
+			else await reactivarProveedor(estadoTarget.id_proveedor);
+			estadoTarget = null;
+			await load();
+		} catch (err: unknown) {
+			estadoError = err instanceof Error ? err.message : 'No se pudo cambiar el estado del proveedor';
+		} finally {
+			cambiandoEstado = false;
 		}
 	}
 
@@ -250,6 +276,14 @@
 										>
 											<Pencil class="h-4 w-4" />
 										</button>
+										<!-- CU-98: desactivar / reactivar -->
+										<button
+											onclick={() => openEstado(p)}
+											class="ml-3 transition-colors {p.activa ? 'text-destructive hover:text-destructive/80' : 'text-accent hover:text-accent-hover'}"
+											title={p.activa ? 'Desactivar proveedor' : 'Reactivar proveedor'}
+										>
+											{#if p.activa}<PowerOff class="h-4 w-4" />{:else}<Power class="h-4 w-4" />{/if}
+										</button>
 									</td>
 								{/if}
 							</tr>
@@ -260,6 +294,42 @@
 		{/if}
 	</div>
 </div>
+
+<!-- CU-98: confirmación de desactivar / reactivar -->
+<Modal
+	title={estadoTarget?.activa ? 'Desactivar proveedor' : 'Reactivar proveedor'}
+	open={estadoTarget !== null}
+	onclose={() => (estadoTarget = null)}
+>
+	{#if estadoTarget}
+		<div class="space-y-4">
+			{#if estadoError}
+				<div class="bg-red-50 border border-red-200 text-destructive text-sm rounded-md px-3 py-2">
+					{estadoError}
+				</div>
+			{/if}
+			<p class="text-sm text-foreground">
+				{#if estadoTarget.activa}
+					¿Desactivar a <strong>{estadoTarget.nombre_comercial}</strong> ({estadoTarget.rut})? No podrá
+					usarse en órdenes de ingreso nuevas. Su historial se conserva.
+				{:else}
+					¿Reactivar a <strong>{estadoTarget.nombre_comercial}</strong> ({estadoTarget.rut})? Volverá a
+					estar disponible en las órdenes de ingreso.
+				{/if}
+			</p>
+			<div class="flex justify-end gap-2">
+				<Button variant="secondary" onclick={() => (estadoTarget = null)}>Cancelar</Button>
+				<Button
+					variant={estadoTarget.activa ? 'destructive' : 'primary'}
+					onclick={handleEstado}
+					disabled={cambiandoEstado}
+				>
+					{cambiandoEstado ? 'Guardando...' : estadoTarget.activa ? 'Desactivar' : 'Reactivar'}
+				</Button>
+			</div>
+		</div>
+	{/if}
+</Modal>
 
 <!-- CU-49: modal nuevo proveedor -->
 <Modal title="Nuevo proveedor" open={showCreate} onclose={() => (showCreate = false)}>
