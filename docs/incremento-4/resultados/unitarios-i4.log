@@ -1,0 +1,27 @@
+OK TomasInventarioService (CU-97) > abrir > E1: rechaza una segunda toma abierta en la bodega
+OK TomasInventarioService (CU-97) > abrir > rechaza una bodega inactiva
+OK TomasInventarioService (CU-97) > abrir > oculta la bodega de otra empresa
+OK TomasInventarioService (CU-97) > registrarConteo > rechaza series repetidas sin importar mayúsculas
+OK TomasInventarioService (CU-97) > registrarConteo > rechaza una toma ya confirmada
+OK TomasInventarioService (CU-97) > registrarConteo > oculta la toma de otra empresa
+OK TomasInventarioService (CU-97) > registrarConteo > E2: registra como OTRA_UBICACION una serie de otra bodega
+OK TomasInventarioService (CU-97) > registrarConteo > E2: registra como NO_REGISTRADA una serie desconocida
+OK TomasInventarioService (CU-97) > confirmar > exige contar todos los consumibles
+OK TomasInventarioService (CU-97) > confirmar > ajusta el stock y deja el movimiento y la auditoría
+OK TomasInventarioService (CU-97) > confirmar > no crea movimiento cuando no hay diferencia
+OK TomasInventarioService (CU-97) > confirmar > crea la fila de stock si aparece un consumible sin stock previo
+OK TomasInventarioService (CU-97) > confirmar > E3: avisa si el stock cambió durante el conteo
+OK TomasInventarioService (CU-97) > confirmar > E3: al forzar aplica la diferencia sobre el stock actual
+OK TomasInventarioService (CU-97) > confirmar > no deja stock negativo
+OK TomasInventarioService (CU-97) > confirmar > una serie faltante se informa y la unidad no cambia de estado
+OK TomasInventarioService (CU-97) > cancelar cierra la toma sin tocar el stock
+OK TomasInventarioService (CU-99) > genera el acta en PDF de una toma confirmada y la audita
+OK TomasInventarioService (CU-99) > E1: rechaza el acta de una toma abierta
+OK TomasInventarioService (CU-99) > E2: una toma de otra empresa responde 404
+OK ProveedoresService (CU-98) > desactiva un proveedor sin órdenes pendientes y lo audita
+OK ProveedoresService (CU-98) > E1: rechaza desactivar un proveedor ya inactivo
+OK ProveedoresService (CU-98) > E2: rechaza desactivar con órdenes de ingreso pendientes
+OK ProveedoresService (CU-98) > responde 404 si el proveedor no existe
+OK ProveedoresService (CU-98) > reactiva un proveedor inactivo
+OK ProveedoresService (CU-98) > rechaza reactivar un proveedor que ya está activo
+Total 26 / 26
