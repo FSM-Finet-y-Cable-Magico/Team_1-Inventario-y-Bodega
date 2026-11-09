@@ -1,9 +1,9 @@
-import copy, sys
+# Presentación del Incremento 4: misma presentación del Incremento 3, cambiando solo textos e imágenes.
+# Uso: python3 ppt4.py SALIDA.pptx
+import copy, sys, os
 from pptx import Presentation
-from pptx.util import Emu, Pt
+from pptx.util import Emu
 from pptx.dml.color import RGBColor
-from pptx.enum.shapes import MSO_SHAPE
-from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from PIL import Image
 
 SRC = '/tmp/ppt3/p3.pptx'
@@ -11,284 +11,280 @@ OUT = sys.argv[1]
 R = '/home/user/Team_1-Inventario-y-Bodega/'
 D4 = R + 'diagramas/incremento4/'
 EV = R + 'docs/incremento-4/evidencias/'
-RED, DARK, GRAY = RGBColor(0x9B, 0x1B, 0x2E), RGBColor(0x3A, 0x3A, 0x3A), RGBColor(0x7B, 0x7B, 0x7B)
+SQ = R + 'diagramas/diagramas-secuencia/'
+IMG = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'pptimg/')
+A = '{http://schemas.openxmlformats.org/drawingml/2006/main}'
+REMB = '{http://schemas.openxmlformats.org/officeDocument/2006/relationships}embed'
 
 prs = Presentation(SRC)
-slides = list(prs.slides)
-cover, chrome_src = slides[0], slides[3]
-CHROME = ['Google Shape;87;p4', 'Google Shape;88;p4', 'Google Shape;89;p4', 'Google Shape;90;p4', 'Google Shape;118;p4']
+S = list(prs.slides)
 
 
-def clone_shapes(src, dst, names=None):
-    for sh in src.shapes:
-        if names and sh.name not in names:
-            continue
-        el = copy.deepcopy(sh._element)
-        for blip in el.iter('{http://schemas.openxmlformats.org/drawingml/2006/main}blip'):
-            rid = blip.get('{http://schemas.openxmlformats.org/officeDocument/2006/relationships}embed')
-            part = src.part.related_part(rid)
-            new = dst.part.relate_to(part, 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/image')
-            blip.set('{http://schemas.openxmlformats.org/officeDocument/2006/relationships}embed', new)
-        dst.shapes._spTree.append(el)
+def sh(n, i):
+    return list(S[n - 1].shapes)[i]
 
 
-def set_text(sh, text):
-    tf = sh.text_frame
-    r = tf.paragraphs[0].runs[0]
-    r.text = text
-    for x in tf.paragraphs[0].runs[1:]:
-        x.text = ''
-    for para in tf.paragraphs[1:]:
-        para._p.getparent().remove(para._p)
+def T(n, i, *paras):
+    """Reemplaza el texto conservando el formato del primer run de cada párrafo."""
+    tf = sh(n, i).text_frame
+    ps = tf.paragraphs
+    for k, text in enumerate(paras):
+        if k < len(ps):
+            p = ps[k]
+        else:
+            p_el = copy.deepcopy(ps[-1]._p); ps[-1]._p.addnext(p_el); p = tf.paragraphs[k]
+        runs = p.runs
+        runs[0].text = text
+        for r in runs[1:]:
+            r._r.getparent().remove(r._r)
+    for p in tf.paragraphs[len(paras):]:
+        p._p.getparent().remove(p._p)
 
 
-def new_slide(title, subtitle):
-    s = prs.slides.add_slide(chrome_src.slide_layout)
-    for ph in list(s.placeholders):
-        ph._element.getparent().remove(ph._element)
-    clone_shapes(chrome_src, s, CHROME)
-    for sh in s.shapes:
-        if sh.name == 'Google Shape;88;p4': set_text(sh, title)
-        if sh.name == 'Google Shape;89;p4': set_text(sh, subtitle)
-    return s
+def DEL(n, *idx):
+    shapes = list(S[n - 1].shapes)
+    for i in idx:
+        el = shapes[i]._element; el.getparent().remove(el)
 
 
-def tb(s, x, y, w, h, text, size=11, color=DARK, bold=False, align=None, anchor=None):
-    box = s.shapes.add_textbox(Emu(x), Emu(y), Emu(w), Emu(h))
-    tf = box.text_frame; tf.word_wrap = True
-    tf.margin_left = tf.margin_right = Emu(45720); tf.margin_top = tf.margin_bottom = Emu(20000)
-    if anchor: tf.vertical_anchor = anchor
-    for i, line in enumerate(text.split('\n')):
-        para = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
-        r = para.add_run(); r.text = line
-        r.font.size = Pt(size); r.font.color.rgb = color; r.font.bold = bold; r.font.name = 'Calibri'
-        if align: para.alignment = align
-    return box
+def PIC(n, i, path, box=None):
+    """Cambia la imagen y la ajusta, centrada y sin deformar, dentro de la caja (por defecto la original)."""
+    s = sh(n, i)
+    x, y, w, h = box or (s.left, s.top, s.width, s.height)
+    _, rid = S[n - 1].part.get_or_add_image_part(path)
+    blip = s._element.find('.//' + A + 'blip'); blip.set(REMB, rid)
+    src = s._element.find('.//' + A + 'srcRect')
+    if src is not None:
+        src.getparent().remove(src)
+    iw, ih = Image.open(path).size
+    sc = min(w / iw, h / ih)
+    nw, nh = int(iw * sc), int(ih * sc)
+    s.left, s.top, s.width, s.height = Emu(x + (w - nw) // 2), Emu(y + (h - nh) // 2), Emu(nw), Emu(nh)
 
 
-def label(s, x, y, text, w=1600000):
-    b = s.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Emu(x), Emu(y), Emu(w), Emu(256032))
-    b.fill.solid(); b.fill.fore_color.rgb = RGBColor(0xF7, 0xE3, 0xE0); b.line.color.rgb = RGBColor(0xF7, 0xE3, 0xE0)
-    b.shadow.inherit = False
-    tf = b.text_frame; tf.margin_top = tf.margin_bottom = 0
-    r = tf.paragraphs[0].add_run(); r.text = text; r.font.size = Pt(12); r.font.bold = True; r.font.color.rgb = RED; r.font.name = 'Calibri'
-    tf.paragraphs[0].alignment = PP_ALIGN.CENTER
+def NOTE(n, text):
+    S[n - 1].notes_slide.notes_text_frame.text = text
 
 
-def bullets(s, x, y, w, items, size=11, step=330000):
-    for it in items:
-        m = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, Emu(x), Emu(y + 95000), Emu(50000), Emu(50000))
-        m.fill.solid(); m.fill.fore_color.rgb = RED; m.line.color.rgb = RED; m.shadow.inherit = False
-        lines = max(1, int(len(it) * size * 5200 / w) + 1)
-        tb(s, x + 120000, y, w - 120000, step * lines, it, size)
-        y += int(step * (0.75 + 0.42 * lines))
-    return y
+# 1 · Portada y 16 · Cierre
+for n in (1, 16):
+    T(n, 4, 'Incremento 4')
+    T(n, 10, 'Santiago, Chile  —  Noviembre de 2026')
+NOTE(1, 'Buenas tardes. Somos el Grupo 1 y presentamos el Incremento 4 del Sistema de Gestión Integral para Finet y Cable '
+        'Mágico Litoral. Nuestro módulo es Inventario y Bodega, y en esta entrega cerramos el proyecto: sumamos tres casos '
+        'de uso y dejamos el sistema funcionando en la VPS del curso.')
+NOTE(16, 'Eso es todo por nuestra parte. Muchas gracias; quedamos atentos a sus preguntas.')
 
+# 2 · Índice
+T(2, 2, 'Flujo de la presentación · foco en el alcance y la trazabilidad del Incremento 4')
+for i, t in [(8, 'Alcance del Incremento 4'), (12, 'Trazabilidad · RF-71 → CU-97'), (14, 'Trazabilidad · RF-72 → CU-98'),
+             (20, 'Comportamiento del sistema · CU-97'), (22, 'Comportamiento del sistema · CU-98'),
+             (28, 'Traza Scrum++ del Incremento 4')]:
+    T(2, i, t)
+NOTE(2, 'Este es el recorrido. Partimos con el contexto y el alcance, seguimos con los requerimientos y la trazabilidad de '
+        'los dos casos principales, luego la arquitectura, el modelo físico con sus relaciones y el comportamiento del '
+        'sistema, las pruebas y, al final, la traza Scrum++ y el avance acumulado.')
 
-def kpi(s, x, y, w, num, cap):
-    b = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, Emu(x), Emu(y), Emu(w), Emu(777240))
-    b.fill.solid(); b.fill.fore_color.rgb = RGBColor(0xFA, 0xF6, 0xF6); b.line.color.rgb = RGBColor(0xE9, 0xDC, 0xDD); b.shadow.inherit = False
-    tb(s, x, y + 60000, w, 420000, num, 22, RED, True, PP_ALIGN.CENTER)
-    tb(s, x, y + 480000, w, 260000, cap, 9, GRAY, False, PP_ALIGN.CENTER)
+# 3 · Introducción y contexto
+T(3, 10, 'Los Incrementos 1 a 3 completaron los 96 CU del Documento 0, incluidos los cierres con el sistema de terreno (G3).')
+T(3, 11, 'Qué agrega el Incremento 4')
+T(3, 13, 'Toma de inventario físico por bodega: conteo, comparación con lo esperado y ajuste de diferencias.')
+T(3, 15, 'Desactivación y reactivación de proveedores, sin perder su historial de órdenes.')
+T(3, 17, 'Acta PDF de cada toma confirmada, para firmarla y archivarla.')
+T(3, 19, 'Sistema en producción en la VPS FiNet, con la base global y 45 relaciones nuevas en el modelo físico.')
+T(3, 21, 'Incremento 4: 3 casos de uso nuevos que llevan el proyecto a 99, con el sistema desplegado en la VPS del curso.')
+NOTE(3, 'El problema de origen es un inventario manejado con herramientas sueltas y registros manuales, donde cuesta seguir '
+        'cada equipo y separar los datos de cada empresa. Los tres primeros incrementos dejaron implementados los 96 casos '
+        'del Documento 0. En este último agregamos el control físico de la bodega con la toma de inventario y su acta, la '
+        'gestión de la vigencia de los proveedores, y dejamos el sistema en producción en la VPS.')
 
+# 4 · Alcance del Incremento 4
+T(4, 1, 'Alcance del Incremento 4')
+T(4, 7, 'Toma de inventario físico y ajuste de diferencias (CU-97)')
+T(4, 9, 'Desactivar y reactivar proveedor (CU-98)')
+T(4, 11, 'Acta PDF de la toma de inventario (CU-99)')
+T(4, 13, 'Órdenes de ingreso solo con proveedores activos (CU-98)')
+T(4, 15, 'Roles equivalentes con la base global de validación')
+T(4, 17, 'Cierres de G3 que identifican al técnico por id, RUT o usuario')
+T(4, 23, 'Despliegue con Docker rootless en la VPS FiNet y túnel SSH')
+T(4, 25, '45 claves foráneas nuevas (72 en total), creadas NOT VALID y luego validadas')
+T(4, 27, 'Integraciones por HTTPS en el nginx de la VPS (puerto 8143)')
+T(4, 29, '45'); T(4, 30, 'Claves foráneas nuevas')
+T(4, 35, '100%'); T(4, 36, 'CU acumulado · 99 / 99')
+T(4, 38, '3,03%'); T(4, 39, 'Avance del incremento · 3 / 99')
+T(4, 41, '3'); T(4, 42, 'Casos de uso nuevos')
+T(4, 44, '3'); T(4, 45, 'Requerimientos funcionales')
+NOTE(4, 'El Incremento 4 suma 3 casos de uso, que equivalen al 3,03 por ciento de un total que ahora es de 99, y con eso '
+        'cerramos en 99 de 99, el 100 por ciento acumulado. En lo técnico, el sistema quedó en la VPS FiNet con Docker, '
+        'conectado a la base global, y agregamos 45 claves foráneas, con lo que el modelo físico queda con 72 relaciones.')
 
-def img(s, path, x, y, w, h):
-    W_, H_ = Image.open(path).size
-    sc = min(w / W_, h / H_)
-    iw, ih = int(W_ * sc), int(H_ * sc)
-    s.shapes.add_picture(path, Emu(x + (w - iw) // 2), Emu(y + (h - ih) // 2), Emu(iw), Emu(ih))
+# 5 · Requerimientos y trazabilidad
+T(5, 17, '2'); T(5, 20, '3'); T(5, 23, '3'); T(5, 26, '10/10')
+T(5, 27, 'Escenarios de prueba')
+T(5, 29, 'En detalle:  RF-71 → CU-97 (Registrando toma de inventario físico)   y   RF-72 → CU-98 (Desactivando proveedor).')
+T(5, 32, 'RF-71  →  CU-97'); T(5, 33, 'RF-72  →  CU-98'); T(5, 34, 'RF-73  →  CU-99')
+T(5, 37, 'UR 13.1  →  RF-71, RF-73'); T(5, 38, 'UR 13.2  →  RF-72')
+DEL(5, 35, 36, *range(39, 49))
+NOTE(5, 'Los 3 casos vienen de 3 requerimientos funcionales y 2 requerimientos de usuario nuevos: el 13.1, control físico '
+        'del inventario, y el 13.2, vigencia de proveedores. Cada requerimiento se sigue hasta su caso de uso, su diagrama '
+        'de secuencia, el código y la prueba. Abajo está la matriz completa del incremento.')
 
+# 6 · Trazabilidad RF-71 → CU-97
+T(6, 1, 'Trazabilidad · RF-71 → CU-97')
+T(6, 2, 'Registrando toma de inventario físico')
+T(6, 4, 'Registrar la toma de inventario físico de una bodega y ajustar las diferencias')
+T(6, 5, 'Registrando toma de inventario físico')
+T(6, 6, 'CU-97 — flujo normal y excepción por toma abierta')
+T(6, 7, 'tomas-inventario · TomasInventarioController → TomasInventarioService')
+T(6, 8, 'P97-N y P97-E1 — conformes · 17 pruebas unitarias')
+T(6, 11, 'El encargado abre una toma en una bodega y el sistema guarda lo esperado.')
+T(6, 13, 'Registra cantidades y series; cada línea queda como coincide, faltante o sobrante.')
+T(6, 15, 'Al confirmar, cada diferencia genera un movimiento de ajuste del stock.')
+PIC(6, 17, EV + 'CU97-conteo-abierta.png')
+T(6, 18, 'RF-71'); T(6, 19, 'CU-97')
+NOTE(6, 'El primero es CU-97, que viene del RF-71. Lo elegimos porque es el caso principal del incremento y afecta '
+        'directamente las existencias. El encargado abre la toma, el sistema guarda lo que debería haber, se cuentan los '
+        'consumibles y se leen las series, y al confirmar cada diferencia se ajusta con un movimiento de inventario. '
+        'Si la bodega ya tiene una toma abierta, no se permite abrir otra.')
 
-def notes(s, text):
-    s.notes_slide.notes_text_frame.text = text
+# 7 · Trazabilidad RF-72 → CU-98
+T(7, 1, 'Trazabilidad · RF-72 → CU-98')
+T(7, 2, 'Desactivando proveedor')
+T(7, 4, 'Desactivar o reactivar proveedores conservando su historial')
+T(7, 5, 'Desactivando proveedor')
+T(7, 6, 'CU-98 — flujo normal y excepción por órdenes pendientes')
+T(7, 7, 'proveedores · ProveedoresController → ProveedoresService')
+T(7, 8, 'P98-N, P98-E1, P98-E2, P98-E3 y P98-R — conformes')
+T(7, 11, 'El administrador desactiva el proveedor desde su listado.')
+T(7, 13, 'T1 revisa que no tenga órdenes de ingreso pendientes y lo marca inactivo.')
+T(7, 15, 'Un proveedor inactivo no aparece en órdenes nuevas y se puede reactivar.')
+PIC(7, 17, EV + 'CU98-E2-ordenes-pendientes.png')
+T(7, 18, 'RF-72'); T(7, 19, 'CU-98')
+NOTE(7, 'El segundo es CU-98, del RF-72: desactivar un proveedor. El proveedor no se borra, conserva su historial, pero ya '
+        'no se puede usar en órdenes de ingreso nuevas. Si todavía tiene órdenes pendientes de recepción, el sistema lo '
+        'impide y avisa cuántas son. También se puede reactivar.')
 
+# 8 · Diagrama de componentes
+T(8, 5, 'Vista de componentes · Inventario y Bodega, Incremento 4')
+PIC(8, 0, D4 + 'componentes-i4.png')
+NOTE(8, 'Este es el diagrama de componentes. La vista en SvelteKit consume la API REST en NestJS; los controladores delegan '
+        'en servicios como inventario, toma de inventario, proveedores, reportes e integraciones, y la persistencia va a '
+        'PostgreSQL. Los módulos nuevos del incremento reutilizan el stock, las órdenes de ingreso y el generador PDF.')
 
-X0, Y0, FULLW = 566928, 1380744, 11064240
-# ---------------- portada
-for sh in cover.shapes:
-    if sh.has_text_frame:
-        t = sh.text_frame.text
-        if t.strip() == 'Incremento 3': set_text(sh, 'Incremento 4')
-        if 'Octubre de 2026' in t: set_text(sh, 'Santiago, Chile  —  Noviembre de 2026')
-notes(cover, 'Presentación del cuarto y último incremento del Grupo 1: inventario y bodega.')
+# 9 · Modelo físico
+T(9, 4, 'Modelo físico por incremento · 34 tablas y 72 relaciones en PostgreSQL')
+PIC(9, 5, IMG + 'fisico-slide.png', (566928, 1330000, 9400000, 5050000))
+T(9, 6, 'Azul: I1 (12)  ·  Verde: I2 (14)  ·  Ámbar: I3 (6)  ·  Violeta: I4 (2 nuevas: toma_inventario, toma_inventario_detalle)  ·  Líneas violetas: 45 FK nuevas')
+NOTE(9, 'El modelo físico está coloreado por incremento: 12 tablas del primero, 14 del segundo, 6 del tercero y 2 nuevas '
+        'en este, la toma de inventario y su detalle. En total son 34 tablas. Atendiendo la observación del incremento '
+        'anterior, ahora se ven las relaciones: las líneas violetas son las 45 claves foráneas que agregamos, 72 en total.')
 
-# ---------------- índice
-s = new_slide('Índice', 'Flujo de la presentación · cierre del proyecto y traza del Incremento 4')
-items = ['Introducción y contexto', 'Alcance del Incremento 4', 'Requerimientos y trazabilidad', 'CU-97 · Toma de inventario',
-         'CU-98 y CU-99 · Proveedor y acta', 'Modelo físico con relaciones', 'Comportamiento · CU-97', 'Sistema en la VPS FiNet',
-         'Árbol de navegación', 'Pruebas', 'Traza Scrum++ del Incremento 4', 'Avance acumulado del proyecto']
-for i, t in enumerate(items):
-    cx = 1545327 if i < 6 else 6429103
-    cy = 1636780 + (i % 6) * 502920
-    tb(s, cx, cy, 500000, 310800, f'{i + 1:02d}', 14, RED, True)
-    tb(s, cx + 470000, cy, 4300000, 310800, t, 13, DARK)
+# 10 · Comportamiento CU-97
+T(10, 2, 'Comportamiento del sistema · CU-97')
+T(10, 5, 'Diagrama de secuencia · flujo normal de la toma de inventario con ajuste de diferencias')
+PIC(10, 0, SQ + 'CU97/CU97-normal.png')
+NOTE(10, 'En la secuencia de CU-97 se ve el flujo completo: se abre la toma y se guarda lo esperado de la bodega, se '
+         'registra el conteo, y al confirmar se comparan las líneas y se generan los movimientos de ajuste dentro de una '
+         'misma transacción, junto con la auditoría.')
 
-# ---------------- introducción
-s = new_slide('Introducción y contexto', 'El cierre del proyecto: control físico de la bodega y sistema en producción')
-label(s, X0, Y0, 'PUNTO DE PARTIDA')
-bullets(s, X0, Y0 + 450000, 5100000, [
-    'Al cierre del Incremento 3 estaban implementados los 96 casos de uso del Documento 0.',
-    'El sistema corría en Railway y en un entorno local; el despliegue productivo quedó para el Incremento 4.',
-    'El docente pidió mostrar el trabajo incremental en la pila, la traza de la metodología y las relaciones del modelo físico.'])
-label(s, 6263640, Y0, 'QUÉ AGREGA EL I4')
-bullets(s, 6263640, Y0 + 450000, 5100000, [
-    'Tres requerimientos nuevos: toma de inventario (RF-71), desactivar proveedor (RF-72) y acta PDF (RF-73).',
-    'Sistema en la VPS FiNet, integrado con G3 y G8 y conectado a la base global de validación.',
-    '45 claves foráneas nuevas: el modelo físico queda con 72 relaciones.'])
-notes(s, 'Contexto: venimos de 96 de 96 CU. Este incremento suma 3 requerimientos pequeños y deja el sistema en producción.')
+# 11 · Comportamiento CU-98
+T(11, 1, 'Comportamiento del sistema · CU-98')
+T(11, 4, 'Diagrama de secuencia · flujo normal de la desactivación de un proveedor')
+PIC(11, 3, SQ + 'CU98/CU98-normal.png')
+NOTE(11, 'En CU-98 el flujo es más corto: se valida la empresa, se cuentan las órdenes de ingreso pendientes del proveedor '
+         'y, si no hay, se marca inactivo y se registra en la auditoría. Al crear una orden de ingreso, el servicio rechaza '
+         'un proveedor inactivo.')
 
-# ---------------- alcance
-s = new_slide('Alcance del Incremento 4', '¿Qué comprende la entrega?')
-label(s, X0, Y0, 'FUNCIONAL')
-bullets(s, X0, Y0 + 450000, 5100000, [
-    'CU-97 Registrando toma de inventario físico y ajuste de diferencias.',
-    'CU-98 Desactivando proveedor (y reactivarlo).',
-    'CU-99 Generando acta de toma de inventario en PDF.'])
-label(s, 6263640, Y0, 'TÉCNICO')
-bullets(s, 6263640, Y0 + 450000, 5100000, [
-    'Despliegue con Docker rootless en la VPS y acceso por túnel SSH.',
-    'Integraciones por HTTPS en el nginx del administrador (:8143).',
-    'Base global finet_global_validacion y equivalencia de roles entre grupos.',
-    'Claves foráneas faltantes en el script de migración.'])
-for i, (n, c) in enumerate([('3', 'Casos de uso nuevos'), ('3', 'Requerimientos funcionales'), ('45', 'Claves foráneas nuevas'),
-                            ('3,03%', 'Avance del incremento · 3 / 99'), ('100%', 'CU acumulado · 99 / 99')]):
-    kpi(s, 746582 + i * 2150000, 4433969, 1950000, n, c)
-notes(s, 'El denominador pasa de 96 a 99 casos de uso. El incremento aporta 3,03 % y deja el acumulado en 100 %.')
+# 12 · Árbol de navegación
+T(12, 6, 'Ámbar: pantallas del Incremento 3')
+T(12, 7, 'Violeta: pantallas nuevas del Incremento 4; borde violeta: pantalla anterior ampliada')
+T(12, 8, 'Recorrido de CU-97 y CU-98')
+T(12, 10, 'Toma de inventario: listado de tomas, detalle con conteo y descarga del acta.')
+T(12, 12, 'Proveedores: botones Desactivar y Reactivar con confirmación.')
+T(12, 14, 'Órdenes de ingreso: solo se ofrecen proveedores activos.')
+PIC(12, 16, R + 'diagramas/arbol-navegacion/arbol-navegacion-incremento4.png')
+T(12, 20, 'I4')
+vio = sh(12, 20)
+vio.fill.solid(); vio.fill.fore_color.rgb = RGBColor(0xD9, 0xCC, 0xF5)
+vio.line.color.rgb = RGBColor(0x6A, 0x4F, 0xB3)
+NOTE(12, 'El árbol de navegación muestra en qué incremento se incorporó cada pantalla: azul para el primero, verde para el '
+         'segundo, ámbar para el tercero y violeta para este. Lo nuevo es la toma de inventario, con su listado y el detalle '
+         'del conteo, y en proveedores se agregaron las acciones de desactivar y reactivar.')
 
-# ---------------- requerimientos
-s = new_slide('Requerimientos y trazabilidad', 'Cada RF se sigue de extremo a extremo: usuario → requisito → caso de uso → diseño → código → prueba')
-rows = [('UR 13.1', 'RF-71', 'CU-97', 'tomas-inventario', 'P97-N, P97-E1 · 17 unitarias'),
-        ('UR 13.2', 'RF-72', 'CU-98', 'proveedores · ordenes-ingreso', 'P98-N, E1, E2, E3, R · 6 unitarias'),
-        ('UR 13.1', 'RF-73', 'CU-99', 'tomas-inventario · pdf-reporte', 'P99-N, E1, E2 · 3 unitarias')]
-heads = ['Usuario', 'Requisito', 'Caso de uso', 'Módulo', 'Pruebas']
-ws = [1500000, 1500000, 1500000, 3000000, 3500000]
-tbl = s.shapes.add_table(4, 5, Emu(X0), Emu(Y0 + 100000), Emu(sum(ws)), Emu(1800000)).table
-for j, w in enumerate(ws): tbl.columns[j].width = Emu(w)
-for i, row in enumerate([heads] + rows):
-    for j, v in enumerate(row):
-        c = tbl.cell(i, j); c.text = v
-        f = c.text_frame.paragraphs[0].runs[0].font
-        f.size = Pt(12); f.name = 'Calibri'; f.bold = i == 0
-        f.color.rgb = RGBColor(0xFF, 0xFF, 0xFF) if i == 0 else DARK
-        c.fill.solid(); c.fill.fore_color.rgb = RED if i == 0 else (RGBColor(0xFA, 0xF6, 0xF6) if i % 2 else RGBColor(0xFF, 0xFF, 0xFF))
-tb(s, X0, 3700000, FULLW, 900000, 'Requerimientos de usuario nuevos: UR 13.1 «Control físico periódico del inventario de bodega» y '
-   'UR 13.2 «Gestión de la vigencia de proveedores». Los tres casos reutilizan módulos de incrementos anteriores: stock (I1), '
-   'órdenes de ingreso (I2) y generador PDF (I3).', 12)
+# 13 · Pruebas
+T(13, 2, '10 de 10 escenarios conformes · 174 pruebas automatizadas y 72 claves foráneas validadas')
+T(13, 5, 'CU-97 Y CU-99 · TOMA')
+T(13, 7, 'P97-N: toma confirmada, diferencias ajustadas en el stock')
+T(13, 9, 'P97-E1: segunda toma abierta en la misma bodega rechazada')
+T(13, 11, 'P99-N: acta PDF de la toma confirmada')
+T(13, 13, 'P99-E1 y P99-E2: toma abierta (409) u otra empresa (404)')
+T(13, 15, 'P98-N: proveedor sin órdenes pendientes desactivado')
+T(13, 17, 'P98-E1: proveedor ya inactivo, sin cambios')
+T(13, 19, 'P98-E2: órdenes pendientes de recepción, desactivación rechazada')
+T(13, 21, 'P98-E3: orden de ingreso con proveedor inactivo rechazada; P98-R: reactivación conforme')
+T(13, 23, 'Migración probada en base nueva, base vacía y segunda ejecución')
+T(13, 25, '72'); T(13, 26, 'Claves foráneas validadas')
+T(13, 29, 'CU-98 · PROVEEDOR')
+T(13, 31, '26'); T(13, 32, 'Suites de pruebas')
+T(13, 34, '174'); T(13, 35, 'Pruebas automatizadas (Jest)')
+T(13, 37, '10/10'); T(13, 38, 'Escenarios conformes')
+T(13, 40, '26'); T(13, 41, 'Unitarias del incremento')
+NOTE(13, 'En pruebas tenemos 10 escenarios funcionales sobre la API, todos conformes: el flujo normal y las excepciones de '
+         'cada caso. Además hay 26 pruebas unitarias nuevas y la suite completa del backend, 174 pruebas en 26 suites, pasa '
+         'sin fallas. La migración de las claves foráneas se probó en una base nueva, una vacía y una ya migrada.')
 
-# ---------------- CU-97
-s = new_slide('CU-97 · Toma de inventario físico', 'RF-71 → CU-97: contar la bodega, comparar y ajustar las diferencias')
-label(s, X0, Y0, 'FLUJO', 1200000)
-bullets(s, X0, Y0 + 450000, 4600000, [
-    'Se abre una toma por bodega: el sistema guarda lo esperado.',
-    'Se registran cantidades y series; cada línea muestra COINCIDE, FALTANTE o SOBRANTE.',
-    'Al confirmar, cada diferencia genera un movimiento AJUSTE_INVENTARIO.',
-    'E1: una sola toma abierta por bodega (409).',
-    'E3: si el stock cambió durante el conteo, se avisa antes de ajustar.'])
-img(s, EV + 'CU97-conteo-abierta.png', 5500000, 1300000, 6200000, 4500000)
-notes(s, 'CU-97 es el caso principal del incremento. Se muestra la pantalla de conteo con los resultados por línea.')
+# 14 · Traza Scrum++
+T(14, 1, 'Traza Scrum++ del Incremento 4')
+PIC(14, 3, D4 + 'graficos/burnup-sprint-i4.png')
+PIC(14, 4, D4 + 'graficos/burndown-sprint-i4.png')
+T(14, 8, 'Product Backlog: la pila crece por incremento; el I4 suma 15 elementos (89 HH).')
+T(14, 10, 'Sprint Planning 04-11: primero la VPS y CU-97, luego la documentación.')
+T(14, 12, 'Daily Scrum: avance e impedimentos, la mayoría externos (permisos y red de la VPS).')
+T(14, 14, 'Sprint Review: Pull Requests revisadas por el jefe de grupo y pruebas en dev y en la VPS.')
+T(14, 16, 'Cambio de alcance 09-11: RF-72 y RF-73 (+12 HH); retrospectiva al cierre.')
+T(14, 18, '3'); T(14, 19, 'CU completados')
+T(14, 21, '101 HH'); T(14, 22, 'Estimación del sprint')
+T(14, 24, '70 HH'); T(14, 25, 'Completadas al 09-11')
+NOTE(14, 'En Scrum++ la pila del producto crece en cada incremento; en este agregamos 15 elementos con 89 horas hombre, y el '
+         '9 de noviembre sumamos dos requerimientos más, con 12 horas. Priorizamos la VPS y la toma de inventario, porque el '
+         'resto dependía de ellas. El burn-up y el burn-down muestran el avance del sprint frente a lo planificado.')
 
-# ---------------- CU-98 / CU-99
-s = new_slide('CU-98 y CU-99 · Proveedor y acta', 'RF-72 → CU-98 desactivar proveedor · RF-73 → CU-99 acta PDF de la toma')
-label(s, X0, Y0, 'CU-98', 1200000)
-bullets(s, X0, Y0 + 400000, 5100000, [
-    'El proveedor inactivo conserva su historial y no entra en órdenes nuevas.',
-    'No se desactiva con órdenes pendientes de recepción (409).'], 11)
-img(s, EV + 'CU98-E2-ordenes-pendientes.png', X0, 2850000, 5200000, 3000000)
-label(s, 6263640, Y0, 'CU-99', 1200000)
-bullets(s, 6263640, Y0 + 400000, 5100000, [
-    'Acta PDF de una toma confirmada, con el mismo generador de reportes de CU-93.',
-    'Una toma abierta responde 409 y una de otra empresa 404.'], 11)
-img(s, EV + 'CU99-acta-pdf.png', 6263640, 2850000, 5200000, 3000000)
+# 15 · Avance acumulado
+PIC(15, 3, D4 + 'graficos/burnup-proyecto.png')
+PIC(15, 4, D4 + 'graficos/burndown-proyecto.png')
+T(15, 8, 'Denominador: 99 casos de uso (96 del Documento 0 y 3 del Incremento 4).')
+T(15, 10, 'Mínimos exigidos: 30 %, 70 %, 95 % y 100 % al cierre de cada incremento.')
+T(15, 12, 'Cada entrega superó su mínimo; el Incremento 4 cierra en el 100 %.')
+T(15, 14, 'Burn-down: de 99 CU pendientes a 0 al cierre del Incremento 4.')
+T(15, 16, 'Cierre: sistema en la VPS y aceptación del Product Owner.')
+T(15, 19, 'Incremento 1 · 46,46%')
+T(15, 22, 'Incremento 2 · 77,78%')
+T(15, 25, 'Incremento 3 · 96,97%')
+# cuarta caja (Incremento 4): se reparten 4 cajas en el ancho que ocupaban 3
+shapes15 = list(S[14].shapes)
+box = [shapes15[23], shapes15[24], shapes15[25]]
+new = [copy.deepcopy(s._element) for s in box]
+anchor = shapes15[25]._element
+for el in new:
+    anchor.addnext(el); anchor = el
+shapes15 = list(S[14].shapes)
+W4, GAP, X0 = 1300000, 110000, 566928
+for k in range(4):
+    b, num, cap = shapes15[17 + 3 * k], shapes15[18 + 3 * k], shapes15[19 + 3 * k]
+    x = X0 + k * (W4 + GAP)
+    b.left, b.width = Emu(x), Emu(W4)
+    num.left, num.width = Emu(x), Emu(W4)
+    cap.left, cap.width = Emu(x + 30000), Emu(W4 - 60000)
+T(15, 27, '99'); T(15, 28, 'Incremento 4 · 100%')
+NOTE(15, 'En el acumulado del proyecto pasamos de 46 casos en el primer incremento a 77 en el segundo, 96 en el tercero y '
+         '99 en este, siempre por sobre los mínimos. Con los tres casos nuevos el total sube a 99 y cerramos en el 100 por '
+         'ciento, con el sistema en producción en la VPS.')
 
-# ---------------- modelo físico
-s = new_slide('Modelo físico con relaciones', 'Respuesta a la observación del I3: 45 claves foráneas nuevas, 72 en total')
-img(s, D4 + 'modelo-fisico-toma-proveedor.png', X0, 1250000, 6400000, 5000000)
-label(s, 7300000, Y0, 'CAMBIOS', 1400000)
-bullets(s, 7300000, Y0 + 450000, 4300000, [
-    'Tablas nuevas toma_inventario y toma_inventario_detalle (violeta).',
-    'Líneas violetas: claves foráneas agregadas en el I4.',
-    'Se crean NOT VALID y luego se validan, sin romper bases antiguas.',
-    'Sin FK a propósito: IDs externos de G3/G8 y auditoría del sistema.'])
-
-# ---------------- comportamiento
-s = new_slide('Comportamiento del sistema · CU-97', 'Diagrama de secuencia · flujo normal de la toma, desde la vista hasta la base de datos')
-img(s, R + 'diagramas/diagramas-secuencia/CU97/CU97-normal.png', X0, 1250000, FULLW, 4900000)
-
-# ---------------- VPS
-s = new_slide('Sistema en la VPS FiNet', 'El sistema quedó en producción en el servidor del curso')
-img(s, D4 + 'despliegue-vps.png', X0, 1250000, 5200000, 4900000)
-label(s, 6263640, Y0, 'HITOS', 1200000)
-bullets(s, 6263640, Y0 + 450000, 5200000, [
-    '04-11 · compose y guía de despliegue (PR #76).',
-    '05-11 · app con 4 contenedores sanos; integraciones por HTTPS en :8143.',
-    '06-11 · opción de base global (PR #79, #80).',
-    '08-11 · roles equivalentes y técnico del cierre (PR #82, #84, #87).',
-    '08-11 · cambio a la base global finet_global_validacion.',
-    'Acceso de usuarios por túnel SSH, según la política de la VPS.'])
-
-# ---------------- árbol
-s = new_slide('Árbol de navegación', 'Pantallas del sistema según el incremento en que se incorporan · violeta = Incremento 4')
-img(s, R + 'diagramas/arbol-navegacion/arbol-navegacion-incremento4.png', 6600000, 1150000, 5000000, 5200000)
-label(s, X0, Y0, 'INCREMENTO 4', 1600000)
-bullets(s, X0, Y0 + 450000, 5600000, [
-    'Toma de inventario: listado, detalle con conteo y descarga del acta.',
-    'Proveedores: botones Desactivar y Reactivar con confirmación.',
-    'Órdenes de ingreso: solo ofrece proveedores activos.',
-    'Menú lateral: nueva entrada Toma de inventario.'])
-
-# ---------------- pruebas
-s = new_slide('Pruebas', 'Flujo normal y excepciones de cada caso, con evidencia en docs/incremento-4')
-label(s, X0, Y0, 'API', 1200000)
-bullets(s, X0, Y0 + 450000, 5100000, [
-    'P97-N toma confirmada con ajustes (201) · P97-E1 toma abierta (409).',
-    'P98-N desactivar (200) · E1 ya inactivo (409) · E2 órdenes pendientes (409) · E3 orden con inactivo (400).',
-    'P99-N acta PDF (200) · E1 toma abierta (409) · E2 otra empresa (404).'])
-label(s, 6263640, Y0, 'AUTOMATIZADAS', 1700000)
-bullets(s, 6263640, Y0 + 450000, 5100000, [
-    '26 pruebas unitarias de CU-97, CU-98 y CU-99.',
-    'Suite completa del backend: 174 de 174 aprobadas.',
-    'Migración probada en base nueva, base vacía y segunda ejecución.'])
-for i, (n, c) in enumerate([('10/10', 'Escenarios API correctos'), ('26', 'Unitarias del incremento'), ('174', 'Suite completa'), ('72', 'FK validadas')]):
-    kpi(s, 746582 + i * 2700000, 4433969, 2400000, n, c)
-
-# ---------------- traza scrum
-s = new_slide('Traza Scrum++ del Incremento 4', 'Pila incremental, sprint del 04-11 al 15-11 y métricas de avance')
-label(s, X0, Y0, 'SCRUM++', 1300000)
-bullets(s, X0, Y0 + 450000, 5000000, [
-    'Product Backlog por incremento: I1 a I3 terminados, I4 con 15 elementos.',
-    'Sprint Planning 04-11: primero VPS y CU-97, luego documentación.',
-    'Daily: avance e impedimentos, la mayoría externos (permisos y red de la VPS).',
-    'Cambio de alcance 09-11: RF-72 y RF-73 (+12 HH).',
-    'Review sobre dev y la VPS; retrospectiva al cierre.'], 11)
-img(s, D4 + 'graficos/burnup-sprint-i4.png', 6100000, 1150000, 5500000, 2550000)
-img(s, D4 + 'graficos/burndown-sprint-i4.png', 6100000, 3750000, 5500000, 2550000)
-for i, (n, c) in enumerate([('101 HH', 'Alcance del sprint'), ('70 HH', 'Completadas al 09-11')]):
-    kpi(s, 746582 + i * 2400000, 5000000, 2200000, n, c)
-
-# ---------------- avance acumulado
-s = new_slide('Avance acumulado del proyecto', 'Casos de uso por incremento frente al mínimo exigido')
-label(s, X0, Y0, 'ALCANCE DEL PROYECTO', 2300000)
-bullets(s, X0, Y0 + 450000, 5000000, [
-    'Denominador: 99 casos de uso (96 del Documento 0 + 3 del I4).',
-    'Mínimos de la rúbrica: 30 %, 70 %, 95 % y 100 %.',
-    'Cada entrega supera su mínimo; el I4 cierra en 100 %.'])
-img(s, D4 + 'graficos/burnup-proyecto.png', 6100000, 1150000, 5500000, 2550000)
-img(s, D4 + 'graficos/burndown-proyecto.png', 6100000, 3750000, 5500000, 2550000)
-for i, (n, c) in enumerate([('46', 'Incremento 1 · 46,46 %'), ('77', 'Incremento 2 · 77,78 %'), ('96', 'Incremento 3 · 96,97 %'), ('99', 'Incremento 4 · 100 %')]):
-    kpi(s, 746582 + (i % 2) * 2500000, 3600000 + (i // 2) * 950000, 2300000, n, c)
-
-# ---------------- cierre (copia de la portada)
-end = prs.slides.add_slide(cover.slide_layout)
-for ph in list(end.placeholders):
-    ph._element.getparent().remove(ph._element)
-clone_shapes(cover, end)
-
-# ---------------- quitar las diapositivas originales salvo la portada y reordenar
-sldIdLst = prs.slides._sldIdLst
-ids = list(sldIdLst)
-for sid in ids[1:16]:
-    rid = sid.get('{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id')
-    prs.part.drop_rel(rid)
-    sldIdLst.remove(sid)
+# quitar las imágenes antiguas que ya no usa ninguna diapositiva
+for sl in prs.slides:
+    xml = sl._element.xml
+    for rid, rel in list(sl.part.rels.items()):
+        if rel.reltype.endswith('/image') and f'"{rid}"' not in xml:
+            sl.part.drop_rel(rid)
 prs.save(OUT)
-print('slides', len(prs.slides))
+print('ok', len(prs.slides), 'diapositivas')
