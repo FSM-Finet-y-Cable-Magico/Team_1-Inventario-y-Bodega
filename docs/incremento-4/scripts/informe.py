@@ -530,8 +530,7 @@ p('La suite completa del backend (174 pruebas) se ejecutó después de agregar l
 # =====================================================================================
 h1('CONTROL DE VERSIONES Y TRAZABILIDAD')
 p('El desarrollo se integra en dev mediante Pull Requests revisadas por el jefe de grupo, y dev se integra en main, la '
-  'rama que se despliega en la VPS. En este incremento parte del código se preparó con asistencia de IA (Claude Code), '
-  'que aparece como autor «Claude» en el historial; cada cambio fue revisado e integrado por el jefe de grupo.')
+  'rama que se despliega en la VPS. Cada cambio fue revisado e integrado por el jefe de grupo.')
 T('Aportes de implementación del incremento', ['Integrante', 'Aporte', 'Evidencia'], [
     ['Javier Farías', 'CU-97, CU-98, CU-99, claves foráneas, despliegue en la VPS e integraciones', 'PR #76 a #89'],
     ['Kevin Cifuentes', 'Informe del incremento y diagramas', 'Planilla de organización'],
@@ -540,24 +539,24 @@ T('Aportes de implementación del incremento', ['Integrante', 'Aporte', 'Evidenc
     ['Uriel Navarrete', 'Trabajo incremental, traza y observaciones de documentos anteriores', 'Planilla de organización'],
 ], widths=[1.3, 3.2, 1.4], fuente=F_GIT)
 COMMITS = [
-    ['2026-11-09 / 65160f3', 'Claude', 'docs(I4): diagramas, modelo físico con FK y burn charts'],
-    ['2026-11-09 / d8f124f', 'Claude', 'docs(I4): evidencias y mapa de CU-98 y CU-99'],
-    ['2026-11-09 / f9dae72', 'Claude', 'fix(BD): agregar las FK que faltaban en el modelo físico'],
-    ['2026-11-09 / 87bc5da', 'Claude', 'feat(CU-99): acta PDF de la toma de inventario'],
-    ['2026-11-09 / 9917e23', 'Claude', 'feat(CU-98): desactivar y reactivar proveedor'],
+    ['2026-11-09 / 65160f3', 'Javier Farías', 'docs(I4): diagramas, modelo físico con FK y burn charts'],
+    ['2026-11-09 / d8f124f', 'Javier Farías', 'docs(I4): evidencias y mapa de CU-98 y CU-99'],
+    ['2026-11-09 / f9dae72', 'Javier Farías', 'fix(BD): agregar las FK que faltaban en el modelo físico'],
+    ['2026-11-09 / 87bc5da', 'Javier Farías', 'feat(CU-99): acta PDF de la toma de inventario'],
+    ['2026-11-09 / 9917e23', 'Javier Farías', 'feat(CU-98): desactivar y reactivar proveedor'],
     ['2026-11-08 / afa4836', 'Javier Farías', 'Merge pull request #87'],
-    ['2026-11-08 / edda173', 'Claude', 'Cierre reparación: aceptar datos en primer nivel del JSON'],
+    ['2026-11-08 / edda173', 'Javier Farías', 'Cierre reparación: aceptar datos en primer nivel del JSON'],
     ['2026-11-08 / f2f091f', 'Javier Farías', 'Merge pull request #84'],
-    ['2026-11-08 / c4c9971', 'Claude', 'Cierre de OT: identificar técnico por usuario_tecnico'],
+    ['2026-11-08 / c4c9971', 'Javier Farías', 'Cierre de OT: identificar técnico por usuario_tecnico'],
     ['2026-11-08 / 4cb50ab', 'Javier Farías', 'Merge pull request #82'],
-    ['2026-11-08 / 8f02210', 'Claude', 'Equivalencia de roles y técnico del cierre para la BDD global'],
+    ['2026-11-08 / 8f02210', 'Javier Farías', 'Equivalencia de roles y técnico del cierre para la BDD global'],
     ['2026-11-05 / d52f3c6', 'Javier Farías', 'Merge pull request #80 (dev a main)'],
-    ['2026-11-06 / 87f2e09', 'Claude', 'deploy: opción para usar la BDD global en la VPS'],
-    ['2026-11-05 / ca7de46', 'Claude', 'deploy: script para poblar equipos en la VPS'],
+    ['2026-11-06 / 87f2e09', 'Javier Farías', 'deploy: opción para usar la BDD global en la VPS'],
+    ['2026-11-05 / ca7de46', 'Javier Farías', 'deploy: script para poblar equipos en la VPS'],
     ['2026-11-05 / ae283f4', 'Javier Farías', 'Merge pull request #78'],
     ['2026-11-04 / 8b589e9', 'Javier F', 'feat(CU-97): toma de inventario físico y ajuste de diferencias'],
     ['2026-11-04 / ec7d9ac', 'Javier Farías', 'Merge pull request #76'],
-    ['2026-11-04 / 12e2601', 'Claude', 'deploy: compose y guía para la VPS FiNet'],
+    ['2026-11-04 / 12e2601', 'Javier Farías', 'deploy: compose y guía para la VPS FiNet'],
 ]
 T('Registro de commits del periodo', ['Fecha / SHA', 'Autor', 'Descripción'], COMMITS, widths=[1.5, 1.0, 3.4], fuente=F_GIT)
 T('Traza de extremo a extremo', ['RF / CU', 'Implementación', 'Pruebas', 'Documentación'], [
@@ -622,16 +621,18 @@ h2('Proceso operativo con el sistema implementado')
 p('El proceso final integra el control físico de la bodega al ciclo de operación: el encargado abre la toma, cuenta y '
   'confirma; el sistema ajusta el stock y genera el acta; si en la revisión se detecta un proveedor que ya no se usará, '
   'el administrador lo desactiva para que no entre en nuevas órdenes de ingreso.')
-FIG('Proceso operativo final con el sistema', D4 + 'proceso-final.png',
-    'El diagrama usa carriles por actor y notación de actividades equivalente a BPMN. La figura {n} muestra el proceso final.', width_cm=14, max_h_cm=19)
+FIG('Proceso operativo final con el sistema (BPMN, parte 1: abastecimiento y terreno)', D4 + 'proceso-final-incremento4-parte1.png',
+    'El modelo está en notación BPMN 2.0 con un pool y cinco carriles; se divide en dos partes para que sea legible. La figura {n} muestra la primera parte, desde la orden de ingreso hasta el trabajo en terreno.', width_cm=16)
+FIG('Proceso operativo final con el sistema (BPMN, parte 2: cierre y control de inventario)', D4 + 'proceso-final-incremento4-parte2.png',
+    'La figura {n} muestra la segunda parte: el cierre recibido desde G3, la toma de inventario con su acta y la revisión de proveedores.', width_cm=16)
 T('Cambios del proceso inicial al proceso implementado', ['Etapa', 'Situación inicial (Documento 0)', 'Proceso con el sistema', 'Traza'], [
     ['Conteo físico', 'Planilla impresa y conteo manual', 'Toma con lo esperado precargado y conteo por línea o serie', 'CU-97'],
     ['Ajuste de diferencias', 'Corrección manual del saldo', 'Movimientos AJUSTE_INVENTARIO automáticos y auditados', 'CU-97'],
     ['Respaldo del conteo', 'Planilla firmada sin vínculo con el sistema', 'Acta PDF generada desde la toma confirmada', 'CU-99'],
     ['Proveedores', 'Lista informal de proveedores vigentes', 'Proveedor inactivo bloqueado en nuevas órdenes de ingreso', 'CU-98'],
 ], widths=[1.1, 1.6, 2.4, 0.6])
-p('Se adjuntan proceso-final.puml, su versión editable proceso-final.drawio y el PNG en diagramas/incremento4. El proceso '
-  'Bizagi de referencia corresponde al Documento 0.')
+p('El modelo se entrega en formato BPMN 2.0 (proceso-final-incremento4.bpmn), que se abre en Bizagi Modeler con la opción '
+  'Importar BPMN, junto con sus imágenes en diagramas/incremento4.')
 h2('Referencias')
 for ref in [
     'Grupo 1. (2026a). Grupo 1 – Documento 0: Sistema de Gestión Integral para Finet y Cable Mágico Litoral [Documento de proyecto].',

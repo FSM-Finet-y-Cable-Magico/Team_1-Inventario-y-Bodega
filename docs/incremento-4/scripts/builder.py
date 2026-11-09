@@ -171,7 +171,14 @@ class Informe:
 
     def table(self, titulo, headers, rows, widths=None, intro=None, fuente=FUENTE, bold_first=False):
         num = self.next_tab()
-        self.p(intro.format(n=num) if intro else f'La tabla {num} presenta {titulo[0].lower() + titulo[1:]}.')
+        ART = {'actores': 'los', 'alcance': 'el', 'aportes': 'los', 'atributos': 'los', 'cambios': 'los', 'caso': 'el', 'casos': 'los',
+               'claves': 'las', 'configuración': 'la', 'decisiones': 'las', 'definición': 'la', 'diccionario': 'el', 'especificación': 'la',
+               'evolución': 'la', 'ficha': 'la', 'formas': 'las', 'hitos': 'los', 'mapa': 'el', 'matriz': 'la', 'observaciones': 'las',
+               'pila': 'la', 'procedencia': 'la', 'pruebas': 'las', 'registro': 'el', 'resultado': 'el', 'resultados': 'los',
+               'retrospectiva': 'la', 'seguimiento': 'el', 'sprint': 'el', 'tablas': 'las', 'traza': 'la'}
+        t0 = titulo[0].lower() + titulo[1:]
+        art = ART.get(t0.split()[0], '')
+        self.p(intro.format(n=num) if intro else f'La tabla {num} presenta {(art + " ") if art else ""}{t0}.')
         self.ntab += 1
         proto = self.proto['tbl']
         tbl = copy.deepcopy(proto)
