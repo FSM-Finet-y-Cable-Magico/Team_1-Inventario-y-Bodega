@@ -8,6 +8,9 @@
 --  Es idempotente: se puede ejecutar varias veces sin duplicar. El stock
 --  solo sube hasta el mínimo indicado.
 --
+--  Usa tablas temporales: g1_app no tiene ese permiso en la BDD global,
+--  así que debe ejecutarlo un rol con TEMP (ya se cargó el 06-11).
+--
 --  Requisitos: empresas 1 y 2, y el usuario superinventario (figura como
 --  autor en el historial de cada unidad).
 --
