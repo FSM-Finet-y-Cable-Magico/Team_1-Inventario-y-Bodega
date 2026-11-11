@@ -1,0 +1,53 @@
+@startuml objetos-toma
+title Diagrama de objetos — toma N° 1 confirmada y su acta (CU-97 / CU-99)
+skinparam shadowing false
+object "toma1 : TomaInventario" as t {
+  id_toma = 1
+  bodega = "Bodega Finet Central"
+  estado = "CONFIRMADA"
+  fecha_apertura = 09-11-2026 14:38
+  fecha_cierre = 09-11-2026 14:38
+}
+object "l9 : TomaInventarioDetalle" as l9 {
+  tipo = "Conector SC/APC QA"
+  esperada = 5
+  contada = 4
+  resultado = "FALTANTE"
+}
+object "l11 : TomaInventarioDetalle" as l11 {
+  tipo = "Cable UTP Cat6 QA"
+  esperada = 320
+  contada = 322
+  resultado = "SOBRANTE"
+}
+object "s2 : TomaInventarioDetalle" as s2 {
+  numero_serie = "DEMO-ONT-0002"
+  es_esperada = true
+  contada = 0
+  resultado = "FALTANTE"
+}
+object "m1 : MovimientoInventario" as m1 {
+  tipo = "AJUSTE_INVENTARIO"
+  cantidad = 1 (salida)
+  referencia_id = 1
+}
+object "m2 : MovimientoInventario" as m2 {
+  tipo = "AJUSTE_INVENTARIO"
+  cantidad = 2 (entrada)
+  referencia_id = 1
+}
+object "acta : PDF" as a {
+  nombre = "acta-toma-1-20261109.pdf"
+  lineas = 11
+}
+object "ev : LogAuditoria" as ev {
+  accion = "GENERAR_ACTA_TOMA_INVENTARIO"
+}
+t *-- l9
+t *-- l11
+t *-- s2
+l9 --> m1 : ajuste
+l11 --> m2 : ajuste
+t --> a : genera (CU-99)
+a --> ev
+@enduml

@@ -1,0 +1,69 @@
+@startuml CU99-normal
+title CU-99 — Generando acta de toma de inventario en PDF (flujo normal)
+skinparam style strictuml
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+  ParticipantBorderColor black
+  ActorBorderColor black
+}
+skinparam participant {
+  BackgroundColor<<vista>> #BDD7EF
+  BackgroundColor<<control>> #C7E1B5
+  BackgroundColor<<persistencia>> #F9CBAD
+}
+skinparam database {
+  BackgroundColor<<persistencia>> #F9CBAD
+}
+hide stereotype
+hide footbox
+
+actor "Encargado de bodega" as user
+participant "V_TomaInventario" as view <<vista>>
+participant "C_RolesGuard" as guard <<control>>
+participant "C_TomasInventarioController" as ctrl <<control>>
+participant "C_TomasInventarioService" as svc <<control>>
+participant "C_PdfReporte" as pdf <<control>>
+participant "C_AuditoriaService" as aud <<control>>
+participant "C_TypeORM" as orm <<persistencia>>
+database "postgres" as db <<persistencia>>
+
+user -> view : Presiona «Descargar acta PDF»\nen una toma confirmada
+activate view
+view -> guard : GET /tomas-inventario/:id/acta
+activate guard
+guard --> view : Acceso permitido\n(ADMIN / SUPERUSUARIO / ADMIN_BODEGA)
+deactivate guard
+view -> ctrl : GET /tomas-inventario/:id/acta
+activate ctrl
+ctrl -> svc : generarActa(id, actor)
+activate svc
+svc -> orm : Lee la toma de la empresa del actor\ncon sus líneas y la bodega
+activate orm
+orm -> db : SELECT toma_inventario,\ntoma_inventario_detalle, bodega, tipo_equipo
+db --> orm : Toma CONFIRMADA y sus líneas
+orm --> svc : Toma con diferencias y resumen
+deactivate orm
+svc -> orm : Busca los nombres de quien abrió y confirmó
+activate orm
+orm -> db : SELECT usuario
+db --> orm : Usuarios
+orm --> svc : Nombres
+deactivate orm
+svc -> pdf : construirPdfReporte(encabezado, líneas)
+activate pdf
+pdf --> svc : Buffer PDF
+deactivate pdf
+svc -> aud : create(GENERAR_ACTA_TOMA_INVENTARIO)
+activate aud
+aud --> svc : Evento registrado
+deactivate aud
+svc --> ctrl : { archivo, nombre }
+deactivate svc
+ctrl --> view : 200 OK application/pdf\n(acta-toma-N-AAAAMMDD.pdf)
+deactivate ctrl
+view --> user : Descarga el acta
+deactivate view
+@enduml

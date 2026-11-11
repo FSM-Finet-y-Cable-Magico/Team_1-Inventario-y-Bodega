@@ -21,6 +21,7 @@ el service; fuera de la empresa la bodega o toma responde 404.
 | PATCH | `/api/tomas-inventario/:id/conteo` | Guarda `consumibles` y `series`; se puede repetir. `series` es la lista completa. |
 | POST | `/api/tomas-inventario/:id/confirmar` | Ajusta el stock y cierra la toma. `forzar_movimientos` confirma tras el aviso E3. |
 | POST | `/api/tomas-inventario/:id/cancelar` | Cancela la toma sin tocar el inventario. |
+| GET | `/api/tomas-inventario/:id/acta` | **CU-99:** descarga el acta PDF de una toma confirmada. |
 
 ## 2. Reglas
 
@@ -41,3 +42,14 @@ el service; fuera de la empresa la bodega o toma responde 404.
 | E1 | La bodega ya tiene una toma abierta | 409. Además lo impide el índice único parcial `uq_toma_abierta_por_bodega`. |
 | E2 | Serie que no estaba en la bodega | Línea `OTRA_UBICACION` o `NO_REGISTRADA`. Una serie de otra empresa se informa como `NO_REGISTRADA`. |
 | E3 | Stock o unidades cambiaron durante el conteo | 409 con `codigo: MOVIMIENTOS_DURANTE_CONTEO`; no ajusta hasta reenviar con `forzar_movimientos: true`. |
+
+## 4. CU-99 — Generando acta de toma de inventario en PDF (RF-73, Incremento 4)
+
+- Reutiliza el generador de PDF de CU-93 (`reportes/pdf-reporte.ts`), sin librerías nuevas.
+- Encabezado: empresa, `Acta de toma de inventario N° {id}`, bodega, fechas de apertura y
+  confirmación, quién abrió y quién confirmó. Tabla: tipo, serie (o «(consumible)»), esperado,
+  contado, diferencia y resultado; primero los consumibles y luego las series.
+- Archivo `acta-toma-{id}-AAAAMMDD.pdf`. Auditoría `GENERAR_ACTA_TOMA_INVENTARIO`.
+- **E1:** la toma está abierta o cancelada → 409 «Solo se puede generar el acta de una toma confirmada.»
+- **E2:** la toma es de otra empresa → 404 (mismo aislamiento que el resto del módulo).
+- Frontend: botón «Descargar acta PDF» en `/tomas-inventario/[id]` cuando la toma está confirmada.

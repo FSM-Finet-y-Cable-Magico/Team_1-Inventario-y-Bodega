@@ -11,6 +11,13 @@ import { StockConsumible } from '../bodegas/entities/stock-consumible.entity';
 import { TipoEquipo } from '../inventario/entities/tipo-equipo.entity';
 import { UnidadEquipo } from '../inventario/entities/unidad-equipo.entity';
 import { MovimientoInventario } from '../transferencias/entities/movimiento-inventario.entity';
+import { Usuario } from '../usuarios/entities/usuario.entity';
+import { EMPRESAS } from '../companies/companies.service';
+import {
+  ColumnaPdf,
+  construirPdfReporte,
+  fechaLegible,
+} from '../reportes/pdf-reporte';
 import { RegistrarConteoDto } from './dto/registrar-conteo.dto';
 import {
   RESULTADO_COINCIDE,
@@ -29,6 +36,16 @@ import {
 
 export const TIPO_MOVIMIENTO_AJUSTE = 'AJUSTE_INVENTARIO';
 const ESTADO_EN_BODEGA = 'En bodega';
+
+// CU-99: columnas del acta. Primero los consumibles y luego las series.
+const COLUMNAS_ACTA: ColumnaPdf[] = [
+  { titulo: 'Tipo de equipo', campo: 'tipo', peso: 2 },
+  { titulo: 'N° de serie', campo: 'serie', peso: 1.6 },
+  { titulo: 'Esperado', campo: 'esperado', peso: 0.8 },
+  { titulo: 'Contado', campo: 'contado', peso: 0.8 },
+  { titulo: 'Diferencia', campo: 'diferencia', peso: 0.8 },
+  { titulo: 'Resultado', campo: 'resultado', peso: 1.2 },
+];
 
 export interface ActorToma {
   id_usuario: number;
@@ -544,5 +561,80 @@ export class TomasInventarioService {
       valor_nuevo: { estado: TOMA_CANCELADA },
     });
     return this.obtener(id, actor);
+  }
+
+  //CU-99: genera el acta en PDF de una toma confirmada (lo esperado, lo contado y las diferencias)
+  async generarActa(
+    id: number,
+    actor: ActorToma,
+  ): Promise<{ archivo: Buffer; nombre: string }> {
+    const toma = await this.obtener(id, actor);
+    // CU-99 Excepción 1: solo una toma confirmada tiene un resultado definitivo
+    if (toma.estado !== TOMA_CONFIRMADA) {
+      throw new ConflictException(
+        'Solo se puede generar el acta de una toma confirmada.',
+      );
+    }
+
+    const [abrio, cerro] = await Promise.all([
+      this.nombreUsuario(toma.id_usuario_apertura),
+      this.nombreUsuario(toma.id_usuario_cierre),
+    ]);
+    const fecha = new Date();
+    const formato = (n: number | null) =>
+      n === null ? '-' : Number.isInteger(n) ? String(n) : n.toFixed(2);
+    const filas = [...toma.consumibles, ...toma.series].map((l) => ({
+      tipo: l.tipo_equipo_nombre ?? '-',
+      serie: l.numero_serie ?? '(consumible)',
+      esperado: formato(l.cantidad_esperada),
+      contado: formato(l.cantidad_contada),
+      diferencia: formato(l.diferencia),
+      resultado: l.resultado ?? '-',
+    }));
+    const archivo = construirPdfReporte({
+      empresa:
+        EMPRESAS.find((e) => e.id === toma.id_empresa)?.nombre ?? 'Empresa',
+      titulo: `Acta de toma de inventario N° ${toma.id_toma}`,
+      filtros: [
+        { etiqueta: 'Bodega', valor: toma.bodega_nombre ?? '-' },
+        {
+          etiqueta: 'Apertura',
+          valor: fechaLegible(new Date(toma.fecha_apertura)),
+        },
+        {
+          etiqueta: 'Confirmación',
+          valor: toma.fecha_cierre
+            ? fechaLegible(new Date(toma.fecha_cierre))
+            : '-',
+        },
+        { etiqueta: 'Abierta por', valor: abrio },
+        { etiqueta: 'Confirmada por', valor: cerro },
+      ],
+      generadoPor: await this.nombreUsuario(actor.id_usuario),
+      fecha,
+      columnas: COLUMNAS_ACTA,
+      filas,
+    });
+
+    await this.auditoriaService.create({
+      id_usuario: actor.id_usuario,
+      accion: 'GENERAR_ACTA_TOMA_INVENTARIO',
+      entidad_afectada: 'toma_inventario',
+      id_entidad_afectada: id,
+      valor_anterior: null,
+      valor_nuevo: { formato: 'PDF', lineas: filas.length },
+    });
+
+    const p = (n: number) => String(n).padStart(2, '0');
+    const marca = `${fecha.getFullYear()}${p(fecha.getMonth() + 1)}${p(fecha.getDate())}`;
+    return { archivo, nombre: `acta-toma-${toma.id_toma}-${marca}.pdf` };
+  }
+
+  private async nombreUsuario(id: number | null): Promise<string> {
+    if (!id) return '-';
+    const usuario = await this.dataSource.manager
+      .findOne(Usuario, { where: { id_usuario: id } })
+      .catch(() => null);
+    return usuario?.nombre_completo ?? `Usuario ${id}`;
   }
 }

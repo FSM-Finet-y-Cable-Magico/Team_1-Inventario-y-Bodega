@@ -34,6 +34,17 @@ Restricción UNIQUE en `(id_proveedor, id_tipo_equipo)`.
 | `POST` | `/api/proveedores` | ADMIN, SUPERUSUARIO | CU-49: crear proveedor |
 | `PATCH` | `/api/proveedores/:id` | ADMIN, SUPERUSUARIO | CU-50: editar proveedor |
 | `GET` | `/api/proveedores` | ADMIN_BODEGA, ADMIN, SUPERUSUARIO | CU-51: listado (filtros: `buscar`, `activa`) |
+| `PATCH` | `/api/proveedores/:id/desactivar` | ADMIN, SUPERUSUARIO | CU-98: desactivar proveedor |
+| `PATCH` | `/api/proveedores/:id/reactivar` | ADMIN, SUPERUSUARIO | CU-98: reactivar proveedor |
+
+### CU-98 — Desactivando proveedor (RF-72, Incremento 4)
+
+- Deja `activa = false`. El proveedor y su historial se conservan; solo deja de ofrecerse en
+  órdenes de ingreso nuevas (`/ordenes-ingreso` lista `activa=true` y el backend rechaza
+  `POST /ordenes-ingreso` con un proveedor inactivo: 400 «El proveedor seleccionado está inactivo.»).
+- **E1:** el proveedor ya está inactivo → 409.
+- **E2:** tiene órdenes de ingreso `Pendiente de recepción` o `Recepción parcial` → 409 con la cantidad.
+- Reactivar es la operación inversa (409 si ya está activo).
 
 ## Validación de RUT (módulo 11)
 
@@ -48,6 +59,7 @@ para CU-75, CU-78, CU-80, CU-81. El helper:
 
 - `CREAR` al registrar un proveedor nuevo.
 - `EDITAR` al modificar un proveedor existente (`valor_anterior` / `valor_nuevo` en jsonb).
+- `DESACTIVAR` / `REACTIVAR` (CU-98), con `activa` anterior y nuevo.
 
 ## CUs cubiertos
 
@@ -56,3 +68,4 @@ para CU-75, CU-78, CU-80, CU-81. El helper:
 | CU-49 | Crear proveedor con validación de RUT y tipos de equipo opcionales |
 | CU-50 | Editar proveedor (datos + tipos de equipo), validación de RUT y unicidad excluyendo el propio |
 | CU-51 | Consultar listado de proveedores (ADMIN_BODEGA incluido, solo lectura) |
+| CU-98 | Desactivar o reactivar proveedor (sin órdenes de ingreso pendientes) |

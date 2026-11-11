@@ -79,6 +79,10 @@ export class OrdenesIngresoService {
     if (!proveedor) {
       throw new NotFoundException('El proveedor seleccionado no existe.');
     }
+    // CU-98: un proveedor desactivado no recibe órdenes nuevas
+    if (!proveedor.activa) {
+      throw new BadRequestException('El proveedor seleccionado está inactivo.');
+    }
 
     // Validar bodega activa y de la empresa destinataria
     const bodega = await this.bodegaRepository.findOne({

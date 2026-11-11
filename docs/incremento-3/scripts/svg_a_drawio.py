@@ -31,8 +31,11 @@ for f in sorted(SRC.glob('*.svg')):
     pts=[float(t) for t in re.findall(r'-?\d+(?:\.\d+)?',a['points'])];commands=[('M' if i==0 else 'L',pts[i:i+2]) for i in range(0,len(pts),2)]+[('Z',[])]
    else:
     toks=re.findall(r'[MLQCZA]|-?(?:\d*\.)?\d+(?:[eE][+-]?\d+)?',a['d']);i=0
+    command='M'
     while i<len(toks):
-     command=toks[i];i+=1;k={'M':2,'L':2,'Q':4,'C':6,'A':7,'Z':0}[command];v=list(map(float,toks[i:i+k]));i+=k;commands.append((command,v))
+     if toks[i] in 'MLQCZA':command=toks[i];i+=1
+     elif command=='M':command='L'
+     k={'M':2,'L':2,'Q':4,'C':6,'A':7,'Z':0}[command];v=list(map(float,toks[i:i+k]));i+=k;commands.append((command,v))
    xs=[];ys=[]
    for c,v in commands:
     vv=v[-2:] if c=='A' else v

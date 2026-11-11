@@ -1,0 +1,52 @@
+[
+  {
+    "archivo": "casos-uso-i4.drawio",
+    "objetos_editables": 68,
+    "fuente_svg": "casos-uso-i4.svg"
+  },
+  {
+    "archivo": "clases-i4.drawio",
+    "objetos_editables": 194,
+    "fuente_svg": "clases-i4.svg"
+  },
+  {
+    "archivo": "componentes-i4.drawio",
+    "objetos_editables": 78,
+    "fuente_svg": "componentes-i4.svg"
+  },
+  {
+    "archivo": "despliegue-vps.drawio",
+    "objetos_editables": 100,
+    "fuente_svg": "despliegue-vps.svg"
+  },
+  {
+    "archivo": "estados-i4.drawio",
+    "objetos_editables": 60,
+    "fuente_svg": "estados-i4.svg"
+  },
+  {
+    "archivo": "modelo-fisico-cierres.drawio",
+    "objetos_editables": 520,
+    "fuente_svg": "modelo-fisico-cierres.svg"
+  },
+  {
+    "archivo": "modelo-fisico-general.drawio",
+    "objetos_editables": 600,
+    "fuente_svg": "modelo-fisico-general.svg"
+  },
+  {
+    "archivo": "modelo-fisico-toma-proveedor.drawio",
+    "objetos_editables": 447,
+    "fuente_svg": "modelo-fisico-toma-proveedor.svg"
+  },
+  {
+    "archivo": "objetos-toma.drawio",
+    "objetos_editables": 68,
+    "fuente_svg": "objetos-toma.svg"
+  },
+  {
+    "archivo": "proceso-final.drawio",
+    "objetos_editables": 123,
+    "fuente_svg": "proceso-final.svg"
+  }
+]
