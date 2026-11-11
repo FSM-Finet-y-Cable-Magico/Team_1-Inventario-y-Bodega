@@ -1,0 +1,14 @@
+### CU99-E1 acta de toma abierta
+{"message":"Solo se puede generar el acta de una toma confirmada.","error":"Conflict","statusCode":409}  [HTTP 409]
+conteo 200
+### CU97 confirmar
+{"id_toma":1,"id_bodega":1,"id_empresa":1,"estado":"CONFIRMADA","id_usuario_apertura":2,"id_usuario_cierre":2,"fecha_apertura":"2026-11-09T14:38:41.247Z","fecha_cierre":"2026-11-09T14:38:56.181Z","bod
+### CU99-N descargar acta
+HTTP/1.1 200 OK
+Content-Type: application/pdf
+Content-Disposition: attachment; filename="acta-toma-1-20261109.pdf"
+Content-Length: 11635
+### CU99-E2 acta de toma de otra empresa (admin_cable)
+{"message":"Toma de inventario no encontrada.","error":"Not Found","statusCode":404}  [HTTP 404]
+### CU97-E1 segunda toma abierta
+{"message":"La bodega ya tiene una toma abierta (#2).","error":"Conflict","statusCode":409}  [HTTP 409]

@@ -1,0 +1,74 @@
+@startuml CU98-normal
+title CU-98 — Desactivando proveedor (flujo normal)
+skinparam style strictuml
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+  ParticipantBorderColor black
+  ActorBorderColor black
+}
+skinparam participant {
+  BackgroundColor<<vista>> #BDD7EF
+  BackgroundColor<<control>> #C7E1B5
+  BackgroundColor<<persistencia>> #F9CBAD
+}
+skinparam database {
+  BackgroundColor<<persistencia>> #F9CBAD
+}
+hide stereotype
+hide footbox
+
+actor "Administrador" as user
+participant "V_Proveedores" as view <<vista>>
+participant "C_RolesGuard" as guard <<control>>
+participant "C_ProveedoresController" as ctrl <<control>>
+participant "C_ProveedoresService" as svc <<control>>
+participant "C_AuditoriaService" as aud <<control>>
+participant "C_TypeORM" as orm <<persistencia>>
+database "postgres" as db <<persistencia>>
+
+user -> view : Presiona «Desactivar» en el proveedor
+activate view
+view --> user : Pide confirmar la desactivación
+deactivate view
+user -> view : Confirma
+activate view
+view -> guard : PATCH /proveedores/:id/desactivar
+activate guard
+guard --> view : Acceso permitido (ADMIN / SUPERUSUARIO)
+deactivate guard
+view -> ctrl : PATCH /proveedores/:id/desactivar
+activate ctrl
+ctrl -> svc : desactivar(id, actorId)
+activate svc
+svc -> orm : Busca el proveedor
+activate orm
+orm -> db : SELECT proveedor
+db --> orm : Proveedor activo
+orm --> svc : Proveedor
+deactivate orm
+svc -> orm : Cuenta órdenes de ingreso abiertas
+activate orm
+orm -> db : SELECT COUNT(*) FROM orden_ingreso\nWHERE estado IN (Pendiente, Parcial)
+db --> orm : 0
+orm --> svc : Sin órdenes pendientes
+deactivate orm
+svc -> orm : Guarda activa = false
+activate orm
+orm -> db : UPDATE proveedor SET activa = false
+db --> orm : Fila actualizada
+orm --> svc : Proveedor inactivo
+deactivate orm
+svc -> aud : create(DESACTIVAR, proveedor)
+activate aud
+aud --> svc : Evento registrado
+deactivate aud
+svc --> ctrl : Proveedor con estado Inactivo
+deactivate svc
+ctrl --> view : 200 OK
+deactivate ctrl
+view --> user : Muestra el proveedor como Inactivo
+deactivate view
+@enduml

@@ -1,0 +1,107 @@
+@startuml clases-i4
+title Diagrama de clases — módulos del Incremento 4
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #3A3A3A
+}
+hide empty members
+package "tomas-inventario (CU-97, CU-99)" #F3EEFD {
+  class TomasInventarioController <<controller>> {
+    +abrir(dto: AbrirTomaDto, actor)
+    +listar(actor, id_bodega?)
+    +obtener(id, actor)
+    +registrarConteo(id, dto, actor)
+    +confirmar(id, dto, actor)
+    +cancelar(id, actor)
+    +acta(id, actor, res)
+  }
+  class TomasInventarioService <<service>> {
+    +abrir(idBodega, actor)
+    +obtener(id, actor)
+    +registrarConteo(id, dto, actor)
+    +confirmar(id, forzar, actor)
+    +cancelar(id, actor)
+    +generarActa(id, actor): {archivo, nombre}
+    -obtenerToma(id, actor, manager, bloquear)
+    -unidadesMovidas(...)
+    -nombreUsuario(id)
+  }
+  class TomaInventario <<entity>> {
+    +id_toma: number
+    +id_bodega: number
+    +id_empresa: number
+    +estado: ABIERTA|CONFIRMADA|CANCELADA
+    +id_usuario_apertura: number
+    +id_usuario_cierre: number
+    +fecha_apertura: Date
+    +fecha_cierre: Date
+  }
+  class TomaInventarioDetalle <<entity>> {
+    +id_detalle: number
+    +id_toma: number
+    +id_tipo_equipo: number
+    +id_unidad: number
+    +numero_serie: string
+    +es_esperada: boolean
+    +cantidad_esperada: number
+    +cantidad_contada: number
+    +resultado: string
+  }
+}
+package "proveedores (CU-98)" #F3EEFD {
+  class ProveedoresController <<controller>> {
+    +create(dto, req)
+    +update(id, body, req)
+    +findAll(buscar?, activa?)
+    +desactivar(id, req)
+    +reactivar(id, req)
+  }
+  class ProveedoresService <<service>> {
+    +desactivar(id, actorId)
+    +reactivar(id, actorId)
+    -cambiarEstado(proveedor, activa, actorId)
+  }
+  class Proveedor <<entity>> {
+    +id_proveedor: number
+    +nombre_comercial: string
+    +rut: string
+    +activa: boolean
+  }
+}
+package "existentes (I1–I3)" #F2F2F2 {
+  class OrdenesIngresoService <<service>> {
+    +create(dto, actor)
+  }
+  class OrdenIngreso <<entity>> {
+    +id_proveedor: number
+    +estado: string
+  }
+  class AuditoriaService <<service>> {
+    +create(evento)
+  }
+  class PdfReporte <<util>> {
+    +construirPdfReporte(reporte): Buffer
+  }
+  class Bodega <<entity>>
+  class TipoEquipo <<entity>>
+  class UnidadEquipo <<entity>>
+  class StockConsumible <<entity>>
+  class MovimientoInventario <<entity>>
+}
+TomasInventarioController --> TomasInventarioService
+TomasInventarioService --> AuditoriaService
+TomasInventarioService ..> PdfReporte : CU-99
+TomasInventarioService ..> StockConsumible : ajusta
+TomasInventarioService ..> MovimientoInventario : AJUSTE_INVENTARIO
+TomaInventario "1" *-- "1..*" TomaInventarioDetalle
+TomaInventario "*" --> "1" Bodega
+TomaInventarioDetalle "*" --> "0..1" TipoEquipo
+TomaInventarioDetalle "*" --> "0..1" UnidadEquipo
+ProveedoresController --> ProveedoresService
+ProveedoresService --> AuditoriaService
+ProveedoresService ..> OrdenIngreso : cuenta pendientes
+OrdenesIngresoService ..> Proveedor : exige activa
+OrdenIngreso "*" --> "1" Proveedor
+@enduml

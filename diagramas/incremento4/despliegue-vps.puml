@@ -1,0 +1,31 @@
+@startuml despliegue-vps
+title Diagrama de despliegue — producción en la VPS FiNet (Incremento 4)
+skinparam shadowing false
+node "Computador del usuario" as pc {
+  artifact "Navegador\n(Chrome / Firefox / Edge)" as nav
+  artifact "Túnel SSH\n127.0.0.1:18100 → VPS 127.0.0.1:8100" as ssh
+}
+node "VPS FiNet 38.7.201.104\nUbuntu 20.04 · Docker rootless" as vps {
+  node "nginx del administrador (HTTPS, certificado válido)" as ngx {
+    artifact ":8143 /api/integraciones/ → G1" as p1
+    artifact ":8343 → G3   ·   :8843 → G8 CRM" as p2
+  }
+  node "grupo1 · docker-compose.vps.yml" as g1 {
+    node "nginx G1\n127.0.0.1:8100" as n1
+    node "frontend\nSvelteKit :3000" as fe
+    node "backend\nNestJS :3003" as be
+  }
+  node "grupo8 · Docker" as g8 {
+    database "PostgreSQL 15\nBDD global finet_global_validacion\n(rol g1_app)" as bd
+  }
+  node "grupo3 · Docker (FSM terreno)" as g3
+}
+nav --> ssh
+ssh --> n1 : HTTP por túnel
+n1 --> fe : /
+n1 --> be : /api
+be --> bd : TCP 10.0.2.2:8150 (reenvío)
+g3 --> p1 : webhook cierre OT\nX-API-KEY
+p1 --> n1
+be --> p2 : consultas a G3 (HTTPS)
+@enduml

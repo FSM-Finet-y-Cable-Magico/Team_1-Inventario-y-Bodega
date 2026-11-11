@@ -1,0 +1,38 @@
+@startuml componentes-i4
+title Diagrama de componentes — cambios del Incremento 4
+skinparam shadowing false
+skinparam componentStyle rectangle
+package "Frontend SvelteKit" #EAF2FB {
+  [/tomas-inventario] as v1 #E8DEFB
+  [/tomas-inventario/:id\n(Descargar acta PDF)] as v2 #E8DEFB
+  [/proveedores\n(Desactivar / Reactivar)] as v3 #E8DEFB
+  [/ordenes-ingreso] as v4
+  [lib/api (client.ts, index.ts)] as api
+}
+package "Backend NestJS" #EEF6EA {
+  [TomasInventarioModule] as m1 #E8DEFB
+  [ProveedoresModule] as m2 #E8DEFB
+  [OrdenesIngresoModule] as m3
+  [ReportesModule\npdf-reporte.ts] as m4
+  [AuditoriaModule] as m5
+  [AuthModule\nJwt + RolesGuard] as m6
+}
+database "PostgreSQL\ntoma_inventario, toma_inventario_detalle,\nproveedor, orden_ingreso, stock_consumible,\nmovimiento_inventario, log_auditoria" as db #FCE4D6
+v1 --> api
+v2 --> api
+v3 --> api
+v4 --> api
+api --> m1 : /api/tomas-inventario
+api --> m2 : /api/proveedores
+api --> m3 : /api/ordenes-ingreso
+m1 --> m4 : construirPdfReporte (CU-99)
+m1 --> m5
+m2 --> m5
+m3 ..> m2 : proveedor activo (CU-98)
+m1 ..> m6
+m2 ..> m6
+m1 --> db
+m2 --> db
+m3 --> db
+m5 --> db
+@enduml

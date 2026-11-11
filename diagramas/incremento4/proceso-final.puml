@@ -1,0 +1,35 @@
+@startuml proceso-final
+title Proceso operativo final con el sistema terminado — abastecimiento, control físico y terreno
+skinparam shadowing false
+skinparam ActivityBackgroundColor #FFFFFF
+skinparam ActivityBorderColor #3A3A3A
+|Administrador|
+start
+:Registrar o actualizar proveedor\n(CU-49/50);
+if (¿Proveedor sigue vigente?) then (no)
+  :Desactivar proveedor\n(CU-98, sin órdenes pendientes);
+  stop
+else (sí)
+endif
+:Registrar orden de ingreso\n(CU-52, solo proveedor activo);
+|Encargado de bodega|
+:Recibir mercadería y series\n(CU-54/55/56);
+:Entregar equipos y consumibles\nal técnico (CU-57/60);
+|Técnico de terreno|
+:Consultar jornada e inventario\n(CU-61);
+:Cerrar trabajo en G3\n(CU-63/69);
+|Sistema T1|
+:Aplicar cierre atómico: estados,\nSRV y descuento (CU-64/68);
+|Encargado de bodega|
+:Abrir toma de inventario físico\n(CU-97);
+:Contar series y consumibles;
+if (¿Hay diferencias?) then (sí)
+  :Confirmar ajuste\n(movimientos AJUSTE_INVENTARIO);
+else (no)
+  :Confirmar sin ajustes;
+endif
+:Descargar acta PDF\n(CU-99);
+|Administrador|
+:Revisar reportes, alertas\ny auditoría (CU-85..96, CU-09);
+stop
+@enduml

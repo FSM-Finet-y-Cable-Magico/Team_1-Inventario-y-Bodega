@@ -1,0 +1,18 @@
+@startuml estados-i4
+title Estados de la toma de inventario (CU-97/CU-99) y del proveedor (CU-98)
+skinparam shadowing false
+state "Toma de inventario" as T {
+  [*] --> ABIERTA : abrir()\n(una por bodega)
+  ABIERTA --> ABIERTA : registrarConteo()
+  ABIERTA --> CONFIRMADA : confirmar()\najusta stock
+  ABIERTA --> CANCELADA : cancelar()
+  CONFIRMADA --> CONFIRMADA : generarActa()\n(CU-99)
+  CONFIRMADA --> [*]
+  CANCELADA --> [*]
+}
+state "Proveedor" as P {
+  [*] --> Activo : crear (CU-49)
+  Activo --> Inactivo : desactivar (CU-98)\nsin órdenes pendientes
+  Inactivo --> Activo : reactivar (CU-98)
+}
+@enduml

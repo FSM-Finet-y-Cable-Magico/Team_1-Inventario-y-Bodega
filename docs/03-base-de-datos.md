@@ -346,3 +346,17 @@ consultar al jefe de grupo (hoy no se soporta).
 Parcialmente. Muchas columnas `id_*` son "FKs desnudas" (números sin relación TypeORM) para evitar
 acoplamiento. Las relaciones explícitas TypeORM más usadas son: `UnidadEquipo.tipoEquipo` (eager),
 `UnidadEquipo.historial`, `StockConsumible.bodega/tipoEquipo`, `Usuario.usuarioRoles.rol`.
+
+## Relaciones del modelo físico (Incremento 4)
+
+La revisión del I3 marcó tablas dibujadas sin relaciones. `scripts/migrar.ts` (lista
+`RELACIONES_FISICAS`) declara ahora 45 FK que faltaban en columnas que ya apuntaban a otra tabla
+(`id_empresa` → `empresa`, `id_usuario*`/`id_tecnico` → `usuario`, `id_bodega*` → `bodega`,
+`id_tipo_equipo` → `tipo_equipo`, `id_unidad` → `unidad_equipo`, `cierre_reparacion.id_cierre` →
+`integracion_cierre`). Se crean `NOT VALID` y luego se validan, para no fallar con datos antiguos.
+
+Quedan sin FK a propósito: `log_auditoria.id_usuario` (el sistema audita con `0`), los `id_tecnico`
+de `integracion_cierre`, `borrador_cierre` y `cierre_reparacion` y el `id_usuario` de historial y
+movimientos (pueden venir de G3), y los identificadores externos (`id_ot`, `id_cliente_externo`,
+`id_servicio_externo`, `id_contrato_externo`) que pertenecen a G3/G8. En la BDD global de la VPS
+(`OMITIR_MIGRACIONES=true`) el esquema lo administra otro grupo, así que estas FK no se aplican allí.

@@ -469,8 +469,92 @@ CREATE TABLE IF NOT EXISTS toma_inventario_detalle (
 CREATE INDEX IF NOT EXISTS idx_toma_detalle_toma ON toma_inventario_detalle (id_toma);
 `;
 
+// Modelo físico (retroalimentación del I3): FK de las columnas que ya
+// apuntaban a otra tabla sin declararlo. [tabla, columna, tabla_ref, columna_ref].
+// Se agregan NOT VALID para no fallar con datos antiguos y luego se intenta
+// validar; si quedan huérfanos, la FK igual protege las filas nuevas.
+// Quedan fuera a propósito: log_auditoria.id_usuario (el sistema audita con 0),
+// los id_tecnico y historial que llegan desde G3 (id externos) y los id_ot,
+// id_cliente_externo, id_servicio_externo e id_contrato_externo, que son de G3/G8.
+const RELACIONES_FISICAS: [string, string, string, string][] = [
+  ['usuario', 'id_empresa', 'empresa', 'id_empresa'],
+  ['bodega', 'id_empresa', 'empresa', 'id_empresa'],
+  ['bodega', 'id_usuario_responsable', 'usuario', 'id_usuario'],
+  ['tipo_equipo', 'id_empresa', 'empresa', 'id_empresa'],
+  ['unidad_equipo', 'id_empresa', 'empresa', 'id_empresa'],
+  ['unidad_equipo', 'id_bodega_actual', 'bodega', 'id_bodega'],
+  ['unidad_equipo', 'id_tecnico_asignado', 'usuario', 'id_usuario'],
+  ['inventario_personal_tecnico', 'id_tecnico', 'usuario', 'id_usuario'],
+  [
+    'inventario_personal_tecnico',
+    'id_tipo_equipo',
+    'tipo_equipo',
+    'id_tipo_equipo',
+  ],
+  ['movimiento_inventario', 'id_tipo_equipo', 'tipo_equipo', 'id_tipo_equipo'],
+  ['movimiento_inventario', 'id_unidad', 'unidad_equipo', 'id_unidad'],
+  ['movimiento_inventario', 'id_empresa_origen', 'empresa', 'id_empresa'],
+  ['movimiento_inventario', 'id_empresa_destino', 'empresa', 'id_empresa'],
+  ['movimiento_inventario', 'id_bodega_origen', 'bodega', 'id_bodega'],
+  ['movimiento_inventario', 'id_bodega_destino', 'bodega', 'id_bodega'],
+  ['transferencia_equipo', 'id_empresa_origen', 'empresa', 'id_empresa'],
+  ['transferencia_equipo', 'id_empresa_destino', 'empresa', 'id_empresa'],
+  ['transferencia_equipo', 'id_usuario_registro', 'usuario', 'id_usuario'],
+  ['salida_bodega', 'id_empresa', 'empresa', 'id_empresa'],
+  ['salida_bodega', 'id_bodega_origen', 'bodega', 'id_bodega'],
+  ['salida_bodega', 'id_tecnico', 'usuario', 'id_usuario'],
+  ['salida_bodega', 'id_usuario_registro', 'usuario', 'id_usuario'],
+  ['salida_detalle', 'id_tipo_equipo', 'tipo_equipo', 'id_tipo_equipo'],
+  ['salida_detalle', 'id_unidad', 'unidad_equipo', 'id_unidad'],
+  ['orden_ingreso', 'id_empresa_destino', 'empresa', 'id_empresa'],
+  ['orden_ingreso', 'id_usuario_registro', 'usuario', 'id_usuario'],
+  ['prestamo_externo', 'id_empresa', 'empresa', 'id_empresa'],
+  ['prestamo_externo', 'id_bodega_origen', 'bodega', 'id_bodega'],
+  ['prestamo_externo', 'id_usuario_registro', 'usuario', 'id_usuario'],
+  ['prestamo_detalle', 'id_tipo_equipo', 'tipo_equipo', 'id_tipo_equipo'],
+  ['prestamo_retorno', 'id_usuario', 'usuario', 'id_usuario'],
+  ['solicitud_baja', 'id_empresa', 'empresa', 'id_empresa'],
+  ['solicitud_baja', 'id_usuario_solicitante', 'usuario', 'id_usuario'],
+  ['solicitud_baja', 'id_usuario_aprobador', 'usuario', 'id_usuario'],
+  ['donacion', 'id_empresa', 'empresa', 'id_empresa'],
+  ['donacion', 'id_usuario', 'usuario', 'id_usuario'],
+  ['notificacion', 'id_empresa', 'empresa', 'id_empresa'],
+  ['secuencia_srv', 'id_empresa', 'empresa', 'id_empresa'],
+  ['toma_inventario', 'id_empresa', 'empresa', 'id_empresa'],
+  ['borrador_cierre', 'id_empresa', 'empresa', 'id_empresa'],
+  ['integracion_cierre', 'id_empresa', 'empresa', 'id_empresa'],
+  ['integracion_activacion', 'id_empresa', 'empresa', 'id_empresa'],
+  ['asignacion_equipo_servicio', 'id_empresa', 'empresa', 'id_empresa'],
+  ['cierre_reparacion', 'id_empresa', 'empresa', 'id_empresa'],
+  ['cierre_reparacion', 'id_cierre', 'integracion_cierre', 'id_cierre'],
+];
+
+async function agregarRelaciones(ds: DataSource): Promise<void> {
+  for (const [tabla, columna, ref, colRef] of RELACIONES_FISICAS) {
+    const nombre = `fk_${tabla}_${columna}`.slice(0, 63);
+    const existe = await ds.query(
+      `SELECT 1 FROM pg_constraint WHERE conname = $1`,
+      [nombre],
+    );
+    if (existe.length === 0) {
+      await ds.query(
+        `ALTER TABLE ${tabla} ADD CONSTRAINT ${nombre} FOREIGN KEY (${columna}) REFERENCES ${ref} (${colRef}) NOT VALID`,
+      );
+    }
+    try {
+      await ds.query(`ALTER TABLE ${tabla} VALIDATE CONSTRAINT ${nombre}`);
+      console.log(`✓ FK ${nombre}`);
+    } catch {
+      console.warn(`! FK ${nombre} sin validar: hay filas antiguas huérfanas`);
+    }
+  }
+}
+
 async function main() {
-  const ds = new DataSource({ type: 'postgres', url: process.env.DATABASE_URL });
+  const ds = new DataSource({
+    type: 'postgres',
+    url: process.env.DATABASE_URL,
+  });
   await ds.initialize();
 
   // Asegurar que las tablas base existan independientemente del entorno (Railway / Docker local)
@@ -479,15 +563,21 @@ async function main() {
 
   // CU-49: tablas de proveedores
   await ds.query(TABLAS_CU49_SQL);
-  console.log('✓ Tablas proveedor / proveedor_tipo_equipo inicializadas / comprobadas.');
+  console.log(
+    '✓ Tablas proveedor / proveedor_tipo_equipo inicializadas / comprobadas.',
+  );
 
   // CU-52: tablas de órdenes de ingreso
   await ds.query(TABLAS_CU52_SQL);
-  console.log('✓ Tablas orden_ingreso / orden_ingreso_detalle inicializadas / comprobadas.');
+  console.log(
+    '✓ Tablas orden_ingreso / orden_ingreso_detalle inicializadas / comprobadas.',
+  );
 
   // CU-78/CU-80/CU-81: tablas de bajas, donaciones y detalle de préstamos
   await ds.query(TABLAS_G4_SQL);
-  console.log('✓ Tablas solicitud_baja / donacion / prestamo_detalle inicializadas / comprobadas.');
+  console.log(
+    '✓ Tablas solicitud_baja / donacion / prestamo_detalle inicializadas / comprobadas.',
+  );
 
   // CU-96: tabla de notificaciones de la campana
   await ds.query(TABLAS_CU96_SQL);
@@ -495,12 +585,16 @@ async function main() {
 
   // CU-97: tablas de toma de inventario físico
   await ds.query(TABLAS_CU97_SQL);
-  console.log('✓ Tablas toma_inventario / toma_inventario_detalle inicializadas / comprobadas.');
+  console.log(
+    '✓ Tablas toma_inventario / toma_inventario_detalle inicializadas / comprobadas.',
+  );
 
   for (const sql of SENTENCIAS) {
     await ds.query(sql);
     console.log(`✓ ${sql}`);
   }
+
+  await agregarRelaciones(ds);
   await ds.destroy();
   console.log('Migración completada.');
 }
@@ -509,4 +603,3 @@ main().catch((err) => {
   console.error(err);
   process.exit(1);
 });
-

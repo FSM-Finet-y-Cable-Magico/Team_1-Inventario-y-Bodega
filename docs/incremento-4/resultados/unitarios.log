@@ -1,0 +1,7 @@
+[33m[Nest] 3102  - [39m11/09/2026, 2:44:16 PM [33m   WARN[39m [38;5;3m[ExportacionService] [39m[33mExportación PDF de [stock] superó 15000 ms.[39m
+
+Test Suites: 26 passed, 26 total
+Tests:       174 passed, 174 total
+Snapshots:   0 total
+Time:        2.814 s, estimated 3 s
+Ran all test suites.

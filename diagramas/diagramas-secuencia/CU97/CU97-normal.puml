@@ -1,7 +1,6 @@
 @startuml CU97-normal
 title CU-97 — Registrando toma de inventario físico y ajuste de diferencias (flujo normal)
 skinparam style strictuml
-skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
 <style>
@@ -18,16 +17,25 @@ skinparam sequence {
   MessageAlign center
   LifeLineBorderColor black
 }
+skinparam participant {
+  BackgroundColor<<vista>> #BDD7EF
+  BackgroundColor<<control>> #C7E1B5
+  BackgroundColor<<persistencia>> #F9CBAD
+}
+skinparam database {
+  BackgroundColor<<persistencia>> #F9CBAD
+}
+hide stereotype
 hide footbox
 
 actor "Encargado de bodega" as user
-participant "V_TomaInventario" as view
-participant "C_RolesGuard" as guard
-participant "C_TomasInventarioController" as ctrl
-participant "C_TomasInventarioService" as svc
-participant "C_AuditoriaService" as aud
-participant "C_TypeORM" as orm
-database "postgres" as db
+participant "V_TomaInventario" as view <<vista>>
+participant "C_RolesGuard" as guard <<control>>
+participant "C_TomasInventarioController" as ctrl <<control>>
+participant "C_TomasInventarioService" as svc <<control>>
+participant "C_AuditoriaService" as aud <<control>>
+participant "C_TypeORM" as orm <<persistencia>>
+database "postgres" as db <<persistencia>>
 
 user -> view : Selecciona la bodega\ny abre la toma
 activate view

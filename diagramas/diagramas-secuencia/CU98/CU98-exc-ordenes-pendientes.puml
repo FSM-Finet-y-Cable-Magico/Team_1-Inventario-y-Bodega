@@ -1,0 +1,48 @@
+@startuml CU98-exc-ordenes-pendientes
+title CU-98 — Excepción 2: proveedor con órdenes de ingreso pendientes
+skinparam style strictuml
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+  ParticipantBorderColor black
+  ActorBorderColor black
+}
+skinparam participant {
+  BackgroundColor<<vista>> #BDD7EF
+  BackgroundColor<<control>> #C7E1B5
+  BackgroundColor<<persistencia>> #F9CBAD
+}
+skinparam database {
+  BackgroundColor<<persistencia>> #F9CBAD
+}
+hide stereotype
+hide footbox
+
+actor "Administrador" as user
+participant "V_Proveedores" as view <<vista>>
+participant "C_ProveedoresController" as ctrl <<control>>
+participant "C_ProveedoresService" as svc <<control>>
+participant "C_TypeORM" as orm <<persistencia>>
+database "postgres" as db <<persistencia>>
+
+user -> view : Confirma la desactivación
+activate view
+view -> ctrl : PATCH /proveedores/:id/desactivar
+activate ctrl
+ctrl -> svc : desactivar(id, actorId)
+activate svc
+svc -> orm : Busca el proveedor y cuenta\nsus órdenes abiertas
+activate orm
+orm -> db : SELECT proveedor;\nSELECT COUNT(*) FROM orden_ingreso
+db --> orm : Proveedor activo, 1 orden pendiente
+orm --> svc : pendientes = 1
+deactivate orm
+svc --> ctrl : ConflictException\n(órdenes pendientes de recepción)
+deactivate svc
+ctrl --> view : 409 Conflict
+deactivate ctrl
+view --> user : «El proveedor tiene 1 orden(es) de ingreso\npendiente(s)». El proveedor sigue activo
+deactivate view
+@enduml
