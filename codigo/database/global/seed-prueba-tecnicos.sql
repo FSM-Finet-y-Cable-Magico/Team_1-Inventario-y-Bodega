@@ -24,19 +24,6 @@
 
 BEGIN;
 
--- Mínimos por técnico (empresa 1, Bodega PRUEBA Finet Central)
-CREATE TEMP TABLE minimo_prueba (
-    tipo      TEXT,
-    unidades  INTEGER,        -- equipos con serie en 'Asignado a técnico'
-    cantidad  NUMERIC(10,2)   -- consumibles en el inventario personal
-) ON COMMIT DROP;
-
-INSERT INTO minimo_prueba VALUES
-    ('ONT PRUEBA Finet',             5, NULL),
-    ('Router PRUEBA Finet',          3, NULL),
-    ('Conector SC/APC PRUEBA Finet', NULL, 40),
-    ('Fibra drop PRUEBA Finet',      NULL, 300);
-
 DO $$
 DECLARE
     v_empresa   CONSTANT INTEGER := 1;
@@ -81,7 +68,17 @@ BEGIN
         v_unidades := 0;
         v_consum   := 0;
 
-        FOR v_min IN SELECT * FROM minimo_prueba LOOP
+        -- Mínimos por técnico (empresa 1, Bodega PRUEBA Finet Central).
+        -- Van como VALUES y no como tabla temporal: g1_app no tiene
+        -- privilegio TEMP en la BDD global.
+        FOR v_min IN
+            SELECT * FROM (VALUES
+                ('ONT PRUEBA Finet',             5,    NULL::NUMERIC),
+                ('Router PRUEBA Finet',          3,    NULL::NUMERIC),
+                ('Conector SC/APC PRUEBA Finet', NULL, 40::NUMERIC),
+                ('Fibra drop PRUEBA Finet',      NULL, 300::NUMERIC)
+            ) AS m(tipo, unidades, cantidad)
+        LOOP
             SELECT * INTO v_tipo FROM tipo_equipo
             WHERE nombre = v_min.tipo AND id_empresa = v_empresa;
             IF NOT FOUND THEN
