@@ -21,7 +21,10 @@
 	const MSG_GENERICO = 'Usuario o contraseña incorrectos.';
 
 	function formatoValido() {
-		return /^[a-z0-9_]{4,20}$/.test(nombre_usuario) && password.length >= 8 && password.length <= 64;
+		// Usuario de G1/G3 (jperez, nombre.apellido) o email (usuarios creados en G8).
+		const id = nombre_usuario.trim();
+		const formato = /^(?:[A-Za-z0-9._-]{3,50}|[^\s@]+@[^\s@]+\.[^\s@]+)$/;
+		return formato.test(id) && password.length >= 8 && password.length <= 72;
 	}
 
 	async function handleSubmit(e: Event) {
@@ -170,7 +173,7 @@
 
 			<div>
 				<label for="nombre_usuario" class="block text-sm font-medium text-foreground mb-1">
-					Usuario
+					Usuario o email
 				</label>
 				<input
 					id="nombre_usuario"
@@ -179,7 +182,7 @@
 					required
 					autocomplete="username"
 					class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-					placeholder="nombre de usuario"
+					placeholder="nombre de usuario o email"
 				/>
 			</div>
 

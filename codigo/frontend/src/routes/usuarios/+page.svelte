@@ -282,8 +282,8 @@
 			<input id="nu" type="text" required bind:value={createForm.nombre_usuario}
 				autocomplete="off"
 				class="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-				placeholder="ej: jperez" pattern={'^[a-z0-9_]{4,20}$'}
-				title="4-20 caracteres, minúsculas, números y guión bajo" />
+				placeholder="ej: juan.perez" pattern={'^[a-z0-9._]{4,50}$'}
+				title="4-50 caracteres: minúsculas, números, punto y guión bajo" />
 		</FormField>
 
 		<FormField label="Nombre completo" name="nc" required>

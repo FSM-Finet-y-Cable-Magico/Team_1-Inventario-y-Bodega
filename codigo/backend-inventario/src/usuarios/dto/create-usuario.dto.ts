@@ -12,9 +12,10 @@ import {
 export class CreateUsuarioDto {
   @IsString({ message: 'El nombre de usuario es obligatorio' })
   @IsNotEmpty({ message: 'El nombre de usuario es obligatorio' })
-  @Matches(/^[a-z0-9_]{4,20}$/, {
+  // Compatible con G3 (nombre.apellido): se permite el punto; máximo 50 = columna global.
+  @Matches(/^[a-z0-9._]{4,50}$/, {
     message:
-      'El nombre de usuario debe tener 4 a 20 caracteres: solo minúsculas, dígitos y guión bajo',
+      'El nombre de usuario debe tener 4 a 50 caracteres: solo minúsculas, dígitos, punto y guión bajo',
   })
   nombre_usuario: string;
   @IsNotEmpty({ message: 'El nombre completo es obligatorio' })
