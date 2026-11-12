@@ -19,6 +19,16 @@ const MSG_GENERICO = 'Usuario o contraseña incorrectos.';
 const MSG_BLOQUEADO =
   'Cuenta bloqueada temporalmente. Intente nuevamente en 15 minutos.';
 
+// BDD global: G3 y G1 identifican por nombre_usuario y G8 por email (G8 crea
+// usuarios sin nombre_usuario). Con '@' se busca por email; ambos sin
+// mayúsculas ni espacios, como los guardan los otros grupos.
+function criterioIdentificador(valor: string) {
+  const limpio = (valor ?? '').trim().toLowerCase();
+  return limpio.includes('@')
+    ? { email: limpio }
+    : { nombre_usuario: limpio };
+}
+
 @Injectable()
 export class AuthService {
   private readonly tokenBlacklist = new Set<string>();
@@ -32,7 +42,7 @@ export class AuthService {
 
   async login(loginDto: LoginDto) {
     const usuario = await this.usuarioRepository.findOne({
-      where: { nombre_usuario: loginDto.nombre_usuario },
+      where: criterioIdentificador(loginDto.nombre_usuario),
       relations: { usuarioRoles: { rol: true } },
     });
 
@@ -156,7 +166,7 @@ export class AuthService {
     nueva_password: string;
   }) {
     const usuario = await this.usuarioRepository.findOne({
-      where: { nombre_usuario: dto.nombre_usuario },
+      where: criterioIdentificador(dto.nombre_usuario),
     });
     if (!usuario || !usuario.activo)
       throw new UnauthorizedException(MSG_GENERICO);

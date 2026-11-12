@@ -5,14 +5,15 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
+import { FORMATO_USUARIO_O_EMAIL } from './login.dto';
 
 // CU-10: la nueva contraseña debe cumplir las reglas de RF-01
 export class CambiarPasswordDto {
   @IsString({ message: 'El nombre de usuario es obligatorio' })
   @IsNotEmpty({ message: 'El nombre de usuario es obligatorio' })
-  @MinLength(4, { message: 'Usuario o contraseña incorrectos.' })
-  @MaxLength(20, { message: 'Usuario o contraseña incorrectos.' })
-  @Matches(/^[a-z0-9_]+$/, { message: 'Usuario o contraseña incorrectos.' })
+  @MinLength(3, { message: 'Usuario o contraseña incorrectos.' })
+  @MaxLength(150, { message: 'Usuario o contraseña incorrectos.' })
+  @Matches(FORMATO_USUARIO_O_EMAIL, { message: 'Usuario o contraseña incorrectos.' })
   nombre_usuario: string;
 
   @IsString({ message: 'La contraseña actual es obligatoria' })
