@@ -82,6 +82,25 @@ describe('G3ClientService', () => {
     expect(urlLlamada).toContain('hasta=2026-09-26');
   });
 
+  it('consultarOrdenes desarma la respuesta paginada real de G3', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        data: { data: [{ id_ot: 7 }], total: 1, page: 1, limit: 50 },
+      }),
+    }) as never;
+    const service = crearServicio('https://g3.test/api/integraciones', 'k1');
+
+    await expect(
+      service.consultarOrdenes({
+        idTecnico: 5,
+        idEmpresa: 1,
+        fecha: '2026-11-12',
+      }),
+    ).resolves.toEqual({ ok: true, data: [{ id_ot: 7 }] });
+  });
+
   it('si G3 no responde, consultarOrdenes devuelve ok:false', async () => {
     global.fetch = jest.fn().mockRejectedValue(new Error('timeout')) as never;
     const service = crearServicio('https://g3.test/api/integraciones', 'k1');
