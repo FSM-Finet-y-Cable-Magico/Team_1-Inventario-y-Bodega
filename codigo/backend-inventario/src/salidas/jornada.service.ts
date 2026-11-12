@@ -38,7 +38,11 @@ export class JornadaService {
         fecha,
         // OK | NO_DISPONIBLE (G3 sin configurar, error o timeout)
         trabajos_estado: resultado.ok ? 'OK' : 'NO_DISPONIBLE',
-        trabajos: resultado.ok ? this.mapearTrabajos(resultado.data ?? []) : [],
+        trabajos: resultado.ok
+          ? this.mapearTrabajos(
+              Array.isArray(resultado.data) ? resultado.data : [],
+            )
+          : [],
         inventario,
       },
     };

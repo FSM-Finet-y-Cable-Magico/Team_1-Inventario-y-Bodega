@@ -99,7 +99,15 @@ export class G3ClientService {
       page: '1',
       limit: '50',
     });
-    return this.obtener<any[]>(`/ordenes?${query.toString()}`, 3000);
+    const res = await this.obtener<any>(`/ordenes?${query.toString()}`, 3000);
+    if (!res.ok) return { ok: false, data: null };
+    // G3 responde paginado: { data: [...], total, page, limit }
+    const lista = Array.isArray(res.data)
+      ? res.data
+      : Array.isArray(res.data?.data)
+        ? res.data.data
+        : [];
+    return { ok: true, data: lista };
   }
 
   // CU-90: consulta órdenes de trabajo cerradas en G3 (con materiales o fallback).
