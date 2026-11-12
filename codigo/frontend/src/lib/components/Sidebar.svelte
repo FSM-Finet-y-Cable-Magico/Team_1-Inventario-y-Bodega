@@ -55,7 +55,8 @@
 		{ label: 'Reportes', icon: BarChart3, path: '/reportes', roles: ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'] }
 	];
 
-	let collapsed = $state(false);
+	// En pantallas angostas (celular) el menú parte colapsado para no tapar el contenido
+	let collapsed = $state(typeof window !== 'undefined' && window.innerWidth < 768);
 
 	let roles: RolNombre[] = [];
 	userRoles.subscribe((r) => (roles = r));
@@ -78,7 +79,7 @@
 </script>
 
 <aside
-	class="bg-white border-r border-border flex flex-col transition-all duration-200"
+	class="bg-white border-r border-border flex flex-col shrink-0 transition-all duration-200"
 	class:collapsed
 	style={collapsed ? 'width: 60px' : 'width: 240px'}
 >

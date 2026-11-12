@@ -93,9 +93,9 @@
 {:else if $authStore.token}
 	<div class="flex h-dvh overflow-hidden">
 		<Sidebar />
-		<div class="flex-1 flex flex-col overflow-hidden">
+		<div class="flex-1 min-w-0 flex flex-col overflow-hidden">
 			<Header />
-			<main class="flex-1 overflow-y-auto p-6">
+			<main class="flex-1 overflow-y-auto p-3 sm:p-6">
 				{@render children()}
 			</main>
 		</div>
