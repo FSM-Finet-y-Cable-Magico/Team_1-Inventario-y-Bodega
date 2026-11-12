@@ -96,10 +96,6 @@ class FakeManager {
           return fila[campo] !== null && fila[campo] !== undefined;
         }
       }
-      // Raw de la consulta de recepciones: payload->>'request_id' = :request_id.
-      if (valor && typeof valor === 'object' && valor._type === 'raw') {
-        return fila[campo]?.request_id === valor._objectLiteralParameters?.request_id;
-      }
       if (valor && typeof valor === 'object' && valor._type === 'in') {
         const lista = Array.isArray(valor._value) ? valor._value : [];
         return lista.includes(fila[campo]);
@@ -153,7 +149,23 @@ function crearServicio(
     release: jest.fn().mockResolvedValue(undefined),
     manager,
   };
-  const dataSource = { createQueryRunner: jest.fn().mockReturnValue(queryRunner) };
+  const dataSource = {
+    createQueryRunner: jest.fn().mockReturnValue(queryRunner),
+    // Recepciones: búsqueda de la OT por payload->>'request_id'.
+    query: jest.fn(async (_sql: string, [idEmpresa, requestId, idOt]: any[]) =>
+      manager
+        .tabla(IntegracionCierre)
+        .filter(
+          (c) =>
+            c.id_empresa === idEmpresa &&
+            c.payload?.request_id === requestId &&
+            (idOt === null || c.id_ot === idOt),
+        )
+        .sort((a, b) => b.id_cierre - a.id_cierre)
+        .slice(0, 1)
+        .map((c) => ({ id_ot: c.id_ot })),
+    ),
+  };
   const cierreRepository = {
     findOne: jest.fn((opciones: any) => manager.findOne(IntegracionCierre, opciones)),
     find: jest.fn((opciones: any) => manager.find(IntegracionCierre, opciones)),
@@ -442,6 +454,37 @@ describe('IntegracionesService — sc-158 (acuerdo G8 P0)', () => {
       const cabecera = manager.tabla(IntegracionActivacion)[0];
       expect(cabecera.estadoProceso).toBe('PENDIENTE_CIERRE');
       expect(cabecera.eventId).toBe('client-activation-ot-781');
+    });
+
+    it('BDD global: cliente inexistente (FK) no deshace la asignación, queda discrepancia', async () => {
+      const { service, manager } = crearServicio({
+        UnidadEquipo: [{ ...UNIDAD_INSTALADA }],
+        IntegracionCierre: [
+          {
+            id_cierre: 1,
+            claveIdempotencia: '781:2026-09-25T10:00:00Z',
+            id_ot: 781,
+            id_empresa: 1,
+            payload: { id_empresa: 1, fecha_completada: '2026-09-25T10:00:00Z' },
+          },
+        ],
+      });
+      const original = manager.update.bind(manager);
+      manager.update = async (entity: any, criterios: Fila, cambios: Fila) => {
+        if (entity === UnidadEquipo && 'id_cliente_instalado' in cambios) {
+          throw Object.assign(new Error('violates foreign key'), { code: '23503' });
+        }
+        return original(entity, criterios, cambios);
+      };
+
+      const respuesta = await service.registrarActivacion(payloadActivacion(), G8);
+
+      expect(respuesta.data.equipos_asociados).toBe(1);
+      const cabecera = manager.tabla(IntegracionActivacion)[0];
+      expect(cabecera.discrepancias).toEqual([
+        expect.objectContaining({ codigo: 'CLIENTE_NO_EXISTE', numero_serie: 'ONT-123456' }),
+      ]);
+      expect(manager.tabla(AsignacionEquipoServicio).filter((a) => a.activa)).toHaveLength(1);
     });
 
     it('multi-equipo con el cierre ya recibido → todas las asignaciones del evento', async () => {
@@ -1547,6 +1590,9 @@ describe('IntegracionesService — baja por morosidad (recepción de equipos)', 
     await expect(service.consultarRecepciones(1, { id_ot: '5' })).rejects.toThrow(
       'G1 no ha recibido el cierre',
     );
+    await expect(
+      service.consultarRecepciones(1, { request_id: 'g8-retiro-1-no-existe' }),
+    ).rejects.toThrow('G1 no ha recibido el cierre');
     await expect(service.consultarRecepciones(1, {})).rejects.toBeInstanceOf(
       BadRequestException,
     );
