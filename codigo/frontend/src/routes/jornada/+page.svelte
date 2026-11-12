@@ -167,7 +167,9 @@
 
 	function fmtFecha(fecha: string | null): string {
 		if (!fecha) return '-';
-		return new Date(fecha).toLocaleDateString('es-CL', {
+		// "YYYY-MM-DD" sin hora se interpreta como UTC y en Chile mostraba el día anterior
+		const soloFecha = /^\d{4}-\d{2}-\d{2}$/.test(fecha);
+		return new Date(soloFecha ? `${fecha}T12:00:00` : fecha).toLocaleDateString('es-CL', {
 			day: '2-digit',
 			month: '2-digit',
 			year: 'numeric',
