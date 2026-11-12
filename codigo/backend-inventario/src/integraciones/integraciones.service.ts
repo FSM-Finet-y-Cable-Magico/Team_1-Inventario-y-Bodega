@@ -12,6 +12,7 @@ import {
   In,
   IsNull,
   Not,
+  Raw,
   Repository,
 } from 'typeorm';
 import { IntegracionCierre } from './entities/cierre-integracion.entity';
@@ -81,6 +82,11 @@ const ESTADO_ACTIVACION = {
 
 // Origen con el que se registran las asignaciones creadas por el evento de G8.
 const ORIGEN_ACTIVACION_G8 = 'ACTIVACION_G8';
+// Asignación heredada por el equipo instalado en reemplazo de otro (misma OT).
+const ORIGEN_REEMPLAZO_G3 = 'REEMPLAZO_G3';
+
+// Acciones de G3 que dejan el equipo en manos de G1 (bodega o revisión).
+const ACCIONES_RECEPCION = ['RETIRADO_PARA_DIAGNOSTICO', 'RETIRADO_A_BODEGA'];
 
 // categoria_falla llega a nivel raíz como string o como {nombre}; si solo viene
 // el bloque reparacion del contrato doc-12, usamos su categoria_falla_otro.
@@ -701,6 +707,16 @@ export class IntegracionesService {
         }
       }
 
+      // Reemplazo en terreno: el equipo instalado en la misma OT hereda el servicio
+      // del equipo retirado, para que G8 siga viendo el servicio con su equipo.
+      await this.traspasarAsignacionReemplazo(
+        queryRunner.manager,
+        accionesAplicadas,
+        idOt,
+        idEmpresa,
+        fechaCompletada,
+      );
+
       // CU-64 (C) + CU-68: descuento de los consumibles declarados del inventario
       // personal. Saldo insuficiente = ajuste registrado, nunca rechazo del cierre.
       const resultadoMateriales = await this.procesarMateriales(
@@ -796,6 +812,218 @@ export class IntegracionesService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  private async traspasarAsignacionReemplazo(
+    manager: EntityManager,
+    acciones: any[],
+    idOt: number,
+    idEmpresa: number,
+    fecha: Date,
+  ): Promise<void> {
+    const retiradas = acciones.filter(
+      (a) => a?.id_asignacion_retirada !== undefined,
+    );
+    const servicios = new Set(retiradas.map((a) => a.id_servicio_externo));
+    if (servicios.size !== 1) return;
+    const instaladas = acciones.filter(
+      (a) => a?.estado_nuevo === 'Instalado en cliente' && a?.id_unidad,
+    );
+    if (instaladas.length === 0) return;
+
+    const origen = await manager.findOne(AsignacionEquipoServicio, {
+      where: { id_asignacion: retiradas[0].id_asignacion_retirada },
+    });
+    if (!origen) return;
+
+    for (const accion of instaladas) {
+      const yaActiva = await manager.findOne(AsignacionEquipoServicio, {
+        where: { id_unidad: accion.id_unidad, activa: true },
+      });
+      if (yaActiva) continue;
+      await manager.save(
+        AsignacionEquipoServicio,
+        manager.create(AsignacionEquipoServicio, {
+          id_unidad: accion.id_unidad,
+          id_empresa: idEmpresa,
+          eventId: null,
+          idClienteExterno: origen.idClienteExterno ?? null,
+          rutCliente: origen.rutCliente ?? null,
+          idServicioExterno: origen.idServicioExterno,
+          idContratoExterno: origen.idContratoExterno ?? null,
+          id_ot: idOt,
+          fechaInstalacion: fecha,
+          activa: true,
+          origen: ORIGEN_REEMPLAZO_G3,
+          traceId: origen.traceId ?? null,
+        }),
+      );
+      if (origen.idClienteExterno != null) {
+        await manager.update(
+          UnidadEquipo,
+          { id_unidad: accion.id_unidad },
+          { id_cliente_instalado: origen.idClienteExterno },
+        );
+      }
+      accion.id_servicio_externo = origen.idServicioExterno;
+    }
+  }
+
+  // GET /integraciones/recepciones — baja por morosidad (propuesta G8, 12-11-2026):
+  // confirmación por equipo de que lo retirado en una OT de G3 llegó a G1.
+  // Acuerdo propuesto: 'En revisión' ya cuenta como recibido. Se busca por la OT
+  // de G3 (id_ot) o por el request_id que G8 le dio a la OT y G3 reenvía en el cierre.
+  async consultarRecepciones(
+    idEmpresa: number,
+    filtros: { id_ot?: string; request_id?: string },
+  ) {
+    const idOt = this.enteroPositivo(filtros.id_ot);
+    const requestId =
+      typeof filtros.request_id === 'string' ? filtros.request_id.trim() : '';
+    if (filtros.id_ot !== undefined && filtros.id_ot !== '' && idOt === null) {
+      throw new BadRequestException('El parámetro id_ot debe ser numérico.');
+    }
+    if (idOt === null && requestId === '') {
+      throw new BadRequestException(
+        'Indique id_ot (OT de G3) o request_id (solicitud de G8).',
+      );
+    }
+    if (requestId.length > 150) {
+      throw new BadRequestException('El request_id es demasiado largo.');
+    }
+
+    const where: any = { id_empresa: idEmpresa };
+    if (idOt !== null) where.id_ot = idOt;
+    if (requestId !== '') {
+      where.payload = Raw((alias) => `${alias}->>'request_id' = :request_id`, {
+        request_id: requestId,
+      });
+    }
+    const cierres = await this.cierreRepository.find({
+      where,
+      order: { fechaProceso: 'ASC', id_cierre: 'ASC' },
+    });
+    if (cierres.length === 0) {
+      throw new NotFoundException(
+        'G1 no ha recibido el cierre de esa OT todavía.',
+      );
+    }
+    const otOrigen = cierres[cierres.length - 1].id_ot;
+    const delaOt = cierres.filter((c) => c.id_ot === otOrigen);
+
+    type Linea = {
+      numero_serie: string;
+      resultado: string;
+      fecha_recepcion: Date | null;
+      id_servicio_externo: number | null;
+      detalle: string | null;
+      con_dano: boolean;
+    };
+    const lineas = new Map<string, Linea>();
+    const conDano = (item: any): boolean =>
+      item?.con_dano === true ||
+      (typeof item?.estado_fisico === 'string' &&
+        /^DA[NÑ]ADO$/i.test(item.estado_fisico.trim()));
+
+    for (const cierre of delaOt) {
+      const payload = cierre.payload ?? {};
+      const retirados: any[] = Array.isArray(payload.equipos_retirados)
+        ? payload.equipos_retirados
+        : [];
+      const porSerie = new Map(
+        retirados.map((e) => [String(e?.numero_serie ?? '').trim(), e]),
+      );
+      for (const accion of cierre.accionesAplicadas ?? []) {
+        if (!ACCIONES_RECEPCION.includes(accion?.accion)) continue;
+        const serie = String(accion.numero_serie ?? '').trim();
+        const previa = lineas.get(serie);
+        lineas.set(serie, {
+          numero_serie: serie,
+          resultado: 'RECIBIDO',
+          fecha_recepcion: previa?.resultado === 'RECIBIDO'
+            ? previa.fecha_recepcion
+            : cierre.fechaProceso,
+          id_servicio_externo:
+            accion.id_servicio_externo ?? previa?.id_servicio_externo ?? null,
+          detalle: null,
+          con_dano: conDano(porSerie.get(serie)) || previa?.con_dano === true,
+        });
+      }
+      for (const disc of cierre.discrepancias ?? []) {
+        if (!ACCIONES_RECEPCION.includes(disc?.accion)) continue;
+        const serie = String(disc.numero_serie ?? '').trim();
+        if (lineas.get(serie)?.resultado === 'RECIBIDO') continue;
+        lineas.set(serie, {
+          numero_serie: serie,
+          resultado: 'NO_RECIBIDO',
+          fecha_recepcion: null,
+          id_servicio_externo: null,
+          detalle: `${disc.codigo}: ${disc.detalle ?? ''}`.trim(),
+          con_dano: false,
+        });
+      }
+      const faltantes: any[] = Array.isArray(payload.equipos_faltantes)
+        ? payload.equipos_faltantes
+        : [];
+      for (const f of faltantes) {
+        const serie = String(f?.numero_serie ?? '').trim();
+        if (serie === '' || lineas.get(serie)?.resultado === 'RECIBIDO') continue;
+        lineas.set(serie, {
+          numero_serie: serie,
+          resultado: 'NO_RECIBIDO',
+          fecha_recepcion: null,
+          id_servicio_externo: null,
+          detalle: f?.motivo ? `Equipo no recuperado: ${f.motivo}` : 'Equipo no recuperado.',
+          con_dano: false,
+        });
+      }
+    }
+
+    const series = [...lineas.keys()];
+    const unidades = series.length
+      ? await this.unitRepository.find({
+          where: { id_empresa: idEmpresa, serialNumber: In(series) },
+        })
+      : [];
+    const estados = new Map(unidades.map((u) => [u.serialNumber, u.estado]));
+
+    const equipos = [...lineas.values()].map((l) => {
+      const estado = estados.get(l.numero_serie) ?? null;
+      let resultado = l.resultado;
+      if (resultado === 'RECIBIDO' && (l.con_dano || estado === 'Dado de baja')) {
+        resultado = 'RECIBIDO_CON_DANO';
+      }
+      return {
+        numero_serie: l.numero_serie,
+        resultado,
+        estado_g1: estado,
+        fecha_recepcion: l.fecha_recepcion ?? null,
+        id_servicio_externo: l.id_servicio_externo,
+        detalle: l.detalle,
+      };
+    });
+
+    const ultimo = delaOt[delaOt.length - 1];
+    const recibidos = equipos.filter((e) => e.resultado !== 'NO_RECIBIDO').length;
+    return {
+      success: true,
+      data: {
+        clave_evento: `g1-recepcion-${idEmpresa}-${otOrigen}-${ultimo.id_cierre}`,
+        id_empresa: idEmpresa,
+        id_ot_g3: otOrigen,
+        request_id: ultimo.payload?.request_id ?? (requestId || null),
+        tipo_ot: ultimo.tipo_ot ?? null,
+        estado_recepcion:
+          equipos.length === 0
+            ? 'SIN_EQUIPOS_RETIRADOS'
+            : recibidos === equipos.length
+              ? 'COMPLETA'
+              : recibidos === 0
+                ? 'NO_RECIBIDA'
+                : 'PARCIAL',
+        equipos,
+      },
+    };
   }
 
   private extraerEquipos(payload: any): any[] {
@@ -920,6 +1148,32 @@ export class IntegracionesService {
       // Acuerdo G3: diagnóstico = categoria_falla del cierre; sin dato → fallback.
       unidad.diagnosticoTecnico = categoriaFalla ?? DIAGNOSTICO_FALLBACK_G3;
     }
+    // Baja por morosidad (acuerdo G8/G3): un equipo que sale del domicilio deja de
+    // estar vinculado al cliente y al servicio. Se limpia id_cliente_instalado y se
+    // cierra la asignación activa, para que GET /integraciones/equipos?id_servicio
+    // ya no lo muestre instalado y la recepción quede correlacionada con el servicio.
+    let asignacionRetirada: AsignacionEquipoServicio | null = null;
+    if (
+      estadoOrigen === 'Instalado en cliente' &&
+      regla.estado !== 'Instalado en cliente'
+    ) {
+      unidad.id_cliente_instalado = null as unknown as undefined;
+      asignacionRetirada = await queryRunner.manager.findOne(
+        AsignacionEquipoServicio,
+        {
+          where: { id_unidad: unidad.id_unidad, activa: true },
+          order: { fechaInstalacion: 'DESC', id_asignacion: 'DESC' },
+        },
+      );
+      if (asignacionRetirada) {
+        asignacionRetirada.activa = false;
+        asignacionRetirada.fechaRetiro = new Date();
+        await queryRunner.manager.save(
+          AsignacionEquipoServicio,
+          asignacionRetirada,
+        );
+      }
+    }
     // CU-64 (B): al instalar se persisten cliente y dirección del cierre para
     // CU-48/71/73/87 (G3 identifica por RUT). El SRV se asigna al final del cierre.
     if (regla.estado === 'Instalado en cliente') {
@@ -968,6 +1222,13 @@ export class IntegracionesService {
         id_unidad: unidad.id_unidad,
         estado_anterior: estadoOrigen,
         estado_nuevo: regla.estado,
+        ...(asignacionRetirada
+          ? {
+              id_asignacion_retirada: asignacionRetirada.id_asignacion,
+              id_servicio_externo: asignacionRetirada.idServicioExterno,
+              id_cliente_externo: asignacionRetirada.idClienteExterno ?? null,
+            }
+          : {}),
       },
       id_tecnico: idTecnicoUnidad,
     };

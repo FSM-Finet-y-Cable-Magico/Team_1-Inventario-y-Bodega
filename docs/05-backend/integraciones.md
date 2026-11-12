@@ -18,6 +18,7 @@
 | POST | `/api/integraciones/activaciones` | `X-API-KEY` | Evento de activación de G8: asocia cliente/servicio/contrato externos a las unidades instaladas (G1-8 · sc-158) |
 | GET | `/api/integraciones/equipos?id_empresa=N&id_servicio=S` | `X-API-KEY` | Equipos activos de un servicio para el perfil del servicio en el CRM (G1-9 · sc-159) |
 | GET | `/api/integraciones/stock?id_empresa=N&id_tipo_equipo=T` \| `&categoria=C` | `X-API-KEY` | Disponibilidad **informativa** (G1-4 extendido · sc-159). G8 no reserva ni descuenta |
+| GET | `/api/integraciones/recepciones?id_empresa=N&id_ot=OT` \| `&request_id=R` | `X-API-KEY` | Baja por morosidad: G8 confirma, equipo por equipo, que lo retirado en la OT de G3 llegó a G1 |
 
 Contrato de errores: `400` falta `id_empresa`/no numérico, payload malformado,
 `clave_idempotencia`/`event_id`/`id_contrato`/`id_servicio` ausentes, `id_ot` de ruta ≠ payload,
@@ -166,6 +167,26 @@ otros datos de activación. Respuestas envueltas `{ success, data }`.
   unidad_medida, requiere_serie_individual, disponible, reservado, total}`.
 - Garantía (G8-G / G1-6): ya viaja dentro de la consulta de unidad ampliada (sc-158); el endpoint
   dedicado `GET /unidades/:serie/garantia` queda **solo si G8 lo pide expresamente** (prioridad baja).
+
+### 3.7 `consultarRecepciones` (GET G8 · baja por morosidad, 12-11-2026)
+- Propuesta de G8 (flujo de baja): la baja efectiva exige que G1 confirme la recepción de cada
+  equipo retirado. Se consulta por la OT de G3 (`id_ot`) o por el `request_id` que G8 le asignó
+  a la OT (`g8-retiro-{id_empresa}-{id_solicitud}`), que G3 reenvía en la raíz del cierre.
+- Fuente: los cierres de esa OT en `integracion_cierre` (sin tablas nuevas). Un equipo cuenta
+  como recibido si G3 lo informó `RETIRADO_PARA_DIAGNOSTICO` o `RETIRADO_A_BODEGA` y la
+  transición se aplicó (`En revisión` ya basta). Si un cierre posterior repite la serie, la
+  recepción ya confirmada se mantiene.
+- `resultado` por equipo: `RECIBIDO`, `RECIBIDO_CON_DANO` (ítem con `estado_fisico: DAÑADO` o
+  `con_dano: true`, o unidad ya `Dado de baja`) o `NO_RECIBIDO` (serie en `equipos_faltantes[]`,
+  o retiro que quedó como discrepancia, con el `detalle`).
+- Respuesta: `{clave_evento, id_empresa, id_ot_g3, request_id, tipo_ot, estado_recepcion
+  (COMPLETA | PARCIAL | NO_RECIBIDA | SIN_EQUIPOS_RETIRADOS), equipos: [{numero_serie,
+  resultado, estado_g1, fecha_recepcion, id_servicio_externo, detalle}]}`. `clave_evento` es
+  estable mientras no llegue otro cierre de la OT. OT sin cierre → 404; sin filtros → 400.
+- Efecto en el cierre: cuando un equipo sale de `Instalado en cliente`, se limpia
+  `unidad_equipo.id_cliente_instalado` y su asignación activa pasa a `activa=false` con
+  `fecha_retiro`; así `GET /integraciones/equipos?id_servicio` ya no lo lista. Si en la misma
+  OT se instala un reemplazo, el equipo nuevo hereda el servicio (`origen = REEMPLAZO_G3`).
 
 ## 4. Entidades / tablas
 

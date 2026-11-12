@@ -96,6 +96,10 @@ class FakeManager {
           return fila[campo] !== null && fila[campo] !== undefined;
         }
       }
+      // Raw de la consulta de recepciones: payload->>'request_id' = :request_id.
+      if (valor && typeof valor === 'object' && valor._type === 'raw') {
+        return fila[campo]?.request_id === valor._objectLiteralParameters?.request_id;
+      }
       if (valor && typeof valor === 'object' && valor._type === 'in') {
         const lista = Array.isArray(valor._value) ? valor._value : [];
         return lista.includes(fila[campo]);
@@ -152,6 +156,7 @@ function crearServicio(
   const dataSource = { createQueryRunner: jest.fn().mockReturnValue(queryRunner) };
   const cierreRepository = {
     findOne: jest.fn((opciones: any) => manager.findOne(IntegracionCierre, opciones)),
+    find: jest.fn((opciones: any) => manager.find(IntegracionCierre, opciones)),
   };
   const activacionRepository = {
     findOne: jest.fn((opciones: any) => manager.findOne(IntegracionActivacion, opciones)),
@@ -1429,5 +1434,151 @@ describe('IntegracionesService — sc-159 (acuerdo G8 P1)', () => {
 
       expect(cierre(manager)).toBeUndefined();
     });
+  });
+});
+
+describe('IntegracionesService — baja por morosidad (recepción de equipos)', () => {
+  const ASIGNACION: Fila = {
+    id_asignacion: 77,
+    id_unidad: 501,
+    id_empresa: 1,
+    idClienteExterno: 130,
+    rutCliente: '12345678-9',
+    idServicioExterno: 245,
+    idContratoExterno: 92,
+    id_ot: 781,
+    fechaInstalacion: new Date('2026-10-01T10:00:00Z'),
+    activa: true,
+  };
+
+  const payloadBaja = (overrides: Fila = {}) => ({
+    clave_idempotencia: `990:${Math.random()}`,
+    id_ot: 990,
+    id_empresa: 1,
+    tipo_ot: 'BAJA',
+    id_tecnico: 45,
+    request_id: 'g8-retiro-1-15',
+    fecha_completada: '2026-11-12T15:00:00Z',
+    equipos_retirados: [{ numero_serie: 'ONT-123456' }],
+    ...overrides,
+  });
+
+  const seed = (): Record<string, Fila[]> => ({
+    UnidadEquipo: [
+      { ...UNIDAD_INSTALADA, id_cliente_instalado: 130, tipoEquipo: undefined },
+    ],
+    AsignacionEquipoServicio: [{ ...ASIGNACION }],
+  });
+
+  it('el retiro cierra la asignación y desvincula al cliente', async () => {
+    const { service, manager } = crearServicio(seed());
+
+    const r = await service.recibirCierreOt(990, payloadBaja(), G8);
+
+    const unidad = manager.tabla(UnidadEquipo)[0];
+    expect(unidad.estado).toBe('En revisión');
+    expect(unidad.id_cliente_instalado).toBeNull();
+    const asignacion = manager.tabla(AsignacionEquipoServicio)[0];
+    expect(asignacion.activa).toBe(false);
+    expect(asignacion.fechaRetiro).toBeInstanceOf(Date);
+    expect(r.data.acciones_aplicadas[0]).toMatchObject({
+      id_asignacion_retirada: 77,
+      id_servicio_externo: 245,
+    });
+    const equipos = await service.consultarEquiposPorServicio(1, '245');
+    expect(equipos.data).toEqual([]);
+  });
+
+  it('consulta por request_id: RECIBIDO por equipo y recepción COMPLETA', async () => {
+    const { service } = crearServicio(seed());
+    await service.recibirCierreOt(990, payloadBaja(), G8);
+
+    const r = await service.consultarRecepciones(1, { request_id: 'g8-retiro-1-15' });
+
+    expect(r.data).toMatchObject({
+      id_ot_g3: 990,
+      request_id: 'g8-retiro-1-15',
+      tipo_ot: 'BAJA',
+      estado_recepcion: 'COMPLETA',
+    });
+    expect(r.data.clave_evento).toMatch(/^g1-recepcion-1-990-/);
+    expect(r.data.equipos).toEqual([
+      expect.objectContaining({
+        numero_serie: 'ONT-123456',
+        resultado: 'RECIBIDO',
+        estado_g1: 'En revisión',
+        id_servicio_externo: 245,
+      }),
+    ]);
+  });
+
+  it('equipo dañado y equipo faltante → PARCIAL', async () => {
+    const { service } = crearServicio(seed());
+    await service.recibirCierreOt(
+      990,
+      payloadBaja({
+        equipos_retirados: [{ numero_serie: 'ONT-123456', estado_fisico: 'DAÑADO' }],
+        equipos_faltantes: [{ numero_serie: 'RTR-999', motivo: 'Cliente no lo entregó' }],
+      }),
+      G8,
+    );
+
+    const r = await service.consultarRecepciones(1, { id_ot: '990' });
+
+    expect(r.data.estado_recepcion).toBe('PARCIAL');
+    const porSerie = Object.fromEntries(r.data.equipos.map((e: any) => [e.numero_serie, e]));
+    expect(porSerie['ONT-123456'].resultado).toBe('RECIBIDO_CON_DANO');
+    expect(porSerie['RTR-999'].resultado).toBe('NO_RECIBIDO');
+  });
+
+  it('un segundo cierre de la misma OT no pierde la recepción ya confirmada', async () => {
+    const { service } = crearServicio(seed());
+    await service.recibirCierreOt(990, payloadBaja(), G8);
+    await service.recibirCierreOt(990, payloadBaja(), G8);
+
+    const r = await service.consultarRecepciones(1, { id_ot: '990' });
+
+    expect(r.data.equipos).toHaveLength(1);
+    expect(r.data.equipos[0].resultado).toBe('RECIBIDO');
+  });
+
+  it('OT sin cierre → 404; sin filtros → 400', async () => {
+    const { service } = crearServicio(seed());
+    await expect(service.consultarRecepciones(1, { id_ot: '5' })).rejects.toThrow(
+      'G1 no ha recibido el cierre',
+    );
+    await expect(service.consultarRecepciones(1, {})).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+  });
+
+  it('reemplazo: el equipo nuevo hereda el servicio del retirado', async () => {
+    const base = seed();
+    base.UnidadEquipo.push({
+      ...UNIDAD_INSTALADA,
+      id_unidad: 502,
+      serialNumber: 'ONT-NUEVA',
+      estado: 'Asignado a técnico',
+      idTecnicoAsignado: 45,
+      tipoEquipo: undefined,
+    });
+    const { service, manager } = crearServicio(base);
+
+    await service.recibirCierreOt(
+      990,
+      payloadBaja({
+        tipo_ot: 'REPARACION',
+        equipos_instalados: [{ numero_serie: 'ONT-NUEVA' }],
+      }),
+      G8,
+    );
+
+    const activas = manager
+      .tabla(AsignacionEquipoServicio)
+      .filter((a) => a.activa);
+    expect(activas).toEqual([
+      expect.objectContaining({ id_unidad: 502, idServicioExterno: 245, origen: 'REEMPLAZO_G3' }),
+    ]);
+    expect(manager.tabla(UnidadEquipo).find((u) => u.id_unidad === 502)?.id_cliente_instalado).toBe(130);
   });
 });
