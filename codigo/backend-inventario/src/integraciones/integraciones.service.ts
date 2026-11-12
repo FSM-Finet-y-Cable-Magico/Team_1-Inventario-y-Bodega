@@ -12,7 +12,6 @@ import {
   In,
   IsNull,
   Not,
-  Raw,
   Repository,
 } from 'typeorm';
 import { IntegracionCierre } from './entities/cierre-integracion.entity';
@@ -859,10 +858,12 @@ export class IntegracionesService {
         }),
       );
       if (origen.idClienteExterno != null) {
-        await manager.update(
-          UnidadEquipo,
-          { id_unidad: accion.id_unidad },
-          { id_cliente_instalado: origen.idClienteExterno },
+        await this.conSavepoint(manager, () =>
+          manager.update(
+            UnidadEquipo,
+            { id_unidad: accion.id_unidad },
+            { id_cliente_instalado: origen.idClienteExterno as number },
+          ),
         );
       }
       accion.id_servicio_externo = origen.idServicioExterno;
@@ -892,17 +893,26 @@ export class IntegracionesService {
       throw new BadRequestException('El request_id es demasiado largo.');
     }
 
-    const where: any = { id_empresa: idEmpresa };
-    if (idOt !== null) where.id_ot = idOt;
+    // Por request_id se resuelve primero la OT (último cierre que lo trae) y luego
+    // se leen todos los cierres de esa OT, igual que en la búsqueda por id_ot.
+    let otBuscada = idOt;
     if (requestId !== '') {
-      where.payload = Raw((alias) => `${alias}->>'request_id' = :request_id`, {
-        request_id: requestId,
-      });
+      const filas: { id_ot: number }[] = await this.dataSource.query(
+        `SELECT id_ot FROM integracion_cierre
+          WHERE id_empresa = $1 AND payload->>'request_id' = $2
+            AND ($3::int IS NULL OR id_ot = $3)
+          ORDER BY id_cierre DESC LIMIT 1`,
+        [idEmpresa, requestId, idOt],
+      );
+      otBuscada = filas[0]?.id_ot ?? null;
     }
-    const cierres = await this.cierreRepository.find({
-      where,
-      order: { fechaProceso: 'ASC', id_cierre: 'ASC' },
-    });
+    const cierres =
+      otBuscada === null
+        ? []
+        : await this.cierreRepository.find({
+            where: { id_empresa: idEmpresa, id_ot: otBuscada },
+            order: { fechaProceso: 'ASC', id_cierre: 'ASC' },
+          });
     if (cierres.length === 0) {
       throw new NotFoundException(
         'G1 no ha recibido el cierre de esa OT todavía.',
@@ -1833,8 +1843,23 @@ export class IntegracionesService {
         cabecera.idClienteExterno !== undefined &&
         unidad.id_cliente_instalado !== cabecera.idClienteExterno
       ) {
-        unidad.id_cliente_instalado = cabecera.idClienteExterno;
-        await manager.save(UnidadEquipo, unidad);
+        // BDD global: id_cliente_instalado tiene FK a cliente (de G8). Si el cliente
+        // no existe, se deshace solo este paso (savepoint) y queda la discrepancia;
+        // la asignación del servicio ya quedó registrada.
+        const ok = await this.conSavepoint(manager, () =>
+          manager.update(
+            UnidadEquipo,
+            { id_unidad: unidad.id_unidad },
+            { id_cliente_instalado: cabecera.idClienteExterno as number },
+          ),
+        );
+        if (!ok) {
+          discrepancias.push({
+            numero_serie: serie,
+            codigo: 'CLIENTE_NO_EXISTE',
+            detalle: `El cliente ${cabecera.idClienteExterno} no existe en la BDD global; la unidad queda sin id_cliente_instalado.`,
+          });
+        }
       }
 
       asociados.push({
@@ -1845,6 +1870,24 @@ export class IntegracionesService {
     }
 
     return { asociados, discrepancias };
+  }
+
+  // Ejecuta una escritura dentro de un SAVEPOINT: si falla por una FK (23503), se
+  // revierte solo esa escritura y la transacción del cierre sigue viva.
+  private async conSavepoint(
+    manager: EntityManager,
+    accion: () => Promise<unknown>,
+  ): Promise<boolean> {
+    await manager.query('SAVEPOINT g1_paso_opcional');
+    try {
+      await accion();
+      await manager.query('RELEASE SAVEPOINT g1_paso_opcional');
+      return true;
+    } catch (err) {
+      await manager.query('ROLLBACK TO SAVEPOINT g1_paso_opcional');
+      if ((err as { code?: string })?.code === '23503') return false;
+      throw err;
+    }
   }
 
   // Correlación por id_ot: completa las activaciones que esperaban el cierre y,
