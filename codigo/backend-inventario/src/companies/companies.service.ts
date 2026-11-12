@@ -81,7 +81,13 @@ export class CompaniesService {
       // CU-20: notificación de transferencias pendientes de aprobación
       transferencias_pendientes: await this.getTransferenciasPendientes(actor),
       // CU-78: notificación de solicitudes de baja pendientes de aprobación
-      bajas_pendientes: await this.getBajasPendientes(actor),
+      bajas_pendientes: await this.getBajasPendientes(actor).catch((error) => {
+        // El dashboard no se cae si la bandeja de bajas no está disponible
+        console.warn(
+          `No se pudieron leer las bajas pendientes: ${(error as Error).message}`,
+        );
+        return [];
+      }),
     };
   }
 

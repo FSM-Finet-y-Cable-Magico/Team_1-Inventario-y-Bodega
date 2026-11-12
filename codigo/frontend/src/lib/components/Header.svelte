@@ -122,8 +122,8 @@
 	}
 </script>
 
-<header class="h-14 bg-white border-b border-border flex items-center justify-between px-6">
-	<div class="flex items-center gap-2 text-sm text-muted">
+<header class="h-14 bg-white border-b border-border flex items-center justify-between px-3 sm:px-6 gap-2 min-w-0">
+	<div class="flex items-center gap-2 text-sm text-muted min-w-0 truncate">
 		<Building2 class="h-4 w-4" />
 		<!-- CU-13/CU-16: contexto de la empresa del usuario autenticado -->
 		{#if user?.empresa}

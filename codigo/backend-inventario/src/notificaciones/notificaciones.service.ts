@@ -221,10 +221,18 @@ export class NotificacionesService {
   private async purgarHistorialVencido(): Promise<void> {
     const limite = new Date();
     limite.setDate(limite.getDate() - DIAS_HISTORIAL);
-    await this.notificacionRepository.delete({
-      leida: true,
-      fecha_generacion: LessThan(limite),
-    });
+    // Es limpieza: si falla (por ejemplo, sin permiso DELETE en la BD
+    // global) no debe impedir que la campana cargue.
+    try {
+      await this.notificacionRepository.delete({
+        leida: true,
+        fecha_generacion: LessThan(limite),
+      });
+    } catch (error) {
+      console.warn(
+        `No se pudo purgar el historial de notificaciones: ${(error as Error).message}`,
+      );
+    }
   }
 
   private recortar(texto: string): string {
