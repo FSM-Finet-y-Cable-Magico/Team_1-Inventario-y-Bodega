@@ -79,6 +79,23 @@ export class IntegracionesController {
     return this.integracionesService.consultarUnidadPorSerie(numeroSerie, id);
   }
 
+  // Baja por morosidad: G8 lee si G1 recibió cada equipo retirado en la OT de G3.
+  @Get('recepciones')
+  consultarRecepciones(
+    @Query('id_empresa') idEmpresa: string,
+    @Query('id_ot') idOt: string,
+    @Query('request_id') requestId: string,
+    @Req() request: any,
+  ) {
+    const integracion = request.integracion as IntegracionContexto;
+    const id = Number(idEmpresa);
+    this.integracionesService.validarScope(integracion, id);
+    return this.integracionesService.consultarRecepciones(id, {
+      id_ot: idOt,
+      request_id: requestId,
+    });
+  }
+
   @Post('activaciones')
   registrarActivacion(@Body() payload: any, @Req() request: any) {
     const integracion = request.integracion as IntegracionContexto;
