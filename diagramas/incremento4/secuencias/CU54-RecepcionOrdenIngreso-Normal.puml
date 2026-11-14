@@ -1,0 +1,151 @@
+@startuml CU54-RecepcionOrdenIngreso-Normal
+skinparam sequenceDividerBorderThickness 0.6
+title CU-54 — Registrando recepción total o parcial de orden de ingreso (flujo normal)
+skinparam style strictuml
+skinparam ParticipantBackgroundColor white
+skinparam ParticipantBorderColor black
+skinparam ActorBackgroundColor white
+skinparam ActorBorderColor black
+skinparam ArrowColor black
+skinparam SequenceLifeLineBackgroundColor white
+skinparam SequenceGroupBorderColor black
+skinparam SequenceGroupBackgroundColor white
+skinparam SequenceGroupHeaderFontColor black
+skinparam NoteBackgroundColor white
+skinparam NoteBorderColor black
+skinparam TitleFontColor black
+hide stereotype
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+<style>
+sequenceDiagram {
+  participant {
+    margin 30
+  }
+  actor {
+    margin 12
+  }
+  .vista { BackGroundColor #BDD7EF ; FontColor #223C67 }
+  .controlador { BackGroundColor #C7E1B5 ; FontColor #37571F }
+  .persistencia { BackGroundColor #F9CBAD ; FontColor #894212 }
+}
+</style>
+skinparam sequence {
+  MessageAlign center
+  LifeLineBorderColor black
+}
+hide footbox
+
+actor "Admin/AdminBodega/\nSuperusuario" as user
+participant "V_OrdenIngresoDetalle" as view <<vista>>
+participant "C_OrdenesIngresoController" as ctrl <<controlador>>
+participant "C_OrdenesIngresoService" as svc <<controlador>>
+participant "C_AuditoriaService" as aud <<controlador>>
+participant "C_TypeORM" as orm <<controlador>>
+participant "C_QueryRunner" as qr <<controlador>>
+participant "orden_ingreso" as oing <<persistencia>>
+participant "orden_ingreso_detalle" as odet <<persistencia>>
+participant "log_auditoria" as aent <<persistencia>>
+user -> view : Abre la ficha de una orden\n'Pendiente de recepción'\no 'Recepción parcial'
+activate view
+
+view --> user : Muestra los ítems con tipo de equipo,\ncantidad esperada y ya recibida
+
+user -> view : Clic "Registrar recepción" e\nindica la cantidad recibida\nen esta instancia por ítem
+
+view -> view : Valida en cliente\n0 <= cantidad <= pendiente
+activate view
+deactivate view
+
+view -> ctrl : POST /api/ordenes-ingreso/{id}/recepcion\n{ fecha_recepcion, items: [ { id_detalle,\ncantidad_recibida, numeros_serie? } ] }
+activate ctrl
+
+ctrl -> svc : registrarRecepcion(id, dto, actor)
+activate svc
+
+svc -> orm : findOne(orden_ingreso)\nverificarPertenencia(id, actor)
+activate orm
+orm -> oing : SELECT * FROM orden_ingreso\nWHERE id_orden = ?
+activate oing
+oing --> orm : orden
+deactivate oing
+orm --> svc : orden (404 genérico si es de otra empresa)
+deactivate orm
+
+svc -> svc : Precondición:\nestado != 'Completada'
+activate svc
+deactivate svc
+
+svc -> orm : find(orden_ingreso_detalle, { id_orden })
+activate orm
+orm -> odet : SELECT * FROM orden_ingreso_detalle\nWHERE id_orden = ?
+activate odet
+odet --> orm : detalles[]
+deactivate odet
+orm --> svc : detalles[]
+deactivate orm
+
+svc -> svc : Valida TODOS los ítems antes de\nabrir la transacción:\n0 <= cantidad <= (esperada - recibida)
+activate svc
+deactivate svc
+
+svc -> svc : Calcula el estado resultante:\ntodos completos -> 'Completada'\nalgo pendiente -> 'Recepción parcial'
+activate svc
+deactivate svc
+
+svc -> qr : QueryRunner.connect()\n+ startTransaction()
+activate qr
+qr --> svc : Transacción iniciada
+deactivate qr
+
+svc -> qr : manager.increment(OrdenIngresoDetalle,\n{ id_detalle }, 'cantidad_recibida', ?)\n(x N ítems con cantidad > 0)
+activate qr
+qr -> odet : UPDATE orden_ingreso_detalle\nSET cantidad_recibida = cantidad_recibida + ?\nWHERE id_detalle = ?
+activate odet
+odet --> qr : filas actualizadas
+deactivate odet
+qr --> svc : ok
+deactivate qr
+
+svc -> qr : manager.update(OrdenIngreso, { id_orden },\n{ estado: nuevoEstado })  (si el estado cambió)
+activate qr
+qr -> oing : UPDATE orden_ingreso\nSET estado = ?\nWHERE id_orden = ?
+activate oing
+oing --> qr : fila actualizada
+deactivate oing
+qr --> svc : ok
+deactivate qr
+
+svc -> qr : QueryRunner.commitTransaction()
+activate qr
+qr --> svc : Commit OK
+deactivate qr
+
+svc -> qr : QueryRunner.release()
+activate qr
+qr --> svc : Conexión liberada
+deactivate qr
+
+svc -> aud : create({ accion: 'RECEPCION',\nentidad_afectada: 'orden_ingreso',\nvalor_anterior: estado previo,\nvalor_nuevo: items + estado })
+activate aud
+aud -> orm : save(log)
+activate orm
+orm -> aent : INSERT INTO log_auditoria
+activate aent
+aent --> orm : Registrado
+deactivate aent
+orm --> aud : Log guardado
+deactivate orm
+aud --> svc : Auditoría registrada
+deactivate aud
+
+svc --> ctrl : Orden con detalles actualizados
+deactivate svc
+
+ctrl --> view : 201 Created\n{ estado, detalles: [ { cantidad_esperada,\ncantidad_recibida } ] }
+deactivate ctrl
+
+view --> user : Banner "Recepción registrada" +\ntabla de ítems con cantidades\ny estado actualizados
+deactivate view
+
+@enduml
