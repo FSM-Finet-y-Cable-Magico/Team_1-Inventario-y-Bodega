@@ -166,7 +166,7 @@ NOTE(7, 'El segundo es CU-98, del RF-72: desactivar un proveedor. El proveedor n
 
 # 8 · Diagrama de componentes
 T(8, 5, 'Vista de componentes · Inventario y Bodega, Incremento 4')
-PIC(8, 0, D4 + 'componentes-i4.png')
+PIC(8, 0, D4 + 'diagrama-componentes-incremento4.png')
 NOTE(8, 'Este es el diagrama de componentes. La vista en SvelteKit consume la API REST en NestJS; los controladores delegan '
         'en servicios como inventario, toma de inventario, proveedores, reportes e integraciones, y la persistencia va a '
         'PostgreSQL. Los módulos nuevos del incremento reutilizan el stock, las órdenes de ingreso y el generador PDF.')

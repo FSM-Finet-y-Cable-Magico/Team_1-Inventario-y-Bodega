@@ -15,6 +15,10 @@
     "fuente_svg": "despliegue-vps.svg"
   },
   {
+    "archivo": "diagrama-componentes-incremento4.drawio",
+    "fuente_png": "../diagrama-componentes-incremento4.png"
+  },
+  {
     "archivo": "estados-i4.drawio",
     "objetos_editables": 60,
     "fuente_svg": "estados-i4.svg"
