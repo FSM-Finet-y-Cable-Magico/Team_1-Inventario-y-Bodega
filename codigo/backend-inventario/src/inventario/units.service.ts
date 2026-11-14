@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   BadRequestException,
   ConflictException,
   NotFoundException,
@@ -18,6 +19,7 @@ import { HistorialEstado } from './entities/historial-estado.entity';
 import { EditarDatosUnidadDto } from './dto/editar-datos-unidad.dto';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { PrestamoExterno } from './entities/prestamo-externo.entity';
+import { AsignacionEquipoServicio } from '../integraciones/entities/asignacion-equipo-servicio.entity';
 import { ProveedoresService } from '../proveedores/proveedores.service';
 import { IntegracionCierre } from '../integraciones/entities/cierre-integracion.entity';
 import {
@@ -53,6 +55,8 @@ export const TRANSICIONES_PERMITIDAS: Record<string, string[]> = {
 
 @Injectable()
 export class UnitsService {
+  private readonly logger = new Logger(UnitsService.name);
+
   constructor(
     @InjectRepository(UnidadEquipo)
     private readonly unitRepository: Repository<UnidadEquipo>,
@@ -1799,6 +1803,66 @@ export class UnitsService {
     };
   }
 
+  // Cliente de la BDD global (tabla cliente de G8) para una unidad instalada.
+  // Orden: id_cliente_instalado, luego la asignación activa (id_cliente_externo,
+  // rut_cliente o la OT), y por último el RUT conocido. Lee la fila como JSON para
+  // tolerar columnas distintas; si la tabla no existe o no hay permiso, null.
+  async buscarClienteGlobal(
+    unidad: UnidadEquipo,
+    rutConocido: string | null,
+  ): Promise<{ rut: string | null; nombre: string | null } | null> {
+    try {
+      const asignacion = await this.dataSource
+        .getRepository(AsignacionEquipoServicio)
+        .findOne({
+          where: { id_unidad: unidad.id_unidad, activa: true },
+          order: { fechaInstalacion: 'DESC', id_asignacion: 'DESC' },
+        })
+        .catch(() => null);
+
+      const idCliente =
+        unidad.id_cliente_instalado ?? asignacion?.idClienteExterno ?? null;
+      const rut = rutConocido ?? asignacion?.rutCliente ?? null;
+      const idOt = asignacion?.id_ot ?? null;
+      if (!idCliente && !rut && !idOt) return null;
+
+      const filas: { c: Record<string, any> }[] = await this.dataSource.query(
+        `SELECT to_jsonb(c) AS c FROM cliente c
+          WHERE ($1::int IS NOT NULL AND c.id_cliente = $1::int)
+             OR ($2::text IS NOT NULL
+                 AND upper(regexp_replace(to_jsonb(c)->>'rut', '[^0-9kK]', '', 'g'))
+                   = upper(regexp_replace($2::text, '[^0-9kK]', '', 'g')))
+             OR ($3::int IS NOT NULL AND c.id_cliente = (
+                   SELECT (to_jsonb(o)->>'id_cliente')::int FROM orden_trabajo o
+                    WHERE o.id_ot = $3::int LIMIT 1))
+          ORDER BY (c.id_cliente = $1::int) DESC NULLS LAST
+          LIMIT 1`,
+        [idCliente, rut, idOt],
+      );
+      const c = filas[0]?.c;
+      if (!c) return rut ? { rut, nombre: null } : null;
+
+      const texto = (v: any): string | null =>
+        typeof v === 'string' && v.trim() !== '' ? v.trim() : null;
+      const compuesto = [c.nombres ?? c.nombre, c.apellidos ?? c.apellido]
+        .map(texto)
+        .filter(Boolean)
+        .join(' ');
+      return {
+        rut: texto(c.rut) ?? rut,
+        nombre:
+          texto(c.nombre_completo) ??
+          texto(c.razon_social) ??
+          (compuesto !== '' ? compuesto : null),
+      };
+    } catch (error) {
+      this.logger.warn(
+        `No se pudo leer el cliente global de la unidad ${unidad.id_unidad}: ${(error as Error).message}`,
+      );
+      return null;
+    }
+  }
+
   // CU-48: resuelve la ubicación externa de una unidad fuera de bodega según su
   // estado. Nunca falla: los campos sin dato quedan en `campos_faltantes` (E1).
   async resolverUbicacionExterna(unidad: UnidadEquipo): Promise<{
@@ -1840,6 +1904,16 @@ export class UnitsService {
         direccion: unidad.direccionInstalacion ?? null,
         comuna: unidad.comunaInstalacion ?? null,
       };
+
+      // Si el cierre no trajo nombre/RUT, se buscan en la tabla cliente de la
+      // BDD global (G8), por id_cliente_instalado o por la asignación activa.
+      if (!datos.nombre || !datos.rut) {
+        const clienteGlobal = await this.buscarClienteGlobal(unidad, datos.rut);
+        if (clienteGlobal) {
+          datos.nombre = datos.nombre ?? clienteGlobal.nombre;
+          datos.rut = datos.rut ?? clienteGlobal.rut;
+        }
+      }
 
       // Enriquecimiento opcional con G3 (GET /clientes/rut/{rut}, X-API-KEY).
       // Si G3 no responde o no está configurado se degrada a lo persistido por
