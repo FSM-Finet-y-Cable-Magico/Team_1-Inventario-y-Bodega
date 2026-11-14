@@ -345,7 +345,7 @@ p('El docente observó en el Incremento 3 que el modelo físico no mostraba las 
 p('Se dejaron sin clave foránea, a propósito, las columnas que guardan identificadores externos (G3 y G8), las de '
   'auditoría que usan 0 para eventos del sistema y las de integraciones que reciben identificadores de técnicos de otro '
   'sistema. El anexo 13.2 lista las 45 relaciones.')
-FIG('Modelo físico general con relaciones', D4 + 'modelo-fisico-general.png',
+FIG('Modelo físico general con relaciones', D4 + 'modelo-fisico-chartdb/modelo-fisico-incremento4.png',
     'El color de cada tabla indica su incremento: azul I1, verde I2, ámbar I3 y violeta I4. Las líneas violetas son las '
     'claves foráneas agregadas en este incremento. La figura {n} muestra el modelo físico general con relaciones.', width_cm=16, max_h_cm=22)
 FIG('Modelo físico de toma de inventario y proveedores', D4 + 'modelo-fisico-toma-proveedor.png',
@@ -406,7 +406,7 @@ h2('Componentes y organización del código')
 p('Los casos nuevos se agregan como un módulo NestJS (tomas-inventario) y como ampliaciones de los módulos proveedores '
   'y ordenes-ingreso, con sus rutas SvelteKit. No se agregan dependencias: el acta reutiliza el generador PDF propio de '
   'reportes (CU-93).')
-FIG('Componentes del incremento 4', D4 + 'componentes-i4.png',
+FIG('Componentes del incremento 4', D4 + 'diagrama-componentes-incremento4.png',
     'La figura {n} muestra los componentes que intervienen en el incremento y sus dependencias.', width_cm=13)
 T('Mapa de implementación por caso', ['CU', 'Backend', 'Rutas API', 'Frontend', 'Dependencia'], [
     ['CU-97', 'tomas-inventario', 'POST /tomas-inventario; PATCH /:id/conteo; POST /:id/confirmar y /:id/cancelar', '/tomas-inventario y /tomas-inventario/[id]', 'CU-44, CU-45'],

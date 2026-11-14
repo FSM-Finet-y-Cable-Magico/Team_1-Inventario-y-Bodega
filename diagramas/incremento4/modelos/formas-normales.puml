@@ -1,0 +1,60 @@
+@startuml
+!theme plain
+hide circle
+skinparam shadowing false
+skinparam linetype ortho
+skinparam classFontSize 12
+skinparam class {
+ BackgroundColor #FFFFFF
+ BorderColor #2B5797
+ HeaderBackgroundColor #E8EEF7
+}
+top to bottom direction
+title FNs — descomposición conceptual de una salida a técnico
+entity "Registro inicial (no normalizado)" as U {
+ salida, fecha, técnico, bodega
+ lista de equipos y consumibles
+}
+entity "Primera forma normal" as F1 {
+ salida, línea, fecha, técnico, bodega
+ tipo de equipo, unidad, cantidad
+ una línea por ítem
+}
+entity "Cabecera: salida_bodega" as S {
+ * id_salida <<PK>>
+ fecha_hora
+ id_tecnico <<FK>>
+ id_bodega_origen <<FK>>
+ id_empresa <<FK>>
+ id_usuario_registro <<FK>>
+}
+entity "Detalle: salida_detalle" as D {
+ * id_detalle <<PK>>
+ id_salida <<FK>>
+ id_tipo_equipo <<FK>>
+ id_unidad <<FK, opcional>>
+ cantidad
+}
+entity "Maestros referenciados" as M {
+ usuario (técnico y registrador)
+ bodega
+ empresa
+ tipo_equipo
+ unidad_equipo
+}
+U --> F1 : 1FN: eliminar listas repetidas
+F1 --> S : 2FN: separar datos de cabecera
+F1 --> D : 2FN: separar datos del ítem
+S ||--o{ D : tiene
+S --> M : 3FN: datos propios en maestros
+D --> M : 3FN: referencias por clave
+note bottom of M
+Dependencias: id_salida determina su cabecera;
+id_detalle determina su línea y referencia de salida.
+El esquema actual usa claves artificiales: verificar
+también claves candidatas y restricciones únicas.
+JSONB de auditoría/integración y datos históricos
+de cliente se documentan como instantáneas;
+no se afirma 3FN universal para todo el esquema.
+end note
+@enduml

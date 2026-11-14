@@ -10,14 +10,13 @@
     "fuente_svg": "clases-i4.svg"
   },
   {
-    "archivo": "componentes-i4.drawio",
-    "objetos_editables": 78,
-    "fuente_svg": "componentes-i4.svg"
-  },
-  {
     "archivo": "despliegue-vps.drawio",
     "objetos_editables": 100,
     "fuente_svg": "despliegue-vps.svg"
+  },
+  {
+    "archivo": "diagrama-componentes-incremento4.drawio",
+    "fuente_png": "../diagrama-componentes-incremento4.png"
   },
   {
     "archivo": "estados-i4.drawio",
@@ -28,11 +27,6 @@
     "archivo": "modelo-fisico-cierres.drawio",
     "objetos_editables": 520,
     "fuente_svg": "modelo-fisico-cierres.svg"
-  },
-  {
-    "archivo": "modelo-fisico-general.drawio",
-    "objetos_editables": 600,
-    "fuente_svg": "modelo-fisico-general.svg"
   },
   {
     "archivo": "modelo-fisico-toma-proveedor.drawio",
