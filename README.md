@@ -1,13 +1,30 @@
 # Sistema de Inventario y Bodega
 
-Sistema fullstack de **inventario y bodega** para un ISP (empresas **Finet** y **Cable Mágico**).
-**83 de 96 casos de uso implementados** (estado CU por CU en [`docs/08-roadmap.md`](docs/08-roadmap.md)).
+Sistema fullstack de **inventario y bodega** para un ISP (empresas **Finet** y **Cable Mágico**),
+desarrollado por el **Grupo 1** del curso Ingeniería de Software (UNAB, 2026).
+
+**Proyecto terminado: 99 de 99 casos de uso (100 %)**, entregados en 4 incrementos y aceptados por el
+cliente (FIBERNET LIMITADA). Estado CU por CU en [`docs/08-roadmap.md`](docs/08-roadmap.md).
+
+| Incremento | CU nuevos | Acumulado | Contenido principal |
+|------------|-----------|-----------|---------------------|
+| Incremento 1 | 46 | 46 (46,5 %) | Usuarios y roles, multiempresa, catálogo, unidades, bodegas y stock |
+| Incremento 2 | 31 | 77 (77,8 %) | Proveedores y órdenes de ingreso, salidas a técnicos, revisión, bajas, préstamos y reportes |
+| Incremento 3 | 19 | 96 (97,0 %) | Cierres de trabajo integrados con G3, clientes, notificaciones, exportación a Excel y PDF |
+| Incremento 4 | 3 | 99 (100 %) | Toma de inventario (CU-97), desactivación de proveedores (CU-98) y acta en PDF (CU-99); despliegue en la VPS FiNet |
+
+De los 99 CU, el Grupo 1 implementa 95; CU-63, CU-65, CU-66 y CU-67 los cubre el Grupo 3 (terreno/FSM)
+y este sistema consume sus endpoints. La integración con G2 (portal web), G3 (terreno) y G8 (CRM) está
+documentada en `docs/09` a `docs/13`.
+
+**Equipo:** Kevin Cifuentes · Javier Farías · Tomás Heilenkötter · Javiera Morán · Uriel Navarrete.
 
 | Capa | Tecnología |
 |------|-----------|
 | Frontend | SvelteKit + Svelte 5 + Tailwind CSS v4 (`codigo/frontend/`) |
 | Backend | NestJS + TypeORM + PostgreSQL (`codigo/backend-inventario/`) |
 | Infra | Docker Compose + Nginx (entrada única en `http://localhost`) |
+| Producción | VPS FiNet compartida con los otros grupos (`codigo/docker-compose.vps.yml`, guía en `codigo/DESPLIEGUE-VPS.md`) |
 
 ---
 
@@ -25,9 +42,12 @@ Para agentes de IA: [`AGENTS.md`](AGENTS.md) es la guía de entrada obligatoria.
 | `docs/05-backend/` | Convenciones y módulos del backend (endpoints, lógica, CU). |
 | `docs/06-casos-de-uso-implementados.md` | Estado de los CU implementados y mapa CU → módulos/rutas. |
 | `docs/07-guia-implementacion-cu.md` | Checklist paso a paso para implementar un CU nuevo. |
-| `docs/08-roadmap.md` | **Estado de los 96 CU** (implementado / en progreso / pendiente). Se actualiza en cada avance. |
+| `docs/08-roadmap.md` | **Estado de los 99 CU** (todos implementados; los 4 de G3 marcados como tales). |
 | `docs/09-…` a `docs/13-…` | Integración con los otros grupos (G2/G3/G8): CUs compartidos, trazabilidad y endpoints acordados. |
+| `docs/incremento-3/`, `docs/incremento-4/` | Evidencias y resultados de pruebas de cada incremento. |
 | `codigo/README.md` | Guía operativa de Docker (levantar, scripts, credenciales). |
+| `codigo/DESPLIEGUE-VPS.md` | Despliegue en producción en la VPS FiNet. |
+| `codigo/database/README.md` | Base de datos: DDL, DML y cómo crear la base desde cero. |
 
 La fuente de información de los casos de uso es `docs/casos-de-uso.json`
 (lo coloca el jefe de grupo; es de solo lectura).
@@ -98,11 +118,14 @@ npm run seed:qa     # usuarios/empresas/bodegas de prueba
 
 > Nota: `migrar` y `seed:qa` necesitan `DATABASE_URL` en el entorno (ver `.env.template`).
 
+Para crear la base sin el backend, `codigo/database/` trae el esquema final (`ddl/esquema-completo.sql`:
+34 tablas y 72 claves foráneas) y los datos de demostración (`dml/datos-demostracion.sql`).
+
 ### Verificación antes de una Pull Request
 
 ```bash
-# Backend
-cd codigo/backend-inventario && npm run lint && npm run build
+# Backend (incluye las pruebas unitarias: 174 en total)
+cd codigo/backend-inventario && npm run lint && npm run build && npm test
 # Frontend
 cd ../frontend && npm run check && npm run build
 ```
@@ -114,9 +137,16 @@ cd ../frontend && npm run check && npm run build
 ```
 ├── AGENTS.md              ← guía de entrada para agentes de IA
 ├── docs/                  ← documentación del proyecto (ver arriba)
-├── codigo/                ← EL SISTEMA (backend + frontend + docker + nginx)
+├── codigo/                ← EL SISTEMA
+│   ├── backend-inventario/  ← API NestJS (controladores, servicios, entidades, migraciones)
+│   ├── frontend/            ← SvelteKit (vistas y rutas)
+│   ├── database/            ← DDL, DML, init.sql y scripts de la BDD global
+│   ├── nginx/               ← proxy de entrada única
+│   └── docker-compose*.yml  ← entorno local y de la VPS
 ├── Casos de uso/          ← evidencia visual (capturas) por CU implementado
 ├── diagramas/             ← diagramas (clases, componentes, secuencia por CU, BDD...)
+│   ├── incremento3/         ← modelos por área, MERE, ME, FN, burn charts, proceso final
+│   └── incremento4/         ← modelo físico en ChartDB, componentes, MERE/MR/ME/FN, CU-97 a CU-99, gráficos
 └── archivos-incremento-1/ ← artefactos del Incremento 1
 ```
 
