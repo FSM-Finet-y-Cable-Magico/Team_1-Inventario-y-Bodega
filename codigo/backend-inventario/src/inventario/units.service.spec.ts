@@ -11,6 +11,7 @@ function crearServicio(
     usuario?: Record<string, unknown> | null;
     prestamo?: Record<string, unknown> | null;
     clienteG3?: Record<string, unknown> | null;
+    clienteGlobal?: Record<string, unknown> | null;
   } = {},
 ) {
   const usuarioRepo: Doble = {
@@ -25,6 +26,9 @@ function crearServicio(
       if (entidad.name === 'PrestamoExterno') return prestamoRepo;
       return { findOne: jest.fn().mockResolvedValue(null) };
     }),
+    query: jest
+      .fn()
+      .mockResolvedValue(opciones.clienteGlobal ? [{ c: opciones.clienteGlobal }] : []),
   };
   const g3Client = {
     consultarClientePorRut: jest
@@ -218,5 +222,26 @@ describe('UnitsService — CU-48 (ubicación externa en la ficha)', () => {
     await expect(
       service.resolverUbicacionExterna(UNIDAD({ estado: 'Dado de baja' })),
     ).resolves.toBeNull();
+  });
+
+  it('Instalado en cliente sin nombre/RUT: los toma de la tabla cliente global (G8)', async () => {
+    const { service } = crearServicio({
+      clienteGlobal: { id_cliente: 8, rut: '21584670-9', nombre_completo: 'Ana Pérez' },
+    });
+
+    const ubicacion = await service.resolverUbicacionExterna(
+      UNIDAD({
+        estado: 'Instalado en cliente',
+        id_cliente_instalado: 8,
+        direccionInstalacion: 'Av. Siempre Viva 742',
+      }),
+    );
+
+    expect(ubicacion?.datos).toMatchObject({
+      rut: '21584670-9',
+      nombre: 'Ana Pérez',
+      direccion: 'Av. Siempre Viva 742',
+    });
+    expect(ubicacion?.campos_faltantes).toEqual([]);
   });
 });
