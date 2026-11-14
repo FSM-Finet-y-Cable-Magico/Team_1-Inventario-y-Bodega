@@ -39,6 +39,7 @@ def dot(name, tables, full, title, edgesel=None):
         subprocess.run(['dot','-T'+fmt,'-Gdpi=130' if fmt=='png' else '-Gdpi=72',name+'.dot','-o',f'{name}.{fmt}'],check=True)
 NEWFK=set(json.load(open('/tmp/fk-nuevas.json')))
 allt=I1+I2+I3+I4
-dot('modelo-fisico-general', allt, False, 'Modelo físico general con relaciones (34 tablas) — azul I1 · verde I2 · ámbar I3 · violeta I4 · líneas violetas: FK agregadas en I4')
+# El modelo físico general se mantiene en ChartDB (modelo-fisico-chartdb/).
+# dot('modelo-fisico-general', allt, False, 'Modelo físico general con relaciones (34 tablas) — azul I1 · verde I2 · ámbar I3 · violeta I4 · líneas violetas: FK agregadas en I4')
 dot('modelo-fisico-toma-proveedor', I4+['bodega','tipo_equipo','unidad_equipo','usuario','empresa','proveedor','orden_ingreso','proveedor_tipo_equipo','movimiento_inventario','stock_consumible'], True, 'Modelo físico — Incremento 4: toma de inventario y proveedores')
 dot('modelo-fisico-cierres', I3+['integracion_cierre','empresa','usuario','unidad_equipo','tipo_equipo','inventario_personal_tecnico','historial_estado_equipo'], True, 'Modelo físico — Cierres e integración, con las relaciones agregadas en I4')
