@@ -19,13 +19,16 @@ import { MovimientoInventario } from '../transferencias/entities/movimiento-inve
 import { Usuario } from '../usuarios/entities/usuario.entity';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 
-// CU-57: salida de bodega a técnico (equipos individualizables y/o consumibles).
-// CU-59: las validaciones de NS se aplican en dos momentos (en vivo vía
-// UnitsService.verificarSerie y de verdad aquí, dentro de la transacción).
-// CU-62: el stock de consumibles se valida con bloqueo de fila y nunca queda negativo.
-// CU-60: es el mismo flujo con solo ítems consumibles (endpoint compartido).
 export const TIPO_MOVIMIENTO_SALIDA = 'SALIDA_A_TECNICO';
 
+// ======================================================================
+// Salidas a técnico · SalidasService (servicio)
+// CU-57 · Registrando salida de equipos de bodega a técnico
+// CU-59 · Validando número de serie en salida de bodega
+// CU-60 · Registrando salida de consumibles de bodega a técnico
+// CU-62 · Validando stock disponible en bodega para consumibles
+// Entidades: SalidaBodega, SalidaDetalle, UnidadEquipo, TipoEquipo, Bodega, StockConsumible, HistorialEstado, MovimientoInventario, Usuario
+// ======================================================================
 @Injectable()
 export class SalidasService {
   constructor(
@@ -36,8 +39,7 @@ export class SalidasService {
     private readonly auditoriaService: AuditoriaService,
   ) {}
 
-  // CU-62: validación con bloqueo de fila, reutilizable (CU-57/60/81). Si no
-  // existe fila de stock para (bodega, tipo), el disponible se trata como 0.
+  // CU-62 · Validando stock disponible en bodega para consumibles
   async verificarStockDisponible(
     manager: EntityManager,
     idBodega: number,
@@ -63,7 +65,8 @@ export class SalidasService {
     }
   }
 
-  //CU-57/CU-60
+  // CU-57 · Registrando salida de equipos de bodega a técnico
+  // CU-60 · Registrando salida de consumibles de bodega a técnico
   async registrarSalida(
     dto: CrearSalidaDto,
     idEmpresaContexto: number,
@@ -199,7 +202,8 @@ export class SalidasService {
     }
   }
 
-  // CU-57/CU-59: validación real del NS dentro de la transacción + transición
+  // CU-57 · Registrando salida de equipos de bodega a técnico
+  // CU-59 · Validando número de serie en salida de bodega
   private async procesarItemUnidad(
     manager: EntityManager,
     item: ItemSalidaDto,
@@ -266,7 +270,8 @@ export class SalidasService {
     });
   }
 
-  // CU-60: consumibles → validar cantidad, stock (CU-62), descontar y sumar al técnico (CU-58)
+  // CU-60 · Registrando salida de consumibles de bodega a técnico
+  // CU-62 · Validando stock disponible en bodega para consumibles
   private async procesarItemConsumible(
     manager: EntityManager,
     item: ItemSalidaDto,
@@ -340,8 +345,7 @@ export class SalidasService {
     });
   }
 
-  // Listado de salidas con aislamiento manual por empresa (patrón bodegas)
-  //CU-57
+  // CU-57 · Registrando salida de equipos de bodega a técnico
   async listarSalidas(idEmpresaContexto: number, esSuperusuario: boolean) {
     const qb = this.salidaRepository
       .createQueryBuilder('salida')

@@ -29,6 +29,16 @@ function criterioIdentificador(valor: string) {
     : { nombre_usuario: limpio };
 }
 
+// ======================================================================
+// Autenticación · AuthService (servicio)
+// CU-01 · Iniciando sesión en el sistema
+// CU-10 · Restableciendo contraseña de usuario
+// CU-11 · Cerrando sesión automáticamente por inactividad
+// CU-12 · Cerrando sesión del sistema
+// CU-13 · Cargando contexto de empresa Finet al iniciar sesión
+// CU-14 · Cargando contexto de empresa Cable Mágico al iniciar sesión
+// Entidades: Usuario
+// ======================================================================
 @Injectable()
 export class AuthService {
   private readonly tokenBlacklist = new Set<string>();
@@ -40,6 +50,9 @@ export class AuthService {
     private readonly auditoriaService: AuditoriaService,
   ) {}
 
+  // CU-01 · Iniciando sesión en el sistema
+  // CU-13 · Cargando contexto de empresa Finet al iniciar sesión
+  // CU-14 · Cargando contexto de empresa Cable Mágico al iniciar sesión
   async login(loginDto: LoginDto) {
     const usuario = await this.usuarioRepository.findOne({
       where: criterioIdentificador(loginDto.nombre_usuario),
@@ -143,7 +156,8 @@ export class AuthService {
     };
   }
 
-  // CU-11/CU-12: el motivo distingue cierre manual del cierre por inactividad
+  // CU-11 · Cerrando sesión automáticamente por inactividad
+  // CU-12 · Cerrando sesión del sistema
   async logout(token: string, usuarioId: number, motivo?: string) {
     this.tokenBlacklist.add(token);
     await this.auditoriaService.create({
@@ -159,7 +173,7 @@ export class AuthService {
     return { message: 'Sesión cerrada correctamente.' };
   }
 
-  // CU-10: el usuario establece su nueva contraseña tras un restablecimiento
+  // CU-10 · Restableciendo contraseña de usuario
   async cambiarPassword(dto: {
     nombre_usuario: string;
     password_actual: string;
@@ -203,10 +217,12 @@ export class AuthService {
     };
   }
 
+  // CU-12 · Cerrando sesión del sistema
   isTokenBlacklisted(token: string): boolean {
     return this.tokenBlacklist.has(token);
   }
 
+  // CU-10 · Restableciendo contraseña de usuario
   async restablecerPassword(
     targetId: number,
     actorId: number,

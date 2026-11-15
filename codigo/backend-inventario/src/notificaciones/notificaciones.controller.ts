@@ -6,28 +6,30 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
-// CU-96: campana de notificaciones (préstamo vencido + stock bajo umbral),
-// persistidas con lectura/no-lectura. Reutiliza la detección de CU-94.
+// ======================================================================
+// Notificaciones · NotificacionesController (controlador)
+// CU-96 · Recibiendo notificaciones visuales en la campana del sistema
+// ======================================================================
 @Controller('notificaciones')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class NotificacionesController {
   constructor(private readonly notificacionesService: NotificacionesService) {}
 
-  // CU-96: genera las pendientes (dedupe diario) y devuelve contador + no leídas
+  // CU-96 · Recibiendo notificaciones visuales en la campana del sistema
   @Get()
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   listarNoLeidas(@CurrentUser() actor: ActorJwt) {
     return this.notificacionesService.listarNoLeidas(actor);
   }
 
-  // CU-96: marcar una notificación como leída
+  // CU-96 · Recibiendo notificaciones visuales en la campana del sistema
   @Patch(':id/leer')
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   marcarLeida(@Param('id') id: string, @CurrentUser() actor: ActorJwt) {
     return this.notificacionesService.marcarLeida(Number(id), actor);
   }
 
-  // CU-96: marcar todas las notificaciones como leídas
+  // CU-96 · Recibiendo notificaciones visuales en la campana del sistema
   @Patch('leer-todas')
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   marcarTodasLeidas(@CurrentUser() actor: ActorJwt) {

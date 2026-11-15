@@ -51,10 +51,6 @@ const ACCIONES_G3: Record<string, { estado: string; origenes: string[] }> = {
   },
 };
 
-// CU-69: respaldo para un cierre que llegue sin `accion` por ítem. G3 la envía en su
-// CerrarOtDto (verificado el 26-sept-2026, docs/11 §5) y esa siempre manda; si falta,
-// la define el arreglo de origen: lo retirado va a revisión (CU-71) y lo instalado en
-// reemplazo queda en el cliente.
 const ACCION_POR_CAMPO: Record<string, string> = {
   equipos_instalados: 'INSTALADO_EN_CLIENTE',
   equipos_retirados: 'RETIRADO_PARA_DIAGNOSTICO',
@@ -109,6 +105,19 @@ function extraerCategoriaFalla(payload: any): string | null {
   return null;
 }
 
+// ======================================================================
+// Integraciones con G3 y G8 · IntegracionesService (servicio)
+// CU-64 · Ejecutando acciones atómicas del cierre de instalación
+// CU-68 · Verificando saldo de consumibles en cierre
+// CU-69 · Registrando cierre de trabajo de reparación
+// Integración G3/G8: catálogo de tipos de equipo
+// Integración G8: equipos de un servicio
+// Integración G3/G8: stock disponible
+// Integración G3: unidad por número de serie
+// Integración G8: recepción de equipos retirados (baja por morosidad)
+// Integración G8: activación de servicio
+// Entidades: IntegracionCierre, IntegracionActivacion, AsignacionEquipoServicio, UnidadEquipo, HistorialEstado, TipoEquipo, StockConsumible, CierreReparacion, Usuario
+// ======================================================================
 @Injectable()
 export class IntegracionesService {
   constructor(
@@ -133,7 +142,7 @@ export class IntegracionesService {
         private readonly dataSource: DataSource,
     ) {}
 
-  // Todas las rutas de integración exigen id_empresa explícito, validado contra el scope de la key.
+  // Apoyo de CU-64, CU-68, CU-69
   validarScope(integracion: IntegracionContexto, idEmpresa: number): void {
     if (!Number.isInteger(idEmpresa)) {
       throw new BadRequestException(
@@ -145,8 +154,7 @@ export class IntegracionesService {
     }
   }
 
-  // GET /integraciones/tipos-equipo — catálogo S2S (G1-7): wrapper del catálogo
-  // humano (`CatalogService.consultar`), con id_empresa validado contra el scope.
+  // Integración G3/G8: catálogo de tipos de equipo
   async consultarTiposEquipo(
     idEmpresa: number,
     filtros: { categoria?: string; buscar?: string; activo?: string },
@@ -187,8 +195,7 @@ export class IntegracionesService {
     };
   }
 
-    // GET /integraciones/equipos — G1-9 (sc-159, P1): equipos de un servicio
-    // desde `asignacion_equipo_servicio` (solo asignaciones activas).
+    // Integración G8: equipos de un servicio
     async consultarEquiposPorServicio(idEmpresa: number, idServicioRaw: string) {
         const idServicio = this.enteroPositivo(idServicioRaw);
         if (idServicio === null) {
@@ -234,10 +241,7 @@ export class IntegracionesService {
         };
     }
 
-    // GET /integraciones/stock — G1-4 extendido (sc-159, P1): disponibilidad
-    // INFORMATIVA para factibilidad comercial; G8 no reserva ni descuenta.
-    // Consumibles: suma de `stock_consumible.cantidad_disponible`.
-    // Individualizables: unidades 'En bodega' (disponible) y 'Asignado a técnico' (reservado).
+    // Integración G3/G8: stock disponible
     async consultarStock(
         idEmpresa: number,
         filtros: { id_tipo_equipo?: string; categoria?: string },
@@ -322,9 +326,7 @@ export class IntegracionesService {
         };
     }
 
-    // GET /integraciones/unidades/:numeroSerie — G3 valida la serie ANTES de que el
-  // técnico cierre la OT. sc-158 (G8): se amplía la respuesta sin quitar campos
-  // existentes y con 404 genérico (una serie de otra empresa no se distingue).
+    // Integración G3: unidad por número de serie
   async consultarUnidadPorSerie(numeroSerie: string, idEmpresa: number) {
     const serie = (numeroSerie ?? '').trim();
     if (serie === '') {
@@ -379,10 +381,7 @@ export class IntegracionesService {
     };
   }
 
-  // POST /integraciones/activaciones — evento de activación de G8 (G1-8).
-  // Idempotencia por event_id (UNIQUE en la cabecera) y UNIQUE(event_id, id_unidad)
-  // en las filas. Tolera ambos órdenes cierre/activación: la asignación activa se
-  // crea cuando están ambos eventos. El estado físico lo define SIEMPRE el cierre.
+  // Integración G8: activación de servicio
   async registrarActivacion(payload: any, integracion: IntegracionContexto) {
     if (
       payload === null ||
@@ -574,11 +573,9 @@ export class IntegracionesService {
     }
   }
 
-  // POST /integraciones/ordenes/:idOt/cierre — webhook receptor del cierre de OT de G3.
-  // CU-63 lo ejecuta G3; aquí se aplican CU-64 (instalación), CU-68 (saldo de
-  // consumibles), CU-69 (reparación) y CU-70 (tipo de trabajo del borrador).
-  // Contrato: payload válido → 2xx SIEMPRE, registrando discrepancias por ítem (un serial
-  // mal tecleado nunca hace perder el cierre completo). 4xx solo para payloads mal formados.
+  // CU-64 · Ejecutando acciones atómicas del cierre de instalación
+  // CU-68 · Verificando saldo de consumibles en cierre
+  // CU-69 · Registrando cierre de trabajo de reparación
   async recibirCierreOt(
     idOt: number,
     payload: any,
@@ -813,6 +810,7 @@ export class IntegracionesService {
     }
   }
 
+  // Apoyo de CU-64, CU-68, CU-69
   private async traspasarAsignacionReemplazo(
     manager: EntityManager,
     acciones: any[],
@@ -870,10 +868,7 @@ export class IntegracionesService {
     }
   }
 
-  // GET /integraciones/recepciones — baja por morosidad (propuesta G8, 12-11-2026):
-  // confirmación por equipo de que lo retirado en una OT de G3 llegó a G1.
-  // Acuerdo propuesto: 'En revisión' ya cuenta como recibido. Se busca por la OT
-  // de G3 (id_ot) o por el request_id que G8 le dio a la OT y G3 reenvía en el cierre.
+  // Integración G8: recepción de equipos retirados (baja por morosidad)
   async consultarRecepciones(
     idEmpresa: number,
     filtros: { id_ot?: string; request_id?: string },
@@ -1036,6 +1031,7 @@ export class IntegracionesService {
     };
   }
 
+  // Apoyo de CU-64, CU-68, CU-69
   private extraerEquipos(payload: any): any[] {
     const listar = (campo: string): any[] => {
       const valor = payload[campo];
@@ -1076,6 +1072,7 @@ export class IntegracionesService {
     return items;
   }
 
+  // CU-64 · Ejecutando acciones atómicas del cierre de instalación
   private async procesarEquipo(
     queryRunner: any,
     item: any,
@@ -1244,6 +1241,7 @@ export class IntegracionesService {
     };
   }
 
+  // Apoyo de CU-64, CU-68, CU-69
   private async resolverTecnico(
     manager: EntityManager,
     idTecnico: number | null,
@@ -1290,10 +1288,7 @@ export class IntegracionesService {
     };
   }
 
-  // --- CU-64/CU-68: acciones atómicas del cierre -----------------------------
-
-  // CU-64 (B): cliente/dirección del payload de G3 (tolerante a los nombres del
-  // contrato doc-12 §1.3: cliente{rut,nombre|nombre_completo} y direccion{...}).
+  // Apoyo de CU-64, CU-68, CU-69
   private extraerDatosInstalacion(payload: any): {
     clienteRut: string | null;
     clienteNombre: string | null;
@@ -1323,8 +1318,7 @@ export class IntegracionesService {
     };
   }
 
-  // CU-64 (C): materiales[{id_tipo_equipo, cantidad}] del cierre. Cantidad 0 o
-  // negativa = payload inválido (400); duplicados del mismo tipo se suman.
+  // Apoyo de CU-64, CU-68, CU-69
   private extraerMateriales(payload: any): { id_tipo_equipo: number; cantidad: number }[] {
     const valor = payload.materiales;
     if (valor === undefined || valor === null) return [];
@@ -1360,9 +1354,8 @@ export class IntegracionesService {
     }));
   }
 
-  // CU-64 (C)/CU-68: descuenta materiales del inventario personal del técnico.
-  // Nunca rechaza el cierre: si el saldo no alcanza, descuenta lo disponible y
-  // registra el faltante como ajuste + discrepancia (acuerdo Opción A con G3).
+  // CU-64 · Ejecutando acciones atómicas del cierre de instalación
+  // CU-68 · Verificando saldo de consumibles en cierre
   private async procesarMateriales(
     manager: EntityManager,
     materiales: { id_tipo_equipo: number; cantidad: number }[],
@@ -1461,9 +1454,7 @@ export class IntegracionesService {
     };
   }
 
-  // --- CU-69: cierre de trabajo de reparación --------------------------------
-
-  // Hay reparación cuando G3 marca tipo_ot REPARACION o adjunta el bloque.
+  // Apoyo de CU-64, CU-68, CU-69
   private esCierreDeReparacion(payload: any): boolean {
     const tipo =
       typeof payload.tipo_ot === 'string'
@@ -1477,16 +1468,14 @@ export class IntegracionesService {
     );
   }
 
-  // CU-69: falla reportada y solución aplicada son obligatorias, de 5 a 300 caracteres.
+  // Apoyo de CU-69
   private textoObligatorio(valor: any): string | null {
     if (typeof valor !== 'string') return null;
     const limpio = valor.trim();
     return limpio.length >= 5 && limpio.length <= 300 ? limpio : null;
   }
 
-  // CU-69: registra el cierre de reparación dentro de la transacción del webhook.
-  // Los consumibles ya fueron descontados por procesarMateriales (CU-64/CU-68); aquí
-  // solo se guarda su detalle junto al cierre para la trazabilidad y la vista.
+  // CU-69 · Registrando cierre de trabajo de reparación
   private async registrarCierreReparacion(
     manager: EntityManager,
     payload: any,
@@ -1604,7 +1593,7 @@ export class IntegracionesService {
     });
   }
 
-  // CU-69 (vista): cierres de reparación para la UI autenticada, aislados por empresa.
+  // CU-69 · Registrando cierre de trabajo de reparación
   async listarCierresReparacion(
     filtros: { numero_serie?: string; id_ot?: number },
     actor: { id_empresa: number; roles?: string[] },
@@ -1636,8 +1625,7 @@ export class IntegracionesService {
     return query.getMany();
   }
 
-  // CU-64 (D): SRV-YYYY-XXXXX con secuencia atómica por empresa/año. Un re-cierre
-  // de la misma OT conserva el SRV original.
+  // CU-64 · Ejecutando acciones atómicas del cierre de instalación
   private async obtenerSrv(
     manager: EntityManager,
     idEmpresa: number,
@@ -1692,6 +1680,7 @@ export class IntegracionesService {
     });
   }
 
+  // Apoyo de CU-64, CU-68, CU-69
   private enteroPositivo(valor: any): number | null {
     if (valor === undefined || valor === null || valor === '') return null;
     const numero = Number(valor);
@@ -1733,9 +1722,7 @@ export class IntegracionesService {
     return JSON.stringify(previas) === JSON.stringify([...datos.series].sort());
   }
 
-  // Crea las asignaciones activas del evento cuando ya están ambos eventos.
-  // Reemplazos (acuerdo v1): las asignaciones activas previas del mismo servicio
-  // pasan a activa=false + fecha_retiro; una unidad mantiene una sola asignación activa.
+  // Apoyo de CU-64, CU-68, CU-69
   private async completarAsignaciones(
     manager: EntityManager,
     cabecera: IntegracionActivacion,
@@ -1872,8 +1859,7 @@ export class IntegracionesService {
     return { asociados, discrepancias };
   }
 
-  // Ejecuta una escritura dentro de un SAVEPOINT: si falla por una FK (23503), se
-  // revierte solo esa escritura y la transacción del cierre sigue viva.
+  // Apoyo de CU-64, CU-68, CU-69
   private async conSavepoint(
     manager: EntityManager,
     accion: () => Promise<unknown>,
@@ -1890,9 +1876,7 @@ export class IntegracionesService {
     }
   }
 
-  // Correlación por id_ot: completa las activaciones que esperaban el cierre y,
-  // si el cierre declaró equipos instalados y no hay activación, deja el
-  // registro PENDIENTE_ACTIVACION (nunca se inventa estado físico).
+  // Apoyo de CU-64, CU-68, CU-69
   private async correlacionarActivacion(
     manager: EntityManager,
     cierre: IntegracionCierre,
@@ -1968,11 +1952,13 @@ export class IntegracionesService {
     );
   }
 
+  // Apoyo de CU-64, CU-68, CU-69
   private fechaDelCierre(cierre: IntegracionCierre): Date {
     const fecha = this.parsearFecha(cierre.payload?.fecha_completada);
     return fecha ?? new Date();
   }
 
+  // Apoyo de CU-64, CU-68, CU-69
   private parsearFecha(valor: any): Date | null {
     if (typeof valor !== 'string' || valor.trim() === '') return null;
     const fecha = new Date(valor);
@@ -2017,8 +2003,7 @@ export class IntegracionesService {
     };
   }
 
-  // CU-69: en un reenvío del mismo cierre la respuesta conserva el id del cierre
-  // de reparación ya registrado (no se vuelve a procesar nada).
+  // Apoyo de CU-64, CU-68, CU-69
   private async respuestaDuplicado(cierre: IntegracionCierre) {
     const reparacion = await this.reparacionRepository.findOne({
       where: { id_cierre: cierre.id_cierre },
@@ -2030,6 +2015,7 @@ export class IntegracionesService {
     );
   }
 
+  // Apoyo de CU-64, CU-68, CU-69
   private respuestaCierre(
     cierre: IntegracionCierre,
     duplicado: boolean,

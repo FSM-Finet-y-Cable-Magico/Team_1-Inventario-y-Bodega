@@ -22,20 +22,26 @@ function aIdOpcional(valor?: string): number | undefined {
   return Number.isInteger(n) && n > 0 ? n : undefined;
 }
 
-// CU-53: acepta solo fechas YYYY-MM-DD reales. Un texto cualquiera llegaría tal cual a la
-// comparación contra la columna DATE y Postgres abortaría la consulta (500).
 function aFechaOpcional(valor?: string): string | undefined {
   if (!valor || !/^\d{4}-\d{2}-\d{2}$/.test(valor)) return undefined;
   const d = new Date(`${valor}T00:00:00Z`);
   return Number.isNaN(d.getTime()) ? undefined : valor;
 }
 
+// ======================================================================
+// Órdenes de ingreso · OrdenesIngresoController (controlador)
+// CU-52 · Registrando orden de ingreso desde proveedor
+// CU-53 · Consultando órdenes de ingreso
+// CU-54 · Registrando recepción total o parcial de orden de ingreso
+// CU-55 · Ingresando números de serie en recepción de equipos
+// CU-56 · Registrando fecha de adquisición real en recepción
+// ======================================================================
 @Controller('ordenes-ingreso')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class OrdenesIngresoController {
   constructor(private readonly ordenesIngresoService: OrdenesIngresoService) {}
 
-  // CU-52: registrar orden de ingreso desde proveedor
+  // CU-52 · Registrando orden de ingreso desde proveedor
   @Post()
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   create(@Body() dto: CreateOrdenIngresoDto, @Req() req) {
@@ -47,7 +53,7 @@ export class OrdenesIngresoController {
     return this.ordenesIngresoService.create(dto, actor);
   }
 
-  // CU-52/CU-53: listar órdenes de ingreso con filtros
+  // CU-53 · Consultando órdenes de ingreso
   @Get()
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   findAll(
@@ -77,7 +83,7 @@ export class OrdenesIngresoController {
     });
   }
 
-  // CU-53: detalle de una orden de ingreso con sus ítems
+  // CU-53 · Consultando órdenes de ingreso
   @Get(':id')
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   findOne(@Param('id') id: string, @Req() req) {
@@ -88,7 +94,9 @@ export class OrdenesIngresoController {
     return this.ordenesIngresoService.findOne(Number(id), actor);
   }
 
-  // CU-54: registrar la recepción total o parcial de una orden de ingreso
+  // CU-54 · Registrando recepción total o parcial de orden de ingreso
+  // CU-55 · Ingresando números de serie en recepción de equipos
+  // CU-56 · Registrando fecha de adquisición real en recepción
   @Post(':id/recepcion')
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   registrarRecepcion(

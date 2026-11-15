@@ -19,6 +19,17 @@ import { UpdateBodegaDto } from './dto/update-bodega.dto';
 import { ConfigurarUmbralDto } from './dto/configurar-umbral.dto';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 
+// ======================================================================
+// Bodegas · BodegasService (servicio)
+// CU-16 · Consultando datos aislados por empresa
+// CU-41 · Creando bodega
+// CU-42 · Editando bodega
+// CU-43 · Desactivando bodega
+// CU-44 · Consultando listado de bodegas
+// CU-45 · Consultando stock de bodega
+// CU-46 · Configurando umbral de stock mínimo
+// Entidades: Bodega, StockConsumible, UnidadEquipo, TipoEquipo, Auditoria, Usuario
+// ======================================================================
 @Injectable()
 export class BodegasService {
   constructor(
@@ -37,6 +48,7 @@ export class BodegasService {
     private readonly auditoriaService: AuditoriaService,
   ) {}
 
+  // CU-41 · Creando bodega
   async create(dto: CreateBodegaDto, actorId: number): Promise<Bodega> {
     const existing = await this.bodegaRepository.findOne({
       where: { nombre: dto.nombre, id_empresa: dto.id_empresa },
@@ -64,9 +76,7 @@ export class BodegasService {
     return nuevaBodega;
   }
 
-  // CU-16/CU-18/CU-19 Excepción 1: el acceso a una bodega de otra empresa se
-  // rechaza con el mismo 404 que una bodega inexistente (no se revela si el
-  // registro existe) y el intento queda en el log de auditoría.
+  // CU-16 · Consultando datos aislados por empresa
   private async verificarPertenencia(
     bodega: Bodega,
     userEmpresaId: number,
@@ -93,6 +103,7 @@ export class BodegasService {
     throw new NotFoundException('Bodega no encontrada');
   }
 
+  // CU-42 · Editando bodega
   async update(
     id: number,
     dto: UpdateBodegaDto,
@@ -147,6 +158,7 @@ export class BodegasService {
     return bodegaActualizada;
   }
 
+  // CU-43 · Desactivando bodega
   async deactivate(
     id: number,
     actorId: number,
@@ -194,6 +206,7 @@ export class BodegasService {
     return bodegaActualizada;
   }
 
+  // CU-44 · Consultando listado de bodegas
   async findAll(
     filtros: { activa?: boolean; nombre?: string },
     userEmpresaId: number,
@@ -289,8 +302,7 @@ export class BodegasService {
     return result;
   }
 
-  // CU-20: bodegas activas de otra empresa, usadas como destino de una
-  // transferencia inter-empresa; expone solo id y nombre
+  // CU-44 · Consultando listado de bodegas
   async findActivasByEmpresa(
     idEmpresa: number,
   ): Promise<Pick<Bodega, 'id_bodega' | 'nombre'>[]> {
@@ -301,6 +313,7 @@ export class BodegasService {
     });
   }
 
+  // CU-44 · Consultando listado de bodegas
   async findOne(
     id: number,
     userEmpresaId: number,
@@ -322,6 +335,7 @@ export class BodegasService {
     return bodega;
   }
 
+  // CU-45 · Consultando stock de bodega
   async getStock(
     id: number,
     userEmpresaId: number,
@@ -423,8 +437,7 @@ export class BodegasService {
     return Object.values(stockPorTipo);
   }
 
-  // CU-46: el umbral aplica a cualquier combinación de tipo de equipo y bodega;
-  // para serializados el stock es el conteo de unidades 'En bodega'
+  // CU-46 · Configurando umbral de stock mínimo
   async configurarUmbral(
     id: number,
     dto: ConfigurarUmbralDto,

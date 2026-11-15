@@ -26,11 +26,21 @@ import { diskStorage } from 'multer';
 import { extname, resolve } from 'path';
 import { existsSync } from 'fs';
 
+// ======================================================================
+// Inventario · CatalogController (controlador)
+// CU-24 · Creando tipo de equipo en el catálogo
+// CU-25 · Consultando catálogo de tipos de equipo
+// CU-26 · Editando tipo de equipo existente
+// CU-27 · Desactivando tipo de equipo del catálogo
+// CU-29 · Adjuntando ficha técnica PDF a tipo de equipo
+// CU-30 · Descargando ficha técnica de tipo de equipo
+// ======================================================================
 @Controller('catalogo')
 @UseGuards(AuthGuard('jwt'), CompanyIsolationGuard, RolesGuard)
 export class CatalogController {
   constructor(private readonly catalogService: CatalogService) {}
 
+  // CU-24 · Creando tipo de equipo en el catálogo
   @Post()
   @Roles('ADMIN', 'SUPERUSUARIO')
   async crearTipoEquipo(@Body() body: any, @CurrentUser() actor: any) {
@@ -40,6 +50,7 @@ export class CatalogController {
     });
   }
 
+  // CU-25 · Consultando catálogo de tipos de equipo
   @Get()
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
   async buscarCatalogo(@Query() query: any, @CurrentUser() actor: any) {
@@ -51,13 +62,14 @@ export class CatalogController {
     });
   }
 
+  // CU-30 · Descargando ficha técnica de tipo de equipo
   @Get(':id/ficha-tecnica')
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
   async verFichaTecnica(@Param('id') id: string, @CurrentUser() actor: any) {
     return this.catalogService.obtenerFichaPdf(id, actor.id_empresa);
   }
 
-  // CU-30: descarga del archivo PDF de la ficha técnica
+  // CU-30 · Descargando ficha técnica de tipo de equipo
   @Get(':id/ficha-tecnica/archivo')
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
   async descargarFichaTecnica(
@@ -86,6 +98,7 @@ export class CatalogController {
     );
   }
 
+  // CU-26 · Editando tipo de equipo existente
   @Patch(':id')
   @Roles('ADMIN', 'SUPERUSUARIO')
   async editarTipoEquipo(
@@ -100,6 +113,7 @@ export class CatalogController {
     );
   }
 
+  // CU-27 · Desactivando tipo de equipo del catálogo
   @Delete(':id')
   @Roles('ADMIN', 'SUPERUSUARIO')
   async desactivarTipoEquipo(
@@ -109,7 +123,7 @@ export class CatalogController {
     return this.catalogService.desactivarTipo(id, actor.id_empresa);
   }
 
-  // CU-27 Excepción 1: la eliminación física solo procede sin unidades registradas
+  // CU-27 · Desactivando tipo de equipo del catálogo
   @Delete(':id/fisico')
   @Roles('ADMIN', 'SUPERUSUARIO')
   async eliminarTipoEquipoFisico(
@@ -123,6 +137,7 @@ export class CatalogController {
     );
   }
 
+  // CU-29 · Adjuntando ficha técnica PDF a tipo de equipo
   @Post(':id/ficha-tecnica')
   @Roles('ADMIN', 'SUPERUSUARIO')
   @UseInterceptors(

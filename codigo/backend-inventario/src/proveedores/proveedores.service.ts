@@ -16,6 +16,14 @@ import { OrdenIngreso } from '../ordenes-ingreso/entities/orden-ingreso.entity';
 // CU-98: estados de orden_ingreso que todavía esperan mercadería del proveedor.
 const ESTADOS_ORDEN_ABIERTA = ['Pendiente de recepción', 'Recepción parcial'];
 
+// ======================================================================
+// Proveedores · ProveedoresService (servicio)
+// CU-49 · Creando proveedor
+// CU-50 · Editando proveedor
+// CU-51 · Consultando listado de proveedores
+// CU-98 · Desactivando proveedor
+// Entidades: Proveedor, ProveedorTipoEquipo, TipoEquipo, OrdenIngreso
+// ======================================================================
 @Injectable()
 export class ProveedoresService {
   constructor(
@@ -30,8 +38,7 @@ export class ProveedoresService {
     private readonly ordenIngresoRepository: Repository<OrdenIngreso>,
   ) {}
 
-  // CU-49: calcula el dígito verificador del RUT chileno (módulo 11)
-  // Reutilizable para CU-75, CU-78, CU-80, CU-81
+  // Apoyo de CU-49, CU-50
   calcularDV(rutNumero: number): string {
     let suma = 0;
     let multiplo = 2;
@@ -47,7 +54,7 @@ export class ProveedoresService {
     return String(resultado);
   }
 
-  // CU-49: valida que el dígito verificador del RUT sea correcto
+  // Apoyo de CU-49, CU-50
   validarRut(rut: string): boolean {
     const partes = rut.split('-');
     if (partes.length !== 2) return false;
@@ -57,7 +64,7 @@ export class ProveedoresService {
     return this.calcularDV(num).toLowerCase() === dv.toLowerCase();
   }
 
-  // CU-49: crear proveedor
+  // CU-49 · Creando proveedor
   async create(dto: CreateProveedorDto, actorId: number): Promise<Proveedor> {
     // CU-49 Excepción 1: validar DV del RUT
     if (!this.validarRut(dto.rut)) {
@@ -112,7 +119,7 @@ export class ProveedoresService {
     return this.findOneConTipos(nuevo.id_proveedor);
   }
 
-  // CU-50: editar proveedor
+  // CU-50 · Editando proveedor
   async update(
     id: number,
     dto: Partial<CreateProveedorDto>,
@@ -197,8 +204,7 @@ export class ProveedoresService {
     return actualizado;
   }
 
-  //CU-98: desactivar proveedor. Deja de ofrecerse en órdenes de ingreso nuevas,
-  // pero su historial (órdenes y unidades recibidas) se conserva.
+  // CU-98 · Desactivando proveedor
   async desactivar(id: number, actorId: number): Promise<any> {
     const proveedor = await this.proveedorRepository.findOne({
       where: { id_proveedor: id },
@@ -222,7 +228,7 @@ export class ProveedoresService {
     return this.cambiarEstado(proveedor, false, actorId);
   }
 
-  //CU-98: reactivar un proveedor desactivado
+  // CU-98 · Desactivando proveedor
   async reactivar(id: number, actorId: number): Promise<any> {
     const proveedor = await this.proveedorRepository.findOne({
       where: { id_proveedor: id },
@@ -236,6 +242,7 @@ export class ProveedoresService {
     return this.cambiarEstado(proveedor, true, actorId);
   }
 
+  // Apoyo de CU-98
   private async cambiarEstado(
     proveedor: Proveedor,
     activa: boolean,
@@ -254,7 +261,7 @@ export class ProveedoresService {
     return this.findOneConTipos(proveedor.id_proveedor);
   }
 
-  //CU-51
+  // CU-51 · Consultando listado de proveedores
   async findAll(filtros?: {
     buscar?: string;
     activa?: boolean;
@@ -279,6 +286,7 @@ export class ProveedoresService {
     );
   }
 
+  // Apoyo de CU-49, CU-50, CU-51, CU-98
   private async findOneConTipos(id: number): Promise<any> {
     const proveedor = await this.proveedorRepository.findOne({
       where: { id_proveedor: id },

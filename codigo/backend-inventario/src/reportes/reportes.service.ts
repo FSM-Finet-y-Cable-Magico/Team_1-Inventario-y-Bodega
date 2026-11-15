@@ -153,6 +153,18 @@ const ESTADOS_REPORTE = [
   'En préstamo externo',
 ];
 
+// ======================================================================
+// Reportes · ReportesService (servicio)
+// CU-85 · Generando reporte de stock actual
+// CU-86 · Generando reporte de movimientos de inventario
+// CU-87 · Generando reporte de equipos instalados por cliente
+// CU-88 · Generando reporte de garantías
+// CU-89 · Generando reporte de inventario actual de técnicos
+// CU-90 · Generando reporte de productividad de técnicos
+// CU-91 · Generando reporte de consumo de consumibles
+// CU-92 · Exportando reporte a Excel
+// Entidades: Bodega, StockConsumible, TipoEquipo, UnidadEquipo, HistorialEstado, Usuario, InventarioPersonal, SalidaBodega, SalidaDetalle, OrdenIngreso, OrdenIngresoDetalle, PrestamoDetalle, PrestamoExterno, PrestamoRetorno, MovimientoInventario
+// ======================================================================
 @Injectable()
 export class ReportesService {
   constructor(
@@ -174,7 +186,7 @@ export class ReportesService {
     private readonly excelExportService: ExcelExportService,
   ) {}
 
-  //CU-89
+  // CU-89 · Generando reporte de inventario actual de técnicos
   async getInventarioTecnicosReport(
     filtros: FiltrosInventarioTecnicos,
     actor: Actor,
@@ -374,7 +386,7 @@ export class ReportesService {
     return resultado;
   }
 
-  //CU-91
+  // CU-91 · Generando reporte de consumo de consumibles
   async getConsumoReport(
     filtros: FiltrosConsumo,
     actor: Actor,
@@ -537,7 +549,7 @@ export class ReportesService {
     return filas;
   }
 
-  //CU-85
+  // CU-85 · Generando reporte de stock actual
   async getStockReport(filtros: FiltrosStock, actor: Actor): Promise<any[]> {
     const esSuperusuario = actor.roles?.includes('SUPERUSUARIO') ?? false;
 
@@ -678,7 +690,7 @@ export class ReportesService {
     return resultado;
   }
 
-  //CU-86
+  // CU-86 · Generando reporte de movimientos de inventario
   async getMovementsReport(
     filtros: FiltrosMovimientos,
     actor: Actor,
@@ -775,7 +787,7 @@ export class ReportesService {
     return resultado;
   }
 
-  //CU-88
+  // CU-88 · Generando reporte de garantías
   async getGarantiasReport(
     filtros: FiltrosGarantias,
     actor: Actor,
@@ -914,6 +926,7 @@ export class ReportesService {
     return resultado;
   }
 
+  // Apoyo de CU-88
   private normalizePeriodo(
     periodo?: string,
   ): 'VENCIDAS' | '30' | '60' | '90' | 'TODAS' {
@@ -932,6 +945,7 @@ export class ReportesService {
     );
   }
 
+  // Apoyo de CU-86, CU-91
   private validateDateRange(fechaDesde?: string, fechaHasta?: string) {
     if (!fechaDesde && !fechaHasta) return;
     if (
@@ -960,12 +974,14 @@ export class ReportesService {
     }
   }
 
+  // Apoyo de CU-86, CU-88, CU-89, CU-90
   private nombreEmpresa(idEmpresa: number | null): string | null {
     if (idEmpresa === 1) return 'Finet';
     if (idEmpresa === 2) return 'Cable Mágico';
     return null;
   }
 
+  // Apoyo de CU-86
   private referenciaTipo(tipoMovimiento: string): string {
     if (tipoMovimiento.startsWith('TRANSFERENCIA')) return 'transferencia';
     if (tipoMovimiento.startsWith('INGRESO')) return 'orden_ingreso';
@@ -974,8 +990,7 @@ export class ReportesService {
     return 'documento';
   }
 
-  // CU-87: equipos 'Instalado en cliente' filtrados por RUT, nombre o NS,
-  // enriquecidos con el cliente de G3 y el cierre de instalación (CU-64).
+  // CU-87 · Generando reporte de equipos instalados por cliente
   async getEquiposInstaladosReport(
     filtros: FiltrosEquiposInstalados,
     actor: Actor,
@@ -1293,8 +1308,7 @@ export class ReportesService {
     return filas;
   }
 
-  // CU-90: productividad por técnico (instalaciones/reparaciones cerradas y
-  // consumibles usados) a partir de los cierres de OT locales y de G3.
+  // CU-90 · Generando reporte de productividad de técnicos
   async getTecnicosProductividadReport(
     filtros: FiltrosProductividadTecnicos,
     actor: Actor,
@@ -1589,6 +1603,7 @@ export class ReportesService {
     return filas;
   }
 
+  // Apoyo de CU-85, CU-86, CU-87, CU-88, CU-89, CU-90, CU-91
   private async auditReport(
     actor: Actor,
     filtros:
@@ -1614,7 +1629,7 @@ export class ReportesService {
     });
   }
 
-  // CU-92: exportación a Excel con límite de 15 segundos (Excepción 1).
+  // CU-92 · Exportando reporte a Excel
   async exportarReporteExcel(
     query: {
       tipo: string;
@@ -1657,8 +1672,7 @@ export class ReportesService {
     }
   }
 
-  // CU-92: según el tipo, reutiliza el reporte visible (CU-85..CU-91), define
-  // hoja ReporteYYYYMMDD y columnas, genera el .xlsx y audita la exportación.
+  // CU-92 · Exportando reporte a Excel
   private async procesarExportacionExcel(
     query: {
       tipo: string;
@@ -2103,6 +2117,7 @@ export class ReportesService {
     return { buffer, filename, sheetName };
   }
 
+  // Apoyo de CU-92
   private getFechaYYYYMMDD(): string {
     const now = new Date();
     const year = now.getFullYear();
@@ -2111,6 +2126,7 @@ export class ReportesService {
     return `${year}${month}${day}`;
   }
 
+  // Apoyo de CU-92
   private formatDateDDMMYYYYHHmm(
     dateInput: Date | string | null | undefined,
   ): string {

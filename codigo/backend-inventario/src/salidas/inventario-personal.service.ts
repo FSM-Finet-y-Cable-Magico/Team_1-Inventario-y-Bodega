@@ -12,14 +12,15 @@ import { TipoEquipo } from '../inventario/entities/tipo-equipo.entity';
 import { Usuario } from '../usuarios/entities/usuario.entity';
 import { EMPRESAS } from '../companies/companies.service';
 
-// CU-58: mantenimiento del inventario personal del técnico.
-// El saldo NUNCA puede quedar negativo (Excepción 1 con mensaje exacto).
-// `sumar` y `descontar` reciben el EntityManager de la transacción que los
-// invoca (salidas hoy; cierres CU-64/68 y devoluciones CU-82 mañana) y usan
-// bloqueo de fila para no dejar saldos negativos ante operaciones simultáneas.
 export const SALDO_INSUFICIENTE =
   'Saldo insuficiente. No es posible registrar esta operación.';
 
+// ======================================================================
+// Salidas a técnico · InventarioPersonalService (servicio)
+// CU-58 · Manteniendo inventario personal del técnico
+// CU-68 · Verificando saldo de consumibles en cierre
+// Entidades: InventarioPersonal, UnidadEquipo, TipoEquipo, Usuario
+// ======================================================================
 @Injectable()
 export class InventarioPersonalService {
   constructor(
@@ -28,7 +29,7 @@ export class InventarioPersonalService {
     private readonly dataSource: DataSource,
   ) {}
 
-  // CU-58: upsert atómico dentro de la transacción del llamador.
+  // CU-58 · Manteniendo inventario personal del técnico
   async sumar(
     manager: EntityManager,
     idTecnico: number,
@@ -51,9 +52,7 @@ export class InventarioPersonalService {
     }
   }
 
-  // CU-58: descuento con bloqueo de fila. Lanza la Excepción 1 si el saldo
-  // resultaría negativo. Hoy lo usa la devolución a bodega (CU-82) y el
-  // descuento por uso en cierres (CU-64/68) cuando se implementen.
+  // CU-58 · Manteniendo inventario personal del técnico
   async descontar(
     manager: EntityManager,
     idTecnico: number,
@@ -71,7 +70,7 @@ export class InventarioPersonalService {
     await manager.save(row);
   }
 
-  // CU-68 (pre-check, sin bloqueo): saldo disponible del técnico para un tipo.
+  // CU-68 · Verificando saldo de consumibles en cierre
   async saldoDisponible(
     manager: EntityManager,
     idTecnico: number,
@@ -83,8 +82,7 @@ export class InventarioPersonalService {
     return row ? Number(row.cantidad) : 0;
   }
 
-  // CU-64 (C)/CU-68 (webhook): descuento que NUNCA rechaza. Con bloqueo de fila
-  // descuenta hasta el saldo disponible y devuelve el faltante como ajuste.
+  // CU-68 · Verificando saldo de consumibles en cierre
   async descontarHasta(
     manager: EntityManager,
     idTecnico: number,
@@ -105,8 +103,7 @@ export class InventarioPersonalService {
     return { saldoAnterior, descontado, faltante: Number(faltante.toFixed(2)) };
   }
 
-  // CU-68: compara el saldo con lo declarado y devuelve los insuficientes con el
-  // mensaje exacto de la Excepción 1 (sirve de pre-check antes de confirmar).
+  // CU-68 · Verificando saldo de consumibles en cierre
   async detectarInsuficientes(
     manager: EntityManager,
     idTecnico: number,
@@ -154,9 +151,7 @@ export class InventarioPersonalService {
     return insuficientes;
   }
 
-  // CU-68: validación bloqueante para el flujo humano de confirmación del cierre
-  // (mensaje exacto de la Excepción 1). El webhook de G3 no la usa: ahí el saldo
-  // insuficiente se registra como ajuste/discrepancia, nunca rechazo.
+  // CU-68 · Verificando saldo de consumibles en cierre
   async validarSaldo(
     manager: EntityManager,
     idTecnico: number,
@@ -174,7 +169,7 @@ export class InventarioPersonalService {
     }
   }
 
-  // CU-58: consulta del inventario de un técnico (NS asignados + saldos de consumibles).
+  // CU-58 · Manteniendo inventario personal del técnico
   async consultar(idTecnico: number, idEmpresaContexto: number, actor: any) {
     const tecnico = await this.dataSource.getRepository(Usuario).findOne({
       where: { id_usuario: idTecnico },

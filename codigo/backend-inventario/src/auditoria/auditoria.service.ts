@@ -34,6 +34,12 @@ function descripcionEvento(log: Auditoria): string {
   return `${verbo} ${objeto}`.trim().slice(0, 200);
 }
 
+// ======================================================================
+// Auditoría · AuditoriaService (servicio)
+// CU-08 · Registrando eventos en el log de auditoría
+// CU-09 · Consultando el log de auditoría
+// Entidades: Auditoria, Usuario
+// ======================================================================
 @Injectable()
 export class AuditoriaService {
   constructor(
@@ -43,6 +49,7 @@ export class AuditoriaService {
     private usuarioRepository: Repository<Usuario>,
   ) {}
 
+  // CU-08 · Registrando eventos en el log de auditoría
   async create(createAuditoriaDto: CreateAuditoriaDto) {
     const MAX_REINTENTOS = 3;
     let ultimo_error: unknown;
@@ -57,6 +64,7 @@ export class AuditoriaService {
     throw ultimo_error;
   }
 
+  // CU-09 · Consultando el log de auditoría
   async findAll(filtros?: FiltrarAuditoriaDto) {
     const where: FindOptionsWhere<Auditoria> = {};
     if (filtros?.id_usuario) where.id_usuario = filtros.id_usuario;

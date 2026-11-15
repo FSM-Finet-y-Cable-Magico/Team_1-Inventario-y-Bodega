@@ -31,6 +31,12 @@ export interface AlertaStockMinimo {
   id_tipo_equipo: number;
 }
 
+// ======================================================================
+// Empresas · CompaniesService (servicio)
+// CU-15 · Consultando dashboard consolidado de ambas empresas
+// CU-16 · Consultando datos aislados por empresa
+// Entidades: UnidadEquipo, Bodega, StockConsumible, Transferencia, MovimientoInventario, SolicitudBaja
+// ======================================================================
 @Injectable()
 export class CompaniesService {
   constructor(
@@ -48,11 +54,12 @@ export class CompaniesService {
     private readonly solicitudBajaRepository: Repository<SolicitudBaja>,
   ) {}
 
-  // CU-06: listado de empresas para el selector de edición de usuarios
+  // CU-16 · Consultando datos aislados por empresa
   findAll() {
     return EMPRESAS;
   }
 
+  // CU-15 · Consultando dashboard consolidado de ambas empresas
   async getDashboard(): Promise<any> {
     const resultado: any[] = [];
 
@@ -65,7 +72,7 @@ export class CompaniesService {
     return { dashboard_consolidado: resultado };
   }
 
-  // Dashboard de la propia empresa del actor (cualquier rol autenticado)
+  // CU-16 · Consultando datos aislados por empresa
   async getMiDashboard(actor: {
     id_empresa: number;
     roles?: string[];
@@ -91,11 +98,7 @@ export class CompaniesService {
     };
   }
 
-  // CU-20: transferencias que quedaron en estado pendiente al registrarse y
-  // todavía esperan la decisión del Superusuario. Se exponen en la campana de
-  // notificaciones igual que las alertas de stock (CU-46). Aislamiento por rol:
-  // el Superusuario ve todas las pendientes (es quien aprueba/rechaza); un Admin
-  // solo las de su empresa (origen o destino).
+  // Apoyo de CU-16
   private async getTransferenciasPendientes(actor: {
     id_empresa: number;
     roles?: string[];
@@ -147,9 +150,7 @@ export class CompaniesService {
       );
   }
 
-  // CU-78: solicitudes de baja generadas por técnicos que esperan aprobación.
-  // Solo se notifican a quienes pueden resolverlas (Administrador/Superusuario);
-  // el Superusuario ve las de ambas empresas y el Administrador solo las suyas.
+  // Apoyo de CU-16
   private async getBajasPendientes(actor: {
     id_empresa: number;
     roles?: string[];
@@ -183,6 +184,7 @@ export class CompaniesService {
     }));
   }
 
+  // Apoyo de CU-15, CU-16
   private async getEstadisticasEmpresa(
     id: number,
     nombre: string,
@@ -224,10 +226,7 @@ export class CompaniesService {
     };
   }
 
-  // CU-46: alertas de stock bajo el umbral mínimo configurado.
-  // Para consumibles el stock es la cantidad disponible; para tipos
-  // serializados es el conteo de unidades en estado 'En bodega'.
-  // CU-94: es pública para que las alertas del dashboard usen la misma regla.
+  // Apoyo de CU-15, CU-16
   async getAlertasStockMinimo(id: number): Promise<AlertaStockMinimo[]> {
     const umbralesConfigurados = await this.stockRepository
       .createQueryBuilder('s')

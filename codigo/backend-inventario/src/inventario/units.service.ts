@@ -39,9 +39,6 @@ const ESTADOS_VISUALES_DEVOLUCION = [
   'Incompleto',
 ];
 
-// CU-35: máquina de estados de las unidades. Se exporta para que los módulos que
-// hacen su propia transacción (CU-81 préstamos) validen con la misma tabla en vez
-// de duplicarla. Los literales llevan tilde y deben coincidir exacto con el front.
 export const TRANSICIONES_PERMITIDAS: Record<string, string[]> = {
   'En bodega': ['Asignado a técnico', 'En préstamo externo', 'Dado de baja'],
   'Asignado a técnico': ['Instalado en cliente', 'En bodega', 'En revisión'],
@@ -53,6 +50,26 @@ export const TRANSICIONES_PERMITIDAS: Record<string, string[]> = {
   'Dado de baja': [],
 };
 
+// ======================================================================
+// Inventario · UnitsService (servicio)
+// CU-31 · Distinguiendo equipo individualizable de consumible
+// CU-32 · Registrando unidad de equipo individualizable
+// CU-33 · Consultando ficha de detalle de unidad de equipo
+// CU-34 · Editando datos de unidad de equipo
+// CU-35 · Gestionando transiciones de estado de equipo
+// CU-36 · Registrando automáticamente cambio de estado de equipo
+// CU-37 · Consultando historial completo de estados de equipo
+// CU-48 · Consultando ubicación externa de equipo fuera de bodega
+// CU-59 · Validando número de serie en salida de bodega
+// CU-71 · Registrando devolución de equipo desde cliente
+// CU-72 · Registrando resultado de revisión de equipo
+// CU-73 · Mostrando información de equipo en devolución
+// CU-74 · Reacondicionando equipo operativo desde revisión a bodega
+// CU-75 · Enviando equipo a reparación externa
+// CU-76 · Reingresando equipo desde reparación externa
+// CU-77 · Consultando listado de equipos en revisión
+// Entidades: UnidadEquipo, TipoEquipo, Bodega, StockConsumible, Usuario, HistorialEstado, PrestamoExterno, AsignacionEquipoServicio, IntegracionCierre
+// ======================================================================
 @Injectable()
 export class UnitsService {
   private readonly logger = new Logger(UnitsService.name);
@@ -69,6 +86,7 @@ export class UnitsService {
     private readonly g3Client: G3ClientService,
   ) {}
 
+  // CU-33 · Consultando ficha de detalle de unidad de equipo
   async listarUnidades(
     filtros: { estado?: string; buscar?: string },
     idEmpresaContexto: number,
@@ -186,8 +204,7 @@ export class UnitsService {
     );
   }
 
-  // CU-77: listado de equipos "En revisión" con fecha de ingreso, días
-  // transcurridos y diagnóstico. Solo consulta, no audita.
+  // CU-77 · Consultando listado de equipos en revisión
   async listarEnRevision(actor: any) {
     const esSuperusuario = actor.roles?.includes('SUPERUSUARIO');
 
@@ -265,6 +282,7 @@ export class UnitsService {
     });
   }
 
+  // CU-32 · Registrando unidad de equipo individualizable
   async registrarUnidad(
     dto: {
       id_tipo_equipo: number;
@@ -387,7 +405,7 @@ export class UnitsService {
     };
   }
 
-  // CU-28/CU-31: los consumibles (NS=No) se ingresan por cantidad y unidad de medida
+  // CU-31 · Distinguiendo equipo individualizable de consumible
   async ingresarConsumible(
     dto: { id_tipo_equipo: number; id_bodega: number; cantidad: number },
     idEmpresaContexto: number,
@@ -456,8 +474,7 @@ export class UnitsService {
     };
   }
 
-  // CU-28/CU-31: edición del stock de un consumible desde el listado de unidades.
-  // Permite ajustar cantidad disponible y umbral mínimo.
+  // CU-31 · Distinguiendo equipo individualizable de consumible
   async editarConsumible(
     idStock: number,
     dto: { cantidad_disponible?: number; umbral_minimo?: number },
@@ -528,6 +545,8 @@ export class UnitsService {
     };
   }
 
+  // CU-35 · Gestionando transiciones de estado de equipo
+  // CU-36 · Registrando automáticamente cambio de estado de equipo
   async transicionarEstado(
     unitId: number,
     nuevoEstado: string,
@@ -783,8 +802,7 @@ export class UnitsService {
     }
   }
 
-  // CU-72/CU-74: valida la bodega de destino (activa, de la empresa) y el
-  // formato de la ubicación física opcional (≤60) para el resultado "Operativo".
+  // Apoyo de CU-71, CU-72, CU-74
   private async validarDestinoOperativo(
     idBodegaDestino: number | undefined,
     ubicacionFisicaInput: string | undefined,
@@ -813,8 +831,7 @@ export class UnitsService {
     return { bodega, ubicacionFisica };
   }
 
-  // CU-75: RUT opcional; si viene, valida formato (XXXXXXXX-X) y DV
-  // reutilizando ProveedoresService (CU-49), sin duplicar el algoritmo.
+  // Apoyo de CU-72, CU-75
   private validarRutOpcional(rut: string | undefined): string | null {
     if (!rut || !rut.trim()) return null;
     const rutNormalizado = rut.trim().toUpperCase();
@@ -829,8 +846,7 @@ export class UnitsService {
     return rutNormalizado;
   }
 
-  // CU-72/CU-75: valida los datos comunes del envío a reparación externa
-  // (nombre receptor, RUT opcional con DV, fecha de retorno, descripción de falla).
+  // Apoyo de CU-72, CU-75
   private validarDatosReparacionExterna(
     dto: {
       nombre_receptor?: string;
@@ -876,8 +892,7 @@ export class UnitsService {
     return { nombreReceptor, rutReceptor, fechaRetorno, descripcionFalla };
   }
 
-  // CU-74: reacondicionamiento directo de un equipo "En revisión" a "En bodega"
-  // (atajo del resultado "Operativo" de CU-72, con observación propia opcional).
+  // CU-74 · Reacondicionando equipo operativo desde revisión a bodega
   async reacondicionarEquipo(
     idUnidad: number,
     dto: {
@@ -984,8 +999,7 @@ export class UnitsService {
     };
   }
 
-  // CU-75: envío directo de un equipo "En revisión" a reparación externa
-  // (atajo del resultado "Requiere reparación externa" de CU-72).
+  // CU-75 · Enviando equipo a reparación externa
   async enviarAReparacionExterna(
     idUnidad: number,
     dto: {
@@ -1079,8 +1093,7 @@ export class UnitsService {
     };
   }
 
-  // CU-76: registrar el retorno de un equipo desde reparación externa.
-  // El equipo pasa a "En revisión" siempre (reparado o no), el préstamo se cierra.
+  // CU-76 · Reingresando equipo desde reparación externa
   async registrarRetornoReparacion(
     idUnidad: number,
     dto: {
@@ -1206,7 +1219,7 @@ export class UnitsService {
     };
   }
 
-  //CU-72
+  // CU-72 · Registrando resultado de revisión de equipo
   async registrarResultadoRevision(
     unitId: number,
     dto: {
@@ -1356,9 +1369,7 @@ export class UnitsService {
     };
   }
 
-  // CU-59: validación en vivo del NS para el formulario de salida de bodega.
-  // No lanza excepción: devuelve existe/estado/disponible para que el front
-  // marque el NS inválido y deshabilite Confirmar.
+  // CU-59 · Validando número de serie en salida de bodega
   async verificarSerie(
     numeroSerie: string,
     idEmpresaContexto: number,
@@ -1389,10 +1400,7 @@ export class UnitsService {
     };
   }
 
-  // CU-71: cliente y dirección de instalación del equipo, tomados del último
-  // cierre de OT de G3 persistido (integracion_cierre) que instaló esa serie
-  // (solo cierres donde la instalación se aplicó, no los que quedaron como discrepancia).
-  // Si no hay registro, se devuelven null y el front muestra lo disponible.
+  // Apoyo de CU-71, CU-73
   private async buscarClienteInstalacion(
     numeroSerie: string,
     idEmpresa: number,
@@ -1435,9 +1443,7 @@ export class UnitsService {
     };
   }
 
-  // CU-71: el actor ingresa el NS; se valida que esté 'Instalado en cliente'
-  // (Excepción 1) y se muestran NS, tipo, marca, modelo, cliente y dirección.
-  // CU-73: la misma respuesta agrega la información del equipo en devolución.
+  // CU-73 · Mostrando información de equipo en devolución
   async consultarParaDevolucion(numeroSerie: string, actor: any) {
     const serie = (numeroSerie ?? '').trim();
     if (serie === '') {
@@ -1509,7 +1515,7 @@ export class UnitsService {
     };
   }
 
-  // CU-73: fecha (columna date o Date) → 'DD/MM/YYYY'; null si no está registrada
+  // Apoyo de CU-73
   private formatearFechaDDMMYYYY(
     fecha: Date | string | null | undefined,
   ): string | null {
@@ -1522,8 +1528,7 @@ export class UnitsService {
     return anio && mes && dia ? `${dia}/${mes}/${anio}` : null;
   }
 
-  // CU-71: registra la devolución de un equipo 'Instalado en cliente'; queda
-  // 'En revisión' en la bodega indicada, con historial y auditoría.
+  // CU-71 · Registrando devolución de equipo desde cliente
   async registrarDevolucion(
     idUnidad: number,
     dto: {
@@ -1676,8 +1681,7 @@ export class UnitsService {
     };
   }
 
-  // CU-33: ficha de la unidad (CU-38 garantía, CU-48 ubicación externa,
-  // CU-64 cliente/SRV del cierre de instalación).
+  // CU-33 · Consultando ficha de detalle de unidad de equipo
   async verFichaDetalle(idUnidad: number, idEmpresaContexto: number) {
     if (!idUnidad || isNaN(idUnidad)) {
       throw new BadRequestException(
@@ -1803,10 +1807,7 @@ export class UnitsService {
     };
   }
 
-  // Cliente de la BDD global (tabla cliente de G8) para una unidad instalada.
-  // Orden: id_cliente_instalado, luego la asignación activa (id_cliente_externo,
-  // rut_cliente o la OT), y por último el RUT conocido. Lee la fila como JSON para
-  // tolerar columnas distintas; si la tabla no existe o no hay permiso, null.
+  // Apoyo de CU-48
   async buscarClienteGlobal(
     unidad: UnidadEquipo,
     rutConocido: string | null,
@@ -1863,8 +1864,7 @@ export class UnitsService {
     }
   }
 
-  // CU-48: resuelve la ubicación externa de una unidad fuera de bodega según su
-  // estado. Nunca falla: los campos sin dato quedan en `campos_faltantes` (E1).
+  // CU-48 · Consultando ubicación externa de equipo fuera de bodega
   async resolverUbicacionExterna(unidad: UnidadEquipo): Promise<{
     tipo: 'TECNICO' | 'CLIENTE' | 'PRESTAMO_EXTERNO';
     datos: Record<string, any>;
@@ -1976,6 +1976,7 @@ export class UnitsService {
     return null;
   }
 
+  // CU-34 · Editando datos de unidad de equipo
   async editarDatos(idUnidad: number, dto: EditarDatosUnidadDto, actor: any) {
     if (!idUnidad || isNaN(idUnidad)) {
       throw new BadRequestException('El ID de la unidad es inválido.');
@@ -2017,6 +2018,7 @@ export class UnitsService {
     };
   }
 
+  // CU-37 · Consultando historial completo de estados de equipo
   async verHistorialEstados(serialNumber: string, idEmpresaContexto: number) {
     if (!serialNumber || serialNumber.trim() === '') {
       throw new BadRequestException(

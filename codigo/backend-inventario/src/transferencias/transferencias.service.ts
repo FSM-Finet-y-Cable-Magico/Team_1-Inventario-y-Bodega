@@ -18,14 +18,20 @@ import { EMPRESAS } from '../companies/companies.service';
 const ESTADO_PENDIENTE = 'TRANSFERENCIA_PENDIENTE';
 const ESTADO_APROBADA = 'TRANSFERENCIA_APROBADA';
 const ESTADO_RECHAZADA = 'TRANSFERENCIA_RECHAZADA';
-// CU-23: el estado de una transferencia sale solo de sus movimientos TRANSFERENCIA_*;
-// referencia_id también la usan órdenes, salidas y préstamos con su propio número.
 const TIPOS_TRANSFERENCIA = [
   ESTADO_PENDIENTE,
   ESTADO_APROBADA,
   ESTADO_RECHAZADA,
 ];
 
+// ======================================================================
+// Transferencias · TransferenciasService (servicio)
+// CU-20 · Registrando solicitud de transferencia inter-empresa
+// CU-21 · Aprobando transferencia inter-empresa
+// CU-22 · Rechazando transferencia inter-empresa
+// CU-23 · Consultando transferencias inter-empresa
+// Entidades: Transferencia, MovimientoInventario, UnidadEquipo, Bodega, Usuario
+// ======================================================================
 @Injectable()
 export class TransferenciasService {
   constructor(
@@ -39,6 +45,7 @@ export class TransferenciasService {
     private readonly dataSource: DataSource,
   ) {}
 
+  // CU-20 · Registrando solicitud de transferencia inter-empresa
   async registrarTransferencia(
     dto: CreateTransferenciaDto,
     actor: any,
@@ -142,6 +149,7 @@ export class TransferenciasService {
     }
   }
 
+  // CU-21 · Aprobando transferencia inter-empresa
   async aprobarTransferencia(
     idTransferencia: number,
     actor: any,
@@ -223,6 +231,7 @@ export class TransferenciasService {
     }
   }
 
+  // CU-22 · Rechazando transferencia inter-empresa
   async rechazarTransferencia(
     idTransferencia: number,
     observaciones: string,
@@ -278,7 +287,7 @@ export class TransferenciasService {
     };
   }
 
-  // CU-21: detalle completo de una transferencia seleccionada
+  // CU-21 · Aprobando transferencia inter-empresa
   async consultarDetalle(idTransferencia: number, actor: any): Promise<any> {
     const t = await this.transferenciaRepository.findOne({
       where: { id_transferencia: idTransferencia },
@@ -363,7 +372,7 @@ export class TransferenciasService {
     };
   }
 
-  // CU-23: listado con filtros por estado, rango de fechas o empresa
+  // CU-23 · Consultando transferencias inter-empresa
   async consultarTransferencias(
     filtros: {
       estado?: string;

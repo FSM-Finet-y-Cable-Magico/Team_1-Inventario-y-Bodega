@@ -21,18 +21,24 @@ import { RegistrarConteoDto } from './dto/registrar-conteo.dto';
 import type { ActorToma } from './tomas-inventario.service';
 import { TomasInventarioService } from './tomas-inventario.service';
 
-// CU-97: toma de inventario físico. El aislamiento por empresa está en el service.
+// ======================================================================
+// Toma de inventario · TomasInventarioController (controlador)
+// CU-97 · Registrando toma de inventario físico y ajuste de diferencias
+// CU-99 · Generando acta de toma de inventario en PDF
+// ======================================================================
 @Controller('tomas-inventario')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class TomasInventarioController {
   constructor(private readonly service: TomasInventarioService) {}
 
+  // CU-97 · Registrando toma de inventario físico y ajuste de diferencias
   @Post()
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
   abrir(@Body() dto: AbrirTomaDto, @CurrentUser() actor: ActorToma) {
     return this.service.abrir(dto.id_bodega, actor);
   }
 
+  // CU-97 · Registrando toma de inventario físico y ajuste de diferencias
   @Get()
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
   listar(
@@ -42,6 +48,7 @@ export class TomasInventarioController {
     return this.service.listar(actor, idBodega ? Number(idBodega) : undefined);
   }
 
+  // CU-97 · Registrando toma de inventario físico y ajuste de diferencias
   @Get(':id')
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
   obtener(
@@ -51,6 +58,7 @@ export class TomasInventarioController {
     return this.service.obtener(id, actor);
   }
 
+  // CU-97 · Registrando toma de inventario físico y ajuste de diferencias
   @Patch(':id/conteo')
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
   registrarConteo(
@@ -61,6 +69,7 @@ export class TomasInventarioController {
     return this.service.registrarConteo(id, dto, actor);
   }
 
+  // CU-97 · Registrando toma de inventario físico y ajuste de diferencias
   @Post(':id/confirmar')
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
   confirmar(
@@ -71,6 +80,7 @@ export class TomasInventarioController {
     return this.service.confirmar(id, dto.forzar_movimientos === true, actor);
   }
 
+  // CU-97 · Registrando toma de inventario físico y ajuste de diferencias
   @Post(':id/cancelar')
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
   cancelar(
@@ -80,7 +90,7 @@ export class TomasInventarioController {
     return this.service.cancelar(id, actor);
   }
 
-  // CU-99: acta PDF de una toma confirmada
+  // CU-99 · Generando acta de toma de inventario en PDF
   @Get(':id/acta')
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
   async acta(

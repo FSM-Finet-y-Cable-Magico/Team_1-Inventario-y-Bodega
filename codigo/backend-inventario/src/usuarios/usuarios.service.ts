@@ -17,6 +17,14 @@ import * as bcrypt from 'bcrypt';
 import { AuditoriaService } from 'src/auditoria/auditoria.service';
 import { EMPRESAS } from 'src/companies/companies.service';
 
+// ======================================================================
+// Usuarios · UsuariosService (servicio)
+// CU-04 · Creando cuenta de usuario
+// CU-05 · Consultando listado de usuarios
+// CU-06 · Editando cuenta de usuario
+// CU-07 · Desactivando cuenta de usuario
+// Entidades: Usuario, UsuarioRol, Rol
+// ======================================================================
 @Injectable()
 export class UsuariosService {
   constructor(
@@ -29,8 +37,7 @@ export class UsuariosService {
     private readonly auditoriaService: AuditoriaService,
   ) {}
 
-  // CU-05: listado con filtros por rol, estado y nombre (completo o de usuario)
-  // El Superusuario ve usuarios de todas las empresas; el resto solo los de su empresa.
+  // CU-05 · Consultando listado de usuarios
   async findAll(
     filtros: { rol?: string; activo?: boolean; buscar?: string },
     idEmpresaActor: number,
@@ -86,6 +93,7 @@ export class UsuariosService {
     return resultado;
   }
 
+  // CU-06 · Editando cuenta de usuario
   async findOne(id: number): Promise<(Usuario & { roles: Rol[] }) | null> {
     const usuario = await this.usuarioRepository.findOne({
       where: { id_usuario: id },
@@ -94,8 +102,7 @@ export class UsuariosService {
     return usuario ? this.conRoles(usuario) : null;
   }
 
-  // El front consume `roles` plano; usuarioRoles es el detalle de la tabla intermedia.
-  // El hash de la contraseña nunca debe salir del backend.
+  // Apoyo de CU-05, CU-06
   private conRoles(usuario: Usuario): Usuario & { roles: Rol[] } {
     const { password_hash, ...usuarioSeguro } = usuario;
     return {
@@ -108,6 +115,7 @@ export class UsuariosService {
     } as Usuario & { roles: Rol[] };
   }
 
+  // CU-04 · Creando cuenta de usuario
   async create(
     createUsuarioDto: CreateUsuarioDto,
     actor: {
@@ -212,6 +220,7 @@ export class UsuariosService {
     return usuarioSeguro as Usuario;
   }
 
+  // CU-07 · Desactivando cuenta de usuario
   async remove(
     id: number,
     actorId: number,
@@ -251,6 +260,7 @@ export class UsuariosService {
     }
   }
 
+  // CU-06 · Editando cuenta de usuario
   async update(
     id: number,
     updateUsuarioDto: UpdateUsuarioDto,

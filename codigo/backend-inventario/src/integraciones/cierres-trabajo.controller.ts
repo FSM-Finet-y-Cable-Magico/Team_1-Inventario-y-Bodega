@@ -19,21 +19,23 @@ interface Actor {
   roles?: string[];
 }
 
-// CU-70: catálogo codificado de tipos de trabajo y borrador de cierre del técnico.
-// Rutas de la UI (JWT + roles), a diferencia del webhook de G3 (X-API-KEY).
+// ======================================================================
+// Integraciones con G3 y G8 · CierresTrabajoController (controlador)
+// CU-70 · Seleccionando tipo de trabajo codificado para cierre
+// ======================================================================
 @Controller()
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class CierresTrabajoController {
   constructor(private readonly cierresTrabajoService: CierresTrabajoService) {}
 
-  // CU-70: catálogo T-01..T-10, filtrable por tipo de OT.
+  // CU-70 · Seleccionando tipo de trabajo codificado para cierre
   @Get('tipos-trabajo')
   @Roles('TECNICO_TERRENO', 'ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
   listarTiposTrabajo(@Query('tipo_ot') tipoOt: string) {
     return this.cierresTrabajoService.listarTiposTrabajo(tipoOt);
   }
 
-  // CU-70: borrador de cierre que el técnico dejó preparado para la OT.
+  // CU-70 · Seleccionando tipo de trabajo codificado para cierre
   @Get('cierres-trabajo/borradores/:idOt')
   @Roles('TECNICO_TERRENO', 'ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
   obtenerBorrador(@Param('idOt') idOt: string, @CurrentUser() actor: Actor) {
@@ -43,7 +45,7 @@ export class CierresTrabajoController {
     );
   }
 
-  // CU-70: guarda el borrador; el webhook de G3 lo usa al cerrar (CU-69).
+  // CU-70 · Seleccionando tipo de trabajo codificado para cierre
   @Patch('cierres-trabajo/borradores/:idOt')
   @Roles('TECNICO_TERRENO', 'ADMIN', 'SUPERUSUARIO')
   guardarBorrador(

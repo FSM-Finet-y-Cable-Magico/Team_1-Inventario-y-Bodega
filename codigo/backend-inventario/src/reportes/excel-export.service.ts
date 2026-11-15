@@ -24,14 +24,13 @@ for (let n = 0; n < 256; n++) {
   CRC_TABLE[n] = c >>> 0;
 }
 
-// CU-92: generador .xlsx sin dependencias (encabezados en negrita).
+// ======================================================================
+// Reportes · ExcelExportService (servicio)
+// CU-92 · Exportando reporte a Excel
+// ======================================================================
 @Injectable()
 export class ExcelExportService {
-  /**
-   * Genera un buffer de archivo .xlsx válido compatible con Excel 2016+ y LibreOffice Calc 7.0+.
-   * La primera fila lleva los encabezados en negrita (style 1).
-   * La hoja se nombra con el nombre especificado (máx 31 caracteres).
-   */
+  // CU-92 · Exportando reporte a Excel
   generateXlsx(options: ExcelReportOptions): Buffer {
     const { sheetName, columns, rows } = options;
     const sanitizedSheetName = this.sanitizeSheetName(sheetName);
@@ -55,11 +54,13 @@ export class ExcelExportService {
     return this.buildZip(files);
   }
 
+  // Apoyo de CU-92
   private sanitizeSheetName(name: string): string {
     const cleaned = name.replace(/[:\\/?*[\]]/g, '').trim();
     return cleaned.slice(0, 31) || 'Reporte';
   }
 
+  // Apoyo de CU-92
   private escapeXml(unsafe: ExcelCellValue): string {
     if (unsafe === null || unsafe === undefined) return '';
     const str = String(unsafe);
@@ -81,6 +82,7 @@ export class ExcelExportService {
     });
   }
 
+  // Apoyo de CU-92
   private getColumnLetter(colIndex: number): string {
     let name = '';
     let num = colIndex;
@@ -91,6 +93,7 @@ export class ExcelExportService {
     return name;
   }
 
+  // Apoyo de CU-92
   private buildContentTypesXml(): string {
     return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
@@ -102,6 +105,7 @@ export class ExcelExportService {
 </Types>`;
   }
 
+  // Apoyo de CU-92
   private buildRelsXml(): string {
     return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
@@ -109,6 +113,7 @@ export class ExcelExportService {
 </Relationships>`;
   }
 
+  // Apoyo de CU-92
   private buildWorkbookRelsXml(): string {
     return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
@@ -117,6 +122,7 @@ export class ExcelExportService {
 </Relationships>`;
   }
 
+  // Apoyo de CU-92
   private buildWorkbookXml(sheetName: string): string {
     return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
@@ -129,6 +135,7 @@ export class ExcelExportService {
 </workbook>`;
   }
 
+  // Apoyo de CU-92
   private buildStylesXml(): string {
     return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
@@ -170,6 +177,7 @@ export class ExcelExportService {
 </styleSheet>`;
   }
 
+  // Apoyo de CU-92
   private buildSheetXml(
     columns: ExcelColumn[],
     rows: Record<string, ExcelCellValue>[],
@@ -240,6 +248,7 @@ export class ExcelExportService {
 </worksheet>`;
   }
 
+  // Apoyo de CU-92
   private crc32(buf: Buffer): number {
     let c = 0 ^ -1;
     for (let i = 0; i < buf.length; i++) {
@@ -248,6 +257,7 @@ export class ExcelExportService {
     return (c ^ -1) >>> 0;
   }
 
+  // Apoyo de CU-92
   private buildZip(
     files: { name: string; content: string | Buffer }[],
   ): Buffer {

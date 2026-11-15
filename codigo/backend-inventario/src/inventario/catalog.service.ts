@@ -12,6 +12,18 @@ import { UnidadEquipo } from './entities/unidad-equipo.entity';
 import { StockConsumible } from '../bodegas/entities/stock-consumible.entity';
 import { AuditoriaService } from 'src/auditoria/auditoria.service';
 
+// ======================================================================
+// Inventario · CatalogService (servicio)
+// CU-24 · Creando tipo de equipo en el catálogo
+// CU-25 · Consultando catálogo de tipos de equipo
+// CU-26 · Editando tipo de equipo existente
+// CU-27 · Desactivando tipo de equipo del catálogo
+// CU-28 · Validando número de serie de equipo
+// CU-29 · Adjuntando ficha técnica PDF a tipo de equipo
+// CU-30 · Descargando ficha técnica de tipo de equipo
+// CU-31 · Distinguiendo equipo individualizable de consumible
+// Entidades: TipoEquipo, UnidadEquipo, StockConsumible
+// ======================================================================
 @Injectable()
 export class CatalogService {
   constructor(
@@ -39,6 +51,7 @@ export class CatalogService {
   ];
   static readonly UNIDADES_MEDIDA = ['Unidad', 'Metro', 'Rollo'];
 
+  // CU-24 · Creando tipo de equipo en el catálogo
   async crearTipo(dto: {
     nombre: string;
     categoria: string;
@@ -137,6 +150,7 @@ export class CatalogService {
     return await this.catalogRepository.save(nuevoTipo);
   }
 
+  // CU-25 · Consultando catálogo de tipos de equipo
   async consultar(filtros: {
     categoria?: string;
     activo?: string;
@@ -173,6 +187,7 @@ export class CatalogService {
     return await query.getMany();
   }
 
+  // CU-26 · Editando tipo de equipo existente
   async editarTipo(
     id: string,
     dto: {
@@ -373,6 +388,7 @@ export class CatalogService {
     });
   }
 
+  // CU-27 · Desactivando tipo de equipo del catálogo
   async desactivarTipo(id: string, idEmpresaContexto: number) {
     const idNum = parseInt(id);
     if (isNaN(idNum)) {
@@ -417,7 +433,7 @@ export class CatalogService {
     };
   }
 
-  // CU-27: eliminación física, solo permitida si el tipo no tiene registros asociados
+  // CU-27 · Desactivando tipo de equipo del catálogo
   async eliminarTipoFisico(
     id: string,
     idEmpresaContexto: number,
@@ -483,6 +499,7 @@ export class CatalogService {
     };
   }
 
+  // CU-28 · Validando número de serie de equipo
   validarFormatoSerialNumber(serial: string): boolean {
     if (!serial || serial.trim() === '') {
       throw new BadRequestException(
@@ -499,6 +516,7 @@ export class CatalogService {
     return true;
   }
 
+  // CU-29 · Adjuntando ficha técnica PDF a tipo de equipo
   async adjuntarPdfPath(id: string, path: string, nombreOriginal?: string) {
     const idNum = parseInt(id);
     if (isNaN(idNum)) {
@@ -538,6 +556,7 @@ export class CatalogService {
     };
   }
 
+  // CU-30 · Descargando ficha técnica de tipo de equipo
   async obtenerFichaPdf(id: string, idEmpresaContexto: number) {
     const idNum = parseInt(id);
     if (isNaN(idNum)) {
@@ -574,6 +593,7 @@ export class CatalogService {
     };
   }
 
+  // CU-31 · Distinguiendo equipo individualizable de consumible
   async determinarNaturalezaEquipo(
     idTipoEquipo: number,
     idEmpresaContexto: number,

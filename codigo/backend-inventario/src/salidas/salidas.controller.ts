@@ -17,7 +17,13 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 import { CrearSalidaDto } from './dto/crear-salida.dto';
 
-// CU-57/60: salidas de bodega a técnico (equipos y/o consumibles)
+// ======================================================================
+// Salidas a técnico · SalidasController (controlador)
+// CU-57 · Registrando salida de equipos de bodega a técnico
+// CU-58 · Manteniendo inventario personal del técnico
+// CU-60 · Registrando salida de consumibles de bodega a técnico
+// CU-61 · Consultando vista móvil de trabajos e inventario del técnico
+// ======================================================================
 @Controller('salidas')
 @UseGuards(AuthGuard('jwt'), CompanyIsolationGuard, RolesGuard)
 export class SalidasController {
@@ -26,8 +32,8 @@ export class SalidasController {
     private readonly inventarioPersonalService: InventarioPersonalService,
   ) {}
 
-  // CU-57 + CU-60: un solo endpoint; los ítems deciden si es de equipos, de
-  // consumibles o mixta. La transacción es atómica.
+  // CU-57 · Registrando salida de equipos de bodega a técnico
+  // CU-60 · Registrando salida de consumibles de bodega a técnico
   @Post()
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
   async registrarSalida(
@@ -37,6 +43,7 @@ export class SalidasController {
     return this.salidasService.registrarSalida(dto, actor.id_empresa, actor);
   }
 
+  // CU-57 · Registrando salida de equipos de bodega a técnico
   @Get()
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
   async listarSalidas(@CurrentUser() actor: any) {
@@ -45,8 +52,6 @@ export class SalidasController {
   }
 }
 
-// CU-58: consulta del inventario personal de un técnico
-// (GET /api/tecnicos/:id/inventario — también será el wrapper G1-5 para G3)
 @Controller('tecnicos')
 @UseGuards(AuthGuard('jwt'), CompanyIsolationGuard, RolesGuard)
 export class TecnicosController {

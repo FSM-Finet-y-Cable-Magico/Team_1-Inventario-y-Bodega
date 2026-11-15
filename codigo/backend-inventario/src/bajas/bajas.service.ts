@@ -42,6 +42,12 @@ export const BAJA_PENDIENTE = 'Pendiente de aprobación';
 export const BAJA_APROBADA = 'Aprobada';
 export const BAJA_RECHAZADA = 'Rechazada';
 
+// ======================================================================
+// Bajas · BajasService (servicio)
+// CU-78 · Registrando baja definitiva de equipo
+// CU-79 · Ejecutando acciones posteriores a baja definitiva
+// Entidades: SolicitudBaja, UnidadEquipo, Usuario
+// ======================================================================
 @Injectable()
 export class BajasService {
   constructor(
@@ -55,21 +61,19 @@ export class BajasService {
     private readonly auditoriaService: AuditoriaService,
   ) {}
 
+  // Apoyo de CU-78
   private esSuperusuario(actor: ActorJwt): boolean {
     return actor.roles?.includes('SUPERUSUARIO') === true;
   }
 
-  // CU-78: quién aplica la baja directamente y quién solo puede solicitarla.
-  // ADMIN_BODEGA se incluye porque ya puede ejecutar la transición a 'Dado de baja'
-  // por el flujo de cambio de estado (CU-35); el Técnico de terreno siempre solicita.
+  // Apoyo de CU-78
   private aplicaBajaDirecta(actor: ActorJwt): boolean {
     return ['ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA'].some((r) =>
       actor.roles?.includes(r),
     );
   }
 
-  // CU-78 Excepción 3: el motivo debe pertenecer a la lista cerrada y, si es
-  // 'Otro', exige una descripción de entre 5 y 200 caracteres
+  // Apoyo de CU-78
   private validarMotivo(
     motivo: string,
     descripcionOtro?: string,
@@ -91,6 +95,7 @@ export class BajasService {
     return descripcion;
   }
 
+  // Apoyo de CU-78
   private async buscarUnidad(
     idUnidad: number,
     actor: ActorJwt,
@@ -106,7 +111,7 @@ export class BajasService {
     return unidad;
   }
 
-  // CU-78 Excepción 1: mensaje exacto del caso de uso
+  // Apoyo de CU-78
   private validarEstado(unidad: UnidadEquipo): void {
     if (!ESTADOS_QUE_PERMITEN_BAJA.includes(unidad.estado)) {
       throw new BadRequestException(
@@ -115,7 +120,7 @@ export class BajasService {
     }
   }
 
-  //CU-78
+  // CU-78 · Registrando baja definitiva de equipo
   async registrar(
     dto: CreateBajaDto,
     actor: ActorJwt,
@@ -193,8 +198,7 @@ export class BajasService {
     };
   }
 
-  // CU-78/CU-79: la baja real reutiliza la máquina de estados (transición
-  // validada, historial y auditoría dentro de la misma transacción)
+  // CU-79 · Ejecutando acciones posteriores a baja definitiva
   private async ejecutarBaja(
     unidad: UnidadEquipo,
     motivo: string,
@@ -225,7 +229,7 @@ export class BajasService {
     };
   }
 
-  //CU-78
+  // CU-78 · Registrando baja definitiva de equipo
   async aprobar(
     idSolicitud: number,
     actor: ActorJwt,
@@ -271,7 +275,7 @@ export class BajasService {
     };
   }
 
-  //CU-78
+  // CU-78 · Registrando baja definitiva de equipo
   async rechazar(
     idSolicitud: number,
     motivoRechazo: string,
@@ -320,6 +324,7 @@ export class BajasService {
     };
   }
 
+  // Apoyo de CU-78
   private async buscarSolicitudPendiente(
     idSolicitud: number,
     actor: ActorJwt,
@@ -348,7 +353,7 @@ export class BajasService {
     return solicitud;
   }
 
-  // CU-78: bandeja de solicitudes (pendientes y resueltas)
+  // CU-78 · Registrando baja definitiva de equipo
   async listar(
     filtros: { estado?: string },
     actor: ActorJwt,

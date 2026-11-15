@@ -18,11 +18,21 @@ import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 
+// ======================================================================
+// Bodegas · BodegasController (controlador)
+// CU-41 · Creando bodega
+// CU-42 · Editando bodega
+// CU-43 · Desactivando bodega
+// CU-44 · Consultando listado de bodegas
+// CU-45 · Consultando stock de bodega
+// CU-46 · Configurando umbral de stock mínimo
+// ======================================================================
 @Controller('bodegas')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class BodegasController {
   constructor(private readonly bodegasService: BodegasService) {}
 
+  // CU-41 · Creando bodega
   @Post()
   @Roles('ADMIN', 'SUPERUSUARIO')
   create(@Body() dto: CreateBodegaDto, @Req() req) {
@@ -38,6 +48,7 @@ export class BodegasController {
     );
   }
 
+  // CU-42 · Editando bodega
   @Patch(':id')
   @Roles('ADMIN', 'SUPERUSUARIO')
   update(@Param('id') id: string, @Body() dto: UpdateBodegaDto, @Req() req) {
@@ -53,6 +64,7 @@ export class BodegasController {
     );
   }
 
+  // CU-43 · Desactivando bodega
   @Delete(':id/desactivar')
   @Roles('ADMIN', 'SUPERUSUARIO')
   deactivate(@Param('id') id: string, @Req() req) {
@@ -67,6 +79,7 @@ export class BodegasController {
     );
   }
 
+  // CU-44 · Consultando listado de bodegas
   @Get()
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
   findAll(
@@ -87,14 +100,14 @@ export class BodegasController {
     );
   }
 
-  // CU-20: bodegas activas de la empresa destino, para elegir el destino
-  // de una transferencia inter-empresa (lista mínima, sin stock ni metadatos)
+  // CU-44 · Consultando listado de bodegas
   @Get('empresa/:idEmpresa')
   @Roles('ADMIN', 'SUPERUSUARIO')
   findActivasByEmpresa(@Param('idEmpresa') idEmpresa: string) {
     return this.bodegasService.findActivasByEmpresa(+idEmpresa);
   }
 
+  // CU-44 · Consultando listado de bodegas
   @Get(':id')
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
   findOne(@Param('id') id: string, @Req() req) {
@@ -109,6 +122,7 @@ export class BodegasController {
     );
   }
 
+  // CU-45 · Consultando stock de bodega
   @Get(':id/stock')
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
   getStock(@Param('id') id: string, @Req() req) {
@@ -123,6 +137,7 @@ export class BodegasController {
     );
   }
 
+  // CU-46 · Configurando umbral de stock mínimo
   @Post(':id/umbral')
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
   configurarUmbral(

@@ -18,17 +18,21 @@ import { CreateOrdenIngresoDto } from './dto/create-orden-ingreso.dto';
 import { RegistrarRecepcionDto } from './dto/registrar-recepcion.dto';
 import { EMPRESAS } from '../companies/companies.service';
 
-// CU-52: clave del advisory lock que serializa la generación del correlativo OI-%04d.
-// El prefijo OI- está reservado para G1 (docs/13, §1 "Correlativos"): ningún otro
-// módulo debe emitirlo ni reutilizar esta clave.
 const CORRELATIVO_LOCK_KEY = 52;
 
-// CU-52/CU-54: estados de orden_ingreso. Literales exactos (con tildes), deben
-// coincidir con el frontend y con lo declarado en la BD.
 const ESTADO_PENDIENTE = 'Pendiente de recepción';
 const ESTADO_PARCIAL = 'Recepción parcial';
 const ESTADO_COMPLETADA = 'Completada';
 
+// ======================================================================
+// Órdenes de ingreso · OrdenesIngresoService (servicio)
+// CU-52 · Registrando orden de ingreso desde proveedor
+// CU-53 · Consultando órdenes de ingreso
+// CU-54 · Registrando recepción total o parcial de orden de ingreso
+// CU-55 · Ingresando números de serie en recepción de equipos
+// CU-56 · Registrando fecha de adquisición real en recepción
+// Entidades: OrdenIngreso, OrdenIngresoDetalle, Proveedor, Bodega, TipoEquipo, UnidadEquipo
+// ======================================================================
 @Injectable()
 export class OrdenesIngresoService {
   constructor(
@@ -51,7 +55,7 @@ export class OrdenesIngresoService {
     private readonly dataSource: DataSource,
   ) {}
 
-  // CU-52: crear orden de ingreso desde proveedor
+  // CU-52 · Registrando orden de ingreso desde proveedor
   async create(
     dto: CreateOrdenIngresoDto,
     actor: { id_usuario: number; id_empresa: number; esSuperusuario: boolean },
@@ -208,7 +212,7 @@ export class OrdenesIngresoService {
     }
   }
 
-  // CU-52/CU-53: listar órdenes de ingreso (filtradas por empresa del actor)
+  // CU-53 · Consultando órdenes de ingreso
   async findAll(
     actor: { id_empresa: number; esSuperusuario: boolean },
     filtros?: {
@@ -280,9 +284,7 @@ export class OrdenesIngresoService {
     return Promise.all(ordenes.map((o) => this.findOneConDetalles(o.id_orden)));
   }
 
-  // CU-53: detalle de una orden con sus ítems (cantidades esperadas y recibidas).
-  // Aislamiento manual al estilo de `bodegas.verificarPertenencia`: si la orden no
-  // es de la empresa del actor se devuelve un 404 genérico, para no revelar que existe.
+  // CU-53 · Consultando órdenes de ingreso
   async findOne(
     idOrden: number,
     actor: { id_empresa: number; esSuperusuario: boolean },
@@ -299,8 +301,7 @@ export class OrdenesIngresoService {
     return this.findOneConDetalles(idOrden);
   }
 
-  // CU-53/CU-54: devuelve la orden solo si el actor puede verla. Si no existe o es de otra
-  // empresa lanza el MISMO 404, para no revelar la existencia de órdenes ajenas.
+  // Apoyo de CU-53, CU-54, CU-55, CU-56
   private async verificarPertenencia(
     idOrden: number,
     actor: { id_empresa: number; esSuperusuario: boolean },
@@ -320,7 +321,9 @@ export class OrdenesIngresoService {
     return orden;
   }
 
-  // CU-54: registrar la recepción total o parcial de una orden de ingreso
+  // CU-54 · Registrando recepción total o parcial de orden de ingreso
+  // CU-55 · Ingresando números de serie en recepción de equipos
+  // CU-56 · Registrando fecha de adquisición real en recepción
   async registrarRecepcion(
     idOrden: number,
     dto: RegistrarRecepcionDto,
@@ -577,6 +580,7 @@ export class OrdenesIngresoService {
     return this.findOneConDetalles(idOrden);
   }
 
+  // CU-53 · Consultando órdenes de ingreso
   private async findOneConDetalles(idOrden: number): Promise<any> {
     const orden = await this.ordenRepository.findOne({
       where: { id_orden: idOrden },
