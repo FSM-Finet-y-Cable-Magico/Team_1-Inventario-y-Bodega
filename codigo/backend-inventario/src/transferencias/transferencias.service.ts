@@ -18,6 +18,13 @@ import { EMPRESAS } from '../companies/companies.service';
 const ESTADO_PENDIENTE = 'TRANSFERENCIA_PENDIENTE';
 const ESTADO_APROBADA = 'TRANSFERENCIA_APROBADA';
 const ESTADO_RECHAZADA = 'TRANSFERENCIA_RECHAZADA';
+// CU-23: el estado de una transferencia sale solo de sus movimientos TRANSFERENCIA_*;
+// referencia_id también la usan órdenes, salidas y préstamos con su propio número.
+const TIPOS_TRANSFERENCIA = [
+  ESTADO_PENDIENTE,
+  ESTADO_APROBADA,
+  ESTADO_RECHAZADA,
+];
 
 @Injectable()
 export class TransferenciasService {
@@ -289,7 +296,10 @@ export class TransferenciasService {
     }
 
     const movimientos = await this.movimientoRepository.find({
-      where: { referencia_id: idTransferencia },
+      where: {
+        referencia_id: idTransferencia,
+        tipo_movimiento: In(TIPOS_TRANSFERENCIA),
+      },
     });
 
     const unidades = movimientos.length
@@ -423,7 +433,10 @@ export class TransferenciasService {
 
     for (const t of transferencias) {
       const movimientos = await this.movimientoRepository.find({
-        where: { referencia_id: t.id_transferencia },
+        where: {
+          referencia_id: t.id_transferencia,
+          tipo_movimiento: In(TIPOS_TRANSFERENCIA),
+        },
       });
 
       const estadoActual =
