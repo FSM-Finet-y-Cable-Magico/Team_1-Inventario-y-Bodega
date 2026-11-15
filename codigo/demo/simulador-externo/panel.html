@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulador de sistemas externos</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --tx:#1f2937; --mut:#6b7280; --bd:#e5e7eb; --pri:#047857; --g3:#2563eb; --g8:#7c3aed; --g1:#b45309; --err:#b91c1c; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.45 system-ui,-apple-system,Segoe UI,sans-serif; background:var(--bg); color:var(--tx); }
+  header { padding:14px 20px; background:var(--card); border-bottom:1px solid var(--bd); display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  header h1 { font-size:17px; margin:0; }
+  header .sub { color:var(--mut); font-size:13px; }
+  main { display:grid; grid-template-columns: 360px 1fr; gap:16px; padding:16px 20px; }
+  @media (max-width:900px){ main { grid-template-columns:1fr; } }
+  .card { background:var(--card); border:1px solid var(--bd); border-radius:10px; padding:14px; margin-bottom:14px; }
+  .card h2 { font-size:14px; margin:0 0 10px; }
+  button { font:inherit; border:1px solid var(--bd); background:#fff; border-radius:8px; padding:8px 10px; cursor:pointer; text-align:left; width:100%; margin-bottom:6px; }
+  button:hover { border-color:var(--pri); }
+  button.pri { background:var(--pri); color:#fff; border-color:var(--pri); }
+  .tag { display:inline-block; font-size:11px; font-weight:600; padding:1px 6px; border-radius:6px; color:#fff; margin-right:6px; }
+  .G3 { background:var(--g3); } .G8 { background:var(--g8); } .G1 { background:var(--g1); }
+  .row { display:flex; gap:8px; } .row button { width:auto; }
+  pre { margin:6px 0 0; background:#0f172a; color:#e2e8f0; padding:10px; border-radius:8px; overflow:auto; max-height:340px; font-size:12px; }
+  .paso { border-top:1px solid var(--bd); padding-top:8px; margin-top:8px; }
+  .st { font-weight:600; } .ok { color:var(--pri); } .bad { color:var(--err); }
+  table { width:100%; border-collapse:collapse; font-size:12.5px; }
+  td, th { border-bottom:1px solid var(--bd); padding:5px 6px; text-align:left; vertical-align:top; }
+  th { color:var(--mut); font-weight:600; }
+  details summary { cursor:pointer; }
+  .mut { color:var(--mut); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Simulador de sistemas externos</h1>
+  <span class="sub">G3 Terreno/FSM y G8 CRM simulados · Inventario y Bodega (G1) en <a href="http://localhost:8090" target="_blank">localhost:8090</a></span>
+</header>
+<main>
+  <section>
+    <div class="card">
+      <h2>Eventos hacia el inventario</h2>
+      <div id="acciones"></div>
+    </div>
+    <div class="card">
+      <h2>Órdenes de trabajo en G3</h2>
+      <table id="ordenes"><thead><tr><th>OT</th><th>Tipo</th><th>Estado</th><th>Técnico</th><th>Cliente</th></tr></thead><tbody></tbody></table>
+      <p class="mut">«Mi jornada» del técnico consulta estas OT (EN_CURSO y PENDIENTE).</p>
+    </div>
+    <div class="card">
+      <div class="row"><button onclick="limpiar()">Limpiar log</button><button onclick="reiniciar()">Reiniciar OT del simulador</button></div>
+      <p class="mut">Usa «Reiniciar» junto con <code>reset-demo.sh</code> para volver al estado inicial.</p>
+    </div>
+  </section>
+  <section>
+    <div class="card">
+      <h2>Resultado</h2>
+      <div id="resultado" class="mut">Elige un evento.</div>
+    </div>
+    <div class="card">
+      <h2>Log de integración (en vivo)</h2>
+      <table id="log"><thead><tr><th>Hora</th><th>Dirección</th><th>Petición</th><th>Estado</th></tr></thead><tbody></tbody></table>
+    </div>
+  </section>
+</main>
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[c]));
+const tag = (dir) => dir.split(' ').filter((x) => /^G\d$/.test(x)).map((g) => `<span class="tag ${g}">${g}</span>`).join('→ ');
+const fmt = (o) => esc(JSON.stringify(o, null, 2));
+async function cargarAcciones() {
+  const a = await fetch('/panel/acciones').then((r) => r.json());
+  $('#acciones').innerHTML = a.map((x) => `<button onclick="ejecutar('${x.id}')">${tag(x.titulo.startsWith('G8') ? 'G8 x' : 'G3 x')} ${esc(x.titulo.replace(/^G\d( \+ G\d)? · /, ''))}</button>`).join('');
+}
+async function ejecutar(id) {
+  $('#resultado').innerHTML = 'Enviando…';
+  const r = await fetch('/panel/accion/' + id, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).then((x) => x.json());
+  if (r.error) { $('#resultado').innerHTML = `<span class="bad">${esc(r.error)}</span>`; return; }
+  $('#resultado').innerHTML = `<b>${esc(r.titulo)}</b>` + r.pasos.map((p) => `
+    <div class="paso">${tag(p.direccion)} <code>${esc(p.metodo)} ${esc(p.ruta)}</code>
+      <span class="st ${p.status < 300 ? 'ok' : 'bad'}">HTTP ${p.status}</span> <span class="mut">${p.ms} ms · ${esc(p.cabecera)}</span>
+      ${p.peticion ? `<details><summary>Petición (JSON)</summary><pre>${fmt(p.peticion)}</pre></details>` : ''}
+      <details open><summary>Respuesta</summary><pre>${fmt(p.respuesta)}</pre></details>
+    </div>`).join('');
+  refrescar();
+}
+async function refrescar() {
+  const [log, ords] = await Promise.all([fetch('/panel/log').then((r) => r.json()), fetch('/panel/ordenes').then((r) => r.json())]);
+  $('#log tbody').innerHTML = log.slice(0, 60).map((e) => `<tr><td>${new Date(e.ts).toLocaleTimeString('es-CL')}</td><td>${tag(e.direccion)}</td>
+    <td><details><summary><code>${esc(e.metodo)} ${esc(e.ruta)}</code></summary>${e.peticion ? `<pre>${fmt(e.peticion)}</pre>` : ''}<pre>${fmt(e.respuesta)}</pre></details></td>
+    <td class="${e.status < 300 ? 'ok' : 'bad'}">${e.status}</td></tr>`).join('') || '<tr><td colspan="4" class="mut">Sin eventos todavía.</td></tr>';
+  const tec = { 4: 'tecnico_qa', 5: 'tecnico_cable' };
+  $('#ordenes tbody').innerHTML = ords.filter((o) => o.id_ot >= 7000).map((o) => `<tr><td>${o.id_ot}</td><td>${o.tipo_ot}</td><td>${o.estado}</td><td>${tec[o.id_tecnico] || o.id_tecnico}</td><td>${esc(o.cliente.nombre_completo)}</td></tr>`).join('');
+}
+async function limpiar() { await fetch('/panel/log/limpiar', { method: 'POST' }); refrescar(); }
+async function reiniciar() { await fetch('/panel/reiniciar', { method: 'POST' }); $('#resultado').innerHTML = 'OT del simulador reiniciadas.'; refrescar(); }
+cargarAcciones(); refrescar(); setInterval(refrescar, 2000);
+</script>
+</body>
+</html>
