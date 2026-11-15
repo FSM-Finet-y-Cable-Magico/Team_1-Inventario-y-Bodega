@@ -15,32 +15,35 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
+// Bajas · BajasController (controlador)
+// CU-78 · Registrando baja definitiva de equipo
 @Controller('bajas')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class BajasController {
   constructor(private readonly bajasService: BajasService) {}
 
-  // CU-78: el Técnico de terreno genera una solicitud; ADMIN/SUPERUSUARIO/ADMIN_BODEGA
-  // aplican la baja definitiva directamente
+  // CU-78 · Registrando baja definitiva de equipo
   @Post()
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
   registrar(@Body() dto: CreateBajaDto, @CurrentUser() actor: ActorJwt) {
     return this.bajasService.registrar(dto, actor);
   }
 
-  // CU-78: bandeja de solicitudes de baja
+  // CU-78 · Registrando baja definitiva de equipo
   @Get()
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
   listar(@Query('estado') estado: string, @CurrentUser() actor: ActorJwt) {
     return this.bajasService.listar({ estado }, actor);
   }
 
+  // CU-78 · Registrando baja definitiva de equipo
   @Post(':id/aprobar')
   @Roles('ADMIN', 'SUPERUSUARIO')
   aprobar(@Param('id') id: string, @CurrentUser() actor: ActorJwt) {
     return this.bajasService.aprobar(+id, actor);
   }
 
+  // CU-78 · Registrando baja definitiva de equipo
   @Post(':id/rechazar')
   @Roles('ADMIN', 'SUPERUSUARIO')
   rechazar(

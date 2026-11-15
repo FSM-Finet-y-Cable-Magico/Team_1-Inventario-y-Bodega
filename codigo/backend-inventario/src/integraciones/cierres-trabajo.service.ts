@@ -5,9 +5,10 @@ import { BorradorCierre } from './entities/borrador-cierre.entity';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { TIPOS_TRABAJO, buscarTipoTrabajo } from './tipos-trabajo';
 
-// CU-70: catálogo codificado de tipos de trabajo y borrador de cierre del técnico.
-// El cierre de la OT lo ejecuta G3 (CU-63); lo que el técnico prepara aquí precompleta
-// el cierre que nos llega por el webhook (CU-69) y queda en la auditoría.
+// Integraciones con G3 y G8 · CierresTrabajoService (servicio)
+// CU-69 · Registrando cierre de trabajo de reparación
+// CU-70 · Seleccionando tipo de trabajo codificado para cierre
+// Entidades: BorradorCierre
 @Injectable()
 export class CierresTrabajoService {
   constructor(
@@ -16,10 +17,7 @@ export class CierresTrabajoService {
     private readonly auditoriaService: AuditoriaService,
   ) {}
 
-  // Las rutas de UI devuelven el dato desnudo (como el resto de los módulos del
-  // frontend); el envoltorio {success, data} es del contrato S2S con G3/G8.
-  // GET /tipos-trabajo — catálogo T-01..T-10 con sus campos predefinidos.
-  // `tipo_ot` filtra los códigos que aplican a una instalación o a una reparación.
+  // CU-70 · Seleccionando tipo de trabajo codificado para cierre
   listarTiposTrabajo(tipoOt?: string) {
     const filtro = (tipoOt ?? '').trim().toUpperCase();
     const tipos =
@@ -31,7 +29,7 @@ export class CierresTrabajoService {
     return tipos;
   }
 
-  // GET /cierres-trabajo/borradores/:idOt — lo que el técnico dejó preparado.
+  // CU-70 · Seleccionando tipo de trabajo codificado para cierre
   async obtenerBorrador(idOt: number, actor: any) {
     const borrador = await this.borradorRepository.findOne({
       where: { id_ot: this.idOtValido(idOt), id_empresa: actor.id_empresa },
@@ -39,9 +37,7 @@ export class CierresTrabajoService {
     return borrador ?? null;
   }
 
-  // PUT /cierres-trabajo/borradores/:idOt — guarda (o reemplaza) el borrador.
-  // Excepción 1: `codigo_trabajo` puede venir vacío; el técnico completa a mano y
-  // el borrador se guarda igual, sin tipo de trabajo.
+  // CU-70 · Seleccionando tipo de trabajo codificado para cierre
   async guardarBorrador(idOt: number, datos: any, actor: any) {
     const id_ot = this.idOtValido(idOt);
     const codigo = this.codigoValido(datos?.codigo_trabajo);
@@ -77,9 +73,8 @@ export class CierresTrabajoService {
     return guardado;
   }
 
-  // CU-70 + CU-69: completa los campos del cierre que G3 no envía, con el borrador
-  // del técnico primero y, si ese tampoco los trae, con el catálogo del código.
-  // Devuelve null cuando no hay nada que aportar.
+  // CU-69 · Registrando cierre de trabajo de reparación
+  // CU-70 · Seleccionando tipo de trabajo codificado para cierre
   async completarDesdeBorrador(
     manager: EntityManager,
     idOt: number,
@@ -113,6 +108,7 @@ export class CierresTrabajoService {
     return { codigo_trabajo: codigo, campos };
   }
 
+  // Apoyo de CU-70
   private idOtValido(idOt: number): number {
     if (!Number.isInteger(idOt) || idOt <= 0) {
       throw new BadRequestException('El identificador de la OT es inválido.');
@@ -120,7 +116,7 @@ export class CierresTrabajoService {
     return idOt;
   }
 
-  // Excepción 1: sin código el borrador es válido; con código, debe existir en el catálogo.
+  // Apoyo de CU-69, CU-70
   private codigoValido(valor: any): string | null {
     if (typeof valor !== 'string' || valor.trim() === '') return null;
     const tipo = buscarTipoTrabajo(valor);
@@ -132,6 +128,7 @@ export class CierresTrabajoService {
     return tipo.codigo;
   }
 
+  // Apoyo de CU-70
   private resultadoValido(valor: any): string | null {
     if (typeof valor !== 'string' || valor.trim() === '') return null;
     const resultado = valor.trim().toUpperCase();
@@ -143,6 +140,7 @@ export class CierresTrabajoService {
     return resultado;
   }
 
+  // Apoyo de CU-70
   private texto(valor: any, largo: number): string | null {
     if (typeof valor !== 'string' || valor.trim() === '') return null;
     return valor.trim().slice(0, largo);

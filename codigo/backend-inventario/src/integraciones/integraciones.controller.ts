@@ -11,16 +11,22 @@ import {
 import { IntegracionesService } from './integraciones.service';
 import { ApiKeyGuard, IntegracionContexto } from './guards/api-key.guard';
 
-// sc-113: rutas de integración server-to-server con G3 (FSM).
-// sc-158: se suman las rutas del acuerdo con G8 (CRM): catálogo S2S,
-// consulta de unidad ampliada y evento de activación.
-// Sin JWT ni CompanyIsolationGuard: la autenticación es por X-API-KEY y el
-// aislamiento de empresa se valida contra el scope de la key (id_empresa explícito).
+// Integraciones con G3 y G8 · IntegracionesController (controlador)
+// CU-64 · Ejecutando acciones atómicas del cierre de instalación
+// CU-68 · Verificando saldo de consumibles en cierre
+// CU-69 · Registrando cierre de trabajo de reparación
+// Integración G3/G8: catálogo de tipos de equipo
+// Integración G8: equipos de un servicio
+// Integración G3/G8: stock disponible
+// Integración G3: unidad por número de serie
+// Integración G8: recepción de equipos retirados (baja por morosidad)
+// Integración G8: activación de servicio
 @Controller('integraciones')
 @UseGuards(ApiKeyGuard)
 export class IntegracionesController {
   constructor(private readonly integracionesService: IntegracionesService) {}
 
+  // Integración G3/G8: catálogo de tipos de equipo
   @Get('tipos-equipo')
   consultarTiposEquipo(
     @Query('id_empresa') idEmpresa: string,
@@ -39,6 +45,7 @@ export class IntegracionesController {
     });
   }
 
+  // Integración G8: equipos de un servicio
   @Get('equipos')
   consultarEquiposPorServicio(
     @Query('id_empresa') idEmpresa: string,
@@ -51,6 +58,7 @@ export class IntegracionesController {
     return this.integracionesService.consultarEquiposPorServicio(id, idServicio);
   }
 
+  // Integración G3/G8: stock disponible
   @Get('stock')
   consultarStock(
     @Query('id_empresa') idEmpresa: string,
@@ -67,6 +75,7 @@ export class IntegracionesController {
     });
   }
 
+  // Integración G3: unidad por número de serie
   @Get('unidades/:numeroSerie')
   consultarUnidadPorSerie(
     @Param('numeroSerie') numeroSerie: string,
@@ -79,7 +88,7 @@ export class IntegracionesController {
     return this.integracionesService.consultarUnidadPorSerie(numeroSerie, id);
   }
 
-  // Baja por morosidad: G8 lee si G1 recibió cada equipo retirado en la OT de G3.
+  // Integración G8: recepción de equipos retirados (baja por morosidad)
   @Get('recepciones')
   consultarRecepciones(
     @Query('id_empresa') idEmpresa: string,
@@ -96,15 +105,16 @@ export class IntegracionesController {
     });
   }
 
+  // Integración G8: activación de servicio
   @Post('activaciones')
   registrarActivacion(@Body() payload: any, @Req() request: any) {
     const integracion = request.integracion as IntegracionContexto;
     return this.integracionesService.registrarActivacion(payload, integracion);
   }
 
-  // CU-64/CU-68/CU-69/CU-70: webhook del cierre de OT. El cierre lo ejecuta G3
-  // (CU-63) y aquí se reciben sus efectos en inventario: instalación (CU-64),
-  // saldo de consumibles (CU-68) y reparación (CU-69, con el borrador de CU-70).
+  // CU-64 · Ejecutando acciones atómicas del cierre de instalación
+  // CU-68 · Verificando saldo de consumibles en cierre
+  // CU-69 · Registrando cierre de trabajo de reparación
   @Post('ordenes/:idOt/cierre')
   recibirCierreOt(
     @Param('idOt') idOt: string,

@@ -53,7 +53,10 @@ export interface ActorToma {
   roles?: string[];
 }
 
-// CU-97: Registrando toma de inventario físico y ajuste de diferencias.
+// Toma de inventario · TomasInventarioService (servicio)
+// CU-97 · Registrando toma de inventario físico y ajuste de diferencias
+// CU-99 · Generando acta de toma de inventario en PDF
+// Entidades: Bodega, StockConsumible, TipoEquipo, UnidadEquipo, MovimientoInventario, Usuario, TomaInventarioDetalle, TomaInventario
 @Injectable()
 export class TomasInventarioService {
   constructor(
@@ -61,11 +64,12 @@ export class TomasInventarioService {
     private readonly auditoriaService: AuditoriaService,
   ) {}
 
+  // Apoyo de CU-97
   private esSuperusuario(actor: ActorToma): boolean {
     return (actor.roles ?? []).includes('SUPERUSUARIO');
   }
 
-  // Aislamiento por empresa: fuera de la empresa la toma "no existe" (404 genérico)
+  // Apoyo de CU-97
   private async obtenerToma(
     id: number,
     actor: ActorToma,
@@ -85,6 +89,7 @@ export class TomasInventarioService {
     return toma;
   }
 
+  // Apoyo de CU-97
   private exigirAbierta(toma: TomaInventario): void {
     if (toma.estado !== TOMA_ABIERTA) {
       throw new ConflictException(
@@ -93,7 +98,7 @@ export class TomasInventarioService {
     }
   }
 
-  //CU-97: abre la toma y guarda la foto de lo que debería haber en la bodega
+  // CU-97 · Registrando toma de inventario físico y ajuste de diferencias
   async abrir(idBodega: number, actor: ActorToma) {
     const bodega = await this.dataSource.manager.findOne(Bodega, {
       where: { id_bodega: idBodega },
@@ -142,8 +147,7 @@ export class TomasInventarioService {
       const stock = await manager.find(StockConsumible, {
         where: { id_bodega: idBodega },
       });
-      // Consumibles activos del catálogo sin fila de stock: esperado 0, para
-      // poder registrar lo que aparezca al contar.
+      // Consumibles activos del catálogo sin fila de stock: esperado 0
       const catalogo = await manager.find(TipoEquipo, {
         where: [bodega.id_empresa, IsNull()].map((id_empresa) => ({
           id_empresa,
@@ -187,6 +191,7 @@ export class TomasInventarioService {
     return this.obtener(idToma, actor);
   }
 
+  // CU-97 · Registrando toma de inventario físico y ajuste de diferencias
   async listar(actor: ActorToma, idBodega?: number) {
     const query = this.dataSource.manager
       .createQueryBuilder(TomaInventario, 't')
@@ -208,7 +213,7 @@ export class TomasInventarioService {
     return query.getRawMany();
   }
 
-  //CU-97: detalle de la toma con las diferencias calculadas hasta el momento
+  // CU-97 · Registrando toma de inventario físico y ajuste de diferencias
   async obtener(id: number, actor: ActorToma) {
     const toma = await this.obtenerToma(id, actor);
     const manager = this.dataSource.manager;
@@ -274,7 +279,7 @@ export class TomasInventarioService {
     };
   }
 
-  // Mientras la toma está abierta el resultado se deriva; al confirmar se guarda.
+  // Apoyo de CU-97
   private resultadoProvisional(d: TomaInventarioDetalle): string | null {
     if (d.numero_serie !== null) {
       return d.es_esperada && Number(d.cantidad_contada) !== 1
@@ -287,7 +292,7 @@ export class TomasInventarioService {
     return dif > 0 ? RESULTADO_SOBRANTE : RESULTADO_FALTANTE;
   }
 
-  //CU-97: guarda el avance del conteo; se puede repetir hasta confirmar
+  // CU-97 · Registrando toma de inventario físico y ajuste de diferencias
   async registrarConteo(id: number, dto: RegistrarConteoDto, actor: ActorToma) {
     const series = (dto.series ?? []).map((s) => s.trim()).filter(Boolean);
     const vistas = new Set<string>();
@@ -328,6 +333,7 @@ export class TomasInventarioService {
     return this.obtener(id, actor);
   }
 
+  // CU-97 · Registrando toma de inventario físico y ajuste de diferencias
   private async registrarSeries(
     manager: EntityManager,
     toma: TomaInventario,
@@ -356,8 +362,7 @@ export class TomasInventarioService {
     );
     for (const serie of series) {
       if (conocidas.has(serie.toUpperCase())) continue;
-      // CU-97 E2: serie que no estaba en esta bodega. Una serie de otra empresa
-      // se informa igual que una inexistente, para no revelar datos ajenos.
+      // CU-97 E2: serie que no estaba en esta bodega
       const unidad = await manager
         .createQueryBuilder(UnidadEquipo, 'u')
         .where('UPPER(u.serialNumber) = :serie', {
@@ -382,8 +387,7 @@ export class TomasInventarioService {
     }
   }
 
-  //CU-97: confirma en una transacción: ajusta consumibles y cierra la toma.
-  // Las series faltantes solo se informan: no cambian de estado.
+  // CU-97 · Registrando toma de inventario físico y ajuste de diferencias
   async confirmar(id: number, forzarMovimientos: boolean, actor: ActorToma) {
     const resumenAjustes = await this.dataSource.transaction(
       async (manager) => {
@@ -447,8 +451,7 @@ export class TomasInventarioService {
           await manager.save(d);
           if (diferencia === 0) continue;
 
-          // Se aplica la diferencia sobre el stock actual para no pisar los
-          // movimientos registrados mientras se contaba.
+          // Se aplica la diferencia sobre el stock actual para no pisar los movimientos registrados
           const stock = stocks.get(d.id_detalle);
           const nuevo =
             (stock ? Number(stock.cantidad_disponible) : 0) + diferencia;
@@ -520,7 +523,7 @@ export class TomasInventarioService {
     };
   }
 
-  // Series de la foto inicial que ya no están en la bodega
+  // Apoyo de CU-97
   private async unidadesMovidas(
     manager: EntityManager,
     toma: TomaInventario,
@@ -542,7 +545,7 @@ export class TomasInventarioService {
       .map((u) => u.serialNumber);
   }
 
-  //CU-97: cancelar libera la bodega para otra toma; no cambia el inventario
+  // CU-97 · Registrando toma de inventario físico y ajuste de diferencias
   async cancelar(id: number, actor: ActorToma) {
     await this.dataSource.transaction(async (manager) => {
       const toma = await this.obtenerToma(id, actor, manager, true);
@@ -563,13 +566,13 @@ export class TomasInventarioService {
     return this.obtener(id, actor);
   }
 
-  //CU-99: genera el acta en PDF de una toma confirmada (lo esperado, lo contado y las diferencias)
+  // CU-99 · Generando acta de toma de inventario en PDF
   async generarActa(
     id: number,
     actor: ActorToma,
   ): Promise<{ archivo: Buffer; nombre: string }> {
     const toma = await this.obtener(id, actor);
-    // CU-99 Excepción 1: solo una toma confirmada tiene un resultado definitivo
+    // CU-99 E1: solo una toma confirmada tiene un resultado definitivo
     if (toma.estado !== TOMA_CONFIRMADA) {
       throw new ConflictException(
         'Solo se puede generar el acta de una toma confirmada.',
@@ -630,6 +633,7 @@ export class TomasInventarioService {
     return { archivo, nombre: `acta-toma-${toma.id_toma}-${marca}.pdf` };
   }
 
+  // Apoyo de CU-99
   private async nombreUsuario(id: number | null): Promise<string> {
     if (!id) return '-';
     const usuario = await this.dataSource.manager

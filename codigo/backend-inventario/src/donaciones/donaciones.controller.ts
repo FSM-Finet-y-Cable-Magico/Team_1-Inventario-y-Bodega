@@ -16,40 +16,43 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
+// Donaciones · DonacionesController (controlador)
+// CU-80 · Registrando donación de equipos dados de baja
 @Controller('donaciones')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 @Roles('ADMIN', 'SUPERUSUARIO')
 export class DonacionesController {
   constructor(private readonly donacionesService: DonacionesService) {}
 
-  // CU-80: registrar la donación de equipos dados de baja
+  // CU-80 · Registrando donación de equipos dados de baja
   @Post()
   @Roles('ADMIN', 'SUPERUSUARIO')
   registrar(@Body() dto: CreateDonacionDto, @CurrentUser() actor: ActorJwt) {
     return this.donacionesService.registrar(dto, actor);
   }
 
-  // CU-80: comprobación previa de los datos de la institución (no registra nada)
+  // CU-80 · Registrando donación de equipos dados de baja
   @Post('validar')
   @Roles('ADMIN', 'SUPERUSUARIO')
   validar(@Body() dto: CreateDonacionDto) {
     return this.donacionesService.validarDatos(dto);
   }
 
+  // CU-80 · Registrando donación de equipos dados de baja
   @Get()
   @Roles('ADMIN', 'SUPERUSUARIO')
   listar(@CurrentUser() actor: ActorJwt) {
     return this.donacionesService.listar(actor);
   }
 
-  // CU-80: unidades elegibles (dadas de baja con motivo 'Donación a institución')
+  // CU-80 · Registrando donación de equipos dados de baja
   @Get('candidatas')
   @Roles('ADMIN', 'SUPERUSUARIO')
   listarCandidatas(@CurrentUser() actor: ActorJwt) {
     return this.donacionesService.listarCandidatas(actor);
   }
 
-  // CU-80: resumen descargable de la donación
+  // CU-80 · Registrando donación de equipos dados de baja
   @Get(':id/pdf')
   @Roles('ADMIN', 'SUPERUSUARIO')
   async descargarPdf(

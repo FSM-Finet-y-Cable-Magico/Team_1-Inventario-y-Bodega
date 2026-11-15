@@ -34,6 +34,16 @@ interface RawExportQuery {
   numero_serie?: string;
 }
 
+// Reportes · ReportesController (controlador)
+// CU-85 · Generando reporte de stock actual
+// CU-86 · Generando reporte de movimientos de inventario
+// CU-87 · Generando reporte de equipos instalados por cliente
+// CU-88 · Generando reporte de garantías
+// CU-89 · Generando reporte de inventario actual de técnicos
+// CU-90 · Generando reporte de productividad de técnicos
+// CU-91 · Generando reporte de consumo de consumibles
+// CU-92 · Exportando reporte a Excel
+// CU-93 · Exportando reporte a PDF
 @Controller('reportes')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class ReportesController {
@@ -42,9 +52,7 @@ export class ReportesController {
     private readonly exportacionService: ExportacionService,
   ) {}
 
-  // CU-93: exportación a PDF del reporte visible, con sus mismos filtros.
-  // El tipo es el del reporte: stock | movimientos | garantias |
-  // tecnicos-inventario | consumo.
+  // CU-93 · Exportando reporte a PDF
   @Get('exportar/:tipo/pdf')
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   async exportarPdf(
@@ -66,7 +74,7 @@ export class ReportesController {
     res.end(archivo);
   }
 
-  //CU-85
+  // CU-85 · Generando reporte de stock actual
   @Get('stock')
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   getStock(
@@ -85,7 +93,7 @@ export class ReportesController {
     );
   }
 
-  //CU-86
+  // CU-86 · Generando reporte de movimientos de inventario
   @Get('movimientos')
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   getMovimientos(
@@ -112,7 +120,7 @@ export class ReportesController {
     );
   }
 
-  //CU-88
+  // CU-88 · Generando reporte de garantías
   @Get('garantias')
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   getGarantias(
@@ -131,7 +139,7 @@ export class ReportesController {
     );
   }
 
-  //CU-89
+  // CU-89 · Generando reporte de inventario actual de técnicos
   @Get('tecnicos/inventario')
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   getInventarioTecnicos(
@@ -148,7 +156,7 @@ export class ReportesController {
     );
   }
 
-  //CU-91
+  // CU-91 · Generando reporte de consumo de consumibles
   @Get('consumo')
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   getConsumo(
@@ -169,8 +177,7 @@ export class ReportesController {
     );
   }
 
-  // CU-87: reporte de equipos instalados por cliente (RUT, nombre o NS).
-  // La E1 (sin resultados) la muestra el front con la lista vacía.
+  // CU-87 · Generando reporte de equipos instalados por cliente
   @Get('equipos-instalados')
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   getEquiposInstalados(
@@ -192,7 +199,7 @@ export class ReportesController {
     );
   }
 
-  // CU-90: reporte de productividad de técnicos (rango máximo 90 días, E1).
+  // CU-90 · Generando reporte de productividad de técnicos
   @Get('tecnicos/productividad')
   @Roles('ADMIN', 'SUPERUSUARIO')
   getTecnicosProductividad(
@@ -215,7 +222,7 @@ export class ReportesController {
     );
   }
 
-  // CU-92: exportación a Excel (.xlsx) del reporte indicado en ?tipo=.
+  // CU-92 · Exportando reporte a Excel
   @Get('exportar/excel')
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   async exportarExcel(
@@ -263,7 +270,7 @@ export class ReportesController {
     );
   }
 
-  // CU-92: misma exportación a Excel, con el tipo de reporte en la ruta.
+  // CU-92 · Exportando reporte a Excel
   @Get(':tipo/exportar/excel')
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   async exportarExcelPorTipo(
@@ -306,7 +313,7 @@ export class ReportesController {
     );
   }
 
-  // CU-92: arma los filtros, genera el .xlsx y lo devuelve como descarga.
+  // Apoyo de CU-92
   private async handleExportExcel(
     tipo: string,
     query: RawExportQuery,
@@ -347,8 +354,7 @@ export class ReportesController {
     res.end(result.buffer);
   }
 
-  // Los filtros llegan igual que en el reporte visible; los identificadores se
-  // validan con la misma regla y el resto viaja como texto.
+  // Apoyo de CU-93
   private filtrosDeQuery(query: Record<string, string>) {
     const numericos = [
       'id_empresa',
@@ -366,6 +372,7 @@ export class ReportesController {
     return filtros;
   }
 
+  // Apoyo de CU-85, CU-86, CU-87, CU-88, CU-89, CU-90, CU-91, CU-92, CU-93
   private parseOptionalId(
     value: string | undefined,
     label: string,

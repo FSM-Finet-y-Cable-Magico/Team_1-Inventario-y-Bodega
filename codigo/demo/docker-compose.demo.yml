@@ -1,0 +1,36 @@
+# Entorno local de demostración, separado del entorno de desarrollo.
+# Uso: codigo/demo/levantar-demo.sh (o, desde codigo/:
+#   docker compose -p inventario-demo -f docker-compose.yml -f demo/docker-compose.demo.yml up -d --build)
+# App: http://localhost:8090 · Simulador de G3/G8: http://localhost:8091 · PostgreSQL: localhost:15433
+# Todas las API keys de este archivo son de desarrollo local; no son las de producción.
+services:
+  db:
+    container_name: inventario-demo-db
+    ports:
+      - "127.0.0.1:15433:5432"
+  backend:
+    container_name: inventario-demo-backend
+    environment:
+      INTEGRACION_API_KEYS: '[{"key":"g3-dev-key","grupo":"G3","empresas":[1,2]},{"key":"g8-dev-key","grupo":"G8","empresas":[1,2]}]'
+      G3_INTEGRACION_URL: http://simulador:3100/g3
+      G3_INTEGRACION_API_KEY: g1-a-g3-dev-key
+      G3_TIMEOUT_MS: "2500"
+  frontend:
+    container_name: inventario-demo-frontend
+  nginx:
+    container_name: inventario-demo-nginx
+    ports: !override
+      - "8090:80"
+  simulador:
+    build: ./demo/simulador-externo
+    container_name: inventario-demo-simulador
+    restart: unless-stopped
+    environment:
+      BACKEND_URL: http://backend:3003/api
+      KEY_G3_A_G1: g3-dev-key
+      KEY_G8_A_G1: g8-dev-key
+      KEY_G1_A_G3: g1-a-g3-dev-key
+    ports:
+      - "8091:3100"
+    depends_on:
+      - backend

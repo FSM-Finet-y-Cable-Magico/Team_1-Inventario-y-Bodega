@@ -19,3 +19,6 @@ script-actualizacion-bdd.txt
 # Diagramas de secuencia (presentación y archivos de trabajo)
 diagramas/diagramas-secuencia presentacion/
 diagramas/diagramas-secuencia/Auditoria_Diagramas_Secuencia.docx
+
+# Estado local de la base de demostración (lo genera codigo/demo/guardar-estado-demo.sh)
+codigo/demo/*.dump

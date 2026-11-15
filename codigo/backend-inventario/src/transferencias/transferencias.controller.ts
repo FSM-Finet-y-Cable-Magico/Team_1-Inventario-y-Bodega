@@ -15,23 +15,31 @@ import { CreateTransferenciaDto } from './dto/create-transferencia.dto';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 
+// Transferencias · TransferenciasController (controlador)
+// CU-20 · Registrando solicitud de transferencia inter-empresa
+// CU-21 · Aprobando transferencia inter-empresa
+// CU-22 · Rechazando transferencia inter-empresa
+// CU-23 · Consultando transferencias inter-empresa
 @Controller('transferencias')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class TransferenciasController {
   constructor(private readonly transferenciasService: TransferenciasService) {}
 
+  // CU-20 · Registrando solicitud de transferencia inter-empresa
   @Post()
   @Roles('ADMIN', 'SUPERUSUARIO')
   registrar(@Body() dto: CreateTransferenciaDto, @Req() req) {
     return this.transferenciasService.registrarTransferencia(dto, req.user);
   }
 
+  // CU-21 · Aprobando transferencia inter-empresa
   @Patch(':id/aprobar')
   @Roles('SUPERUSUARIO')
   aprobar(@Param('id') id: string, @Req() req) {
     return this.transferenciasService.aprobarTransferencia(+id, req.user);
   }
 
+  // CU-22 · Rechazando transferencia inter-empresa
   @Patch(':id/rechazar')
   @Roles('SUPERUSUARIO')
   rechazar(
@@ -46,15 +54,14 @@ export class TransferenciasController {
     );
   }
 
-  // CU-21: detalle completo de una transferencia (empresas, bodegas,
-  // unidades con número de serie y tipo, fecha, motivo y solicitante)
+  // CU-21 · Aprobando transferencia inter-empresa
   @Get(':id')
   @Roles('ADMIN', 'SUPERUSUARIO')
   consultarDetalle(@Param('id') id: string, @Req() req) {
     return this.transferenciasService.consultarDetalle(+id, req.user);
   }
 
-  // CU-23: filtros por estado, rango de fechas o empresa
+  // CU-23 · Consultando transferencias inter-empresa
   @Get()
   @Roles('ADMIN', 'SUPERUSUARIO')
   consultar(

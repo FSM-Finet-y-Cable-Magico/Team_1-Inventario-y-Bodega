@@ -7,8 +7,6 @@ import {
 import type { ActorJwt } from '../prestamos/prestamos.service';
 import { UnitsService } from '../inventario/units.service';
 
-// CU-94: tipos de alerta tal como los nombra el caso de uso (el front los
-// muestra en negrita). Se devuelven en este mismo orden: A, B, C, D.
 export const TIPO_STOCK_BAJO_UMBRAL = 'Stock bajo umbral';
 export const TIPO_GARANTIA_CON_DEFECTO = 'Garantía con defecto';
 export const TIPO_PRESTAMO_VENCIDO = 'Préstamo vencido';
@@ -27,6 +25,8 @@ export interface AlertaActiva {
   fecha_hora: Date | string;
 }
 
+// Alertas · AlertasService (servicio)
+// CU-94 · Consultando alertas activas en el dashboard
 @Injectable()
 export class AlertasService {
   constructor(
@@ -35,10 +35,7 @@ export class AlertasService {
     private readonly unitsService: UnitsService,
   ) {}
 
-  // CU-94: alertas activas calculadas al vuelo en cada navegación al dashboard
-  // (sin persistencia; guardar notificaciones es CU-96). Cada tipo reutiliza la
-  // consulta de su CU de origen para que las cifras coincidan con esas pantallas.
-  // Aislamiento manual: el Superusuario ve ambas empresas; el resto, solo la suya.
+  // CU-94 · Consultando alertas activas en el dashboard
   async listarAlertasActivas(actor: ActorJwt): Promise<AlertaActiva[]> {
     const esSuperusuario = actor.roles?.includes('SUPERUSUARIO') === true;
     const empresas = esSuperusuario
@@ -52,7 +49,6 @@ export class AlertasService {
     });
 
     // CU-77: equipos 'En revisión' con su fecha de ingreso y días transcurridos
-    // (sirve para B y D, con el mismo aislamiento por empresa)
     const enRevision = await this.unitsService.listarEnRevision(actor);
 
     return [
@@ -63,7 +59,7 @@ export class AlertasService {
     ];
   }
 
-  // CU-94 (A): stock activo de un tipo en una bodega menor al umbral (regla CU-46)
+  // CU-94 · Consultando alertas activas en el dashboard
   private async alertasStockBajoUmbral(
     empresas: { id: number; nombre: string }[],
     ahora: Date,
@@ -87,8 +83,7 @@ export class AlertasService {
     return alertas;
   }
 
-  // CU-94 (B): equipo en revisión con garantía vigente (CU-38/39: la fecha de
-  // hoy es anterior o igual al vencimiento). Fecha = cambio a 'En revisión'.
+  // CU-94 · Consultando alertas activas en el dashboard
   private alertasGarantiaConDefecto(
     enRevision: Awaited<ReturnType<UnitsService['listarEnRevision']>>,
     hoy: string,
@@ -112,9 +107,7 @@ export class AlertasService {
       }));
   }
 
-  // CU-94 (C): préstamo externo activo que superó su fecha estimada de retorno.
-  // Reutiliza la tabla de CU-83 (solo PE-XXXXX, días restantes server-side).
-  // Fecha = fecha de vencimiento (fecha estimada de retorno, a las 00:00:00).
+  // CU-94 · Consultando alertas activas en el dashboard
   private async alertasPrestamoVencido(
     actor: ActorJwt,
   ): Promise<AlertaActiva[]> {
@@ -145,9 +138,7 @@ export class AlertasService {
       );
   }
 
-  // CU-94 (D): equipo en revisión por más de 30 días sin resultado registrado.
-  // Registrar el resultado (CU-72/74/75) saca la unidad de 'En revisión', así
-  // que seguir en ese estado equivale a no tener resultado.
+  // CU-94 · Consultando alertas activas en el dashboard
   private alertasRevisionProlongada(
     enRevision: Awaited<ReturnType<UnitsService['listarEnRevision']>>,
   ): AlertaActiva[] {
@@ -168,7 +159,7 @@ export class AlertasService {
       }));
   }
 
-  // Más recientes primero dentro de cada tipo
+  // Apoyo de CU-94
   private compararFechaDesc(
     a: { fecha_ingreso_revision: Date | null },
     b: { fecha_ingreso_revision: Date | null },
@@ -179,14 +170,14 @@ export class AlertasService {
     );
   }
 
-  // CU-94: descripción de máximo 100 caracteres
+  // Apoyo de CU-94
   private recortar(texto: string): string {
     return texto.length > MAX_DESCRIPCION
       ? `${texto.slice(0, MAX_DESCRIPCION - 3)}...`
       : texto;
   }
 
-  // 'YYYY-MM-DD' → 'DD/MM/YYYY'
+  // Apoyo de CU-94
   private formatearFecha(fechaIso: string): string {
     const [anio, mes, dia] = fechaIso.slice(0, 10).split('-');
     return `${dia}/${mes}/${anio}`;

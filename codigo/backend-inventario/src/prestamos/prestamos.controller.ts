@@ -16,19 +16,24 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
+// Préstamos externos · PrestamosController (controlador)
+// CU-81 · Registrando préstamo externo de equipos
+// CU-82 · Registrando retorno de préstamo externo
+// CU-83 · Consultando tabla de préstamos externos activos
+// CU-84 · Validando trazabilidad de devolución de préstamo externo
 @Controller('prestamos')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class PrestamosController {
   constructor(private readonly prestamosService: PrestamosService) {}
 
-  // CU-81: registrar la salida temporal de equipos a un externo
+  // CU-81 · Registrando préstamo externo de equipos
   @Post()
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   registrar(@Body() dto: CreatePrestamoDto, @CurrentUser() actor: ActorJwt) {
     return this.prestamosService.registrar(dto, actor);
   }
 
-  // CU-83: tabla de préstamos, filtrable por estado y (solo superusuario) empresa
+  // CU-83 · Consultando tabla de préstamos externos activos
   @Get()
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   listar(
@@ -42,13 +47,15 @@ export class PrestamosController {
     );
   }
 
+  // CU-83 · Consultando tabla de préstamos externos activos
   @Get(':id')
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   detalle(@Param('id') id: string, @CurrentUser() actor: ActorJwt) {
     return this.prestamosService.obtenerDetalle(+id, actor);
   }
 
-  // CU-82: retorno total o parcial del préstamo
+  // CU-82 · Registrando retorno de préstamo externo
+  // CU-84 · Validando trazabilidad de devolución de préstamo externo
   @Post(':id/retorno')
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   registrarRetorno(
