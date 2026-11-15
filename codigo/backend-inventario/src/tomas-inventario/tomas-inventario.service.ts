@@ -53,12 +53,10 @@ export interface ActorToma {
   roles?: string[];
 }
 
-// ======================================================================
 // Toma de inventario · TomasInventarioService (servicio)
 // CU-97 · Registrando toma de inventario físico y ajuste de diferencias
 // CU-99 · Generando acta de toma de inventario en PDF
 // Entidades: Bodega, StockConsumible, TipoEquipo, UnidadEquipo, MovimientoInventario, Usuario, TomaInventarioDetalle, TomaInventario
-// ======================================================================
 @Injectable()
 export class TomasInventarioService {
   constructor(
@@ -149,8 +147,7 @@ export class TomasInventarioService {
       const stock = await manager.find(StockConsumible, {
         where: { id_bodega: idBodega },
       });
-      // Consumibles activos del catálogo sin fila de stock: esperado 0, para
-      // poder registrar lo que aparezca al contar.
+      // Consumibles activos del catálogo sin fila de stock: esperado 0
       const catalogo = await manager.find(TipoEquipo, {
         where: [bodega.id_empresa, IsNull()].map((id_empresa) => ({
           id_empresa,
@@ -365,8 +362,7 @@ export class TomasInventarioService {
     );
     for (const serie of series) {
       if (conocidas.has(serie.toUpperCase())) continue;
-      // CU-97 E2: serie que no estaba en esta bodega. Una serie de otra empresa
-      // se informa igual que una inexistente, para no revelar datos ajenos.
+      // CU-97 E2: serie que no estaba en esta bodega
       const unidad = await manager
         .createQueryBuilder(UnidadEquipo, 'u')
         .where('UPPER(u.serialNumber) = :serie', {
@@ -455,8 +451,7 @@ export class TomasInventarioService {
           await manager.save(d);
           if (diferencia === 0) continue;
 
-          // Se aplica la diferencia sobre el stock actual para no pisar los
-          // movimientos registrados mientras se contaba.
+          // Se aplica la diferencia sobre el stock actual para no pisar los movimientos registrados
           const stock = stocks.get(d.id_detalle);
           const nuevo =
             (stock ? Number(stock.cantidad_disponible) : 0) + diferencia;
@@ -577,7 +572,7 @@ export class TomasInventarioService {
     actor: ActorToma,
   ): Promise<{ archivo: Buffer; nombre: string }> {
     const toma = await this.obtener(id, actor);
-    // CU-99 Excepción 1: solo una toma confirmada tiene un resultado definitivo
+    // CU-99 E1: solo una toma confirmada tiene un resultado definitivo
     if (toma.estado !== TOMA_CONFIRMADA) {
       throw new ConflictException(
         'Solo se puede generar el acta de una toma confirmada.',

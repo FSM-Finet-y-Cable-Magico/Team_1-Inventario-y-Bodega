@@ -19,10 +19,8 @@ interface Actor {
   roles?: string[];
 }
 
-// ======================================================================
 // Integraciones con G3 y G8 · CierresTrabajoController (controlador)
 // CU-70 · Seleccionando tipo de trabajo codificado para cierre
-// ======================================================================
 @Controller()
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class CierresTrabajoController {

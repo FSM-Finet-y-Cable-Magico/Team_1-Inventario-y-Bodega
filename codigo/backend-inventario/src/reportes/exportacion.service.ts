@@ -117,11 +117,9 @@ const ETIQUETAS_FILTRO: Record<string, string> = {
   periodo: 'Período',
 };
 
-// ======================================================================
 // Reportes · ExportacionService (servicio)
 // CU-93 · Exportando reporte a PDF
 // Entidades: Usuario
-// ======================================================================
 @Injectable()
 export class ExportacionService {
   private readonly logger = new Logger(ExportacionService.name);
@@ -152,8 +150,7 @@ export class ExportacionService {
     }
 
     const fecha = new Date();
-    // Excepción 1: el trabajo sigue en curso, pero el actor recibe el error a
-    // los 15 segundos en vez de esperar indefinidamente.
+    // E1: el trabajo sigue en curso
     const filas = await this.conTimeout(
       this.obtenerFilas(tipo, filtros, actor),
       tipo,
@@ -252,7 +249,6 @@ export class ExportacionService {
     }
 
     // Inventario de técnicos: el reporte viene anidado (un bloque por técnico)
-    // y la tabla del PDF necesita una fila por ítem.
     const tecnicos = await this.reportesService.getInventarioTecnicosReport(
       filtros,
       actor,

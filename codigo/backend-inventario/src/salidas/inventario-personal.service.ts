@@ -15,12 +15,10 @@ import { EMPRESAS } from '../companies/companies.service';
 export const SALDO_INSUFICIENTE =
   'Saldo insuficiente. No es posible registrar esta operación.';
 
-// ======================================================================
 // Salidas a técnico · InventarioPersonalService (servicio)
 // CU-58 · Manteniendo inventario personal del técnico
 // CU-68 · Verificando saldo de consumibles en cierre
 // Entidades: InventarioPersonal, UnidadEquipo, TipoEquipo, Usuario
-// ======================================================================
 @Injectable()
 export class InventarioPersonalService {
   constructor(
@@ -185,7 +183,7 @@ export class InventarioPersonalService {
       ['SUPERUSUARIO', 'ADMIN', 'ADMIN_BODEGA'].includes(r),
     );
 
-    // Un técnico solo puede ver su propio inventario; los roles de gestión, el de su empresa.
+    // Un técnico solo puede ver su propio inventario; los roles de gestión, el de su empresa
     if (!esSupervisor) {
       if (!esPropio) {
         throw new ForbiddenException(

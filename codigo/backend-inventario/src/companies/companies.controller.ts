@@ -4,11 +4,9 @@ import { CompaniesService } from './companies.service';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 
-// ======================================================================
 // Empresas · CompaniesController (controlador)
 // CU-15 · Consultando dashboard consolidado de ambas empresas
 // CU-16 · Consultando datos aislados por empresa
-// ======================================================================
 @Controller('empresas')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class CompaniesController {

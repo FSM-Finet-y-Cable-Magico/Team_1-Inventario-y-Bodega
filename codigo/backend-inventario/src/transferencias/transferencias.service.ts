@@ -24,14 +24,12 @@ const TIPOS_TRANSFERENCIA = [
   ESTADO_RECHAZADA,
 ];
 
-// ======================================================================
 // Transferencias · TransferenciasService (servicio)
 // CU-20 · Registrando solicitud de transferencia inter-empresa
 // CU-21 · Aprobando transferencia inter-empresa
 // CU-22 · Rechazando transferencia inter-empresa
 // CU-23 · Consultando transferencias inter-empresa
 // Entidades: Transferencia, MovimientoInventario, UnidadEquipo, Bodega, Usuario
-// ======================================================================
 @Injectable()
 export class TransferenciasService {
   constructor(
@@ -167,7 +165,7 @@ export class TransferenciasService {
       );
     }
 
-    // CU-21 Excepción 1: verificar que ninguna unidad cambió de estado desde que se registró la solicitud
+    // CU-21 E1: verificar que ninguna unidad cambió de estado desde que se registró la solicitud
     const idsUnidades = movimientos.map((m) => m.id_unidad);
     const unidades = await this.unidadRepository.findBy({
       id_unidad: In(idsUnidades),
@@ -237,14 +235,14 @@ export class TransferenciasService {
     observaciones: string,
     actor: any,
   ): Promise<any> {
-    // CU-22 Excepción 1: motivo de rechazo obligatorio
+    // CU-22 E1: motivo de rechazo obligatorio
     if (!observaciones || observaciones.trim() === '') {
       throw new BadRequestException(
         'Debe ingresar un motivo de rechazo para continuar.',
       );
     }
 
-    // CU-22 Excepción 2: motivo no puede superar 200 caracteres
+    // CU-22 E2: motivo no puede superar 200 caracteres
     if (observaciones.trim().length > 200) {
       throw new BadRequestException(
         'El motivo de rechazo no puede superar los 200 caracteres.',

@@ -6,10 +6,8 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
-// ======================================================================
 // Alertas · AlertasController (controlador)
 // CU-94 · Consultando alertas activas en el dashboard
-// ======================================================================
 @Controller('alertas')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class AlertasController {

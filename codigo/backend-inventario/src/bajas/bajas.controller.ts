@@ -15,10 +15,8 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
-// ======================================================================
 // Bajas · BajasController (controlador)
 // CU-78 · Registrando baja definitiva de equipo
-// ======================================================================
 @Controller('bajas')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class BajasController {

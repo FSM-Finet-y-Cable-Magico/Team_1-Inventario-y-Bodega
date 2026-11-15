@@ -16,7 +16,6 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 import { EditarDatosUnidadDto } from './dto/editar-datos-unidad.dto';
 
-// ======================================================================
 // Inventario · UnitsController (controlador)
 // CU-31 · Distinguiendo equipo individualizable de consumible
 // CU-32 · Registrando unidad de equipo individualizable
@@ -34,13 +33,13 @@ import { EditarDatosUnidadDto } from './dto/editar-datos-unidad.dto';
 // CU-76 · Reingresando equipo desde reparación externa
 // CU-77 · Consultando listado de equipos en revisión
 // CU-95 · Mostrando aviso de garantía vigente al cambiar estado
-// ======================================================================
+// Listado de unidades (base de CU-33 y CU-35)
 @Controller('unidades')
 @UseGuards(AuthGuard('jwt'), CompanyIsolationGuard, RolesGuard)
 export class UnitsController {
   constructor(private readonly unitsService: UnitsService) {}
 
-  // CU-33 · Consultando ficha de detalle de unidad de equipo
+  // Listado de unidades (base de CU-33 y CU-35)
   @Get()
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
   async listarUnidades(
@@ -99,8 +98,7 @@ export class UnitsController {
     @Query('id_bodega') idBodega: string,
     @CurrentUser() actor: any,
   ) {
-    // CU-59: validación en vivo para el formulario de salida de bodega.
-    // La validación de verdad la re-ejecuta SalidasService en la transacción.
+    // CU-59: validación en vivo para el formulario de salida de bodega
     return this.unitsService.verificarSerie(
       numeroSerie,
       actor.id_empresa,

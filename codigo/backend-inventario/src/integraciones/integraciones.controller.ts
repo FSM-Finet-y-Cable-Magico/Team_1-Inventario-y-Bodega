@@ -11,7 +11,6 @@ import {
 import { IntegracionesService } from './integraciones.service';
 import { ApiKeyGuard, IntegracionContexto } from './guards/api-key.guard';
 
-// ======================================================================
 // Integraciones con G3 y G8 · IntegracionesController (controlador)
 // CU-64 · Ejecutando acciones atómicas del cierre de instalación
 // CU-68 · Verificando saldo de consumibles en cierre
@@ -22,7 +21,6 @@ import { ApiKeyGuard, IntegracionContexto } from './guards/api-key.guard';
 // Integración G3: unidad por número de serie
 // Integración G8: recepción de equipos retirados (baja por morosidad)
 // Integración G8: activación de servicio
-// ======================================================================
 @Controller('integraciones')
 @UseGuards(ApiKeyGuard)
 export class IntegracionesController {

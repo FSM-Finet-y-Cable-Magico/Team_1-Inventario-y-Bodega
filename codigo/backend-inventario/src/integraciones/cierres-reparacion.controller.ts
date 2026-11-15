@@ -5,10 +5,8 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
-// ======================================================================
 // Integraciones con G3 y G8 · CierresReparacionController (controlador)
 // CU-69 · Registrando cierre de trabajo de reparación
-// ======================================================================
 @Controller('cierres-reparacion')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class CierresReparacionController {

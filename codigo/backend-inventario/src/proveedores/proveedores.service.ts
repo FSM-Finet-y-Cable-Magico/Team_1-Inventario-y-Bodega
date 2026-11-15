@@ -16,14 +16,12 @@ import { OrdenIngreso } from '../ordenes-ingreso/entities/orden-ingreso.entity';
 // CU-98: estados de orden_ingreso que todavía esperan mercadería del proveedor.
 const ESTADOS_ORDEN_ABIERTA = ['Pendiente de recepción', 'Recepción parcial'];
 
-// ======================================================================
 // Proveedores · ProveedoresService (servicio)
 // CU-49 · Creando proveedor
 // CU-50 · Editando proveedor
 // CU-51 · Consultando listado de proveedores
 // CU-98 · Desactivando proveedor
 // Entidades: Proveedor, ProveedorTipoEquipo, TipoEquipo, OrdenIngreso
-// ======================================================================
 @Injectable()
 export class ProveedoresService {
   constructor(
@@ -66,7 +64,7 @@ export class ProveedoresService {
 
   // CU-49 · Creando proveedor
   async create(dto: CreateProveedorDto, actorId: number): Promise<Proveedor> {
-    // CU-49 Excepción 1: validar DV del RUT
+    // CU-49 E1: validar DV del RUT
     if (!this.validarRut(dto.rut)) {
       throw new BadRequestException(
         'El dígito verificador del RUT no es válido.',
@@ -76,7 +74,7 @@ export class ProveedoresService {
     // normalizar DV a mayúscula
     const rutNormalizado = dto.rut.replace(/-[kK]$/, '-K');
 
-    // CU-49 Excepción 2: RUT duplicado
+    // CU-49 E2: RUT duplicado
     const existing = await this.proveedorRepository.findOne({
       where: { rut: rutNormalizado },
     });
@@ -212,11 +210,11 @@ export class ProveedoresService {
     if (!proveedor) {
       throw new NotFoundException('Proveedor no encontrado.');
     }
-    // CU-98 Excepción 1: ya estaba inactivo
+    // CU-98 E1: ya estaba inactivo
     if (!proveedor.activa) {
       throw new ConflictException('El proveedor ya está inactivo.');
     }
-    // CU-98 Excepción 2: tiene órdenes de ingreso esperando recepción
+    // CU-98 E2: tiene órdenes de ingreso esperando recepción
     const pendientes = await this.ordenIngresoRepository.count({
       where: { id_proveedor: id, estado: In(ESTADOS_ORDEN_ABIERTA) },
     });

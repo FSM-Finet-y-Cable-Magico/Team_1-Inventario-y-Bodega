@@ -1,10 +1,8 @@
 import { Controller, Get } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 
-// ======================================================================
 // Estado del servicio · HealthController (controlador)
 // Estado del servicio (no es un CU)
-// ======================================================================
 @Controller('health')
 export class HealthController {
   //datasource global para que las queries sean directas, porsiacaso
@@ -13,7 +11,7 @@ export class HealthController {
   @Get('db')
   async checkDb() {
     try {
-      //listar las tablas de usuario o ver si funciona el schema publico, nunca cache si avisaron que separaron los schemas por empresa
+      // listar las tablas de usuario o ver si funciona el schema publico
       const tables = await this.dataSource.query(
         "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;",
       );

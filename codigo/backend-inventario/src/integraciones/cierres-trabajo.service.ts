@@ -5,12 +5,10 @@ import { BorradorCierre } from './entities/borrador-cierre.entity';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { TIPOS_TRABAJO, buscarTipoTrabajo } from './tipos-trabajo';
 
-// ======================================================================
 // Integraciones con G3 y G8 · CierresTrabajoService (servicio)
 // CU-69 · Registrando cierre de trabajo de reparación
 // CU-70 · Seleccionando tipo de trabajo codificado para cierre
 // Entidades: BorradorCierre
-// ======================================================================
 @Injectable()
 export class CierresTrabajoService {
   constructor(

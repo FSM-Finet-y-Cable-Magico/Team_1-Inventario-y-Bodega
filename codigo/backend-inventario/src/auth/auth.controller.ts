@@ -6,7 +6,6 @@ import { CambiarPasswordDto } from './dto/cambiar-password.dto';
 import { RolesGuard } from './guards/roles.guard';
 import { Roles } from './decorators/roles.decorator';
 
-// ======================================================================
 // Autenticación · AuthController (controlador)
 // CU-01 · Iniciando sesión en el sistema
 // CU-10 · Restableciendo contraseña de usuario
@@ -14,7 +13,6 @@ import { Roles } from './decorators/roles.decorator';
 // CU-12 · Cerrando sesión del sistema
 // CU-13 · Cargando contexto de empresa Finet al iniciar sesión
 // CU-14 · Cargando contexto de empresa Cable Mágico al iniciar sesión
-// ======================================================================
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}

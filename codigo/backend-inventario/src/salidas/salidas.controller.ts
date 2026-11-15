@@ -17,13 +17,11 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 import { CrearSalidaDto } from './dto/crear-salida.dto';
 
-// ======================================================================
 // Salidas a técnico · SalidasController (controlador)
 // CU-57 · Registrando salida de equipos de bodega a técnico
 // CU-58 · Manteniendo inventario personal del técnico
 // CU-60 · Registrando salida de consumibles de bodega a técnico
 // CU-61 · Consultando vista móvil de trabajos e inventario del técnico
-// ======================================================================
 @Controller('salidas')
 @UseGuards(AuthGuard('jwt'), CompanyIsolationGuard, RolesGuard)
 export class SalidasController {
@@ -75,8 +73,7 @@ export class TecnicosController {
     @Query('empresa') empresa: string,
     @CurrentUser() actor: any,
   ) {
-    // El superusuario puede consultar técnicos de otra empresa (mismo patrón
-    // manual del resto de módulos); los demás, solo de su contexto.
+    // El superusuario puede consultar técnicos de otra empresa; los demás, solo de su contexto
     const roles: string[] = actor.roles ?? [];
     const idTecnico = parseInt(id, 10);
     const idEmpresa =

@@ -28,14 +28,12 @@ function aFechaOpcional(valor?: string): string | undefined {
   return Number.isNaN(d.getTime()) ? undefined : valor;
 }
 
-// ======================================================================
 // Órdenes de ingreso · OrdenesIngresoController (controlador)
 // CU-52 · Registrando orden de ingreso desde proveedor
 // CU-53 · Consultando órdenes de ingreso
 // CU-54 · Registrando recepción total o parcial de orden de ingreso
 // CU-55 · Ingresando números de serie en recepción de equipos
 // CU-56 · Registrando fecha de adquisición real en recepción
-// ======================================================================
 @Controller('ordenes-ingreso')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class OrdenesIngresoController {
@@ -70,8 +68,7 @@ export class OrdenesIngresoController {
       id_empresa: req.user.id_empresa,
       esSuperusuario: (req.user.roles ?? []).includes('SUPERUSUARIO'),
     };
-    // Los query params llegan como texto: el ValidationPipe global no transforma.
-    // Un valor no numérico se descarta en vez de llegar como NaN a la consulta.
+    // Los query params llegan como texto: el ValidationPipe global no transforma
     return this.ordenesIngresoService.findAll(actor, {
       buscar,
       estado,

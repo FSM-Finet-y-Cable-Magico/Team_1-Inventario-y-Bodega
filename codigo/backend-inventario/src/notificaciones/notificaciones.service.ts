@@ -26,11 +26,9 @@ export interface NotificacionApi {
   fecha_hora: Date;
 }
 
-// ======================================================================
 // Notificaciones · NotificacionesService (servicio)
 // CU-96 · Recibiendo notificaciones visuales en la campana del sistema
 // Entidades: Notificacion
-// ======================================================================
 @Injectable()
 export class NotificacionesService {
   constructor(
@@ -100,8 +98,7 @@ export class NotificacionesService {
     const pendientes = await this.notificacionRepository.find({ where });
     if (pendientes.length === 0) return { success: true, cantidad: 0 };
 
-    // Un solo UPDATE con el mismo filtro (no por ids: evita una segunda
-    // condición de carrera entre el find() de arriba y este statement)
+    // Un solo UPDATE con el mismo filtro
     const ahora = new Date();
     const query = this.notificacionRepository
       .createQueryBuilder()
@@ -174,9 +171,7 @@ export class NotificacionesService {
       }
     }
 
-    // (A) Préstamo vencido, reutilizando la tabla de CU-83. Se evalúa con un
-    // actor "vista de sistema" (rol SUPERUSUARIO interno) para traer los
-    // préstamos de ambas empresas en una sola pasada; nunca se expone al cliente.
+    // (A) Préstamo vencido, reutilizando la tabla de CU-83
     const actorSistema: ActorJwt = {
       id_usuario: 0,
       id_empresa: 0,
@@ -217,8 +212,7 @@ export class NotificacionesService {
   private async purgarHistorialVencido(): Promise<void> {
     const limite = new Date();
     limite.setDate(limite.getDate() - DIAS_HISTORIAL);
-    // Es limpieza: si falla (por ejemplo, sin permiso DELETE en la BD
-    // global) no debe impedir que la campana cargue.
+    // Es limpieza: si falla
     try {
       await this.notificacionRepository.delete({
         leida: true,

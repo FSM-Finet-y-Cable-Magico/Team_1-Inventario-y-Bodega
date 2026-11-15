@@ -18,7 +18,6 @@ import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 
-// ======================================================================
 // Bodegas · BodegasController (controlador)
 // CU-41 · Creando bodega
 // CU-42 · Editando bodega
@@ -26,7 +25,6 @@ import { Roles } from '../auth/decorators/roles.decorator';
 // CU-44 · Consultando listado de bodegas
 // CU-45 · Consultando stock de bodega
 // CU-46 · Configurando umbral de stock mínimo
-// ======================================================================
 @Controller('bodegas')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class BodegasController {

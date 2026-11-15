@@ -105,7 +105,6 @@ function extraerCategoriaFalla(payload: any): string | null {
   return null;
 }
 
-// ======================================================================
 // Integraciones con G3 y G8 · IntegracionesService (servicio)
 // CU-64 · Ejecutando acciones atómicas del cierre de instalación
 // CU-68 · Verificando saldo de consumibles en cierre
@@ -117,7 +116,6 @@ function extraerCategoriaFalla(payload: any): string | null {
 // Integración G8: recepción de equipos retirados (baja por morosidad)
 // Integración G8: activación de servicio
 // Entidades: IntegracionCierre, IntegracionActivacion, AsignacionEquipoServicio, UnidadEquipo, HistorialEstado, TipoEquipo, StockConsumible, CierreReparacion, Usuario
-// ======================================================================
 @Injectable()
 export class IntegracionesService {
   constructor(
@@ -298,7 +296,7 @@ export class IntegracionesService {
                             (total, s) => total + Number(s.cantidad_disponible ?? 0),
                             0,
                         );
-                    // El modelo no reserva consumibles (G8 tampoco lo hace).
+                    // El modelo no reserva consumibles (G8 tampoco lo hace)
                     reservado = 0;
                 } else {
                     const delTipo = unidades.filter(
@@ -342,7 +340,7 @@ export class IntegracionesService {
       throw new NotFoundException('Número de serie no encontrado.');
     }
 
-    // Asignación activa (G8): la última creada para la unidad, si existe.
+    // Asignación activa (G8): la última creada para la unidad, si existe
     const asignacion = await this.asignacionRepository.findOne({
       where: { id_unidad: unidad.id_unidad, activa: true },
       order: { fechaInstalacion: 'DESC', id_asignacion: 'DESC' },
@@ -414,7 +412,7 @@ export class IntegracionesService {
       );
     }
 
-    // Acuerdo v1: id_contrato es obligatorio en el flujo de activación de G8.
+    // Acuerdo v1: id_contrato es obligatorio en el flujo de activación de G8
     const idContrato = this.enteroPositivo(payload.id_contrato);
     if (idContrato === null) {
       throw new BadRequestException(
@@ -466,8 +464,7 @@ export class IntegracionesService {
     const equipos = this.extraerEquiposActivacion(payload);
     const series = equipos.map((e) => e.numero_serie);
 
-    // Idempotencia: mismo evento con los mismos datos → resultado original.
-    // Mismo event_id con otros datos → conflicto de idempotencia (409).
+    // Idempotencia: mismo evento con los mismos datos → resultado original
     const previa = await this.activacionRepository.findOne({
       where: { eventId },
     });
@@ -494,8 +491,7 @@ export class IntegracionesService {
 
     let cabecera: IntegracionActivacion | null;
     try {
-      // Si un cierre de la misma OT ya dejó un registro PENDIENTE_ACTIVACION,
-      // esta activación lo completa (no se crea una cabecera nueva).
+      // Si un cierre de la misma OT ya dejó un registro PENDIENTE_ACTIVACION
       cabecera = await queryRunner.manager.findOne(IntegracionActivacion, {
         where: {
           id_empresa: idEmpresa,
@@ -557,7 +553,7 @@ export class IntegracionesService {
         /* la transacción ya puede estar abortada */
       });
 
-      // Carrera de idempotencia: otra petición insertó el mismo event_id primero.
+      // Carrera de idempotencia: otra petición insertó el mismo event_id primero
       const codigo: string | undefined = err?.code;
       if (codigo === '23505') {
         const duplicado = await this.activacionRepository.findOne({
@@ -617,16 +613,16 @@ export class IntegracionesService {
     }
 
     const equipos = this.extraerEquipos(payload);
-    // CU-64 (C)/CU-68: consumibles declarados en el cierre.
+    // CU-64 (C)/CU-68: consumibles declarados en el cierre
     const materiales = this.extraerMateriales(payload);
-    // CU-64 (D): técnico del cierre (payload o inferido de las unidades).
+    // CU-64 (D): técnico del cierre (payload o inferido de las unidades)
     let idTecnico: number | null = this.enteroPositivo(payload.id_tecnico);
 
-    // CU-64 (B): datos de cliente/dirección que se persisten al instalar.
+    // CU-64 (B): datos de cliente/dirección que se persisten al instalar
     const datosInstalacion = this.extraerDatosInstalacion(payload);
     const tipoOt = typeof payload.tipo_ot === 'string' ? payload.tipo_ot : null;
     const fechaCompletada = this.parsearFecha(payload.fecha_completada) ?? new Date();
-    // Idempotencia: si la clave ya fue procesada, devolvemos el resultado original (2xx).
+    // Idempotencia: si la clave ya fue procesada, devolvemos el resultado original (2xx)
     const previo = await this.cierreRepository.findOne({
       where: { claveIdempotencia: clave },
     });
@@ -640,8 +636,7 @@ export class IntegracionesService {
 
     let cierreGuardado: IntegracionCierre;
     try {
-      // Se inserta primero el registro para reclamar la clave de forma atómica
-      // (UNIQUE): si otro proceso la insertó, caemos por la excepción de duplicado.
+      // Se inserta primero el registro para reclamar la clave de forma atómica (UNIQUE)
       cierreGuardado = await queryRunner.manager.save(IntegracionCierre, {
         claveIdempotencia: clave,
         id_ot: idOt,
@@ -655,8 +650,6 @@ export class IntegracionesService {
       const discrepancias: any[] = [];
 
       // CU-64 (D): identificador de servicio SRV-YYYY-XXXXX para instalaciones
-      // (secuencia por empresa/año; re-cierres de la misma OT conservan su SRV).
-      // Se genera antes de procesar equipos para dejarlo en las unidades instaladas.
       const datosInstalacionConSrv = { ...datosInstalacion, srv: null as string | null };
       if (tipoOt === 'INSTALACION') {
         datosInstalacionConSrv.srv = await this.obtenerSrv(
@@ -667,9 +660,7 @@ export class IntegracionesService {
         );
       }
 
-      // Acuerdo G3/G8 (BDD global): el técnico es el usuario compartido, por
-      // id_tecnico, rut_tecnico o usuario_tecnico. Si no existe, el cierre sigue sin técnico y queda
-      // la discrepancia, en vez de guardar un id que no apunta a nadie.
+      // Acuerdo G3/G8 (BDD global): el técnico es el usuario compartido, por id_tecnico
       const tecnico = await this.resolverTecnico(
         queryRunner.manager,
         idTecnico,
@@ -679,8 +670,7 @@ export class IntegracionesService {
       idTecnico = tecnico.id;
       if (tecnico.discrepancia) discrepancias.push(tecnico.discrepancia);
 
-      // Acuerdo G3: el diagnóstico del retiro para revisión es la categoria_falla
-      // del cierre; si no viene, 'Causa desconocida'.
+      // Acuerdo G3: el diagnóstico del retiro para revisión es la categoria_falla del cierre
       const categoriaFalla = extraerCategoriaFalla(payload);
 
       for (const item of equipos) {
@@ -703,8 +693,7 @@ export class IntegracionesService {
         }
       }
 
-      // Reemplazo en terreno: el equipo instalado en la misma OT hereda el servicio
-      // del equipo retirado, para que G8 siga viendo el servicio con su equipo.
+      // Reemplazo en terreno: el equipo instalado en la misma OT hereda el servicio del equipo
       await this.traspasarAsignacionReemplazo(
         queryRunner.manager,
         accionesAplicadas,
@@ -713,8 +702,7 @@ export class IntegracionesService {
         fechaCompletada,
       );
 
-      // CU-64 (C) + CU-68: descuento de los consumibles declarados del inventario
-      // personal. Saldo insuficiente = ajuste registrado, nunca rechazo del cierre.
+      // CU-64 (C) + CU-68: descuento de los consumibles declarados del inventario personal
       const resultadoMateriales = await this.procesarMateriales(
         queryRunner.manager,
         materiales,
@@ -724,9 +712,7 @@ export class IntegracionesService {
       discrepancias.push(...resultadoMateriales.discrepancias);
       accionesAplicadas.push(...resultadoMateriales.acciones);
 
-      // CU-69: cierre de trabajo de reparación. Registra falla, solución, resultado,
-      // equipos retirados/instalados y los consumibles ya descontados por CU-64/CU-68,
-      // dentro de esta misma transacción.
+      // CU-69: cierre de trabajo de reparación
       let reparacion: CierreReparacion | null = null;
       if (this.esCierreDeReparacion(payload)) {
         reparacion = await this.registrarCierreReparacion(
@@ -755,15 +741,12 @@ export class IntegracionesService {
         accionesAplicadas.length > 0 ? accionesAplicadas : null;
       await queryRunner.manager.save(IntegracionCierre, cierreGuardado);
 
-      // sc-158 (acuerdo G8): el cierre es el otro evento que completa la
-      // correlación por id_ot (activación→cierre y cierre→activación).
+      // El cierre es el otro evento que completa la correlación por id_ot
       await this.correlacionarActivacion(queryRunner.manager, cierreGuardado);
 
       await queryRunner.commitTransaction();
 
-      // CU-69: auditoría tras el commit (patrón del resto de los módulos). El actor es el
-      // técnico que cerró la OT; sin id_tecnico no hay a quién imputar el evento y la
-      // trazabilidad queda en integracion_cierre y cierre_reparacion.
+      // CU-69: auditoría tras el commit
       if (reparacion && Number.isInteger(reparacion.id_tecnico)) {
         await this.auditoriaService.create({
           id_usuario: reparacion.id_tecnico as number,
@@ -775,7 +758,7 @@ export class IntegracionesService {
             id_ot: idOt,
             id_empresa: idEmpresa,
             resultado: reparacion.resultado,
-            // CU-70: el tipo de trabajo codificado queda en la auditoría del cierre.
+            // CU-70: el tipo de trabajo codificado queda en la auditoría del cierre
             codigo_trabajo: reparacion.codigoTrabajo ?? null,
             equipos_retirados: reparacion.equiposRetirados ?? [],
             equipos_instalados: reparacion.equiposInstalados ?? [],
@@ -794,7 +777,7 @@ export class IntegracionesService {
         /* la transacción ya puede estar abortada */
       });
 
-      // Carrera de idempotencia: otra petición insertó la misma clave primero.
+      // Carrera de idempotencia: otra petición insertó la misma clave primero
       const codigo: string | undefined = err?.code;
       if (codigo === '23505') {
         const duplicado = await this.cierreRepository.findOne({
@@ -888,8 +871,7 @@ export class IntegracionesService {
       throw new BadRequestException('El request_id es demasiado largo.');
     }
 
-    // Por request_id se resuelve primero la OT (último cierre que lo trae) y luego
-    // se leen todos los cierres de esa OT, igual que en la búsqueda por id_ot.
+    // Por request_id se resuelve primero la OT (último cierre que lo trae)
     let otBuscada = idOt;
     if (requestId !== '') {
       const filas: { id_ot: number }[] = await this.dataSource.query(
@@ -1059,7 +1041,7 @@ export class IntegracionesService {
           `Cada equipo de ${item._campo} debe incluir un numero_serie (posición ${item._posicion}).`,
         );
       }
-      // CU-69: sin `accion` explícita, la acción la define el arreglo de origen.
+      // CU-69: sin `accion` explícita, la acción la define el arreglo de origen
       if (typeof item.accion !== 'string' || item.accion.trim() === '') {
         item.accion = ACCION_POR_CAMPO[item._campo];
       }
@@ -1118,8 +1100,7 @@ export class IntegracionesService {
       };
     }
 
-    // CU-64/CU-69: una serie asignada a otro técnico no puede usarse en este
-    // cierre; queda como discrepancia y la unidad no cambia de estado.
+    // CU-64/CU-69: una serie asignada a otro técnico no puede usarse en este cierre
     if (
       idTecnicoCierre !== null &&
       unidad.estado === 'Asignado a técnico' &&
@@ -1152,13 +1133,10 @@ export class IntegracionesService {
       unidad.ubicacionFisica = null;
     }
     if (regla.estado === 'En revisión') {
-      // Acuerdo G3: diagnóstico = categoria_falla del cierre; sin dato → fallback.
+      // Acuerdo G3: diagnóstico = categoria_falla del cierre; sin dato → fallback
       unidad.diagnosticoTecnico = categoriaFalla ?? DIAGNOSTICO_FALLBACK_G3;
     }
-    // Baja por morosidad (acuerdo G8/G3): un equipo que sale del domicilio deja de
-    // estar vinculado al cliente y al servicio. Se limpia id_cliente_instalado y se
-    // cierra la asignación activa, para que GET /integraciones/equipos?id_servicio
-    // ya no lo muestre instalado y la recepción quede correlacionada con el servicio.
+    // Baja por morosidad: un equipo que sale del domicilio deja de estar vinculado al cliente
     let asignacionRetirada: AsignacionEquipoServicio | null = null;
     if (
       estadoOrigen === 'Instalado en cliente' &&
@@ -1181,8 +1159,7 @@ export class IntegracionesService {
         );
       }
     }
-    // CU-64 (B): al instalar se persisten cliente y dirección del cierre para
-    // CU-48/71/73/87 (G3 identifica por RUT). El SRV se asigna al final del cierre.
+    // CU-64 (B): al instalar se persisten cliente y dirección del cierre para CU-48/71/73/87
     if (regla.estado === 'Instalado en cliente') {
       if (datosInstalacion.clienteRut !== null)
         unidad.clienteRut = datosInstalacion.clienteRut;
@@ -1268,7 +1245,7 @@ export class IntegracionesService {
         if (porRut) return { id: porRut.id_usuario };
       }
     }
-    // G3 envía usuario_tecnico (nombre_usuario de la tabla compartida).
+    // G3 envía usuario_tecnico (nombre_usuario de la tabla compartida)
     if (usuario !== null) {
       const porUsuario = await manager.findOne(Usuario, {
         where: { nombre_usuario: usuario },
@@ -1378,8 +1355,7 @@ export class IntegracionesService {
     }
 
     if (idTecnico === null) {
-      // Sin técnico identificado no hay inventario personal que descontar: el
-      // material igual queda registrado y se alerta para revisión manual.
+      // Sin técnico identificado no hay inventario personal que descontar
       discrepancias.push({
         codigo: 'TECNICO_NO_IDENTIFICADO',
         detalle:
@@ -1490,8 +1466,7 @@ export class IntegracionesService {
   ): Promise<CierreReparacion | null> {
     const bloque = (payload.reparacion ?? {}) as any;
 
-    // CU-70: lo que el técnico dejó preparado para esta OT (tipo de trabajo
-    // codificado y sus campos) completa lo que G3 no envía en el cierre.
+    // CU-70: lo que el técnico dejó preparado para esta OT
     const preparado = await this.cierresTrabajoService.completarDesdeBorrador(
       manager,
       idOt,
@@ -1500,7 +1475,7 @@ export class IntegracionesService {
     );
     const predefinido = preparado?.campos ?? {};
 
-    // G3 puede mandar los datos dentro de `reparacion` o en el primer nivel del JSON.
+    // G3 puede mandar los datos dentro de `reparacion` o en el primer nivel del JSON
     const falla =
       this.textoObligatorio(bloque.falla_reportada) ??
       this.textoObligatorio(payload.falla_reportada) ??
@@ -1520,7 +1495,7 @@ export class IntegracionesService {
       resultado ? null : `resultado (${Object.keys(RESULTADOS_G3).join(' | ')})`,
     ].filter(Boolean);
 
-    // Contrato con G3: el cierre nunca se rechaza; lo que falta queda como discrepancia.
+    // Contrato con G3: el cierre nunca se rechaza; lo que falta queda como discrepancia
     if (faltantes.length > 0) {
       discrepancias.push({
         codigo: 'DATOS_REPARACION_INCOMPLETOS',
@@ -1529,8 +1504,7 @@ export class IntegracionesService {
       return null;
     }
 
-    // Las acciones aplicadas se reparten por destino: lo instalado en el cliente es el
-    // reemplazo y todo lo demás (revisión, bodega, baja) es retiro.
+    // Las acciones aplicadas se reparten por destino: lo instalado en el cliente es el reemplazo
     const equipos = (instalados: boolean) =>
       accionesAplicadas
         .filter(
@@ -1583,8 +1557,7 @@ export class IntegracionesService {
       resultado,
       resueltoRemotamente: bloque.resuelto_remotamente === true,
       categoriaFalla: categoriaFalla ?? predefinido.categoria_falla ?? null,
-      // CU-70: tipo de trabajo codificado con el que se cerró (null si el técnico
-      // completó el cierre a mano, Excepción 1).
+      // CU-70: tipo de trabajo codificado con el que se cerró
       codigoTrabajo: preparado?.codigo_trabajo ?? null,
       equiposRetirados: equipos(false),
       equiposInstalados: equipos(true),
@@ -1756,7 +1729,7 @@ export class IntegracionesService {
 
     const fechaRetiro = new Date();
 
-    // Reemplazo por servicio: se retiran las asignaciones activas anteriores.
+    // Reemplazo por servicio: se retiran las asignaciones activas anteriores
     await manager.update(
       AsignacionEquipoServicio,
       {
@@ -1800,7 +1773,7 @@ export class IntegracionesService {
         continue;
       }
 
-      // Una unidad solo puede tener una asignación activa a la vez.
+      // Una unidad solo puede tener una asignación activa a la vez
       await manager.update(
         AsignacionEquipoServicio,
         { id_unidad: unidad.id_unidad, activa: true },
@@ -1823,8 +1796,7 @@ export class IntegracionesService {
       });
       const guardada = await manager.save(AsignacionEquipoServicio, fila);
 
-      // Compatibilidad con los flujos actuales: la asignación activa también
-      // se refleja en unidad_equipo.id_cliente_instalado cuando G8 lo informa.
+      // Compatibilidad con los flujos actuales
       if (
         cabecera.idClienteExterno !== null &&
         cabecera.idClienteExterno !== undefined &&
@@ -1938,8 +1910,7 @@ export class IntegracionesService {
         eventId: null,
         id_empresa: cierre.id_empresa,
         id_ot: cierre.id_ot,
-        // Referencia del cierre que espera su activación; la activación
-        // reemplazará este payload por el suyo al completar.
+        // Referencia del cierre que espera su activación
         payload: {
           cierre: {
             clave_idempotencia: cierre.claveIdempotencia,
@@ -2028,17 +1999,17 @@ export class IntegracionesService {
         id_ot: cierre.id_ot,
         clave_idempotencia: cierre.claveIdempotencia,
         estado_proceso: cierre.estadoProceso,
-        // CU-64 (D): SRV-YYYY-XXXXX de la instalación (G3 lo espera en data.srv).
+        // CU-64 (D): SRV-YYYY-XXXXX de la instalación (G3 lo espera en data.srv)
         srv: cierre.srv ?? null,
         id_tecnico: cierre.id_tecnico ?? null,
         acciones_aplicadas: cierre.accionesAplicadas ?? [],
         discrepancias: cierre.discrepancias ?? [],
-        // CU-64 (C)/CU-68: resultado del consumo de materiales declarados.
+        // CU-64 (C)/CU-68: resultado del consumo de materiales declarados
         materiales: cierre.materialesAplicados ?? {
           descontados: [],
           ajustes: [],
         },
-        // CU-69: registro del cierre de reparación (null en cierres de instalación).
+        // CU-69: registro del cierre de reparación (null en cierres de instalación)
         id_cierre_reparacion: idCierreReparacion,
       },
     };

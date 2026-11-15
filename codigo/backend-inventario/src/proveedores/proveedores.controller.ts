@@ -16,13 +16,11 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { ProveedoresService } from './proveedores.service';
 import { CreateProveedorDto } from './dto/create-proveedor.dto';
 
-// ======================================================================
 // Proveedores · ProveedoresController (controlador)
 // CU-49 · Creando proveedor
 // CU-50 · Editando proveedor
 // CU-51 · Consultando listado de proveedores
 // CU-98 · Desactivando proveedor
-// ======================================================================
 @Controller('proveedores')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class ProveedoresController {

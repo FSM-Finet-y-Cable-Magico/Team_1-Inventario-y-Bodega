@@ -6,11 +6,9 @@ import { Rol } from './entities/rol.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AuditoriaService } from 'src/auditoria/auditoria.service';
 
-// ======================================================================
 // Roles · RolesService (servicio)
 // Administración de roles (apoyo de CU-02)
 // Entidades: Rol
-// ======================================================================
 @Injectable()
 export class RolesService {
   constructor(

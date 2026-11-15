@@ -6,10 +6,8 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
-// ======================================================================
 // Notificaciones · NotificacionesController (controlador)
 // CU-96 · Recibiendo notificaciones visuales en la campana del sistema
-// ======================================================================
 @Controller('notificaciones')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class NotificacionesController {

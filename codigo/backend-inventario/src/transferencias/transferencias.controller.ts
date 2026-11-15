@@ -15,13 +15,11 @@ import { CreateTransferenciaDto } from './dto/create-transferencia.dto';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 
-// ======================================================================
 // Transferencias · TransferenciasController (controlador)
 // CU-20 · Registrando solicitud de transferencia inter-empresa
 // CU-21 · Aprobando transferencia inter-empresa
 // CU-22 · Rechazando transferencia inter-empresa
 // CU-23 · Consultando transferencias inter-empresa
-// ======================================================================
 @Controller('transferencias')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class TransferenciasController {

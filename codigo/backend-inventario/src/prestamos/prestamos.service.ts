@@ -41,14 +41,12 @@ export interface ActorJwt {
   roles?: string[];
 }
 
-// ======================================================================
 // Préstamos externos · PrestamosService (servicio)
 // CU-81 · Registrando préstamo externo de equipos
 // CU-82 · Registrando retorno de préstamo externo
 // CU-83 · Consultando tabla de préstamos externos activos
 // CU-84 · Validando trazabilidad de devolución de préstamo externo
 // Entidades: PrestamoExterno, PrestamoDetalle, PrestamoRetorno, UnidadEquipo, HistorialEstado, StockConsumible, Bodega, TipoEquipo, Usuario
-// ======================================================================
 @Injectable()
 export class PrestamosService {
   constructor(
@@ -257,8 +255,6 @@ export class PrestamosService {
       `SELECT pg_advisory_xact_lock(hashtext('prestamo_externo_correlativo'))`,
     );
     // Solo los préstamos por lote llevan correlativo: las reparaciones externas
-    // (CU-75) comparten la tabla con correlativo NULL y hay que excluirlas.
-    // El formato PE-00000 tiene ancho fijo, así que ordenar por texto basta.
     const ultima = await queryRunner.manager.findOne(PrestamoExterno, {
       where: { correlativo: Not(IsNull()) },
       order: { correlativo: 'DESC' },
@@ -323,15 +319,11 @@ export class PrestamosService {
         }),
       );
 
-      // CU-81: las unidades salen de bodega a 'En préstamo externo' (misma
-      // máquina de estados que UnitsService, dentro de esta transacción).
-      // Se releen con bloqueo de escritura: la validación previa usa datos que
-      // pueden haber cambiado si otro préstamo tomó la misma unidad en paralelo.
+      // CU-81: las unidades salen de bodega a 'En préstamo externo'
       const unidadesBloqueadas = unidades.length
         ? await queryRunner.manager.find(UnidadEquipo, {
             where: { id_unidad: In(unidades.map((u) => u.id_unidad)) },
-            // sin relaciones eager: Postgres no admite FOR UPDATE sobre el lado
-            // nullable de un outer join (el LEFT JOIN a tipo_equipo)
+            // sin relaciones eager: Postgres no admite FOR UPDATE sobre el lado nullable de un outer
             loadEagerRelations: false,
             lock: { mode: 'pessimistic_write' },
           })
@@ -378,10 +370,7 @@ export class PrestamosService {
         );
       }
 
-      // CU-81: los consumibles se descuentan con un UPDATE condicional (TypeORM
-      // QueryBuilder, atómico): si otra transacción consumió el saldo mientras
-      // tanto, no afecta filas y el préstamo completo se revierte (evita el
-      // lost update de leer y escribir).
+      // CU-81: los consumibles se descuentan con un UPDATE condicional
       for (const item of consumibles) {
         const resultadoUpdate = await queryRunner.manager
           .createQueryBuilder()
@@ -454,8 +443,7 @@ export class PrestamosService {
     filtros: { estado?: string; id_empresa?: number },
     actor: ActorJwt,
   ): Promise<Record<string, unknown>[]> {
-    // CU-83: este listado cubre los préstamos por lote; las reparaciones
-    // externas (CU-75) se gestionan desde la ficha de la unidad con CU-76
+    // CU-83: este listado cubre los préstamos por lote; las reparaciones externas
     const where: Record<string, unknown> = { tipo: TIPO_PRESTAMO };
     if (filtros.estado) where.estado = filtros.estado;
     // Aislamiento: solo el Superusuario puede filtrar por otra empresa
@@ -521,8 +509,7 @@ export class PrestamosService {
         registrado_por: mapaUsuarios.get(p.idUsuarioRegistro) ?? null,
         equipos: propios.filter((d) => d.id_unidad !== null).length,
         consumibles: propios.filter((d) => d.id_unidad === null).length,
-        // CU-83: negativo cuando ya pasó la fecha estimada de retorno.
-        // Solo tiene sentido mientras el préstamo sigue activo.
+        // CU-83: negativo cuando ya pasó la fecha estimada de retorno
         dias_restantes: p.estado === PRESTAMO_ACTIVO ? diasRestantes : null,
         // CU-83: resumen de ítems para la fila de la tabla
         items_resumen: propios.map((d) =>
@@ -570,7 +557,7 @@ export class PrestamosService {
       );
     }
 
-    // CU-82 Excepción 1: mensaje exacto del caso de uso
+    // CU-82 E1
     const fechaRetorno = dto.fecha_retorno?.trim() ?? '';
     if (
       !/^\d{4}-\d{2}-\d{2}$/.test(fechaRetorno) ||
@@ -598,9 +585,7 @@ export class PrestamosService {
       throw new BadRequestException('Debe indicar al menos un ítem retornado.');
     }
 
-    // CU-84: validaciones de trazabilidad de la devolución. Se ejecutan ANTES de
-    // abrir la transacción, acumulando un error por cada ítem inválido: si hay
-    // alguno no se procesa nada (el retorno es todo o nada).
+    // CU-84: validaciones de trazabilidad de la devolución
     const detalles = await this.detalleRepository.findBy({
       id_prestamo: idPrestamo,
     });
@@ -636,8 +621,7 @@ export class PrestamosService {
     const aRetornar: { detalle: PrestamoDetalle; cantidad: number }[] = [];
 
     for (const item of dto.items) {
-      // (A) el ítem debe pertenecer al préstamo. Se acepta identificarlo por
-      // número de serie o por id_detalle (cada unidad tiene su propio detalle).
+      // (A) el ítem debe pertenecer al préstamo
       let detalle: PrestamoDetalle | undefined;
       if (item.numero_serie) {
         const ns = item.numero_serie.trim();
@@ -711,8 +695,7 @@ export class PrestamosService {
 
     if (errores.length > 0) throw new BadRequestException(errores.join(' '));
 
-    // CU-95: las unidades retornadas pasan a 'En revisión'; si alguna tiene
-    // garantía vigente se muestra el aviso (409) salvo confirmación explícita
+    // CU-95: las unidades retornadas pasan a 'En revisión'
     const idsARetornar = aRetornar
       .map(({ detalle }) => detalle.id_unidad)
       .filter((id): id is number => id !== null);
@@ -745,7 +728,7 @@ export class PrestamosService {
 
       for (const { detalle, cantidad } of aRetornar) {
         if (detalle.id_unidad !== null) {
-          // CU-82: la unidad retornada pasa a 'En revisión' (transición ratificada)
+          // CU-82: la unidad retornada pasa a 'En revisión'
           const unidades = await queryRunner.manager.find(UnidadEquipo, {
             where: { id_unidad: detalle.id_unidad },
             loadEagerRelations: false,
@@ -754,8 +737,7 @@ export class PrestamosService {
           const unidad = unidades[0];
           if (!unidad)
             throw new NotFoundException('El equipo solicitado no existe.');
-          // CU-84 (red de seguridad ante concurrencia): entre la validación previa
-          // y el bloqueo, otro retorno pudo procesar la misma unidad
+          // CU-84 (red de seguridad ante concurrencia): entre la validación previa y el bloqueo
           if (unidad.estado !== ESTADO_PRESTAMO) {
             throw new BadRequestException(
               `El equipo [${unidad.serialNumber}] ya fue retornado o no está en préstamo externo.`,

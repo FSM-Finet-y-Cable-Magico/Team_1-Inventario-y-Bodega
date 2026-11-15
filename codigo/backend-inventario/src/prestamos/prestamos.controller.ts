@@ -16,13 +16,11 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
-// ======================================================================
 // Préstamos externos · PrestamosController (controlador)
 // CU-81 · Registrando préstamo externo de equipos
 // CU-82 · Registrando retorno de préstamo externo
 // CU-83 · Consultando tabla de préstamos externos activos
 // CU-84 · Validando trazabilidad de devolución de préstamo externo
-// ======================================================================
 @Controller('prestamos')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class PrestamosController {

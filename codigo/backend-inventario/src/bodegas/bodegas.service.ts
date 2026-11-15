@@ -19,7 +19,6 @@ import { UpdateBodegaDto } from './dto/update-bodega.dto';
 import { ConfigurarUmbralDto } from './dto/configurar-umbral.dto';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 
-// ======================================================================
 // Bodegas · BodegasService (servicio)
 // CU-16 · Consultando datos aislados por empresa
 // CU-41 · Creando bodega
@@ -29,7 +28,6 @@ import { AuditoriaService } from '../auditoria/auditoria.service';
 // CU-45 · Consultando stock de bodega
 // CU-46 · Configurando umbral de stock mínimo
 // Entidades: Bodega, StockConsumible, UnidadEquipo, TipoEquipo, Auditoria, Usuario
-// ======================================================================
 @Injectable()
 export class BodegasService {
   constructor(
@@ -247,7 +245,6 @@ export class BodegasService {
         : [];
 
     // Resolvemos los nombres de los responsables en una sola query
-    // (responsable explícito CU-41 o, como respaldo, el creador según auditoría)
     const idsResponsables = bodegas
       .map((b) => b.id_usuario_responsable)
       .filter(Boolean) as number[];
@@ -401,8 +398,7 @@ export class BodegasService {
           ? null
           : Number(c.umbral_minimo);
 
-      // CU-46: para tipos serializados la fila de stock_consumible solo
-      // almacena el umbral; el stock real es el conteo de unidades en bodega
+      // CU-46: para tipos serializados la fila de stock_consumible solo almacena el umbral
       if (te.requiereSerialNumber === true) {
         if (!stockPorTipo[te.id_tipo_equipo]) {
           stockPorTipo[te.id_tipo_equipo] = {

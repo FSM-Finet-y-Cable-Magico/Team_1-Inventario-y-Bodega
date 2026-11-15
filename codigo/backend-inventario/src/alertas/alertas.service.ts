@@ -25,10 +25,8 @@ export interface AlertaActiva {
   fecha_hora: Date | string;
 }
 
-// ======================================================================
 // Alertas · AlertasService (servicio)
 // CU-94 · Consultando alertas activas en el dashboard
-// ======================================================================
 @Injectable()
 export class AlertasService {
   constructor(
@@ -51,7 +49,6 @@ export class AlertasService {
     });
 
     // CU-77: equipos 'En revisión' con su fecha de ingreso y días transcurridos
-    // (sirve para B y D, con el mismo aislamiento por empresa)
     const enRevision = await this.unitsService.listarEnRevision(actor);
 
     return [

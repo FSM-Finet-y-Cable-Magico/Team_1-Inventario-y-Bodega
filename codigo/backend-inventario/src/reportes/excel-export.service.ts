@@ -24,10 +24,8 @@ for (let n = 0; n < 256; n++) {
   CRC_TABLE[n] = c >>> 0;
 }
 
-// ======================================================================
 // Reportes · ExcelExportService (servicio)
 // CU-92 · Exportando reporte a Excel
-// ======================================================================
 @Injectable()
 export class ExcelExportService {
   // CU-92 · Exportando reporte a Excel

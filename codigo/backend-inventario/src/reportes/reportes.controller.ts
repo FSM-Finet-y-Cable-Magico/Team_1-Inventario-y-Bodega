@@ -34,7 +34,6 @@ interface RawExportQuery {
   numero_serie?: string;
 }
 
-// ======================================================================
 // Reportes · ReportesController (controlador)
 // CU-85 · Generando reporte de stock actual
 // CU-86 · Generando reporte de movimientos de inventario
@@ -45,7 +44,6 @@ interface RawExportQuery {
 // CU-91 · Generando reporte de consumo de consumibles
 // CU-92 · Exportando reporte a Excel
 // CU-93 · Exportando reporte a PDF
-// ======================================================================
 @Controller('reportes')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class ReportesController {

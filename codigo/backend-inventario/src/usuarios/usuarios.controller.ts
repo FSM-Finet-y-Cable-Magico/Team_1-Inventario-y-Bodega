@@ -17,13 +17,11 @@ import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 
-// ======================================================================
 // Usuarios · UsuariosController (controlador)
 // CU-04 · Creando cuenta de usuario
 // CU-05 · Consultando listado de usuarios
 // CU-06 · Editando cuenta de usuario
 // CU-07 · Desactivando cuenta de usuario
-// ======================================================================
 @Controller('usuario')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class UsuariosController {
@@ -71,8 +69,7 @@ export class UsuariosController {
     @Body() updateUsuarioDto: UpdateUsuarioDto,
     @Req() req,
   ) {
-    // JwtStrategy expone id_usuario (no sub); con sub el actor llegaba
-    // undefined y se saltaba la validación de cuenta propia y la auditoría
+    // JwtStrategy expone id_usuario (no sub); con sub el actor llegaba undefined
     return this.usuariosService.update(
       +id,
       updateUsuarioDto,

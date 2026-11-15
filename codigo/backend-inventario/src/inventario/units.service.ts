@@ -50,7 +50,6 @@ export const TRANSICIONES_PERMITIDAS: Record<string, string[]> = {
   'Dado de baja': [],
 };
 
-// ======================================================================
 // Inventario · UnitsService (servicio)
 // CU-31 · Distinguiendo equipo individualizable de consumible
 // CU-32 · Registrando unidad de equipo individualizable
@@ -68,8 +67,8 @@ export const TRANSICIONES_PERMITIDAS: Record<string, string[]> = {
 // CU-75 · Enviando equipo a reparación externa
 // CU-76 · Reingresando equipo desde reparación externa
 // CU-77 · Consultando listado de equipos en revisión
+// Listado de unidades (base de CU-33 y CU-35)
 // Entidades: UnidadEquipo, TipoEquipo, Bodega, StockConsumible, Usuario, HistorialEstado, PrestamoExterno, AsignacionEquipoServicio, IntegracionCierre
-// ======================================================================
 @Injectable()
 export class UnitsService {
   private readonly logger = new Logger(UnitsService.name);
@@ -86,7 +85,7 @@ export class UnitsService {
     private readonly g3Client: G3ClientService,
   ) {}
 
-  // CU-33 · Consultando ficha de detalle de unidad de equipo
+  // Listado de unidades (base de CU-33 y CU-35)
   async listarUnidades(
     filtros: { estado?: string; buscar?: string },
     idEmpresaContexto: number,
@@ -120,7 +119,7 @@ export class UnitsService {
       proveedor: u.proveedor ?? null,
       fecha_adquisicion: u.fechaAdquisicion,
       fecha_venc_garantia: u.fechaVencGarantia,
-      // CU-38 Excepción 1: sin fecha de adquisición o sin garantía configurada
+      // CU-38 E1: sin fecha de adquisición o sin garantía configurada
       garantia_no_calculable:
         !u.fechaAdquisicion ||
         u.tipoEquipo?.garantiaDias === null ||
@@ -137,10 +136,7 @@ export class UnitsService {
         : null,
     }));
 
-    // CU-28/CU-31: los consumibles no son unidades individualizadas, pero deben
-    // aparecer en el listado general junto al resto de unidades.
-    // Solo se muestran si no hay filtro de estado o si se filtra por "En bodega"
-    // (el stock consumible siempre está disponible en bodega).
+    // CU-28/CU-31: los consumibles no son unidades individualizadas
     if (!filtros.estado || filtros.estado === 'En bodega') {
       const consumibleQb = this.dataSource
         .getRepository(StockConsumible)
@@ -197,8 +193,7 @@ export class UnitsService {
       }
     }
 
-    // Ordenar por ID descendente (los consumibles con id negativo quedan junto
-    // a los serializados según su id_stock de creación).
+    // Ordenar por ID descendente
     return resultado.sort(
       (a, b) => Math.abs(b.id_unidad) - Math.abs(a.id_unidad),
     );
@@ -225,8 +220,7 @@ export class UnitsService {
 
     const idsUnidades = unidades.map((u) => u.id_unidad);
 
-    // CU-77: fecha de ingreso a revisión = última transición hacia 'En
-    // revisión' en el historial (una sola consulta, sin N+1 por unidad)
+    // CU-77: fecha de ingreso a revisión = última transición hacia 'En revisión' en el historial
     const ingresos = await this.historyRepository
       .createQueryBuilder('historial')
       .distinctOn(['historial.id_unidad'])
@@ -241,8 +235,7 @@ export class UnitsService {
       ingresos.map((h) => [h.id_unidad, h.fechaHora]),
     );
 
-    // Nota: por la máquina de estados, una unidad solo llega a 'En revisión' desde 'Asignado a técnico' o 'Instalado en cliente' (nunca desde 'En
-    // bodega' directo), así que id_bodega_actual normalmente viene vacío.
+    // Nota: por la máquina de estados
     const idsBodegas = [
       ...new Set(
         unidades
@@ -344,8 +337,7 @@ export class UnitsService {
       }
     }
 
-    // CU-38 Excepción 1: sin fecha de adquisición la garantía no es calculable
-    // (la ficha mostrará 'Garantía no calculable'), por lo que no se inventa una fecha
+    // CU-38 E1: sin fecha de adquisición la garantía no es calculable
     let fechaAdq: Date | null = null;
     if (dto.fecha_adquisicion) {
       fechaAdq = new Date(dto.fecha_adquisicion);
@@ -416,8 +408,7 @@ export class UnitsService {
       );
     }
 
-    // CU-31 Excepción 1: si el tipo no tiene definido 'Requiere número de
-    // serie individual', determinarNaturalezaEquipo lanza el error de configuración
+    // CU-31 E1: si el tipo no tiene definido 'Requiere número de serie individual'
     const naturaleza = await this.catalogService.determinarNaturalezaEquipo(
       dto.id_tipo_equipo,
       idEmpresaContexto,
@@ -428,7 +419,7 @@ export class UnitsService {
       );
     }
 
-    // CU-28 Excepción 2: la cantidad debe ser un entero positivo mayor a 0
+    // CU-28 E2: la cantidad debe ser un entero positivo mayor a 0
     const cantidad = Number(dto.cantidad);
     if (!Number.isInteger(cantidad) || cantidad <= 0) {
       throw new BadRequestException(
@@ -585,7 +576,7 @@ export class UnitsService {
 
     const estadoOrigen = unidad.estado;
 
-    // CU-35 Excepción 1: mensaje exacto del caso de uso
+    // CU-35 E1
     if (!TRANSICIONES_PERMITIDAS[estadoOrigen]?.includes(nuevoEstado)) {
       throw new BadRequestException(
         'Transición de estado no permitida para este equipo.',
@@ -593,7 +584,7 @@ export class UnitsService {
     }
 
     if (nuevoEstado === 'En revisión') {
-      // CU-40 Excepción 1: diagnóstico técnico obligatorio al ingresar a revisión
+      // CU-40 E1: diagnóstico técnico obligatorio al ingresar a revisión
       if (!diagnosticoPayload || diagnosticoPayload.trim() === '') {
         throw new BadRequestException(
           'Debe seleccionar un diagnóstico técnico para enviar el equipo a revisión.',
@@ -619,8 +610,7 @@ export class UnitsService {
         );
       }
 
-      // CU-40 Excepción 1: si selecciona "Otro" debe incluir una descripción
-      // obligatoria (entre 5 y 200 caracteres); mensaje exacto del caso de uso
+      // CU-40 E1: si selecciona "Otro" debe incluir una descripción obligatoria
       if (diagnosticoNormalizado === 'Otro') {
         const descripcion =
           (descripcionOtroPayload ?? motivoPayload)?.trim() ?? '';
@@ -635,8 +625,7 @@ export class UnitsService {
       }
     }
 
-    // CU-95: garantía vigente al registrar 'Dado de baja' o 'En revisión' →
-    // aviso (409) salvo confirmación explícita; si continúa, se audita el aviso ignorado
+    // CU-95: garantía vigente al registrar 'Dado de baja' o 'En revisión' → aviso
     if (avisoGarantia && ESTADOS_CON_AVISO_GARANTIA.includes(nuevoEstado)) {
       const vigentes = exigirConfirmacionGarantia(
         [unidad],
@@ -650,8 +639,7 @@ export class UnitsService {
       );
     }
 
-    // CU-78: motivo de la baja definitiva (lo valida BajasService, aquí solo se
-    // persiste junto al cambio de estado para que quede en la misma transacción)
+    // CU-78: motivo de la baja definitiva
     if (nuevoEstado === 'Dado de baja' && bajaPayload) {
       unidad.motivoBaja = bajaPayload.motivo;
       unidad.motivoBajaDetalle = bajaPayload.descripcion ?? null;
@@ -660,26 +648,20 @@ export class UnitsService {
     // CU-47: ubicación física actual antes de la transición (para auditoría)
     const ubicacionOrigen = unidad.ubicacionFisica ?? null;
 
-    // CU-47: al ingresar/reingresar a bodega se registra la ubicación física
-    // indicada por el actor (puede quedar vacía según la excepción del caso de uso)
+    // CU-47: al ingresar/reingresar a bodega se registra la ubicación física indicada
     if (nuevoEstado === 'En bodega') {
       unidad.ubicacionFisica = ubicacionFisica;
     }
 
     if (estadoOrigen === 'En bodega' && nuevoEstado !== 'En bodega') {
-      // CU-79 (B): se limpia con null explícito — TypeORM ignora las propiedades
-      // undefined al guardar, por lo que la unidad seguía asociada a la bodega y
-      // se contaba en su stock después de salir de ella (p. ej. tras una baja).
+      // CU-79 (B): se limpia con null explícito
       unidad.id_bodega_actual = null;
       unidad.numeroPoste = null;
       // CU-47: al salir de la bodega el sistema vacía automáticamente la ubicación física
       unidad.ubicacionFisica = null;
     }
 
-    // CU-36: registro transaccional del cambio de estado con reintentos.
-    // Si falla la escritura del historial se reintenta toda la transacción
-    // hasta 3 veces. En modo QA/development se puede forzar el error con
-    // el flag simularErrorHistorial para comprobar la Excepción 1.
+    // CU-36: registro transaccional del cambio de estado con reintentos
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
 
@@ -699,8 +681,7 @@ export class UnitsService {
             }),
           );
 
-          // CU-36/CU-40: el historial registra la observación opcional y, al
-          // entrar a revisión, también el diagnóstico técnico
+          // CU-36/CU-40: el historial registra la observación opcional y, al entrar a revisión
           let motivoHistorial = observacion ?? 'Cambio de estado ordinario';
           // CU-47: la ubicación física queda registrada junto al cambio de estado
           if (nuevoEstado === 'En bodega' && ubicacionFisica) {
@@ -715,8 +696,7 @@ export class UnitsService {
           }
           if (nuevoEstado === 'En revisión') {
             motivoHistorial = `Ingreso a taller técnico. Diagnóstico: ${unidad.diagnosticoTecnico}`;
-            // si la descripción de "Otro" vino en el campo de observación
-            // (compatibilidad), no se duplica como observación general
+            // si la descripción de "Otro" vino en el campo de observación (compatibilidad)
             const obsExtra =
               !descripcionOtroPayload &&
               unidad.diagnosticoTecnico?.startsWith('Otro:')
@@ -746,8 +726,7 @@ export class UnitsService {
           // CU-47: auditoría de la transición; valor_nuevo incluye la ubicación física
           await this.auditoriaService.create({
             id_usuario: actor.id_usuario,
-            // CU-78/CU-79 (D): la baja definitiva se audita con su propia acción e
-            // incluye número de serie, motivo y empresa además del usuario y la fecha
+            // CU-78/CU-79 (D): la baja definitiva se audita con su propia acción e incluye número
             accion:
               nuevoEstado === 'Dado de baja'
                 ? 'BAJA_DEFINITIVA'
@@ -808,7 +787,7 @@ export class UnitsService {
     ubicacionFisicaInput: string | undefined,
     idEmpresaContexto: number,
   ): Promise<{ bodega: Bodega; ubicacionFisica: string | null }> {
-    // CU-74 Excepción 1: mensaje exacto del caso de uso
+    // CU-74 E1
     if (!idBodegaDestino) {
       throw new BadRequestException(
         'Debe seleccionar una bodega de destino para continuar.',
@@ -1112,8 +1091,7 @@ export class UnitsService {
     });
     if (!unidad) throw new NotFoundException('El equipo solicitado no existe.');
 
-    // Precondición del CU-76: 'En préstamo externo' con préstamo de
-    // reparación externa activo
+    // Precondición del CU-76: 'En préstamo externo' con préstamo de reparación externa activo
     if (unidad.estado !== 'En préstamo externo') {
       throw new BadRequestException(
         'Transición de estado no permitida para este equipo.',
@@ -1140,7 +1118,7 @@ export class UnitsService {
       );
     }
 
-    // CU-76 Excepción: mensaje exacto del caso de uso
+    // CU-76 Excepción
     const observacion = dto.observacion?.trim() ?? '';
     if (observacion.length < 5) {
       throw new BadRequestException(
@@ -1263,7 +1241,6 @@ export class UnitsService {
 
     if (dto.resultado === 'OPERATIVO') {
       // CU-74: misma validación de bodega destino + ubicación física que usa
-      // el reacondicionamiento directo, para no duplicar las reglas.
       const { bodega, ubicacionFisica: ubicacion } =
         await this.validarDestinoOperativo(
           dto.id_bodega_actual,
@@ -1292,8 +1269,7 @@ export class UnitsService {
       };
       motivoHistorial = `Resultado de revisión: Requiere reparación externa. Receptor: ${nombreReceptor}. Retorno estimado: ${dto.fecha_retorno_estimada}.`;
     } else {
-      // (C) BAJA — Excepción 1: garantía vigente exige confirmación explícita
-      // con el aviso unificado de CU-95 (409 + 'Continuar sin garantía')
+      // (C) BAJA — E1: garantía vigente exige confirmación explícita con el aviso unificado
       const motivo = dto.motivo?.trim() ?? '';
       if (motivo.length === 0 || motivo.length > 200) {
         throw new BadRequestException(
@@ -1456,7 +1432,7 @@ export class UnitsService {
     });
     if (!unidad) throw new NotFoundException('El equipo solicitado no existe.');
 
-    // CU-71 Excepción 1: mensaje exacto del caso de uso
+    // CU-71 E1
     if (unidad.estado !== 'Instalado en cliente') {
       throw new BadRequestException(
         `Transición de estado no permitida para este equipo. Estado actual: ${unidad.estado}.`,
@@ -1487,7 +1463,7 @@ export class UnitsService {
       direccion_instalacion: cliente.direccion,
     };
 
-    // CU-73 Excepción 1: se indican explícitamente los campos no registrados
+    // CU-73 E1: se indican explícitamente los campos no registrados
     const etiquetas: Record<string, string> = {
       tipo: 'Tipo de equipo',
       marca: 'Marca',
@@ -1549,7 +1525,7 @@ export class UnitsService {
     });
     if (!unidad) throw new NotFoundException('El equipo solicitado no existe.');
 
-    // CU-71 Excepción 1: mensaje exacto del caso de uso
+    // CU-71 E1
     if (unidad.estado !== 'Instalado en cliente') {
       throw new BadRequestException(
         `Transición de estado no permitida para este equipo. Estado actual: ${unidad.estado}.`,
@@ -1700,7 +1676,7 @@ export class UnitsService {
       );
     }
 
-    // CU-48: ubicación externa resuelta según el estado (técnico/cliente/préstamo).
+    // CU-48: ubicación externa resuelta según el estado (técnico/cliente/préstamo)
     const ubicacionExterna = await this.resolverUbicacionExterna(unidad);
     let alertaGarantia = {
       posee_garantia: false,
@@ -1711,8 +1687,7 @@ export class UnitsService {
         'Este dispositivo fue registrado sin un contrato de garantía comercial asociado.',
     };
 
-    // CU-38 Excepción 1: sin fecha de adquisición o sin duración de garantía
-    // configurada en el tipo, la garantía no es calculable
+    // CU-38 E1: sin fecha de adquisición o sin duración de garantía configurada en el tipo
     const garantiaDiasTipo = unidad.tipoEquipo?.garantiaDias;
     if (
       !unidad.fechaAdquisicion ||
@@ -1796,13 +1771,13 @@ export class UnitsService {
       numero_poste: unidad.numeroPoste ?? null,
       id_cliente_instalado: unidad.id_cliente_instalado ?? null,
       id_caja_nap: unidad.id_caja_nap ?? null,
-      // CU-64: cliente/dirección persistidos del cierre de instalación y SRV vigente.
+      // CU-64: cliente/dirección persistidos del cierre de instalación y SRV vigente
       cliente_rut: unidad.clienteRut ?? null,
       cliente_nombre: unidad.clienteNombre ?? null,
       direccion_instalacion: unidad.direccionInstalacion ?? null,
       comuna_instalacion: unidad.comunaInstalacion ?? null,
       srv: unidad.srv ?? null,
-      // CU-48: ubicación externa (null en bodega o dado de baja).
+      // CU-48: ubicación externa (null en bodega o dado de baja)
       ubicacion_externa: ubicacionExterna,
     };
   }
@@ -1905,8 +1880,7 @@ export class UnitsService {
         comuna: unidad.comunaInstalacion ?? null,
       };
 
-      // Si el cierre no trajo nombre/RUT, se buscan en la tabla cliente de la
-      // BDD global (G8), por id_cliente_instalado o por la asignación activa.
+      // Si el cierre no trajo nombre/RUT, se buscan en la tabla cliente de la BDD global (G8)
       if (!datos.nombre || !datos.rut) {
         const clienteGlobal = await this.buscarClienteGlobal(unidad, datos.rut);
         if (clienteGlobal) {
@@ -1915,9 +1889,7 @@ export class UnitsService {
         }
       }
 
-      // Enriquecimiento opcional con G3 (GET /clientes/rut/{rut}, X-API-KEY).
-      // Si G3 no responde o no está configurado se degrada a lo persistido por
-      // el cierre de instalación (CU-64).
+      // Enriquecimiento opcional con G3 (GET /clientes/rut/{rut}, X-API-KEY)
       if (datos.rut) {
         const clienteG3 = await this.g3Client.consultarClientePorRut(
           datos.rut,
@@ -1972,7 +1944,7 @@ export class UnitsService {
       };
     }
 
-    // 'En bodega' y 'Dado de baja' no tienen ubicación externa.
+    // 'En bodega' y 'Dado de baja' no tienen ubicación externa
     return null;
   }
 
@@ -2066,7 +2038,7 @@ export class UnitsService {
       });
 
       if (!existeEquipo) {
-        // CU-33/CU-37 Excepción 1: mensaje exacto del caso de uso
+        // CU-33/CU-37 E1
         throw new NotFoundException('Número de serie no encontrado.');
       }
 

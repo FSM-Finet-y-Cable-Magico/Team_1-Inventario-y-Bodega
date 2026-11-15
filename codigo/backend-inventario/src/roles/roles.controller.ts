@@ -15,10 +15,8 @@ import { AuthGuard } from '@nestjs/passport';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 
-// ======================================================================
 // Roles · RolesController (controlador)
 // Administración de roles (apoyo de CU-02)
-// ======================================================================
 @Controller('roles')
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}

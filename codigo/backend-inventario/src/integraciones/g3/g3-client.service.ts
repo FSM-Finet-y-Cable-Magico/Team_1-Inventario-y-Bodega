@@ -6,13 +6,11 @@ export interface RespuestaG3<T> {
   data: T | null;
 }
 
-// ======================================================================
 // Integraciones con G3 y G8 · G3ClientService (servicio)
 // CU-48 · Consultando ubicación externa de equipo fuera de bodega
 // CU-61 · Consultando vista móvil de trabajos e inventario del técnico
 // CU-87 · Generando reporte de equipos instalados por cliente
 // CU-90 · Generando reporte de productividad de técnicos
-// ======================================================================
 @Injectable()
 export class G3ClientService {
   constructor(private readonly configService: ConfigService) {}
@@ -151,7 +149,7 @@ export class G3ClientService {
       if (ord) ordenes.push(ord);
     }
 
-    // Si el listado general no incluyó materiales, consultar orden individual con fallback (docs/12 §6 ítem 4)
+    // Si el listado general no incluyó materiales, consultar orden individual con fallback
     await Promise.all(
       ordenes.map(async (ord) => {
         if (!ord.materiales || ord.materiales.length === 0) {

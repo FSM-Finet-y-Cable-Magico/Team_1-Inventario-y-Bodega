@@ -2,10 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InventarioPersonalService } from './inventario-personal.service';
 import { G3ClientService } from '../integraciones/g3/g3-client.service';
 
-// ======================================================================
 // Salidas a técnico · JornadaService (servicio)
 // CU-61 · Consultando vista móvil de trabajos e inventario del técnico
-// ======================================================================
 @Injectable()
 export class JornadaService {
   constructor(
@@ -62,7 +60,7 @@ export class JornadaService {
         rut: orden?.cliente?.rut ?? null,
         nombre_completo:
           orden?.cliente?.nombre_completo ?? orden?.cliente?.nombre ?? null,
-        // CU-61: teléfono del cliente (8-15 dígitos); G3 puede no enviarlo aún.
+        // CU-61: teléfono del cliente (8-15 dígitos); G3 puede no enviarlo aún
         telefono: orden?.cliente?.telefono ?? orden?.telefono ?? null,
       },
       direccion: {

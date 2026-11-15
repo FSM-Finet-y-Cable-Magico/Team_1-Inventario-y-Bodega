@@ -16,10 +16,8 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
-// ======================================================================
 // Donaciones · DonacionesController (controlador)
 // CU-80 · Registrando donación de equipos dados de baja
-// ======================================================================
 @Controller('donaciones')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 @Roles('ADMIN', 'SUPERUSUARIO')

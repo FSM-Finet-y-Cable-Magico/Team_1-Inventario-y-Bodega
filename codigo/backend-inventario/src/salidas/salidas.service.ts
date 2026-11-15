@@ -21,14 +21,12 @@ import { AuditoriaService } from '../auditoria/auditoria.service';
 
 export const TIPO_MOVIMIENTO_SALIDA = 'SALIDA_A_TECNICO';
 
-// ======================================================================
 // Salidas a técnico · SalidasService (servicio)
 // CU-57 · Registrando salida de equipos de bodega a técnico
 // CU-59 · Validando número de serie en salida de bodega
 // CU-60 · Registrando salida de consumibles de bodega a técnico
 // CU-62 · Validando stock disponible en bodega para consumibles
 // Entidades: SalidaBodega, SalidaDetalle, UnidadEquipo, TipoEquipo, Bodega, StockConsumible, HistorialEstado, MovimientoInventario, Usuario
-// ======================================================================
 @Injectable()
 export class SalidasService {
   constructor(
@@ -101,8 +99,7 @@ export class SalidasService {
       );
     }
 
-    // CU-59: duplicados dentro del mismo envío (el segundo fallaría de todos modos,
-    // pero se detecta antes para un mensaje claro)
+    // CU-59: duplicados dentro del mismo envío
     const seriesVistas = new Set<string>();
     for (const item of dto.items) {
       if (item.tipo === 'UNIDAD') {
@@ -167,7 +164,7 @@ export class SalidasService {
       salidaGuardada = await manager.save(SalidaBodega, salidaGuardada);
       await queryRunner.commitTransaction();
 
-      // Auditoría de la mutación (después del commit, patrón transferencias)
+      // Auditoría de la mutación
       await this.auditoriaService.create({
         id_usuario: actor.id_usuario,
         accion: 'SALIDA_BODEGA',
@@ -217,12 +214,12 @@ export class SalidasService {
       where: { serialNumber: serie, id_empresa: idEmpresaContexto },
     });
 
-    // CU-59 Excepción 1 (404 genérico cross-empresa, estilo verHistorialEstados)
+    // CU-59 E1
     if (!unidad) {
       throw new NotFoundException('Número de serie no encontrado.');
     }
 
-    // CU-59 Excepción 2: mensaje exacto con el estado real
+    // CU-59 E2
     if (
       unidad.estado !== 'En bodega' ||
       unidad.id_bodega_actual !== salida.id_bodega_origen
@@ -280,7 +277,7 @@ export class SalidasService {
     bodega: Bodega,
     actor: any,
   ): Promise<void> {
-    // CU-60 Excepción 1 (también validada en el DTO, pero el service es la fuente de verdad)
+    // CU-60 E1 (también validada en el DTO, pero el service es la fuente de verdad)
     const cantidad = Number(item.cantidad);
     if (!Number.isFinite(cantidad) || cantidad <= 0) {
       throw new BadRequestException('La cantidad debe ser mayor a cero.');

@@ -21,11 +21,9 @@ import { RegistrarConteoDto } from './dto/registrar-conteo.dto';
 import type { ActorToma } from './tomas-inventario.service';
 import { TomasInventarioService } from './tomas-inventario.service';
 
-// ======================================================================
 // Toma de inventario · TomasInventarioController (controlador)
 // CU-97 · Registrando toma de inventario físico y ajuste de diferencias
 // CU-99 · Generando acta de toma de inventario en PDF
-// ======================================================================
 @Controller('tomas-inventario')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class TomasInventarioController {

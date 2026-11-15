@@ -7,11 +7,9 @@ import { UseGuards } from '@nestjs/common';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { FiltrarAuditoriaDto } from './dto/filtrar-auditoria.dto';
 
-// ======================================================================
 // Auditoría · AuditoriaController (controlador)
 // CU-08 · Registrando eventos en el log de auditoría
 // CU-09 · Consultando el log de auditoría
-// ======================================================================
 @Controller('auditoria')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class AuditoriaController {

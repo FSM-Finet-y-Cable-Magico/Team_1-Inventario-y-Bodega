@@ -42,12 +42,10 @@ export const BAJA_PENDIENTE = 'Pendiente de aprobación';
 export const BAJA_APROBADA = 'Aprobada';
 export const BAJA_RECHAZADA = 'Rechazada';
 
-// ======================================================================
 // Bajas · BajasService (servicio)
 // CU-78 · Registrando baja definitiva de equipo
 // CU-79 · Ejecutando acciones posteriores a baja definitiva
 // Entidades: SolicitudBaja, UnidadEquipo, Usuario
-// ======================================================================
 @Injectable()
 export class BajasService {
   constructor(
@@ -129,8 +127,7 @@ export class BajasService {
     const unidad = await this.buscarUnidad(dto.id_unidad, actor);
     this.validarEstado(unidad);
 
-    // CU-78 Excepción 2 / CU-95: garantía vigente → aviso (409) salvo que el
-    // actor confirme "Continuar sin garantía"; en ese caso se audita el aviso ignorado
+    // CU-78 E2 / CU-95: garantía vigente → aviso
     const vigentes = exigirConfirmacionGarantia(
       [unidad],
       dto.forzar_aviso_garantia,
@@ -148,7 +145,6 @@ export class BajasService {
     }
 
     // CU-78: el Técnico de terreno genera una solicitud pendiente de aprobación
-    // (la unidad NO cambia de estado todavía)
     const pendiente = await this.solicitudRepository.findOne({
       where: { id_unidad: unidad.id_unidad, estado: BAJA_PENDIENTE },
     });
@@ -246,10 +242,7 @@ export class BajasService {
       actor,
     );
 
-    // ponytail: la baja y el cierre de la solicitud no comparten transacción; si
-    // falla este save la unidad queda de baja y la solicitud pendiente (al
-    // reintentar aprobar aparece la Excepción 1). Unificar con un QueryRunner
-    // compartido si el caso llega a darse en producción.
+    // ponytail: la baja y el cierre de la solicitud no comparten transacción
     solicitud.estado = BAJA_APROBADA;
     solicitud.id_usuario_aprobador = actor.id_usuario;
     solicitud.fecha_resolucion = new Date();

@@ -12,7 +12,6 @@ import { UnidadEquipo } from './entities/unidad-equipo.entity';
 import { StockConsumible } from '../bodegas/entities/stock-consumible.entity';
 import { AuditoriaService } from 'src/auditoria/auditoria.service';
 
-// ======================================================================
 // Inventario · CatalogService (servicio)
 // CU-24 · Creando tipo de equipo en el catálogo
 // CU-25 · Consultando catálogo de tipos de equipo
@@ -23,7 +22,6 @@ import { AuditoriaService } from 'src/auditoria/auditoria.service';
 // CU-30 · Descargando ficha técnica de tipo de equipo
 // CU-31 · Distinguiendo equipo individualizable de consumible
 // Entidades: TipoEquipo, UnidadEquipo, StockConsumible
-// ======================================================================
 @Injectable()
 export class CatalogService {
   constructor(
@@ -63,7 +61,7 @@ export class CatalogService {
     garantiaDias?: number;
     id_empresa: number;
   }) {
-    // CU-24 Excepción 1: validaciones de formato con errores específicos
+    // CU-24 E1: validaciones de formato con errores específicos
     const errores: string[] = [];
     const nombre = dto.nombre?.trim() ?? '';
     const marca = dto.marca?.trim() ?? '';
@@ -107,7 +105,7 @@ export class CatalogService {
         'La duración de garantía debe ser un entero entre 0 y 3650 días.',
       );
     }
-    // CU-24 Excepción 2: unidad de medida obligatoria solo si no requiere serie
+    // CU-24 E2: unidad de medida obligatoria solo si no requiere serie
     if (dto.requiereSerialNumber === false) {
       if (
         !dto.unidadMedida ||
@@ -122,8 +120,7 @@ export class CatalogService {
       throw new BadRequestException(errores.join(' '));
     }
 
-    // CU-24 Excepción 3: unicidad de la combinación nombre+marca+modelo
-    // dentro de la empresa (incluye tipos inactivos: siguen en el catálogo)
+    // CU-24 E3: unicidad de la combinación nombre+marca+modelo dentro de la empresa
     const existeDuplicado = await this.catalogRepository.findOne({
       where: { nombre, marca, modelo, id_empresa: dto.id_empresa },
     });
@@ -231,8 +228,7 @@ export class CatalogService {
       );
     }
 
-    // CU-26 Excepción 1: el campo 'Requiere número de serie individual' no
-    // puede cambiar si ya existen unidades registradas para este tipo
+    // CU-26 E1: el campo 'Requiere número de serie individual' no puede cambiar si ya existen
     const serialActual = tipo.requiereSerialNumber ?? null;
     const serialNuevo =
       dto.requiereSerialNumber !== undefined
@@ -320,8 +316,7 @@ export class CatalogService {
       throw new BadRequestException(errores.join(' '));
     }
 
-    // CU-26 Excepción 2: la nueva combinación nombre+marca+modelo no debe
-    // existir en el catálogo de la empresa (incluye tipos inactivos)
+    // CU-26 E2: la nueva combinación nombre+marca+modelo no debe existir en el catálogo
     const nombreFinal = dto.nombre?.trim() ?? tipo.nombre;
     const marcaFinal = dto.marca?.trim() ?? tipo.marca ?? '';
     const modeloFinal = dto.modelo?.trim() ?? tipo.modelo ?? '';
@@ -456,8 +451,7 @@ export class CatalogService {
       );
     }
 
-    // CU-27 Excepción 1: con al menos una unidad registrada (en cualquier
-    // estado) solo se permite la desactivación lógica
+    // CU-27 E1: con al menos una unidad registrada
     const totalUnidades = await this.unitRepository.count({
       where: { id_tipo_equipo: idNum },
     });
@@ -508,7 +502,7 @@ export class CatalogService {
     }
     const regex = /^[A-Z0-9-]{4,30}$/;
     if (!regex.test(serial)) {
-      // CU-28 Excepción 1: mensaje exacto del caso de uso
+      // CU-28 E1
       throw new BadRequestException(
         'El formato del número de serie es inválido. Debe contener entre 4 y 30 caracteres alfanuméricos y guiones. No se permiten espacios ni caracteres especiales.',
       );

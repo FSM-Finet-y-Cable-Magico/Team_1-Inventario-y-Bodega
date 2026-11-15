@@ -26,7 +26,6 @@ import { diskStorage } from 'multer';
 import { extname, resolve } from 'path';
 import { existsSync } from 'fs';
 
-// ======================================================================
 // Inventario · CatalogController (controlador)
 // CU-24 · Creando tipo de equipo en el catálogo
 // CU-25 · Consultando catálogo de tipos de equipo
@@ -34,7 +33,6 @@ import { existsSync } from 'fs';
 // CU-27 · Desactivando tipo de equipo del catálogo
 // CU-29 · Adjuntando ficha técnica PDF a tipo de equipo
 // CU-30 · Descargando ficha técnica de tipo de equipo
-// ======================================================================
 @Controller('catalogo')
 @UseGuards(AuthGuard('jwt'), CompanyIsolationGuard, RolesGuard)
 export class CatalogController {

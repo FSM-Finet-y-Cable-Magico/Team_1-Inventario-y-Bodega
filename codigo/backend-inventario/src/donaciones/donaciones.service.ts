@@ -27,11 +27,9 @@ export interface ActorJwt {
   roles?: string[];
 }
 
-// ======================================================================
 // Donaciones · DonacionesService (servicio)
 // CU-80 · Registrando donación de equipos dados de baja
 // Entidades: Donacion, DonacionDetalle, UnidadEquipo, Usuario
-// ======================================================================
 @Injectable()
 export class DonacionesService {
   constructor(
@@ -208,7 +206,7 @@ export class DonacionesService {
       id_unidad: In(idsUnidades),
     });
 
-    // CU-80 Excepción 1: se indican los NS que no cumplen la condición
+    // CU-80 E1: se indican los NS que no cumplen la condición
     const invalidos: string[] = [];
     const noEncontrados = idsUnidades.filter(
       (id) => !unidades.some((u) => u.id_unidad === id),

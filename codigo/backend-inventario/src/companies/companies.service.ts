@@ -31,12 +31,10 @@ export interface AlertaStockMinimo {
   id_tipo_equipo: number;
 }
 
-// ======================================================================
 // Empresas · CompaniesService (servicio)
 // CU-15 · Consultando dashboard consolidado de ambas empresas
 // CU-16 · Consultando datos aislados por empresa
 // Entidades: UnidadEquipo, Bodega, StockConsumible, Transferencia, MovimientoInventario, SolicitudBaja
-// ======================================================================
 @Injectable()
 export class CompaniesService {
   constructor(
@@ -194,7 +192,6 @@ export class CompaniesService {
     });
 
     // CU-79 (B/C): el desglose por estado conserva las unidades dadas de baja
-    // (su historial sigue accesible), pero el total del inventario activo las excluye
     const estadisticasEstado: Record<string, number> = {};
     for (const u of unidades) {
       estadisticasEstado[u.estado] = (estadisticasEstado[u.estado] ?? 0) + 1;
