@@ -114,9 +114,53 @@ Usuario: `admin_finet`.
   - suma la recepción en `orden_ingreso_detalle`;
   - recalcula el estado de la orden y audita.
 
-### 5.2 CU-64 · Ejecutando acciones atómicas del cierre de instalación
+### 5.2 CU-57 · Registrando salida de equipos de bodega a técnico
 
-Usuarios: `tecnico_qa` y `admin_finet`, más el panel http://localhost:8091.
+Usuario: `admin_finet`. Se hace después de CU-54 y entrega al técnico los mismos equipos recién recibidos, con lo que se ve el ciclo entrada → salida.
+
+1. **Salidas** → «Técnico destinatario»: Técnico Terreno QA; «Bodega de origen»: Bodega Finet Central.
+2. En «Equipo disponible» elegir `ONT-FN-2026-0001` y `RTR-FN-2026-0001`. Cada uno queda marcado «Disponible».
+3. Consumibles: Fibra drop QA, cantidad 30 → «Agregar».
+4. **Confirmar salida**: la salida queda registrada con 2 equipos y 1 consumible.
+5. Mostrar el resultado:
+   - la tarjeta «Inventario personal del técnico», al costado;
+   - **Unidades** → `ONT-FN-2026-0001`: «Asignado a técnico», con historial «Salida de bodega a técnico»;
+   - con `tecnico_qa`, **Mi jornada**.
+6. Excepciones que se ven en pantalla:
+   - **Stock insuficiente:** Conector SC/APC QA, cantidad 10 (hay 5) → «Confirmar salida» muestra «Stock insuficiente de [Conector SC/APC QA] en [Bodega Finet Central]. Disponible: 5 Unidad.»
+   - **Serie no encontrada:** escribir `ONT-FN-2026-9999` en «Buscar por serie». La lista indica «Número de serie no encontrado».
+   - «Equipo no disponible» lo valida la API (`El equipo [...] no está disponible en esta bodega`), pero la pantalla no lo permite porque solo ofrece equipos disponibles.
+
+**Explicación técnica:**
+
+- **Vista:** `routes/salidas` → `POST /api/salidas`.
+  - Roles permitidos: ADMIN, ADMIN_BODEGA o SUPERUSUARIO.
+  - Valida el DTO `CrearSalidaDto`.
+- **Servicio:** `SalidasService.registrarSalida`, en una sola transacción:
+  - valida el técnico, la bodega y cada serie;
+  - pasa las unidades a «Asignado a técnico», con su historial;
+  - descuenta `stock_consumible` con bloqueo de fila;
+  - suma el `inventario_personal_tecnico`;
+  - registra `salida_bodega`, `salida_detalle` y `movimiento_inventario`, y audita.
+
+## 6. Panel del simulador: todos los eventos
+
+| Botón | Qué demuestra | Dónde verlo en la app |
+|---|---|---|
+| Cierre de instalación OT 7001 | CU-64 y CU-68 | Mi jornada, Unidades, Reportes → Equipos por cliente |
+| Reenvío del mismo cierre | Idempotencia del webhook | Respuesta `duplicado: true` |
+| Cierre de reparación OT 7002 | CU-69 y CU-71: retira `QA-ONT-F-0003` a revisión e instala `QA-ONT-F-0002` | Unidades → En revisión; ficha de las dos unidades |
+| Cierre Cable Mágico OT 7101 | Aislamiento por empresa (`tecnico_cable`) | Con `admin_cable`: Unidades, Mi jornada de `tecnico_cable` |
+| Cierre con serie inexistente | Contrato «2xx con discrepancias»: serie desconocida y consumo mayor al saldo | Respuesta `PROCESADO_CON_DISCREPANCIAS` |
+| Baja por morosidad | G3 retira `HW-ONT-99001` (OT 7003, solicitud G8 MOR-2026-0001) y G8 consulta la recepción | Respuesta `estado_recepcion: COMPLETA`; unidad «En revisión» |
+| Activación G8 / Equipos del servicio | Correlación OT ↔ servicio de G8 | Respuesta de `/integraciones/equipos` |
+| Stock / Catálogo / Unidad por serie | Consultas de G3 y G8 a nuestro inventario | Respuestas JSON |
+
+El log de integración muestra cada petición en las dos direcciones: G3/G8 → G1 y G1 → G3. El botón «Cierre con serie inexistente» deja consumos declarados en el reporte de productividad; conviene usar `reset-demo.sh` después.
+
+### 6.1 Opcional · CU-64, cierre de instalación informado por G3
+
+El cierre lo ejecuta G3. Este sistema solo recibe sus efectos, así que no es parte del guion principal. Para mostrar la integración:
 
 1. **Antes:** `tecnico_qa` → **Mi jornada**.
    - Muestra las OT del día que entrega G3: OT 7001 de Ana Torres Fuentes en Puente Alto, 7002 y 7003.
@@ -147,21 +191,6 @@ Si se prefiere la terminal, `./simular-cierre-g3.sh` envía el mismo cierre y `.
   - guarda acciones y discrepancias.
   - Si algo falla, se revierte todo.
 
-## 6. Panel del simulador: todos los eventos
-
-| Botón | Qué demuestra | Dónde verlo en la app |
-|---|---|---|
-| Cierre de instalación OT 7001 | CU-64 y CU-68 | Mi jornada, Unidades, Reportes → Equipos por cliente |
-| Reenvío del mismo cierre | Idempotencia del webhook | Respuesta `duplicado: true` |
-| Cierre de reparación OT 7002 | CU-69 y CU-71: retira `QA-ONT-F-0003` a revisión e instala `QA-ONT-F-0002` | Unidades → En revisión; ficha de las dos unidades |
-| Cierre Cable Mágico OT 7101 | Aislamiento por empresa (`tecnico_cable`) | Con `admin_cable`: Unidades, Mi jornada de `tecnico_cable` |
-| Cierre con serie inexistente | Contrato «2xx con discrepancias»: serie desconocida y consumo mayor al saldo | Respuesta `PROCESADO_CON_DISCREPANCIAS` |
-| Baja por morosidad | G3 retira `HW-ONT-99001` (OT 7003, solicitud G8 MOR-2026-0001) y G8 consulta la recepción | Respuesta `estado_recepcion: COMPLETA`; unidad «En revisión» |
-| Activación G8 / Equipos del servicio | Correlación OT ↔ servicio de G8 | Respuesta de `/integraciones/equipos` |
-| Stock / Catálogo / Unidad por serie | Consultas de G3 y G8 a nuestro inventario | Respuestas JSON |
-
-El log de integración muestra cada petición en las dos direcciones: G3/G8 → G1 y G1 → G3. El botón «Cierre con serie inexistente» deja consumos declarados en el reporte de productividad; conviene usar `reset-demo.sh` después.
-
 ## 7. Revisión del resto de los CU
 
 | Módulo (menú) | CU | Qué probar | Usuario |
@@ -189,10 +218,7 @@ CU-63, CU-65, CU-66 y CU-67 los implementa G3; en la demo se ven a través del p
 
 ## 8. Problemas conocidos
 
-- **Listado de transferencias (CU-23):**
-  - El estado y la cantidad de unidades salen mal: por ejemplo, «INGRESO_RECEPCION, 6 unidades» para la transferencia pendiente de 1 router.
-  - Causa: el servicio busca los movimientos por `referencia_id` sin filtrar los tipos `TRANSFERENCIA_*`, así que mezcla movimientos de órdenes, salidas o préstamos con el mismo número.
-  - Es un error de la aplicación, no de la demo. Mientras no se corrija, la aprobación de la transferencia pendiente no se puede mostrar bien desde esta pantalla.
+- **Listado de transferencias (CU-23):** corregido en la PR #113. La transferencia pendiente se ve «Pendiente, 1 unidad» y se puede aprobar como `superusuario`.
 - **Mi jornada en la VPS:** si G3 no responde, muestra el aviso «G3 no responde o no está configurado». En la demo no ocurre porque responde el simulador.
 
 ## 9. Si algo falla
