@@ -18,15 +18,9 @@ psql -d inventario -f ddl/esquema-completo.sql
 psql -d inventario -f dml/datos-demostracion.sql
 ```
 
-Usuarios de prueba que crea el DML (contraseñas de demostración, no de producción):
-
-| Usuario | Contraseña | Rol |
-|---|---|---|
-| superusuario | Super1234 | SUPERUSUARIO |
-| admin_finet | Finet1234 | ADMIN |
-| admin_cable | Cable1234 | ADMIN |
-| tecnico_qa | Tecnico1234 | TECNICO_TERRENO |
-| tecnico_cable | TecnicoCable1234 | TECNICO_TERRENO |
+Usuarios de prueba que crea el DML (contraseñas de demostración, no de producción).
+Las credenciales no se publican en este repositorio; están definidas en el seed
+(`backend-inventario/scripts/seed-qa.ts`) y se comparten por el canal interno del equipo.
 
 ## Cómo se generaron
 

@@ -61,13 +61,9 @@ docker compose down -v           # detener y borrar datos/BD
 
 ### Usuarios de demostración (seed automático)
 
-| Usuario | Contraseña | Rol | Empresa |
-|---------|-----------|-----|---------|
-| `superusuario` | `Super1234` | SUPERUSUARIO | Finet |
-| `admin_finet` | `Finet1234` | ADMIN | Finet |
-| `admin_cable` | `Cable1234` | ADMIN | Cable Mágico |
-| `tecnico_qa` | `Tecnico1234` | TECNICO_TERRENO | Finet |
-| `tecnico_cable` | `TecnicoCable1234` | TECNICO_TERRENO | Cable Mágico |
+Los usuarios y contraseñas de demo los genera el seed automático
+(`codigo/backend-inventario/scripts/seed-qa.ts`). No se publican en este repositorio;
+solicítalos por el canal interno del equipo.
 
 ## 4. Desarrollo sin Docker (opcional)
 
