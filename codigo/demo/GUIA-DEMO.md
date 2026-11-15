@@ -52,13 +52,9 @@ Otros scripts:
 
 ## 3. Usuarios
 
-| Usuario | Contraseña | Rol | Empresa |
-|---|---|---|---|
-| `superusuario` | `Super1234` | SUPERUSUARIO | Finet |
-| `admin_finet` | `Finet1234` | ADMIN | Finet |
-| `admin_cable` | `Cable1234` | ADMIN | Cable Mágico |
-| `tecnico_qa` | `Tecnico1234` | TECNICO_TERRENO | Finet |
-| `tecnico_cable` | `TecnicoCable1234` | TECNICO_TERRENO | Cable Mágico |
+Las credenciales de los usuarios de demo no se publican en este repositorio;
+están definidas en el seed (`codigo/backend-inventario/scripts/seed-qa.ts`) y se
+comparten por el canal interno del equipo.
 
 ## 4. Datos del estado inicial
 
