@@ -16,11 +16,30 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 import { EditarDatosUnidadDto } from './dto/editar-datos-unidad.dto';
 
+// Inventario · UnitsController (controlador)
+// CU-31 · Distinguiendo equipo individualizable de consumible
+// CU-32 · Registrando unidad de equipo individualizable
+// CU-33 · Consultando ficha de detalle de unidad de equipo
+// CU-34 · Editando datos de unidad de equipo
+// CU-35 · Gestionando transiciones de estado de equipo
+// CU-37 · Consultando historial completo de estados de equipo
+// CU-48 · Consultando ubicación externa de equipo fuera de bodega
+// CU-59 · Validando número de serie en salida de bodega
+// CU-71 · Registrando devolución de equipo desde cliente
+// CU-72 · Registrando resultado de revisión de equipo
+// CU-73 · Mostrando información de equipo en devolución
+// CU-74 · Reacondicionando equipo operativo desde revisión a bodega
+// CU-75 · Enviando equipo a reparación externa
+// CU-76 · Reingresando equipo desde reparación externa
+// CU-77 · Consultando listado de equipos en revisión
+// CU-95 · Mostrando aviso de garantía vigente al cambiar estado
+// Listado de unidades (base de CU-33 y CU-35)
 @Controller('unidades')
 @UseGuards(AuthGuard('jwt'), CompanyIsolationGuard, RolesGuard)
 export class UnitsController {
   constructor(private readonly unitsService: UnitsService) {}
 
+  // Listado de unidades (base de CU-33 y CU-35)
   @Get()
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
   async listarUnidades(
@@ -34,27 +53,28 @@ export class UnitsController {
     );
   }
 
-  // CU-77: listado de equipos en revisión (solo consulta, sin auditoría)
+  // CU-77 · Consultando listado de equipos en revisión
   @Get('en-revision')
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   async listarEnRevision(@CurrentUser() actor: any) {
     return this.unitsService.listarEnRevision(actor);
   }
 
+  // CU-32 · Registrando unidad de equipo individualizable
   @Post()
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
   async registrarNuevaUnidad(@Body() body: any, @CurrentUser() actor: any) {
     return this.unitsService.registrarUnidad(body, actor.id_empresa);
   }
 
-  // CU-28/CU-31: ingreso de consumibles por cantidad y unidad de medida
+  // CU-31 · Distinguiendo equipo individualizable de consumible
   @Post('consumibles')
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
   async ingresarConsumible(@Body() body: any, @CurrentUser() actor: any) {
     return this.unitsService.ingresarConsumible(body, actor.id_empresa);
   }
 
-  // CU-28/CU-31: edición del stock de un consumible (cantidad y umbral)
+  // CU-31 · Distinguiendo equipo individualizable de consumible
   @Patch('consumibles/:id_stock')
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
   async editarConsumible(
@@ -70,7 +90,7 @@ export class UnitsController {
     );
   }
 
-  // CU-59: validación en vivo de número de serie para salida de bodega
+  // CU-59 · Validando número de serie en salida de bodega
   @Get('serie/:numeroSerie')
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
   async verificarSerieParaSalida(
@@ -78,8 +98,7 @@ export class UnitsController {
     @Query('id_bodega') idBodega: string,
     @CurrentUser() actor: any,
   ) {
-    // CU-59: validación en vivo para el formulario de salida de bodega.
-    // La validación de verdad la re-ejecuta SalidasService en la transacción.
+    // CU-59: validación en vivo para el formulario de salida de bodega
     return this.unitsService.verificarSerie(
       numeroSerie,
       actor.id_empresa,
@@ -87,8 +106,7 @@ export class UnitsController {
     );
   }
 
-  // CU-71 + CU-73: búsqueda por NS para la devolución (valida 'Instalado en cliente')
-  // y muestra la información del equipo (fechas, últimos 5 estados, campos faltantes)
+  // CU-73 · Mostrando información de equipo en devolución
   @Get('devolucion/:numeroSerie')
   @Roles('TECNICO_TERRENO', 'ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   async consultarParaDevolucion(
@@ -98,7 +116,7 @@ export class UnitsController {
     return this.unitsService.consultarParaDevolucion(numeroSerie, actor);
   }
 
-  // CU-71: registrar devolución de equipo desde cliente → 'En revisión'
+  // CU-71 · Registrando devolución de equipo desde cliente
   @Post(':id/devolucion')
   @Roles('TECNICO_TERRENO', 'ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   async registrarDevolucion(
@@ -109,8 +127,8 @@ export class UnitsController {
     return this.unitsService.registrarDevolucion(parseInt(id), body, actor);
   }
 
-  // CU-33: ficha de seguimiento de la unidad. Incluye la ubicación externa
-  // fuera de bodega (CU-48) y el cliente/SRV del cierre de instalación (CU-64).
+  // CU-33 · Consultando ficha de detalle de unidad de equipo
+  // CU-48 · Consultando ubicación externa de equipo fuera de bodega
   @Get(':id/ficha')
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
   async verFichaDeSeguimiento(
@@ -120,7 +138,7 @@ export class UnitsController {
     return this.unitsService.verFichaDetalle(parseInt(id), actor.id_empresa);
   }
 
-  // CU-37: historial completo de cambios de estado por número de serie
+  // CU-37 · Consultando historial completo de estados de equipo
   @Get(':serialNumber/historial')
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
   async verHistorialCompleto(
@@ -133,8 +151,8 @@ export class UnitsController {
     );
   }
 
-  // CU-35: cambio de estado según la máquina de estados (con aviso de
-  // garantía vigente de CU-95 al pasar a 'En revisión' o 'Dado de baja')
+  // CU-35 · Gestionando transiciones de estado de equipo
+  // CU-95 · Mostrando aviso de garantía vigente al cambiar estado
   @Patch(':id/cambiar-estado')
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
   async transicionarEstadoEquipo(
@@ -163,7 +181,7 @@ export class UnitsController {
     );
   }
 
-  // CU-72: registrar el resultado de la revisión (Operativo / Reparación externa / Baja)
+  // CU-72 · Registrando resultado de revisión de equipo
   @Post(':id/resultado-revision')
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   async registrarResultadoRevision(
@@ -178,7 +196,7 @@ export class UnitsController {
     );
   }
 
-  // CU-74: reacondicionar equipo "En revisión" directo a "En bodega" (Operativo)
+  // CU-74 · Reacondicionando equipo operativo desde revisión a bodega
   @Post(':id/reacondicionar')
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   async reacondicionarEquipo(
@@ -189,7 +207,7 @@ export class UnitsController {
     return this.unitsService.reacondicionarEquipo(parseInt(id), body, actor);
   }
 
-  // CU-75: enviar equipo "En revisión" a reparación externa
+  // CU-75 · Enviando equipo a reparación externa
   @Post(':id/reparacion-externa')
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   async enviarAReparacionExterna(
@@ -204,7 +222,7 @@ export class UnitsController {
     );
   }
 
-  // CU-76: registrar retorno de reparación externa (equipo → "En revisión")
+  // CU-76 · Reingresando equipo desde reparación externa
   @Post(':id/retorno-reparacion')
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   async registrarRetornoReparacion(
@@ -219,6 +237,7 @@ export class UnitsController {
     );
   }
 
+  // CU-34 · Editando datos de unidad de equipo
   @Patch(':id')
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA')
   async editarDatosUnidad(

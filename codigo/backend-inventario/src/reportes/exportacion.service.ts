@@ -10,8 +10,6 @@ import {
   fechaLegible,
 } from './pdf-reporte';
 
-// CU-93: la generación no puede pasar de 15 segundos (Excepción 1). El valor se
-// puede bajar por entorno (EXPORT_PDF_TIMEOUT_MS) para probar la excepción.
 export const TIMEOUT_EXPORTACION_MS =
   Number(process.env.EXPORT_PDF_TIMEOUT_MS) > 0
     ? Number(process.env.EXPORT_PDF_TIMEOUT_MS)
@@ -28,8 +26,6 @@ type Actor = {
   roles?: string[];
 };
 
-// Los cinco reportes del módulo (CU-85, CU-86, CU-88, CU-89, CU-91), con las
-// columnas que se llevan al PDF. El peso reparte el ancho de la página.
 const REPORTES: Record<
   string,
   { titulo: string; entidad: string; columnas: ColumnaPdf[] }
@@ -121,6 +117,9 @@ const ETIQUETAS_FILTRO: Record<string, string> = {
   periodo: 'Período',
 };
 
+// Reportes · ExportacionService (servicio)
+// CU-93 · Exportando reporte a PDF
+// Entidades: Usuario
 @Injectable()
 export class ExportacionService {
   private readonly logger = new Logger(ExportacionService.name);
@@ -132,11 +131,12 @@ export class ExportacionService {
     private readonly usuarioRepository: Repository<Usuario>,
   ) {}
 
+  // Apoyo de CU-93
   tiposDisponibles(): string[] {
     return Object.keys(REPORTES);
   }
 
-  // CU-93: genera el PDF del reporte visible, con los mismos filtros.
+  // CU-93 · Exportando reporte a PDF
   async exportarPdf(
     tipo: string,
     filtros: Record<string, any>,
@@ -150,8 +150,7 @@ export class ExportacionService {
     }
 
     const fecha = new Date();
-    // Excepción 1: el trabajo sigue en curso, pero el actor recibe el error a
-    // los 15 segundos en vez de esperar indefinidamente.
+    // E1: el trabajo sigue en curso
     const filas = await this.conTimeout(
       this.obtenerFilas(tipo, filtros, actor),
       tipo,
@@ -173,8 +172,7 @@ export class ExportacionService {
     return { archivo, nombre: `reporte-${tipo}-${marca}.pdf`, filas: filas.length };
   }
 
-  // El JWT solo trae el nombre de usuario; el encabezado del CU pide el nombre
-  // de quien generó el reporte, así que se busca y se degrada al del token.
+  // Apoyo de CU-93
   private async nombreDelActor(actor: Actor): Promise<string> {
     if (actor.nombre_completo) return actor.nombre_completo;
     const id = actor.id_usuario ?? actor.sub;
@@ -187,6 +185,7 @@ export class ExportacionService {
     return actor.nombre_usuario ?? 'Usuario del sistema';
   }
 
+  // Apoyo de CU-93
   private async conTimeout<T>(trabajo: Promise<T>, tipo: string): Promise<T> {
     let temporizador: NodeJS.Timeout;
     const limite = new Promise<never>((_, rechazar) => {
@@ -204,8 +203,7 @@ export class ExportacionService {
     }
   }
 
-  // Cada reporte ya existe (CU-85..CU-91): aquí solo se adapta su forma a la
-  // tabla del PDF, sin repetir las consultas ni las reglas de empresa.
+  // Apoyo de CU-93
   private async obtenerFilas(
     tipo: string,
     filtros: Record<string, any>,
@@ -251,7 +249,6 @@ export class ExportacionService {
     }
 
     // Inventario de técnicos: el reporte viene anidado (un bloque por técnico)
-    // y la tabla del PDF necesita una fila por ítem.
     const tecnicos = await this.reportesService.getInventarioTecnicosReport(
       filtros,
       actor,
@@ -292,6 +289,7 @@ export class ExportacionService {
     return filas;
   }
 
+  // Apoyo de CU-93
   private describirFiltros(
     filtros: Record<string, any>,
   ): { etiqueta: string; valor: string }[] {
@@ -303,12 +301,14 @@ export class ExportacionService {
       }));
   }
 
+  // Apoyo de CU-93
   private nombreEmpresa(idEmpresa: any): string {
     if (Number(idEmpresa) === 1) return 'Finet';
     if (Number(idEmpresa) === 2) return 'Cable Mágico';
     return 'Inventario y Bodega';
   }
 
+  // Apoyo de CU-93
   private async auditarExportacion(
     actor: Actor,
     tipo: string,

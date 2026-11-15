@@ -153,6 +153,16 @@ const ESTADOS_REPORTE = [
   'En préstamo externo',
 ];
 
+// Reportes · ReportesService (servicio)
+// CU-85 · Generando reporte de stock actual
+// CU-86 · Generando reporte de movimientos de inventario
+// CU-87 · Generando reporte de equipos instalados por cliente
+// CU-88 · Generando reporte de garantías
+// CU-89 · Generando reporte de inventario actual de técnicos
+// CU-90 · Generando reporte de productividad de técnicos
+// CU-91 · Generando reporte de consumo de consumibles
+// CU-92 · Exportando reporte a Excel
+// Entidades: Bodega, StockConsumible, TipoEquipo, UnidadEquipo, HistorialEstado, Usuario, InventarioPersonal, SalidaBodega, SalidaDetalle, OrdenIngreso, OrdenIngresoDetalle, PrestamoDetalle, PrestamoExterno, PrestamoRetorno, MovimientoInventario
 @Injectable()
 export class ReportesService {
   constructor(
@@ -174,7 +184,7 @@ export class ReportesService {
     private readonly excelExportService: ExcelExportService,
   ) {}
 
-  //CU-89
+  // CU-89 · Generando reporte de inventario actual de técnicos
   async getInventarioTecnicosReport(
     filtros: FiltrosInventarioTecnicos,
     actor: Actor,
@@ -236,10 +246,7 @@ export class ReportesService {
           nombre_completo: string;
           id_empresa: number;
         }) => {
-          // CU-89: unidades asignadas al técnico. La fecha de asignación es el
-          // último historial 'Asignado a técnico' de ese técnico; como respaldo,
-          // la última salida de bodega que incluyó la unidad (equivalente a los
-          // LEFT JOIN LATERAL de la versión anterior, en TypeORM).
+          // CU-89: unidades asignadas al técnico
           const unidades = await this.dataSource
             .getRepository(UnidadEquipo)
             .find({
@@ -374,7 +381,7 @@ export class ReportesService {
     return resultado;
   }
 
-  //CU-91
+  // CU-91 · Generando reporte de consumo de consumibles
   async getConsumoReport(
     filtros: FiltrosConsumo,
     actor: Actor,
@@ -410,9 +417,7 @@ export class ReportesService {
       order: { nombre: 'ASC' },
     });
 
-    // Las tablas orden_ingreso_detalle y prestamo_retorno las crea migrar.ts en
-    // cada arranque (CREATE TABLE IF NOT EXISTS), no hace falta introspección.
-    // Filtros de período/empresa compartidos por las tres sumas del reporte.
+    // Las tablas orden_ingreso_detalle y prestamo_retorno las crea migrar.ts en cada arranque
     const tieneDesde =
       filtros.fecha_desde != null && filtros.fecha_desde !== '';
     const tieneHasta =
@@ -509,7 +514,7 @@ export class ReportesService {
         const entregadoNum = Number(entregado?.cantidad ?? 0);
         const devueltoNum = Number(devuelto?.cantidad ?? 0);
 
-        // Uso en cierres (CU-64/CU-68): este reporte aún no lo suma, se deja la columna lista.
+        // Uso en cierres (CU-64/CU-68): este reporte aún no lo suma, se deja la columna lista
         const usadoEnCierres = 0;
         const diferencia = ingresadoNum - entregadoNum + devueltoNum;
         return {
@@ -537,7 +542,7 @@ export class ReportesService {
     return filas;
   }
 
-  //CU-85
+  // CU-85 · Generando reporte de stock actual
   async getStockReport(filtros: FiltrosStock, actor: Actor): Promise<any[]> {
     const esSuperusuario = actor.roles?.includes('SUPERUSUARIO') ?? false;
 
@@ -678,7 +683,7 @@ export class ReportesService {
     return resultado;
   }
 
-  //CU-86
+  // CU-86 · Generando reporte de movimientos de inventario
   async getMovementsReport(
     filtros: FiltrosMovimientos,
     actor: Actor,
@@ -775,7 +780,7 @@ export class ReportesService {
     return resultado;
   }
 
-  //CU-88
+  // CU-88 · Generando reporte de garantías
   async getGarantiasReport(
     filtros: FiltrosGarantias,
     actor: Actor,
@@ -864,8 +869,7 @@ export class ReportesService {
       .orderBy('fecha_vencimiento', 'ASC')
       .addOrderBy('u.numero_serie', 'ASC')
       .getRawMany();
-    // El driver de pg puede entregar las columnas DATE como objeto Date o como
-    // string según el contexto; normalizar antes de armar el resultado.
+    // El driver de pg puede entregar las columnas DATE como objeto Date o como string según
     const aFechaISO = (valor: unknown): string | null => {
       if (valor === null || valor === undefined) return null;
       const d =
@@ -914,6 +918,7 @@ export class ReportesService {
     return resultado;
   }
 
+  // Apoyo de CU-88
   private normalizePeriodo(
     periodo?: string,
   ): 'VENCIDAS' | '30' | '60' | '90' | 'TODAS' {
@@ -932,6 +937,7 @@ export class ReportesService {
     );
   }
 
+  // Apoyo de CU-86, CU-91
   private validateDateRange(fechaDesde?: string, fechaHasta?: string) {
     if (!fechaDesde && !fechaHasta) return;
     if (
@@ -960,12 +966,14 @@ export class ReportesService {
     }
   }
 
+  // Apoyo de CU-86, CU-88, CU-89, CU-90
   private nombreEmpresa(idEmpresa: number | null): string | null {
     if (idEmpresa === 1) return 'Finet';
     if (idEmpresa === 2) return 'Cable Mágico';
     return null;
   }
 
+  // Apoyo de CU-86
   private referenciaTipo(tipoMovimiento: string): string {
     if (tipoMovimiento.startsWith('TRANSFERENCIA')) return 'transferencia';
     if (tipoMovimiento.startsWith('INGRESO')) return 'orden_ingreso';
@@ -974,8 +982,7 @@ export class ReportesService {
     return 'documento';
   }
 
-  // CU-87: equipos 'Instalado en cliente' filtrados por RUT, nombre o NS,
-  // enriquecidos con el cliente de G3 y el cierre de instalación (CU-64).
+  // CU-87 · Generando reporte de equipos instalados por cliente
   async getEquiposInstaladosReport(
     filtros: FiltrosEquiposInstalados,
     actor: Actor,
@@ -1018,7 +1025,7 @@ export class ReportesService {
       throw new BadRequestException('El formato de RUT debe ser XXXXXXXX-X.');
     }
 
-    // 1. Intentar enriquecer o buscar clientes en G3 (CU-48/CU-87)
+    // 1
     let clienteG3PorRut: any = null;
     let clientesG3PorNombre: any[] = [];
 
@@ -1044,7 +1051,7 @@ export class ReportesService {
       clientesG3PorNombre.map((c) => cleanRut(c.rut)).filter((r) => Boolean(r)),
     );
 
-    // 2. Consultar unidades en estado 'Instalado en cliente'
+    // 2
     const qb = this.unidadRepository
       .createQueryBuilder('u')
       .leftJoinAndSelect('u.tipoEquipo', 'tipo')
@@ -1060,7 +1067,7 @@ export class ReportesService {
 
     const unidades = await qb.getMany();
 
-    // 3. Filtrar por RUT o Nombre en memoria (canónico y con fallback G3)
+    // 3
     const unidadesCoincidentes: UnidadEquipo[] = [];
     for (const u of unidades) {
       let coincideRut = true;
@@ -1117,7 +1124,7 @@ export class ReportesService {
       return [];
     }
 
-    // 4. Cruzar con integracion_cierre (por u.srv) e historial_estado_equipo para fecha y técnico
+    // 4
     const srvList = Array.from(
       new Set(
         unidadesCoincidentes
@@ -1193,7 +1200,7 @@ export class ReportesService {
       }
     }
 
-    // 5. Construir filas finales del reporte
+    // 5
     const filas: ReporteEquipoInstaladoFila[] = [];
 
     for (const u of unidadesCoincidentes) {
@@ -1277,7 +1284,7 @@ export class ReportesService {
       });
     }
 
-    // 6. Auditoría
+    // 6
     await this.auditReport(
       actor,
       {
@@ -1293,8 +1300,7 @@ export class ReportesService {
     return filas;
   }
 
-  // CU-90: productividad por técnico (instalaciones/reparaciones cerradas y
-  // consumibles usados) a partir de los cierres de OT locales y de G3.
+  // CU-90 · Generando reporte de productividad de técnicos
   async getTecnicosProductividadReport(
     filtros: FiltrosProductividadTecnicos,
     actor: Actor,
@@ -1317,7 +1323,7 @@ export class ReportesService {
       );
     }
 
-    // CU-90 Excepción 1: el rango de fechas no puede superar los 90 días
+    // CU-90 E1: el rango de fechas no puede superar los 90 días
     const fechaDesde = filtros.fecha_desde?.trim();
     const fechaHasta = filtros.fecha_hasta?.trim();
 
@@ -1355,7 +1361,7 @@ export class ReportesService {
       );
     }
 
-    // 1. Obtener técnicos según filtros
+    // 1
     const tecnicos = await this.dataSource.query(
       `SELECT u.id_usuario, u.nombre_completo, u.id_empresa
        FROM usuario u
@@ -1381,7 +1387,7 @@ export class ReportesService {
       return [];
     }
 
-    // 2. Consultar órdenes cerradas en G3 y en registros locales (integracion_cierre)
+    // 2
     const [ordenesG3, cierresLocales, catalogoConsumibles] = await Promise.all([
       this.g3ClientService.consultarOrdenesCerradas({
         id_tecnico: filtros.id_tecnico,
@@ -1410,7 +1416,7 @@ export class ReportesService {
       mapaTipoEquipo.set(t.id_tipo_equipo, t);
     }
 
-    // 3. Unificar órdenes de trabajo cerradas por id_ot
+    // 3
     type OrdenConsolidada = {
       id_ot: number;
       tipo_ot: string;
@@ -1482,7 +1488,7 @@ export class ReportesService {
       }
     }
 
-    // 4. Calcular métricas por cada técnico
+    // 4
     const filas: ReporteProductividadTecnicoFila[] = [];
 
     for (const tecnico of tecnicos) {
@@ -1573,7 +1579,7 @@ export class ReportesService {
       });
     }
 
-    // 5. Auditoría
+    // 5
     await this.auditReport(
       actor,
       {
@@ -1589,6 +1595,7 @@ export class ReportesService {
     return filas;
   }
 
+  // Apoyo de CU-85, CU-86, CU-87, CU-88, CU-89, CU-90, CU-91
   private async auditReport(
     actor: Actor,
     filtros:
@@ -1614,7 +1621,7 @@ export class ReportesService {
     });
   }
 
-  // CU-92: exportación a Excel con límite de 15 segundos (Excepción 1).
+  // CU-92 · Exportando reporte a Excel
   async exportarReporteExcel(
     query: {
       tipo: string;
@@ -1657,8 +1664,7 @@ export class ReportesService {
     }
   }
 
-  // CU-92: según el tipo, reutiliza el reporte visible (CU-85..CU-91), define
-  // hoja ReporteYYYYMMDD y columnas, genera el .xlsx y audita la exportación.
+  // CU-92 · Exportando reporte a Excel
   private async procesarExportacionExcel(
     query: {
       tipo: string;
@@ -2103,6 +2109,7 @@ export class ReportesService {
     return { buffer, filename, sheetName };
   }
 
+  // Apoyo de CU-92
   private getFechaYYYYMMDD(): string {
     const now = new Date();
     const year = now.getFullYear();
@@ -2111,6 +2118,7 @@ export class ReportesService {
     return `${year}${month}${day}`;
   }
 
+  // Apoyo de CU-92
   private formatDateDDMMYYYYHHmm(
     dateInput: Date | string | null | undefined,
   ): string {

@@ -2,11 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InventarioPersonalService } from './inventario-personal.service';
 import { G3ClientService } from '../integraciones/g3/g3-client.service';
 
-// CU-61: vista móvil del técnico. Agrega en un solo endpoint:
-//  (A) trabajos del día, que son de G3 (no se duplica la entidad OT);
-//  (B) inventario personal del técnico (CU-58).
-// Si G3 no responde, la jornada se devuelve igual con `trabajos_estado:
-// NO_DISPONIBLE` (degradación visible en la UI), nunca 5xx.
+// Salidas a técnico · JornadaService (servicio)
+// CU-61 · Consultando vista móvil de trabajos e inventario del técnico
 @Injectable()
 export class JornadaService {
   constructor(
@@ -14,6 +11,7 @@ export class JornadaService {
     private readonly g3Client: G3ClientService,
   ) {}
 
+  // CU-61 · Consultando vista móvil de trabajos e inventario del técnico
   async obtenerJornada(actor: any) {
     const idTecnico: number = actor.id_usuario;
     const fecha = new Date().toLocaleDateString('en-CA', {
@@ -48,8 +46,7 @@ export class JornadaService {
     };
   }
 
-  // Mapeo tolerante al contrato de G3 (docs/12 §1.1 y contrato verificado):
-  // cliente{id_cliente,rut,nombre_completo|nombre} y direccion{direccion_completa|direccion,comuna,referencia}.
+  // Apoyo de CU-61
   private mapearTrabajos(ordenes: any[]): any[] {
     return ordenes.map((orden) => ({
       id_ot: orden?.id_ot ?? null,
@@ -63,7 +60,7 @@ export class JornadaService {
         rut: orden?.cliente?.rut ?? null,
         nombre_completo:
           orden?.cliente?.nombre_completo ?? orden?.cliente?.nombre ?? null,
-        // CU-61: teléfono del cliente (8-15 dígitos); G3 puede no enviarlo aún.
+        // CU-61: teléfono del cliente (8-15 dígitos); G3 puede no enviarlo aún
         telefono: orden?.cliente?.telefono ?? orden?.telefono ?? null,
       },
       direccion: {

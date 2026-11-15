@@ -6,6 +6,9 @@ import { Rol } from './entities/rol.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AuditoriaService } from 'src/auditoria/auditoria.service';
 
+// Roles · RolesService (servicio)
+// Administración de roles (apoyo de CU-02)
+// Entidades: Rol
 @Injectable()
 export class RolesService {
   constructor(
@@ -14,6 +17,7 @@ export class RolesService {
     private readonly auditoriaService: AuditoriaService, //??
   ) {}
 
+  // Administración de roles (apoyo de CU-02)
   async create(createRoleDto: CreateRoleDto): Promise<Rol> {
     const rol = new Rol();
     rol.nombre_rol = createRoleDto.nombre_rol;
@@ -21,14 +25,17 @@ export class RolesService {
     return this.rolRepository.save(rol);
   }
 
+  // Administración de roles (apoyo de CU-02)
   async findAll(): Promise<Rol[]> {
     return this.rolRepository.find();
   }
 
+  // Administración de roles (apoyo de CU-02)
   async findOne(id: number): Promise<Rol | null> {
     return this.rolRepository.findOne({ where: { id_rol: id } });
   }
 
+  // Administración de roles (apoyo de CU-02)
   async update(id: number, updateRoleDto: UpdateRoleDto): Promise<Rol> {
     const rol = await this.findOne(id);
     if (!rol) {
@@ -39,6 +46,7 @@ export class RolesService {
     return this.rolRepository.save(rol);
   }
 
+  // Administración de roles (apoyo de CU-02)
   async remove(id: number): Promise<void> {
     const rol = await this.findOne(id);
     if (!rol) {

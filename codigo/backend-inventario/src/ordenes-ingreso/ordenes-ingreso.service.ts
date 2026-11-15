@@ -18,17 +18,19 @@ import { CreateOrdenIngresoDto } from './dto/create-orden-ingreso.dto';
 import { RegistrarRecepcionDto } from './dto/registrar-recepcion.dto';
 import { EMPRESAS } from '../companies/companies.service';
 
-// CU-52: clave del advisory lock que serializa la generación del correlativo OI-%04d.
-// El prefijo OI- está reservado para G1 (docs/13, §1 "Correlativos"): ningún otro
-// módulo debe emitirlo ni reutilizar esta clave.
 const CORRELATIVO_LOCK_KEY = 52;
 
-// CU-52/CU-54: estados de orden_ingreso. Literales exactos (con tildes), deben
-// coincidir con el frontend y con lo declarado en la BD.
 const ESTADO_PENDIENTE = 'Pendiente de recepción';
 const ESTADO_PARCIAL = 'Recepción parcial';
 const ESTADO_COMPLETADA = 'Completada';
 
+// Órdenes de ingreso · OrdenesIngresoService (servicio)
+// CU-52 · Registrando orden de ingreso desde proveedor
+// CU-53 · Consultando órdenes de ingreso
+// CU-54 · Registrando recepción total o parcial de orden de ingreso
+// CU-55 · Ingresando números de serie en recepción de equipos
+// CU-56 · Registrando fecha de adquisición real en recepción
+// Entidades: OrdenIngreso, OrdenIngresoDetalle, Proveedor, Bodega, TipoEquipo, UnidadEquipo
 @Injectable()
 export class OrdenesIngresoService {
   constructor(
@@ -51,7 +53,7 @@ export class OrdenesIngresoService {
     private readonly dataSource: DataSource,
   ) {}
 
-  // CU-52: crear orden de ingreso desde proveedor
+  // CU-52 · Registrando orden de ingreso desde proveedor
   async create(
     dto: CreateOrdenIngresoDto,
     actor: { id_usuario: number; id_empresa: number; esSuperusuario: boolean },
@@ -133,10 +135,7 @@ export class OrdenesIngresoService {
     await queryRunner.startTransaction();
 
     try {
-      // Lock de aplicación (se libera al COMMIT/ROLLBACK) para serializar la
-      // generación del correlativo. Se usa advisory lock en vez de SELECT ... FOR
-      // UPDATE porque este último no bloquea nada cuando la tabla aún está vacía
-      // y dos órdenes simultáneas obtendrían el mismo OI-0001.
+      // Lock de aplicación (se libera al COMMIT/ROLLBACK) para serializar la generación
       await queryRunner.query(`SELECT pg_advisory_xact_lock($1)`, [
         CORRELATIVO_LOCK_KEY,
       ]);
@@ -208,7 +207,7 @@ export class OrdenesIngresoService {
     }
   }
 
-  // CU-52/CU-53: listar órdenes de ingreso (filtradas por empresa del actor)
+  // CU-53 · Consultando órdenes de ingreso
   async findAll(
     actor: { id_empresa: number; esSuperusuario: boolean },
     filtros?: {
@@ -223,8 +222,7 @@ export class OrdenesIngresoService {
   ): Promise<any[]> {
     const query = this.ordenRepository.createQueryBuilder('o');
 
-    // Aislamiento: el no-superusuario solo ve órdenes de su empresa y el filtro
-    // de empresa se ignora; el superusuario ve todas y puede filtrar por una (CU-53)
+    // Aislamiento: el no-superusuario solo ve órdenes de su empresa
     if (!actor.esSuperusuario) {
       query.andWhere('o.id_empresa_destino = :empresa', {
         empresa: actor.id_empresa,
@@ -280,15 +278,12 @@ export class OrdenesIngresoService {
     return Promise.all(ordenes.map((o) => this.findOneConDetalles(o.id_orden)));
   }
 
-  // CU-53: detalle de una orden con sus ítems (cantidades esperadas y recibidas).
-  // Aislamiento manual al estilo de `bodegas.verificarPertenencia`: si la orden no
-  // es de la empresa del actor se devuelve un 404 genérico, para no revelar que existe.
+  // CU-53 · Consultando órdenes de ingreso
   async findOne(
     idOrden: number,
     actor: { id_empresa: number; esSuperusuario: boolean },
   ): Promise<any> {
-    // CU-53: un id no numérico llegaría como NaN a la consulta y reventaría en Postgres
-    // (500). Se rechaza antes, igual que hace `unidades` con la ficha de detalle.
+    // CU-53: un id no numérico llegaría como NaN a la consulta y reventaría en Postgres (500)
     if (!Number.isInteger(idOrden) || idOrden < 1) {
       throw new BadRequestException(
         'El identificador de la orden de ingreso proporcionado es inválido.',
@@ -299,8 +294,7 @@ export class OrdenesIngresoService {
     return this.findOneConDetalles(idOrden);
   }
 
-  // CU-53/CU-54: devuelve la orden solo si el actor puede verla. Si no existe o es de otra
-  // empresa lanza el MISMO 404, para no revelar la existencia de órdenes ajenas.
+  // Apoyo de CU-53, CU-54, CU-55, CU-56
   private async verificarPertenencia(
     idOrden: number,
     actor: { id_empresa: number; esSuperusuario: boolean },
@@ -320,7 +314,9 @@ export class OrdenesIngresoService {
     return orden;
   }
 
-  // CU-54: registrar la recepción total o parcial de una orden de ingreso
+  // CU-54 · Registrando recepción total o parcial de orden de ingreso
+  // CU-55 · Ingresando números de serie en recepción de equipos
+  // CU-56 · Registrando fecha de adquisición real en recepción
   async registrarRecepcion(
     idOrden: number,
     dto: RegistrarRecepcionDto,
@@ -366,7 +362,7 @@ export class OrdenesIngresoService {
         );
       }
       const pendiente = detalle.cantidad_esperada - detalle.cantidad_recibida;
-      // CU-54 Excepción 1
+      // CU-54 E1
       if (item.cantidad_recibida > pendiente) {
         throw new BadRequestException(
           'La cantidad no puede superar la cantidad pendiente del ítem.',
@@ -390,7 +386,7 @@ export class OrdenesIngresoService {
         continue;
       }
 
-      // CU-55 Excepción 3: no se confirma mientras falten NS por ingresar
+      // CU-55 E3: no se confirma mientras falten NS por ingresar
       if (series.length !== item.cantidad_recibida) {
         throw new BadRequestException(
           `Debe ingresar ${item.cantidad_recibida} número(s) de serie para el ítem "${tipo.nombre}". Ingresados: ${series.length}.`,
@@ -398,7 +394,7 @@ export class OrdenesIngresoService {
       }
 
       for (const serie of series) {
-        // CU-55 Excepción 1: se reutiliza la validación de formato de CU-28
+        // CU-55 E1: se reutiliza la validación de formato de CU-28
         this.catalogService.validarFormatoSerialNumber(serie);
 
         // Duplicado dentro del mismo envío (aún no está en la BD)
@@ -409,7 +405,7 @@ export class OrdenesIngresoService {
         }
         seriesDelEnvio.add(serie);
 
-        // CU-55 Excepción 2: unicidad global contra unidad_equipo
+        // CU-55 E2: unicidad global contra unidad_equipo
         const existente = await this.unidadRepository.findOne({
           where: { serialNumber: serie },
         });
@@ -441,16 +437,14 @@ export class OrdenesIngresoService {
 
     const estadoAnterior = orden.estado;
 
-    // CU-56: la fecha de recepción efectiva la indica el actor y es la que queda como
-    // fecha_adquisicion de cada unidad. La fecha del documento del proveedor sigue viva
-    // en orden_ingreso.fecha_documento y NO se sobreescribe: ambas quedan registradas.
+    // CU-56: la fecha de recepción efectiva la indica el actor
     const fechaRecepcion = new Date(`${dto.fecha_recepcion}T00:00:00`);
     if (isNaN(fechaRecepcion.getTime())) {
       throw new BadRequestException(
         'La fecha de recepción debe tener formato válido (YYYY-MM-DD).',
       );
     }
-    // CU-56 Excepción 2: se compara contra la fecha del servidor
+    // CU-56 E2: se compara contra la fecha del servidor
     const hoyServidor = new Date();
     hoyServidor.setHours(23, 59, 59, 999);
     if (fechaRecepcion > hoyServidor) {
@@ -485,13 +479,11 @@ export class OrdenesIngresoService {
         );
       }
 
-      // CU-55: cada NS se registra como una unidad nueva 'En bodega', en la MISMA
-      // transacción que la recepción: o entran todas o no entra ninguna.
+      // CU-55: cada NS se registra como una unidad nueva 'En bodega'
       for (const [idDetalle, series] of seriesPorDetalle) {
         if (series.length === 0) continue;
         const detalle = porId.get(idDetalle)!;
-        // CU-38/CU-56: vencimiento = fecha de recepción efectiva + garantía del ítem,
-        // de modo que el aviso de CU-39 y el reporte de CU-88 usen la fecha real
+        // CU-38/CU-56: vencimiento = fecha de recepción efectiva + garantía del ítem
         const fechaVenc = new Date(fechaRecepcion);
         fechaVenc.setDate(fechaVenc.getDate() + (detalle.garantia_dias ?? 0));
 
@@ -544,8 +536,7 @@ export class OrdenesIngresoService {
       valor_anterior: { estado: estadoAnterior },
       valor_nuevo: {
         estado: nuevoEstado,
-        // CU-56: queda registrada la fecha de recepción efectiva, distinta de la
-        // fecha del documento que conserva la orden
+        // CU-56: queda registrada la fecha de recepción efectiva
         fecha_recepcion: dto.fecha_recepcion,
         fecha_documento_orden: orden.fecha_documento,
         items: dto.items,
@@ -577,6 +568,7 @@ export class OrdenesIngresoService {
     return this.findOneConDetalles(idOrden);
   }
 
+  // CU-53 · Consultando órdenes de ingreso
   private async findOneConDetalles(idOrden: number): Promise<any> {
     const orden = await this.ordenRepository.findOne({
       where: { id_orden: idOrden },

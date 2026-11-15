@@ -27,6 +27,9 @@ export interface ActorJwt {
   roles?: string[];
 }
 
+// Donaciones · DonacionesService (servicio)
+// CU-80 · Registrando donación de equipos dados de baja
+// Entidades: Donacion, DonacionDetalle, UnidadEquipo, Usuario
 @Injectable()
 export class DonacionesService {
   constructor(
@@ -42,11 +45,12 @@ export class DonacionesService {
     private readonly dataSource: DataSource,
   ) {}
 
+  // Apoyo de CU-80
   private esSuperusuario(actor: ActorJwt): boolean {
     return actor.roles?.includes('SUPERUSUARIO') === true;
   }
 
-  // Dígito verificador chileno (módulo 11)
+  // Apoyo de CU-80
   private digitoVerificadorValido(rut: string): boolean {
     const [cuerpo, dv] = rut.split('-');
     let suma = 0;
@@ -60,14 +64,14 @@ export class DonacionesService {
     return esperado === dv.toUpperCase();
   }
 
-  // Fecha de hoy en la zona del sistema (America/Santiago), en formato YYYY-MM-DD
+  // Apoyo de CU-80
   private hoyChile(): string {
     return new Date().toLocaleDateString('en-CA', {
       timeZone: 'America/Santiago',
     });
   }
 
-  // CU-80: validaciones del formulario con mensajes acumulados (estilo catálogo)
+  // CU-80 · Registrando donación de equipos dados de baja
   private validarFormulario(
     dto: CreateDonacionDto,
     exigirUnidades = true,
@@ -135,7 +139,7 @@ export class DonacionesService {
     };
   }
 
-  // CU-80: unidades que pueden donarse (dadas de baja por donación y sin donación previa)
+  // CU-80 · Registrando donación de equipos dados de baja
   async listarCandidatas(actor: ActorJwt): Promise<Record<string, unknown>[]> {
     const unidades = await this.unidadRepository.find({
       where: this.esSuperusuario(actor)
@@ -158,6 +162,7 @@ export class DonacionesService {
       .map((u) => this.resumenUnidad(u));
   }
 
+  // Apoyo de CU-80
   private async unidadesYaDonadas(idsUnidades: number[]): Promise<Set<number>> {
     if (idsUnidades.length === 0) return new Set();
     const detalles = await this.detalleRepository.findBy({
@@ -166,6 +171,7 @@ export class DonacionesService {
     return new Set(detalles.map((d) => d.id_unidad));
   }
 
+  // Apoyo de CU-80
   private resumenUnidad(u: UnidadEquipo): Record<string, unknown> {
     return {
       id_unidad: u.id_unidad,
@@ -188,7 +194,7 @@ export class DonacionesService {
     return { valido: true };
   }
 
-  //CU-80
+  // CU-80 · Registrando donación de equipos dados de baja
   async registrar(
     dto: CreateDonacionDto,
     actor: ActorJwt,
@@ -200,7 +206,7 @@ export class DonacionesService {
       id_unidad: In(idsUnidades),
     });
 
-    // CU-80 Excepción 1: se indican los NS que no cumplen la condición
+    // CU-80 E1: se indican los NS que no cumplen la condición
     const invalidos: string[] = [];
     const noEncontrados = idsUnidades.filter(
       (id) => !unidades.some((u) => u.id_unidad === id),
@@ -289,7 +295,7 @@ export class DonacionesService {
     }
   }
 
-  //CU-80
+  // CU-80 · Registrando donación de equipos dados de baja
   async listar(actor: ActorJwt): Promise<Record<string, unknown>[]> {
     const donaciones = await this.donacionRepository.find({
       where: this.esSuperusuario(actor) ? {} : { id_empresa: actor.id_empresa },
@@ -322,7 +328,7 @@ export class DonacionesService {
     }));
   }
 
-  //CU-80
+  // CU-80 · Registrando donación de equipos dados de baja
   async obtenerDetalle(idDonacion: number, actor: ActorJwt) {
     const donacion = await this.donacionRepository.findOne({
       where: { id_donacion: idDonacion },
@@ -360,7 +366,7 @@ export class DonacionesService {
     };
   }
 
-  // CU-80: resumen en PDF con la información tributaria de la donación
+  // CU-80 · Registrando donación de equipos dados de baja
   async generarPdf(
     idDonacion: number,
     actor: ActorJwt,

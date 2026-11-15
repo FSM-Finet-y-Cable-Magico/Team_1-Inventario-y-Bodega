@@ -18,14 +18,18 @@ import { EMPRESAS } from '../companies/companies.service';
 const ESTADO_PENDIENTE = 'TRANSFERENCIA_PENDIENTE';
 const ESTADO_APROBADA = 'TRANSFERENCIA_APROBADA';
 const ESTADO_RECHAZADA = 'TRANSFERENCIA_RECHAZADA';
-// CU-23: el estado de una transferencia sale solo de sus movimientos TRANSFERENCIA_*;
-// referencia_id también la usan órdenes, salidas y préstamos con su propio número.
 const TIPOS_TRANSFERENCIA = [
   ESTADO_PENDIENTE,
   ESTADO_APROBADA,
   ESTADO_RECHAZADA,
 ];
 
+// Transferencias · TransferenciasService (servicio)
+// CU-20 · Registrando solicitud de transferencia inter-empresa
+// CU-21 · Aprobando transferencia inter-empresa
+// CU-22 · Rechazando transferencia inter-empresa
+// CU-23 · Consultando transferencias inter-empresa
+// Entidades: Transferencia, MovimientoInventario, UnidadEquipo, Bodega, Usuario
 @Injectable()
 export class TransferenciasService {
   constructor(
@@ -39,6 +43,7 @@ export class TransferenciasService {
     private readonly dataSource: DataSource,
   ) {}
 
+  // CU-20 · Registrando solicitud de transferencia inter-empresa
   async registrarTransferencia(
     dto: CreateTransferenciaDto,
     actor: any,
@@ -142,6 +147,7 @@ export class TransferenciasService {
     }
   }
 
+  // CU-21 · Aprobando transferencia inter-empresa
   async aprobarTransferencia(
     idTransferencia: number,
     actor: any,
@@ -159,7 +165,7 @@ export class TransferenciasService {
       );
     }
 
-    // CU-21 Excepción 1: verificar que ninguna unidad cambió de estado desde que se registró la solicitud
+    // CU-21 E1: verificar que ninguna unidad cambió de estado desde que se registró la solicitud
     const idsUnidades = movimientos.map((m) => m.id_unidad);
     const unidades = await this.unidadRepository.findBy({
       id_unidad: In(idsUnidades),
@@ -223,19 +229,20 @@ export class TransferenciasService {
     }
   }
 
+  // CU-22 · Rechazando transferencia inter-empresa
   async rechazarTransferencia(
     idTransferencia: number,
     observaciones: string,
     actor: any,
   ): Promise<any> {
-    // CU-22 Excepción 1: motivo de rechazo obligatorio
+    // CU-22 E1: motivo de rechazo obligatorio
     if (!observaciones || observaciones.trim() === '') {
       throw new BadRequestException(
         'Debe ingresar un motivo de rechazo para continuar.',
       );
     }
 
-    // CU-22 Excepción 2: motivo no puede superar 200 caracteres
+    // CU-22 E2: motivo no puede superar 200 caracteres
     if (observaciones.trim().length > 200) {
       throw new BadRequestException(
         'El motivo de rechazo no puede superar los 200 caracteres.',
@@ -278,7 +285,7 @@ export class TransferenciasService {
     };
   }
 
-  // CU-21: detalle completo de una transferencia seleccionada
+  // CU-21 · Aprobando transferencia inter-empresa
   async consultarDetalle(idTransferencia: number, actor: any): Promise<any> {
     const t = await this.transferenciaRepository.findOne({
       where: { id_transferencia: idTransferencia },
@@ -363,7 +370,7 @@ export class TransferenciasService {
     };
   }
 
-  // CU-23: listado con filtros por estado, rango de fechas o empresa
+  // CU-23 · Consultando transferencias inter-empresa
   async consultarTransferencias(
     filtros: {
       estado?: string;

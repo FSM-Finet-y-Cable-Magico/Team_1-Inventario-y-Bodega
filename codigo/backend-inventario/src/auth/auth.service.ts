@@ -29,6 +29,14 @@ function criterioIdentificador(valor: string) {
     : { nombre_usuario: limpio };
 }
 
+// Autenticación · AuthService (servicio)
+// CU-01 · Iniciando sesión en el sistema
+// CU-10 · Restableciendo contraseña de usuario
+// CU-11 · Cerrando sesión automáticamente por inactividad
+// CU-12 · Cerrando sesión del sistema
+// CU-13 · Cargando contexto de empresa Finet al iniciar sesión
+// CU-14 · Cargando contexto de empresa Cable Mágico al iniciar sesión
+// Entidades: Usuario
 @Injectable()
 export class AuthService {
   private readonly tokenBlacklist = new Set<string>();
@@ -40,16 +48,19 @@ export class AuthService {
     private readonly auditoriaService: AuditoriaService,
   ) {}
 
+  // CU-01 · Iniciando sesión en el sistema
+  // CU-13 · Cargando contexto de empresa Finet al iniciar sesión
+  // CU-14 · Cargando contexto de empresa Cable Mágico al iniciar sesión
   async login(loginDto: LoginDto) {
     const usuario = await this.usuarioRepository.findOne({
       where: criterioIdentificador(loginDto.nombre_usuario),
       relations: { usuarioRoles: { rol: true } },
     });
 
-    // CU-01 Excepción 1 y 2: mensaje genérico sin revelar cuál campo falló
+    // CU-01 E1 y 2: mensaje genérico sin revelar cuál campo falló
     if (!usuario) throw new UnauthorizedException(MSG_GENERICO);
 
-    // CU-01 Excepción 3: cuenta bloqueada por intentos fallidos
+    // CU-01 E3: cuenta bloqueada por intentos fallidos
     if (usuario.bloqueado_hasta && usuario.bloqueado_hasta > new Date()) {
       throw new UnauthorizedException(MSG_BLOQUEADO);
     }
@@ -91,13 +102,12 @@ export class AuthService {
       bloqueado_hasta: null,
     });
 
-    // CU-10: con la bandera activa se impide el acceso hasta establecer
-    // una nueva contraseña propia
+    // CU-10: con la bandera activa se impide el acceso hasta establecer una nueva contraseña
     if (usuario.debe_cambiar_password) {
       return { debe_cambiar_password: true };
     }
 
-    // CU-13/CU-14 Excepción 1: usuario sin empresa asignada
+    // CU-13/CU-14 E1: usuario sin empresa asignada
     if (usuario.id_empresa === null || usuario.id_empresa === undefined) {
       throw new UnauthorizedException(
         'Su cuenta no tiene empresa asignada. Contacte al administrador.',
@@ -126,8 +136,7 @@ export class AuthService {
       valor_nuevo: { nombre_usuario: usuario.nombre_usuario },
     });
 
-    // El frontend necesita los datos del usuario (sin hash) para el contexto
-    // de empresa (CU-13/CU-16) y las validaciones de cuenta propia (CU-07)
+    // El frontend necesita los datos del usuario (sin hash) para el contexto de empresa
     const { password_hash, usuarioRoles, ...usuarioSeguro } = usuario;
     return {
       access_token,
@@ -143,7 +152,8 @@ export class AuthService {
     };
   }
 
-  // CU-11/CU-12: el motivo distingue cierre manual del cierre por inactividad
+  // CU-11 · Cerrando sesión automáticamente por inactividad
+  // CU-12 · Cerrando sesión del sistema
   async logout(token: string, usuarioId: number, motivo?: string) {
     this.tokenBlacklist.add(token);
     await this.auditoriaService.create({
@@ -159,7 +169,7 @@ export class AuthService {
     return { message: 'Sesión cerrada correctamente.' };
   }
 
-  // CU-10: el usuario establece su nueva contraseña tras un restablecimiento
+  // CU-10 · Restableciendo contraseña de usuario
   async cambiarPassword(dto: {
     nombre_usuario: string;
     password_actual: string;
@@ -203,10 +213,12 @@ export class AuthService {
     };
   }
 
+  // CU-12 · Cerrando sesión del sistema
   isTokenBlacklisted(token: string): boolean {
     return this.tokenBlacklist.has(token);
   }
 
+  // CU-10 · Restableciendo contraseña de usuario
   async restablecerPassword(
     targetId: number,
     actorId: number,
@@ -215,7 +227,7 @@ export class AuthService {
       where: { id_usuario: targetId },
     });
 
-    // CU-10 Excepción 1: usuario inactivo o inexistente → mensaje unificado
+    // CU-10 E1: usuario inactivo o inexistente → mensaje unificado
     if (!usuario || !usuario.activo) {
       throw new NotFoundException(
         'No es posible restablecer la contraseña de un usuario inactivo o inexistente.',

@@ -6,15 +6,16 @@ export interface RespuestaG3<T> {
   data: T | null;
 }
 
-// CU-48/CU-61: cliente HTTP saliente contra G3 (Terreno/FSM) usando el contrato
-// X-API-KEY. NUNCA lanza: sin configuración o con error devuelve `ok: false`
-// para que el llamador degrade de forma controlada (la UI lo muestra).
-// La URL base y la key se definen por entorno (G3_INTEGRACION_URL /
-// G3_INTEGRACION_API_KEY); las credenciales reales no viven en el repo.
+// Integraciones con G3 y G8 · G3ClientService (servicio)
+// CU-48 · Consultando ubicación externa de equipo fuera de bodega
+// CU-61 · Consultando vista móvil de trabajos e inventario del técnico
+// CU-87 · Generando reporte de equipos instalados por cliente
+// CU-90 · Generando reporte de productividad de técnicos
 @Injectable()
 export class G3ClientService {
   constructor(private readonly configService: ConfigService) {}
 
+  // Apoyo de CU-90
   private obtenerConfiguracion(): {
     baseUrl: string;
     apiKey: string;
@@ -48,7 +49,7 @@ export class G3ClientService {
     }
   }
 
-  // CU-48: cliente por RUT (enriquecimiento de la ubicación externa).
+  // CU-48 · Consultando ubicación externa de equipo fuera de bodega
   async consultarClientePorRut(
     rut: string,
     idEmpresa?: number | null,
@@ -59,7 +60,7 @@ export class G3ClientService {
     return resultado.ok ? resultado.data : null;
   }
 
-  // CU-87: búsqueda parcial de clientes en G3 para reporte de equipos instalados.
+  // CU-87 · Generando reporte de equipos instalados por cliente
   async buscarClientes(
     busqueda: string,
     idEmpresa?: number | null,
@@ -84,7 +85,7 @@ export class G3ClientService {
     return [];
   }
 
-  // CU-61: trabajos del día del técnico (OTs de G3).
+  // CU-61 · Consultando vista móvil de trabajos e inventario del técnico
   async consultarOrdenes(params: {
     idTecnico: number;
     idEmpresa: number;
@@ -110,7 +111,7 @@ export class G3ClientService {
     return { ok: true, data: lista };
   }
 
-  // CU-90: consulta órdenes de trabajo cerradas en G3 (con materiales o fallback).
+  // CU-90 · Generando reporte de productividad de técnicos
   async consultarOrdenesCerradas(filtros: {
     id_tecnico?: number;
     fecha_desde?: string;
@@ -148,7 +149,7 @@ export class G3ClientService {
       if (ord) ordenes.push(ord);
     }
 
-    // Si el listado general no incluyó materiales, consultar orden individual con fallback (docs/12 §6 ítem 4)
+    // Si el listado general no incluyó materiales, consultar orden individual con fallback
     await Promise.all(
       ordenes.map(async (ord) => {
         if (!ord.materiales || ord.materiales.length === 0) {
@@ -163,6 +164,7 @@ export class G3ClientService {
     return ordenes;
   }
 
+  // Apoyo de CU-90
   private async consultarMaterialesOrden(idOt: number): Promise<any[]> {
     const res = await this.obtener<any>(
       `/ordenes/${idOt}?include=materiales`,
@@ -173,6 +175,7 @@ export class G3ClientService {
     return this.extraerMateriales(ordObj.materiales);
   }
 
+  // Apoyo de CU-90
   private normalizarOrden(item: unknown): any | null {
     if (!item || typeof item !== 'object') return null;
     const obj = item as Record<string, unknown>;
@@ -209,6 +212,7 @@ export class G3ClientService {
     };
   }
 
+  // Apoyo de CU-90
   private extraerMateriales(raw: unknown): any[] {
     if (!Array.isArray(raw)) return [];
     const list: any[] = [];

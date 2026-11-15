@@ -17,18 +17,24 @@ import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 
+// Usuarios · UsuariosController (controlador)
+// CU-04 · Creando cuenta de usuario
+// CU-05 · Consultando listado de usuarios
+// CU-06 · Editando cuenta de usuario
+// CU-07 · Desactivando cuenta de usuario
 @Controller('usuario')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}
 
+  // CU-04 · Creando cuenta de usuario
   @Post()
   @Roles('ADMIN', 'SUPERUSUARIO')
   create(@Body() createUsuarioDto: CreateUsuarioDto, @Req() req) {
     return this.usuariosService.create(createUsuarioDto, req.user);
   }
 
-  // CU-05: filtros por rol, estado (activo) y búsqueda por nombre completo o de usuario
+  // CU-05 · Consultando listado de usuarios
   @Get()
   @Roles('ADMIN', 'SUPERUSUARIO')
   findAll(
@@ -48,12 +54,14 @@ export class UsuariosController {
     );
   }
 
+  // CU-06 · Editando cuenta de usuario
   @Get(':id')
   @Roles('ADMIN', 'SUPERUSUARIO')
   findOne(@Param('id') id: string) {
     return this.usuariosService.findOne(+id);
   }
 
+  // CU-06 · Editando cuenta de usuario
   @Patch(':id')
   @Roles('ADMIN', 'SUPERUSUARIO')
   update(
@@ -61,8 +69,7 @@ export class UsuariosController {
     @Body() updateUsuarioDto: UpdateUsuarioDto,
     @Req() req,
   ) {
-    // JwtStrategy expone id_usuario (no sub); con sub el actor llegaba
-    // undefined y se saltaba la validación de cuenta propia y la auditoría
+    // JwtStrategy expone id_usuario (no sub); con sub el actor llegaba undefined
     return this.usuariosService.update(
       +id,
       updateUsuarioDto,
@@ -71,6 +78,7 @@ export class UsuariosController {
     );
   }
 
+  // CU-07 · Desactivando cuenta de usuario
   @Delete(':id')
   @Roles('ADMIN', 'SUPERUSUARIO')
   remove(@Param('id') id: string, @Req() req) {

@@ -16,12 +16,17 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { ProveedoresService } from './proveedores.service';
 import { CreateProveedorDto } from './dto/create-proveedor.dto';
 
+// Proveedores · ProveedoresController (controlador)
+// CU-49 · Creando proveedor
+// CU-50 · Editando proveedor
+// CU-51 · Consultando listado de proveedores
+// CU-98 · Desactivando proveedor
 @Controller('proveedores')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class ProveedoresController {
   constructor(private readonly proveedoresService: ProveedoresService) {}
 
-  // CU-49: registrar proveedor
+  // CU-49 · Creando proveedor
   @Post()
   @Roles('ADMIN', 'SUPERUSUARIO')
   create(@Body() dto: CreateProveedorDto, @Req() req) {
@@ -29,7 +34,7 @@ export class ProveedoresController {
     return this.proveedoresService.create(dto, actorId);
   }
 
-  // CU-50: editar proveedor
+  // CU-50 · Editando proveedor
   @Patch(':id')
   @Roles('ADMIN', 'SUPERUSUARIO')
   update(@Param('id') id: string, @Body() body: any, @Req() req) {
@@ -37,7 +42,7 @@ export class ProveedoresController {
     return this.proveedoresService.update(parseInt(id, 10), body, actorId);
   }
 
-  // CU-51: listado de proveedores (ADMIN_BODEGA también puede consultar)
+  // CU-51 · Consultando listado de proveedores
   @Get()
   @Roles('ADMIN_BODEGA', 'ADMIN', 'SUPERUSUARIO')
   findAll(@Query('buscar') buscar?: string, @Query('activa') activa?: string) {
@@ -46,7 +51,7 @@ export class ProveedoresController {
     return this.proveedoresService.findAll({ buscar, activa: activaFlag });
   }
 
-  // CU-98: desactivar proveedor
+  // CU-98 · Desactivando proveedor
   @Patch(':id/desactivar')
   @Roles('ADMIN', 'SUPERUSUARIO')
   desactivar(@Param('id', ParseIntPipe) id: number, @Req() req) {
@@ -54,7 +59,7 @@ export class ProveedoresController {
     return this.proveedoresService.desactivar(id, actorId);
   }
 
-  // CU-98: reactivar proveedor
+  // CU-98 · Desactivando proveedor
   @Patch(':id/reactivar')
   @Roles('ADMIN', 'SUPERUSUARIO')
   reactivar(@Param('id', ParseIntPipe) id: number, @Req() req) {

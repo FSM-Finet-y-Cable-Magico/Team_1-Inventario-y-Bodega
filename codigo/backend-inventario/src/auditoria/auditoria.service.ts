@@ -20,7 +20,7 @@ const VERBOS: Record<string, string> = {
 };
 
 function descripcionEvento(log: Auditoria): string {
-  // CU-11/CU-12: el cierre de sesión distingue manual vs. por inactividad
+  // CU-11/CU-12: el cierre de sesión distingue manual vs
   if (log.accion === 'LOGOUT') {
     const motivo = (log.valor_nuevo as { motivo?: string } | null)?.motivo;
     return motivo === 'inactividad'
@@ -34,6 +34,10 @@ function descripcionEvento(log: Auditoria): string {
   return `${verbo} ${objeto}`.trim().slice(0, 200);
 }
 
+// Auditoría · AuditoriaService (servicio)
+// CU-08 · Registrando eventos en el log de auditoría
+// CU-09 · Consultando el log de auditoría
+// Entidades: Auditoria, Usuario
 @Injectable()
 export class AuditoriaService {
   constructor(
@@ -43,6 +47,7 @@ export class AuditoriaService {
     private usuarioRepository: Repository<Usuario>,
   ) {}
 
+  // CU-08 · Registrando eventos en el log de auditoría
   async create(createAuditoriaDto: CreateAuditoriaDto) {
     const MAX_REINTENTOS = 3;
     let ultimo_error: unknown;
@@ -57,6 +62,7 @@ export class AuditoriaService {
     throw ultimo_error;
   }
 
+  // CU-09 · Consultando el log de auditoría
   async findAll(filtros?: FiltrarAuditoriaDto) {
     const where: FindOptionsWhere<Auditoria> = {};
     if (filtros?.id_usuario) where.id_usuario = filtros.id_usuario;
@@ -67,8 +73,7 @@ export class AuditoriaService {
       where.fecha_hora = Between(filtros.fecha_inicio, filtros.fecha_fin);
     }
 
-    // CU-09: filtros por nombre de usuario (parcial) o empresa del actor.
-    // Se resuelven los ids de usuario que cumplen y se filtra el log por ellos.
+    // CU-09: filtros por nombre de usuario (parcial) o empresa del actor
     if (filtros?.usuario || filtros?.id_empresa) {
       const whereUsuario: FindOptionsWhere<Usuario> = {};
       if (filtros.usuario)

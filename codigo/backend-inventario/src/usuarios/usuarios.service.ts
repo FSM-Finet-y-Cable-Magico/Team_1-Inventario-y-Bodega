@@ -17,6 +17,12 @@ import * as bcrypt from 'bcrypt';
 import { AuditoriaService } from 'src/auditoria/auditoria.service';
 import { EMPRESAS } from 'src/companies/companies.service';
 
+// Usuarios · UsuariosService (servicio)
+// CU-04 · Creando cuenta de usuario
+// CU-05 · Consultando listado de usuarios
+// CU-06 · Editando cuenta de usuario
+// CU-07 · Desactivando cuenta de usuario
+// Entidades: Usuario, UsuarioRol, Rol
 @Injectable()
 export class UsuariosService {
   constructor(
@@ -29,8 +35,7 @@ export class UsuariosService {
     private readonly auditoriaService: AuditoriaService,
   ) {}
 
-  // CU-05: listado con filtros por rol, estado y nombre (completo o de usuario)
-  // El Superusuario ve usuarios de todas las empresas; el resto solo los de su empresa.
+  // CU-05 · Consultando listado de usuarios
   async findAll(
     filtros: { rol?: string; activo?: boolean; buscar?: string },
     idEmpresaActor: number,
@@ -65,16 +70,14 @@ export class UsuariosService {
       );
     }
 
-    // CU-05: los usuarios con rol SUPERUSUARIO solo son visibles para otro Superusuario.
-    // Un Admin de empresa no debe ver ni editar a los Superusuarios del sistema.
+    // CU-05: los usuarios con rol SUPERUSUARIO solo son visibles para otro Superusuario
     if (!esSuperusuario) {
       resultado = resultado.filter(
         (u) => !u.roles.some((r) => r.nombre_rol === 'SUPERUSUARIO'),
       );
     }
 
-    // Agregamos el nombre de la empresa para que el Superusuario pueda
-    // distinguir usuarios del listado consolidado.
+    // Agregamos el nombre de la empresa
     const mapaEmpresas = new Map(EMPRESAS.map((e) => [e.id, e.nombre]));
     resultado = resultado.map((u) => ({
       ...u,
@@ -86,6 +89,7 @@ export class UsuariosService {
     return resultado;
   }
 
+  // CU-06 · Editando cuenta de usuario
   async findOne(id: number): Promise<(Usuario & { roles: Rol[] }) | null> {
     const usuario = await this.usuarioRepository.findOne({
       where: { id_usuario: id },
@@ -94,8 +98,7 @@ export class UsuariosService {
     return usuario ? this.conRoles(usuario) : null;
   }
 
-  // El front consume `roles` plano; usuarioRoles es el detalle de la tabla intermedia.
-  // El hash de la contraseña nunca debe salir del backend.
+  // Apoyo de CU-05, CU-06
   private conRoles(usuario: Usuario): Usuario & { roles: Rol[] } {
     const { password_hash, ...usuarioSeguro } = usuario;
     return {
@@ -108,6 +111,7 @@ export class UsuariosService {
     } as Usuario & { roles: Rol[] };
   }
 
+  // CU-04 · Creando cuenta de usuario
   async create(
     createUsuarioDto: CreateUsuarioDto,
     actor: {
@@ -148,7 +152,7 @@ export class UsuariosService {
           'Uno o más roles seleccionados no existen.',
         );
       }
-      // CU-04 Excepción 2: el Administrador no puede asignar rol Superusuario
+      // CU-04 E2: el Administrador no puede asignar rol Superusuario
       if (
         rolesAsignar.some((r) => codigoRol(r.nombre_rol) === 'SUPERUSUARIO') &&
         !esSuperusuario
@@ -159,7 +163,7 @@ export class UsuariosService {
       }
     }
 
-    // CU-04 Excepción 3: nombre de usuario ya existe
+    // CU-04 E3: nombre de usuario ya existe
     const existe = await this.usuarioRepository.findOne({
       where: { nombre_usuario: createUsuarioDto.nombre_usuario },
     });
@@ -212,12 +216,13 @@ export class UsuariosService {
     return usuarioSeguro as Usuario;
   }
 
+  // CU-07 · Desactivando cuenta de usuario
   async remove(
     id: number,
     actorId: number,
     actorRoles: string[] = [],
   ): Promise<void> {
-    // CU-07 Excepción 1: el actor no puede desactivar su propia cuenta
+    // CU-07 E1: el actor no puede desactivar su propia cuenta
     if (id === actorId) {
       throw new BadRequestException(
         'No es posible desactivar su propia cuenta.',
@@ -251,6 +256,7 @@ export class UsuariosService {
     }
   }
 
+  // CU-06 · Editando cuenta de usuario
   async update(
     id: number,
     updateUsuarioDto: UpdateUsuarioDto,
@@ -270,7 +276,7 @@ export class UsuariosService {
       );
     }
 
-    // CU-07 Excepción 1: tampoco por edición se puede desactivar la cuenta propia
+    // CU-07 E1: tampoco por edición se puede desactivar la cuenta propia
     if (updateUsuarioDto.activo === false && id === actorId) {
       throw new BadRequestException(
         'No es posible desactivar su propia cuenta.',
@@ -292,7 +298,7 @@ export class UsuariosService {
       );
     }
 
-    // CU-06: el rol es editable. Validar y reemplazar los roles asignados
+    // CU-06: el rol es editable
     let rolesAsignar: Rol[] | null = null;
     if (roles !== undefined) {
       const idsRoles = [...new Set(roles)];
@@ -304,7 +310,7 @@ export class UsuariosService {
           'Uno o más roles seleccionados no existen.',
         );
       }
-      // CU-06 Excepción 2: el Administrador no puede asignar rol Superusuario
+      // CU-06 E2: el Administrador no puede asignar rol Superusuario
       if (
         rolesAsignar.some((r) => codigoRol(r.nombre_rol) === 'SUPERUSUARIO') &&
         !actorRoles.includes('SUPERUSUARIO')

@@ -5,14 +5,14 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
-// CU-69: consulta de los cierres de reparación registrados desde el cierre de OT de G3.
-// A diferencia del webhook (X-API-KEY), esta ruta es para la UI: JWT + roles, y el
-// aislamiento por empresa lo aplica el service salvo para el Superusuario.
+// Integraciones con G3 y G8 · CierresReparacionController (controlador)
+// CU-69 · Registrando cierre de trabajo de reparación
 @Controller('cierres-reparacion')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class CierresReparacionController {
   constructor(private readonly integracionesService: IntegracionesService) {}
 
+  // CU-69 · Registrando cierre de trabajo de reparación
   @Get()
   @Roles('ADMIN', 'SUPERUSUARIO', 'ADMIN_BODEGA', 'TECNICO_TERRENO')
   listar(
